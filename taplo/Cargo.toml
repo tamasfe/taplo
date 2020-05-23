@@ -10,8 +10,6 @@ name        = "taplo"
 readme      = "README.md"
 repository  = "https://github.com/tamasfe/taplo"
 version     = "1.0.0-alpha.1"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-# asd
 
 [features]
 default   = []

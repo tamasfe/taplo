@@ -26,27 +26,27 @@ This extension will try to support all the TOML versions in the future.
 
 Value highlighting based on their types, and semantic key highlighting for tables and arrays.
 
-![Semantic Highlighting](./images/highlight.png)
+![Semantic Highlighting](highlight.png)
 
 ### Validation
 
-![Validation](./images/validation.gif)
+![Validation](validation.gif)
 
 ### Folding
 
 Arrays, and top level tables and comments can be folded.
 
-![Folding](./images/folding.gif)
+![Folding](folding.gif)
 
 ### Symbol tree and navigation (even for tables out of order)
 
-![Symbols](./images/symbols.gif)
+![Symbols](symbols.gif)
 
 ### Formatting
 
 Most of the formatting features are enabled by default, but almost everything can be tweaked in the settings. If you're missing a setting, feel free to open an issue about it!
 
-![Formatting](./images/formatting.gif)
+![Formatting](formatting.gif)
 
 ## Planned Features
 

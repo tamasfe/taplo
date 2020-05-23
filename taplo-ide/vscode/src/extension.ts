@@ -11,10 +11,16 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   let clientOpts: client.LanguageClientOptions = {
-    documentSelector: [{ scheme: "file", language: "toml" }],
+    documentSelector: [
+      { scheme: "file", language: "toml" },
+      { scheme: "file", language: "cargoLock" },
+    ],
     synchronize: {
       configurationSection: "evenBetterToml",
-      fileEvents: vscode.workspace.createFileSystemWatcher("**/.toml"),
+      fileEvents: [
+        vscode.workspace.createFileSystemWatcher("**/.toml"),
+        vscode.workspace.createFileSystemWatcher("**/Cargo.lock"),
+      ],
     },
   };
   // res.registerFeature(new SemanticTokensFeature(res))

@@ -2,7 +2,7 @@
 	"name": "even-better-toml",
 	"displayName": "Even Better TOML",
 	"description": "Fully-featured TOML language support",
-	"version": "1.0.0-alpha.1",
+	"version": "0.1.0",
 	"repository": {
 		"url": "https://github.com/tamasfe/taplo"
 	},
@@ -13,8 +13,8 @@
 	"preview": true,
 	"icon": "taplo-icon.png",
 	"galleryBanner": {
-		"color": "#e43a25",
-		"theme": "light"
+		"color": "#731c12",
+		"theme": "dark"
 	},
 	"license": "SEE LICENSE IN LICENSE.md",
 	"engines": {
@@ -40,6 +40,9 @@
 		"languages": [
 			{
 				"id": "toml",
+				"aliases": [
+					"TOML"
+				],
 				"extensions": [
 					".toml"
 				],
@@ -47,6 +50,9 @@
 			},
 			{
 				"id": "cargoLock",
+				"aliases": [
+					"Cargo Lock"
+				],
 				"filenames": [
 					"Cargo.lock"
 				],

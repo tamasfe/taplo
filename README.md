@@ -20,7 +20,7 @@ Even though Taplo exposes a `Value` that can be serialized with [Serde](https://
 
 ## Status
 
-The library is pretty much **WIP**, it has a few bugs that are being fixed, but it is already used in the [Even Better TOML](todo) Visual Studio Code extension.
+The library is pretty much **WIP**, it has a few bugs that are being fixed, but it is already used in the [Even Better TOML](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) Visual Studio Code extension.
 
 The documentation is a bit lacking for now, and I'm not planning to put too much effort into it before the library reaches 1.0.0 stable. However the API surface is not too large, and should be more or less straightforward to use.
 

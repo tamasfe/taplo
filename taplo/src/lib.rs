@@ -1,6 +1,7 @@
 #[macro_use]
 mod macros;
 
+#[cfg(feature = "serialize")]
 mod serde;
 
 pub mod dom;

@@ -1,0 +1,44 @@
+[package]
+name = "taplo-ide"
+version = "0.1.0"
+authors = ["tamasf97 <tamasf97@outlook.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies]
+wasm-bindgen = {version = "0.2", features = ["serde-serialize"]}
+wasm-bindgen-futures = "0.4.12"
+js-sys = "0.3.39"
+taplo = { path = "../taplo" }
+lsp-types = { version = "0.74.1", features = [ "proposed" ]}
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+rowan = "0.10.0"
+once_cell = "1.3.1"
+lsp-async-stub = { path = "../lsp-async-stub" }
+futures = "0.3.5"
+async-trait = "0.1.30"
+
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+console_error_panic_hook = { version = "0.1.1", optional = true }
+
+# `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
+# compared to the default allocator's ~10K. It is slower than the default
+# allocator, however.
+#
+# Unfortunately, `wee_alloc` requires nightly Rust when targeting wasm for now.
+wee_alloc = { version = "0.4.2", optional = true }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.2"
+
+[profile.release]
+opt-level = 3

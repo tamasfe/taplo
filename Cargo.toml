@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "taplo-ide",
+    "taplo",
+    "lsp-async-stub",
+]
+exclude = [
+    "test-gen"
+]

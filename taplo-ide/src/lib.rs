@@ -39,6 +39,7 @@ macro_rules! log_debug {
     };
 }
 
+mod request_ext;
 mod handlers;
 mod utils;
 
@@ -140,6 +141,9 @@ static SERVER: Lazy<Server<World>> = Lazy::new(|| {
         ))
         .handler(RequestHandler::<request::Formatting, _, _>::new(
             handlers::format,
+        ))
+        .handler(RequestHandler::<request_ext::TomlToJsonRequest, _, _>::new(
+            handlers::toml_to_json,
         ))
         .request_writer(RequestWriter)
         .build()

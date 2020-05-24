@@ -59,6 +59,21 @@
 				"configuration": "./language-configuration.json"
 			}
 		],
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "evenBetterToml.copyTomlAsJson",
+					"when": "editorLangId == toml"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "evenBetterToml.copyTomlAsJson",
+				"title": "TOML: Copy selection as JSON",
+				"enablement": "editorLangId == toml && editorHasSelection"
+			}
+		],
 		"configuration": {
 			"title": "Even Better TOML",
 			"properties": {
@@ -126,8 +141,9 @@
 		"watch": "tsc -watch -p ./"
 	},
 	"dependencies": {
-		"vscode-languageclient": "^6.1.3",
-		"taplo": "../pkg"
+		"clipboardy": "^2.3.0",
+		"taplo": "../pkg",
+		"vscode-languageclient": "^6.1.3"
 	},
 	"devDependencies": {
 		"@types/node": "^12.12.0",

@@ -1,6 +1,8 @@
+use crate::request_ext::*;
 use crate::{Document, World};
 use lsp_async_stub::{rpc::Error, Context, Params, RequestWriter};
 use lsp_types::*;
+use std::convert::TryFrom;
 use taplo::{formatter, util::coords::Mapper};
 use wasm_bindgen_futures::spawn_local;
 
@@ -9,7 +11,7 @@ mod document_symbols;
 mod folding_ranges;
 mod semantic_tokens;
 
-pub async fn initialize(
+pub(crate) async fn initialize(
     context: Context<World>,
     _params: Params<InitializeParams>,
 ) -> Result<InitializeResult, Error> {
@@ -37,10 +39,6 @@ pub async fn initialize(
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             document_symbol_provider: Some(true),
             document_formatting_provider: Some(true),
-            // execute_command_provider: Some(ExecuteCommandOptions {
-            //     commands: vec!["evenBetterToml.toJson".into()],
-            //     work_done_progress_options: Default::default(),
-            // }),
             ..Default::default()
         },
         server_info: Some(ServerInfo {
@@ -72,14 +70,17 @@ async fn update_configuration(mut context: Context<World>) {
     w.configuration = serde_json::from_value(config_vals.remove(0)).unwrap_or_default();
 }
 
-pub async fn configuration_change(
+pub(crate) async fn configuration_change(
     context: Context<World>,
     _params: Params<DidChangeConfigurationParams>,
 ) {
     update_configuration(context).await;
 }
 
-pub async fn document_open(mut context: Context<World>, params: Params<DidOpenTextDocumentParams>) {
+pub(crate) async fn document_open(
+    mut context: Context<World>,
+    params: Params<DidOpenTextDocumentParams>,
+) {
     let p = match params.optional() {
         None => return,
         Some(p) => p,
@@ -95,13 +96,12 @@ pub async fn document_open(mut context: Context<World>, params: Params<DidOpenTe
         version: None,
     };
 
-    context.world().lock().await.documents.insert(
-        p.text_document.uri,
-        Document {
-            parse,
-            mapper,
-        },
-    );
+    context
+        .world()
+        .lock()
+        .await
+        .documents
+        .insert(p.text_document.uri, Document { parse, mapper });
 
     context
         .write_notification::<notification::PublishDiagnostics, _>(Some(diag))
@@ -109,7 +109,7 @@ pub async fn document_open(mut context: Context<World>, params: Params<DidOpenTe
         .ok();
 }
 
-pub async fn document_change(
+pub(crate) async fn document_change(
     mut context: Context<World>,
     params: Params<DidChangeTextDocumentParams>,
 ) {
@@ -133,13 +133,12 @@ pub async fn document_change(
         version: None,
     };
 
-    context.world().lock().await.documents.insert(
-        p.text_document.uri,
-        Document {
-            parse,
-            mapper,
-        },
-    );
+    context
+        .world()
+        .lock()
+        .await
+        .documents
+        .insert(p.text_document.uri, Document { parse, mapper });
 
     context
         .write_notification::<notification::PublishDiagnostics, _>(Some(diag))
@@ -147,7 +146,7 @@ pub async fn document_change(
         .ok();
 }
 
-pub async fn semantic_tokens(
+pub(crate) async fn semantic_tokens(
     mut context: Context<World>,
     params: Params<SemanticTokensParams>,
 ) -> Result<Option<SemanticTokensResult>, Error> {
@@ -165,7 +164,7 @@ pub async fn semantic_tokens(
     })))
 }
 
-pub async fn folding_ranges(
+pub(crate) async fn folding_ranges(
     mut context: Context<World>,
     params: Params<FoldingRangeParams>,
 ) -> Result<Option<Vec<FoldingRange>>, Error> {
@@ -184,7 +183,7 @@ pub async fn folding_ranges(
     )))
 }
 
-pub async fn document_symbols(
+pub(crate) async fn document_symbols(
     mut context: Context<World>,
     params: Params<DocumentSymbolParams>,
 ) -> Result<Option<DocumentSymbolResponse>, Error> {
@@ -202,7 +201,7 @@ pub async fn document_symbols(
     )))
 }
 
-pub async fn format(
+pub(crate) async fn format(
     mut context: Context<World>,
     params: Params<DocumentFormattingParams>,
 ) -> Result<Option<Vec<TextEdit>>, Error> {
@@ -263,4 +262,36 @@ pub async fn format(
         range: doc.mapper.all_range(),
         new_text: taplo::formatter::format_syntax(doc.parse.clone().into_syntax(), format_opts),
     }]))
+}
+
+pub(crate) async fn toml_to_json(
+    _context: Context<World>,
+    params: Params<TomlToJsonParams>,
+) -> Result<TomlToJsonResponse, Error> {
+    let p = params.required()?;
+
+    let parse = taplo::parser::parse(&p.text);
+
+    if !parse.errors.is_empty() {
+        return Ok(TomlToJsonResponse {
+            text: None,
+            errors: Some(parse.errors.iter().map(|e| e.to_string()).collect()),
+        });
+    }
+
+    let dom = parse.into_dom();
+
+    if !dom.errors().is_empty() {
+        return Ok(TomlToJsonResponse {
+            text: None,
+            errors: Some(dom.errors().iter().map(|e| e.to_string()).collect()),
+        });
+    }
+
+    let val = taplo::value::Value::try_from(dom).unwrap();
+
+    Ok(TomlToJsonResponse {
+        text: Some(serde_json::to_string_pretty(&val).unwrap()),
+        errors: None,
+    })
 }

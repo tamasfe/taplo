@@ -1,5 +1,6 @@
 <div style="text-align:left"><img src="taplo-icon.png" width="128"></div>
 
+[![Continuous integration](https://github.com/tamasfe/taplo/workflows/Continuous%20integration/badge.svg)](https://github.com/tamasfe/taplo/actions?query=workflow%3A%22Continuous+integration%22)
 [![Latest Version](https://img.shields.io/crates/v/taplo.svg)](https://crates.io/crates/taplo)
 [![Documentation](https://docs.rs/taplo/badge.svg)](https://docs.rs/taplo)
 

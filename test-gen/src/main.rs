@@ -4,11 +4,7 @@
 use getopts::Options;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use serde_json;
-use serde_yaml;
-use std::io::prelude::*;
-use std::process::Command;
-use std::{env, fs, path::Path};
+use std::{env, fs, io::prelude::*, path::Path, process::Command};
 use walkdir::WalkDir;
 
 fn main() {
@@ -37,9 +33,7 @@ fn main() {
     let valid_dir = Path::new(&test_data_dir).join("valid");
     let invalid_dir = Path::new(&test_data_dir).join("invalid");
 
-    let mut valid_src = quote! {
-        use std::convert::TryFrom;
-    };
+    let mut valid_src = quote! {};
 
     let mut files_in_valid_dir = 0;
     let mut added_valid_files = 0;
@@ -97,7 +91,7 @@ fn main() {
 
         let test_fn_ident = Ident::new(&test_name, Span::call_site());
 
-        let mut json_validation = quote! {};
+        let json_validation = quote! {};
 
         // TODO do a more sophisticated comparison
         // fs::read_to_string(valid_file.path().with_file_name(&(base_name.clone() + ".yaml"))).and_then(
@@ -144,7 +138,7 @@ fn main() {
                     p.errors.is_empty(),
                     "Parse errors:\n{}",
                     p.errors
-                        .into_iter()
+                        .iter()
                         .map(|e| { format!("{}\n", e) })
                         .collect::<String>()
                 );
@@ -155,7 +149,7 @@ fn main() {
                     dom.errors().is_empty(),
                     "Semantic errors:\n{}",
                     dom.errors()
-                        .into_iter()
+                        .iter()
                         .map(|e| { format!("{}\n", e) })
                         .collect::<String>()
                 );

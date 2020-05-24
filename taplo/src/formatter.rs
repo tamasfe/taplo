@@ -91,16 +91,15 @@ struct Context {
 
 /// Formats a parsed TOML green tree.
 pub fn format_green(green: GreenNode, options: Options) -> String {
-    format_syntax(SyntaxNode::new_root(green), options.clone()).to_string()
+    format_syntax(SyntaxNode::new_root(green), options)
 }
 
 /// Parses then formats a TOML document, ignoring errors.
 pub fn format(src: &str, options: Options) -> String {
     format_syntax(
         crate::parser::Parser::new(src).parse().into_syntax(),
-        options.clone(),
+        options,
     )
-    .to_string()
 }
 
 /// Formats a parsed TOML syntax tree.
@@ -143,6 +142,8 @@ fn format_impl(node: SyntaxNode, mut options: Options) -> SyntaxNode {
     SyntaxNode::new_root(builder.finish())
 }
 
+// TODO(refactor)
+#[allow(clippy::cognitive_complexity)]
 fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Options) {
     builder.start_node(ROOT.into());
 
@@ -427,13 +428,7 @@ fn format_array(
         .enumerate()
         .map(|(i, c)| match c {
             NodeOrToken::Node(n) => n.descendants_with_tokens().any(|d| d.kind() == COMMENT),
-            NodeOrToken::Token(t) => {
-                if i != all_token_count - 1 && t.kind() == COMMENT {
-                    true
-                } else {
-                    false
-                }
-            }
+            NodeOrToken::Token(t) => i != all_token_count - 1 && t.kind() == COMMENT,
         })
         .any(|h| h);
 
@@ -447,12 +442,9 @@ fn format_array(
             + options.indent_chars(context.indent_level) as u32
             > options.column_width as u32;
 
-        let mut multiline: bool =
-            has_comment_inside || has_newline || (options.array_auto_expand && too_long);
-
-        if options.array_auto_collapse && !has_comment_inside && !too_long {
-            multiline = false;
-        }
+        let multiline: bool =
+            (has_comment_inside || has_newline || (options.array_auto_expand && too_long))
+                && !(options.array_auto_collapse && !has_comment_inside && !too_long);
 
         let mut was_value = false;
         let mut was_comment = false;
@@ -533,14 +525,10 @@ fn format_array(
                     }
                     COMMENT => {
                         // Comment after the array
-                        if i == all_token_count - 1 {
+                        if i == all_token_count - 1 || was_value {
                             builder.token(WHITESPACE.into(), " ".into());
                             builder.token(t.kind().into(), t.text().clone());
                         // Comment after a value
-                        } else if was_value {
-                            builder.token(WHITESPACE.into(), " ".into());
-                            builder.token(t.kind().into(), t.text().clone());
-                        // Free-standing comment inside the array
                         } else {
                             if was_comment || was_value {
                                 builder.token(NEWLINE.into(), options.newline().into());
@@ -761,7 +749,7 @@ fn add_all(node: SyntaxNode, builder: &mut GreenNodeBuilder) {
 }
 
 fn newlines(s: &str, count: Option<usize>) -> SmolStr {
-    if s.contains("\r") {
+    if s.contains('\r') {
         if count.is_none() {
             if s.newline_count() > 2 {
                 "\r\n\r\n".into()
@@ -771,16 +759,14 @@ fn newlines(s: &str, count: Option<usize>) -> SmolStr {
         } else {
             "\r\n".repeat(count.unwrap_or(1)).into()
         }
-    } else {
-        if count.is_none() {
-            if s.newline_count() > 2 {
-                "\n\n".into()
-            } else {
-                "\n".into()
-            }
+    } else if count.is_none() {
+        if s.newline_count() > 2 {
+            "\n\n".into()
         } else {
-            "\n".repeat(count.unwrap_or(1)).into()
+            "\n".into()
         }
+    } else {
+        "\n".repeat(count.unwrap_or(1)).into()
     }
 }
 

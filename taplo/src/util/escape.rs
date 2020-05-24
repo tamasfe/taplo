@@ -49,7 +49,7 @@ enum Escape {
     Unknown,
 
     #[error]
-    NoEscape,
+    UnEscaped,
 }
 use Escape::*;
 
@@ -85,7 +85,7 @@ pub fn unescape(s: &str) -> Result<String, usize> {
                 .to_string();
             }
             Unknown => return Err(lexer.span().end),
-            NoEscape => {
+            UnEscaped => {
                 new_s += lexer.slice();
             }
         }
@@ -143,7 +143,7 @@ pub fn check_escape(s: &str) -> Result<(), Vec<usize>> {
                 };
             }
             Unknown => invalid.push(lexer.span().start),
-            NoEscape => {}
+            UnEscaped => {}
         }
     }
 

@@ -1,9 +1,14 @@
 [workspace]
+exclude = [
+    #
+    "test-gen",
+]
 members = [
+    #
     "taplo-ide",
     "taplo",
     "lsp-async-stub",
 ]
-exclude = [
-    "test-gen"
-]
+
+[profile.release]
+opt-level = 3

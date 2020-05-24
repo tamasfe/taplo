@@ -96,11 +96,11 @@ pub(crate) mod allowed_chars {
 }
 
 pub trait StringExt {
-    fn remove_prefix(&self, p: &str) -> &str;
-    fn remove_suffix(&self, p: &str) -> &str;
+    fn remove_prefix<'a>(&'a self, p: &str) -> &'a str;
+    fn remove_suffix<'a>(&'a self, p: &str) -> &'a str;
 }
 impl StringExt for &str {
-    fn remove_prefix(&self, p: &str) -> &str {
+    fn remove_prefix<'a>(&'a self, p: &str) -> &'a str {
         if self.starts_with(p) {
             &self[p.len()..]
         } else {
@@ -108,7 +108,7 @@ impl StringExt for &str {
         }
     }
 
-    fn remove_suffix(&self, p: &str) -> &str {
+    fn remove_suffix<'a>(&'a self, p: &str) -> &'a str {
         if self.ends_with(p) {
             &self[..self.len() - p.len()]
         } else {

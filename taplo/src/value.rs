@@ -84,7 +84,7 @@ impl TryFrom<dom::ArrayNode> for Value {
         Ok(Value::Array(
             node.into_items()
                 .into_iter()
-                .map(|item| Value::try_from(item))
+                .map(Value::try_from)
                 .collect::<Result<Vec<Value>, Self::Error>>()?,
         ))
     }

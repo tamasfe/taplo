@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 #[test]
 fn spec_string_basic_multiline_3() {
     let src = "str = \"\"\"\\\n      The quick brown \\\n      fox jumps over \\\n      the lazy dog.\\\n      \"\"\"\n" ;
@@ -7,7 +6,7 @@ fn spec_string_basic_multiline_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -16,7 +15,7 @@ fn spec_string_basic_multiline_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -29,7 +28,7 @@ fn spec_date_time_local_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -38,7 +37,7 @@ fn spec_date_time_local_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -51,7 +50,7 @@ fn spec_float_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -60,7 +59,7 @@ fn spec_float_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -73,7 +72,7 @@ fn spec_float_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -82,7 +81,7 @@ fn spec_float_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -95,7 +94,7 @@ fn spec_float_5() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -104,7 +103,7 @@ fn spec_float_5() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -118,7 +117,7 @@ fn spec_string_basic_multiline_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -127,7 +126,7 @@ fn spec_string_basic_multiline_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -140,7 +139,7 @@ fn spec_extend_dotted_object_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -149,7 +148,7 @@ fn spec_extend_dotted_object_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -162,7 +161,7 @@ fn spec_newline_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -171,7 +170,7 @@ fn spec_newline_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -184,7 +183,7 @@ fn spec_table_inline_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -193,7 +192,7 @@ fn spec_table_inline_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -206,7 +205,7 @@ fn spec_table_7() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -215,7 +214,7 @@ fn spec_table_7() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -228,7 +227,7 @@ fn spec_key_value_pair_7() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -237,7 +236,7 @@ fn spec_key_value_pair_7() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -250,7 +249,7 @@ fn spec_dotted_keys_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -259,7 +258,7 @@ fn spec_dotted_keys_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -272,7 +271,7 @@ fn spec_string_basic_multiline_8() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -281,7 +280,7 @@ fn spec_string_basic_multiline_8() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -294,7 +293,7 @@ fn spec_date_time_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -303,7 +302,7 @@ fn spec_date_time_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -316,7 +315,7 @@ fn spec_string_literal_4() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -325,7 +324,7 @@ fn spec_string_literal_4() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -338,7 +337,7 @@ fn spec_array_of_tables_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -347,7 +346,7 @@ fn spec_array_of_tables_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -360,7 +359,7 @@ fn spec_array_mixed_number_types() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -369,7 +368,7 @@ fn spec_array_mixed_number_types() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -382,7 +381,7 @@ fn spec_date_local_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -391,7 +390,7 @@ fn spec_date_local_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -404,7 +403,7 @@ fn spec_array_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -413,7 +412,7 @@ fn spec_array_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -426,7 +425,7 @@ fn spec_empty_key_name_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -435,7 +434,7 @@ fn spec_empty_key_name_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -448,7 +447,7 @@ fn spec_dotted_keys_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -457,7 +456,7 @@ fn spec_dotted_keys_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -470,7 +469,7 @@ fn spec_dotted_keys_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -479,7 +478,7 @@ fn spec_dotted_keys_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -492,7 +491,7 @@ fn spec_readme_example() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -501,7 +500,7 @@ fn spec_readme_example() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -514,7 +513,7 @@ fn spec_array_more_mixed_types() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -523,7 +522,7 @@ fn spec_array_more_mixed_types() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -536,7 +535,7 @@ fn spec_string_basic_multiline_9() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -545,7 +544,7 @@ fn spec_string_basic_multiline_9() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -558,7 +557,7 @@ fn spec_extend_dotted_object_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -567,7 +566,7 @@ fn spec_extend_dotted_object_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -580,7 +579,7 @@ fn spec_string_literal_multiline_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -589,7 +588,7 @@ fn spec_string_literal_multiline_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -602,7 +601,7 @@ fn spec_date_time_4() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -611,7 +610,7 @@ fn spec_date_time_4() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -624,7 +623,7 @@ fn spec_int_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -633,7 +632,7 @@ fn spec_int_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -646,7 +645,7 @@ fn spec_date_time_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -655,7 +654,7 @@ fn spec_date_time_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -668,7 +667,7 @@ fn spec_string_basic_multiline_7() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -677,7 +676,7 @@ fn spec_string_basic_multiline_7() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -690,7 +689,7 @@ fn spec_float_4() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -699,7 +698,7 @@ fn spec_float_4() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -712,7 +711,7 @@ fn spec_extend_dotted_object_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -721,7 +720,7 @@ fn spec_extend_dotted_object_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -734,7 +733,7 @@ fn spec_empty_key_name_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -743,7 +742,7 @@ fn spec_empty_key_name_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -756,7 +755,7 @@ fn spec_string_basic_tab() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -765,7 +764,7 @@ fn spec_string_basic_tab() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -778,7 +777,7 @@ fn qa_key_string_40kb() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -787,7 +786,7 @@ fn qa_key_string_40kb() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -800,7 +799,7 @@ fn spec_float_10() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -809,7 +808,7 @@ fn spec_float_10() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -822,7 +821,7 @@ fn spec_float_9() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -831,7 +830,7 @@ fn spec_float_9() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -844,7 +843,7 @@ fn spec_key_value_pair_5() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -853,7 +852,7 @@ fn spec_key_value_pair_5() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -866,7 +865,7 @@ fn spec_int_4() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -875,7 +874,7 @@ fn spec_int_4() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -888,7 +887,7 @@ fn spec_string_escape_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -897,7 +896,7 @@ fn spec_string_escape_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -910,7 +909,7 @@ fn spec_array_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -919,7 +918,7 @@ fn spec_array_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -932,7 +931,7 @@ fn spec_table_8() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -941,7 +940,7 @@ fn spec_table_8() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -954,7 +953,7 @@ fn spec_key_value_pair_8() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -963,7 +962,7 @@ fn spec_key_value_pair_8() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -976,7 +975,7 @@ fn spec_string_literal_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -985,7 +984,7 @@ fn spec_string_literal_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -998,7 +997,7 @@ fn qa_scalar_literal_multiline_40kb() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1007,7 +1006,7 @@ fn qa_scalar_literal_multiline_40kb() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1020,7 +1019,7 @@ fn spec_float_11() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1029,7 +1028,7 @@ fn spec_float_11() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1042,7 +1041,7 @@ fn spec_float_8() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1051,7 +1050,7 @@ fn spec_float_8() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1064,7 +1063,7 @@ fn spec_float_6() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1073,7 +1072,7 @@ fn spec_float_6() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1086,7 +1085,7 @@ fn spec_date_time_local_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1095,7 +1094,7 @@ fn spec_date_time_local_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1108,7 +1107,7 @@ fn spec_float_13() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1117,7 +1116,7 @@ fn spec_float_13() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1130,7 +1129,7 @@ fn spec_int_bin1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1139,7 +1138,7 @@ fn spec_int_bin1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1152,7 +1151,7 @@ fn spec_key_value_pair_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1161,7 +1160,7 @@ fn spec_key_value_pair_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1174,7 +1173,7 @@ fn spec_array_7() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1183,7 +1182,7 @@ fn spec_array_7() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1196,7 +1195,7 @@ fn spec_string_basic_tab_multiline() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1205,7 +1204,7 @@ fn spec_string_basic_tab_multiline() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1218,7 +1217,7 @@ fn spec_table_4() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1227,7 +1226,7 @@ fn spec_table_4() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1240,7 +1239,7 @@ fn spec_time_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1249,7 +1248,7 @@ fn spec_time_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1262,7 +1261,7 @@ fn spec_int_6() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1271,7 +1270,7 @@ fn spec_int_6() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1284,7 +1283,7 @@ fn spec_string_escape_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1293,7 +1292,7 @@ fn spec_string_escape_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1306,7 +1305,7 @@ fn spec_string_escape_4() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1315,7 +1314,7 @@ fn spec_string_escape_4() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1328,7 +1327,7 @@ fn spec_int_3a() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1337,7 +1336,7 @@ fn spec_int_3a() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1350,7 +1349,7 @@ fn spec_table_inline_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1359,7 +1358,7 @@ fn spec_table_inline_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1372,7 +1371,7 @@ fn spec_int_oct1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1381,7 +1380,7 @@ fn spec_int_oct1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1394,7 +1393,7 @@ fn spec_int_oct2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1403,7 +1402,7 @@ fn spec_int_oct2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1416,7 +1415,7 @@ fn spec_newline_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1425,7 +1424,7 @@ fn spec_newline_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1438,7 +1437,7 @@ fn spec_date_time_5() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1447,7 +1446,7 @@ fn spec_date_time_5() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1460,7 +1459,7 @@ fn spec_key_value_pair_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1469,7 +1468,7 @@ fn spec_key_value_pair_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1482,7 +1481,7 @@ fn spec_comment_tab() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1491,7 +1490,7 @@ fn spec_comment_tab() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1504,7 +1503,7 @@ fn spec_string_escape_9() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1513,7 +1512,7 @@ fn spec_string_escape_9() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1526,7 +1525,7 @@ fn spec_string_literal_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1535,7 +1534,7 @@ fn spec_string_literal_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1548,7 +1547,7 @@ fn qa_array_inline_1000() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1557,7 +1556,7 @@ fn qa_array_inline_1000() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1570,7 +1569,7 @@ fn spec_float_14() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1579,7 +1578,7 @@ fn spec_float_14() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1592,7 +1591,7 @@ fn spec_table_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1601,7 +1600,7 @@ fn spec_table_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1614,7 +1613,7 @@ fn spec_string_basic_multiline_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1623,7 +1622,7 @@ fn spec_string_basic_multiline_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1636,7 +1635,7 @@ fn qa_scalar_string_multiline_40kb() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1645,7 +1644,7 @@ fn qa_scalar_string_multiline_40kb() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1658,7 +1657,7 @@ fn spec_string_literal_multiline_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1667,7 +1666,7 @@ fn spec_string_literal_multiline_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1680,7 +1679,7 @@ fn qa_table_inline_1000() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1689,7 +1688,7 @@ fn qa_table_inline_1000() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1702,7 +1701,7 @@ fn spec_time_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1711,7 +1710,7 @@ fn spec_time_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1724,7 +1723,7 @@ fn spec_int_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1733,7 +1732,7 @@ fn spec_int_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1746,7 +1745,7 @@ fn spec_string_escape_5() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1755,7 +1754,7 @@ fn spec_string_escape_5() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1768,7 +1767,7 @@ fn spec_case_sensitive() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1777,7 +1776,7 @@ fn spec_case_sensitive() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1790,7 +1789,7 @@ fn spec_table_inline_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1799,7 +1798,7 @@ fn spec_table_inline_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1812,7 +1811,7 @@ fn spec_comment_mid_array() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1821,7 +1820,7 @@ fn spec_comment_mid_array() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1834,7 +1833,7 @@ fn spec_table_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1843,7 +1842,7 @@ fn spec_table_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1856,7 +1855,7 @@ fn qa_scalar_literal_40kb() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1865,7 +1864,7 @@ fn qa_scalar_literal_40kb() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1878,7 +1877,7 @@ fn spec_float_7() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1887,7 +1886,7 @@ fn spec_float_7() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1900,7 +1899,7 @@ fn spec_table_5() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1909,7 +1908,7 @@ fn spec_table_5() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1922,7 +1921,7 @@ fn spec_float_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1931,7 +1930,7 @@ fn spec_float_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1944,7 +1943,7 @@ fn spec_key_value_pair_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1953,7 +1952,7 @@ fn spec_key_value_pair_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1966,7 +1965,7 @@ fn spec_string_escape_8() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1975,7 +1974,7 @@ fn spec_string_escape_8() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1988,7 +1987,7 @@ fn spec_date_time_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -1997,7 +1996,7 @@ fn spec_date_time_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2010,7 +2009,7 @@ fn spec_key_value_pair_6() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2019,7 +2018,7 @@ fn spec_key_value_pair_6() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2032,7 +2031,7 @@ fn spec_int_hex1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2041,7 +2040,7 @@ fn spec_int_hex1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2054,7 +2053,7 @@ fn spec_int_7() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2063,7 +2062,7 @@ fn spec_int_7() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2076,7 +2075,7 @@ fn qa_scalar_string_40kb() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2085,7 +2084,7 @@ fn qa_scalar_string_40kb() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2098,7 +2097,7 @@ fn spec_float_15() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2107,7 +2106,7 @@ fn spec_float_15() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2120,7 +2119,7 @@ fn spec_int_min() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2129,7 +2128,7 @@ fn spec_int_min() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2142,7 +2141,7 @@ fn spec_string_escape_7() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2151,7 +2150,7 @@ fn spec_string_escape_7() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2164,7 +2163,7 @@ fn spec_key_value_pair_9() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2173,7 +2172,7 @@ fn spec_key_value_pair_9() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2186,7 +2185,7 @@ fn spec_array_4() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2195,7 +2194,7 @@ fn spec_array_4() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2208,7 +2207,7 @@ fn spec_key_value_pair_4() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2217,7 +2216,7 @@ fn spec_key_value_pair_4() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2230,7 +2229,7 @@ fn spec_boolean_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2239,7 +2238,7 @@ fn spec_boolean_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2252,7 +2251,7 @@ fn spec_string_basic_multiline_6() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2261,7 +2260,7 @@ fn spec_string_basic_multiline_6() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2274,7 +2273,7 @@ fn spec_int_max() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2283,7 +2282,7 @@ fn spec_int_max() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2296,7 +2295,7 @@ fn spec_int_hex3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2305,7 +2304,7 @@ fn spec_int_hex3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2318,7 +2317,7 @@ fn spec_string_basic_multiline_4() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2327,7 +2326,7 @@ fn spec_string_basic_multiline_4() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2341,7 +2340,7 @@ fn spec_comment() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2350,7 +2349,7 @@ fn spec_comment() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2363,7 +2362,7 @@ fn spec_string_escape_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2372,7 +2371,7 @@ fn spec_string_escape_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2385,7 +2384,7 @@ fn spec_table_6() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2394,7 +2393,7 @@ fn spec_table_6() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2407,7 +2406,7 @@ fn spec_quoted_literal_keys_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2416,7 +2415,7 @@ fn spec_quoted_literal_keys_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2429,7 +2428,7 @@ fn spec_array_of_tables_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2438,7 +2437,7 @@ fn spec_array_of_tables_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2451,7 +2450,7 @@ fn spec_newline_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2460,7 +2459,7 @@ fn spec_newline_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2473,7 +2472,7 @@ fn spec_float_12() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2482,7 +2481,7 @@ fn spec_float_12() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2495,7 +2494,7 @@ fn spec_boolean_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2504,7 +2503,7 @@ fn spec_boolean_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2517,7 +2516,7 @@ fn spec_table() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2526,7 +2525,7 @@ fn spec_table() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2539,7 +2538,7 @@ fn spec_array_5() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2548,7 +2547,7 @@ fn spec_array_5() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2561,7 +2560,7 @@ fn spec_string_basic_multiline_5() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2570,7 +2569,7 @@ fn spec_string_basic_multiline_5() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2583,7 +2582,7 @@ fn spec_int_3b() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2592,7 +2591,7 @@ fn spec_int_3b() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2605,7 +2604,7 @@ fn spec_string_literal_multiline_4() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2614,7 +2613,7 @@ fn spec_string_literal_multiline_4() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2627,7 +2626,7 @@ fn spec_array_of_tables_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2636,7 +2635,7 @@ fn spec_array_of_tables_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2649,7 +2648,7 @@ fn spec_string_escape_6() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2658,7 +2657,7 @@ fn spec_string_escape_6() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2671,7 +2670,7 @@ fn spec_int_hex2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2680,7 +2679,7 @@ fn spec_int_hex2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2693,7 +2692,7 @@ fn spec_int_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2702,7 +2701,7 @@ fn spec_int_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2715,7 +2714,7 @@ fn spec_array_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2724,7 +2723,7 @@ fn spec_array_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2737,7 +2736,7 @@ fn spec_string_literal_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2746,7 +2745,7 @@ fn spec_string_literal_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2759,7 +2758,7 @@ fn spec_int_5() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2768,7 +2767,7 @@ fn spec_int_5() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2781,7 +2780,7 @@ fn spec_table_2() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2790,7 +2789,7 @@ fn spec_table_2() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2804,7 +2803,7 @@ fn spec_string_basic() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2813,7 +2812,7 @@ fn spec_string_basic() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2826,7 +2825,7 @@ fn spec_array_8() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2835,7 +2834,7 @@ fn spec_array_8() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2848,7 +2847,7 @@ fn spec_string_literal_multiline_3() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2857,7 +2856,7 @@ fn spec_string_literal_multiline_3() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2870,7 +2869,7 @@ fn spec_date_time_6() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2879,7 +2878,7 @@ fn spec_date_time_6() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2892,7 +2891,7 @@ fn spec_quoted_basic_keys_1() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2901,7 +2900,7 @@ fn spec_quoted_basic_keys_1() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2914,7 +2913,7 @@ fn spec_comment_mid_string() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2923,7 +2922,7 @@ fn spec_comment_mid_string() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2936,7 +2935,7 @@ fn qa_key_literal_40kb() {
         p.errors.is_empty(),
         "Parse errors:\n{}",
         p.errors
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );
@@ -2945,7 +2944,7 @@ fn qa_key_literal_40kb() {
         dom.errors().is_empty(),
         "Semantic errors:\n{}",
         dom.errors()
-            .into_iter()
+            .iter()
             .map(|e| { format!("{}\n", e) })
             .collect::<String>()
     );

@@ -100,7 +100,6 @@ pub async fn document_open(mut context: Context<World>, params: Params<DidOpenTe
         Document {
             parse,
             mapper,
-            text: p.text_document.text,
         },
     );
 
@@ -139,7 +138,6 @@ pub async fn document_change(
         Document {
             parse,
             mapper,
-            text: change.text,
         },
     );
 
@@ -159,7 +157,7 @@ pub async fn semantic_tokens(
     let doc = w
         .documents
         .get(&p.text_document.uri)
-        .ok_or(Error::invalid_params())?;
+        .ok_or_else(Error::invalid_params)?;
 
     Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
         result_id: None,
@@ -178,7 +176,7 @@ pub async fn folding_ranges(
     let doc = w
         .documents
         .get(&p.text_document.uri)
-        .ok_or(Error::invalid_params())?;
+        .ok_or_else(Error::invalid_params)?;
 
     Ok(Some(folding_ranges::create_folding_ranges(
         &doc.parse.clone().into_syntax(),
@@ -197,7 +195,7 @@ pub async fn document_symbols(
     let doc = w
         .documents
         .get(&p.text_document.uri)
-        .ok_or(Error::invalid_params())?;
+        .ok_or_else(Error::invalid_params)?;
 
     Ok(Some(DocumentSymbolResponse::Nested(
         document_symbols::create_symbols(&doc),
@@ -215,7 +213,7 @@ pub async fn format(
     let doc = w
         .documents
         .get(&p.text_document.uri)
-        .ok_or(Error::invalid_params())?;
+        .ok_or_else(Error::invalid_params)?;
 
     let mut format_opts = formatter::Options::default();
 

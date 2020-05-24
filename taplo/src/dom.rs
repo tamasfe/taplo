@@ -59,13 +59,13 @@ impl Cast for Node {
             | FLOAT
             | BOOL
             | DATE
-            | INLINE_TABLE => ValueNode::cdom_inner(element).map(|v| Node::Value(v)),
-            KEY => KeyNode::cast(element).map(|v| Node::Key(v)),
-            VALUE => ValueNode::cast(element).map(|v| Node::Value(v)),
-            TABLE_HEADER | TABLE_ARRAY_HEADER => TableNode::cast(element).map(|v| Node::Table(v)),
-            ENTRY => EntryNode::cast(element).map(|v| Node::Entry(v)),
-            ARRAY => ArrayNode::cast(element).map(|v| Node::Array(v)),
-            ROOT => RootNode::cast(element).map(|v| Node::Root(v)),
+            | INLINE_TABLE => ValueNode::cdom_inner(element).map(Node::Value),
+            KEY => KeyNode::cast(element).map(Node::Key),
+            VALUE => ValueNode::cast(element).map(Node::Value),
+            TABLE_HEADER | TABLE_ARRAY_HEADER => TableNode::cast(element).map(Node::Table),
+            ENTRY => EntryNode::cast(element).map(Node::Entry),
+            ARRAY => ArrayNode::cast(element).map(Node::Array),
+            ROOT => RootNode::cast(element).map(Node::Root),
             _ => None,
         }
     }
@@ -142,6 +142,8 @@ impl RootNode {
     }
 }
 
+// TODO(refactor)
+#[allow(clippy::cognitive_complexity)]
 impl Cast for RootNode {
     fn cast(syntax: SyntaxElement) -> Option<Self> {
         if syntax.kind() != ROOT {
@@ -329,6 +331,7 @@ impl Cast for RootNode {
             },
         );
 
+        #[allow(clippy::never_loop)]
         'outer: for (group_idx, group) in grouped_by_index.iter().enumerate() {
             for (i, (k, e)) in group.iter().enumerate() {
                 // Look for regular sub-tables before arrays of tables
@@ -426,9 +429,7 @@ impl Cast for TableNode {
                     .first_child()
                     .and_then(|e| KeyNode::cast(rowan::NodeOrToken::Node(e)));
 
-                if key.is_none() {
-                    return None;
-                }
+                key.as_ref()?;
 
                 Some(Self {
                     entries: Entries::default(),
@@ -443,7 +444,7 @@ impl Cast for TableNode {
                     .as_node()
                     .unwrap()
                     .children_with_tokens()
-                    .filter_map(|c| Cast::cast(c))
+                    .filter_map(Cast::cast)
                     .collect(),
                 array: false,
                 pseudo: false,
@@ -464,12 +465,12 @@ impl Entries {
         self.0.len()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &EntryNode> {
-        self.0.iter()
+    pub fn is_empty(&self) -> bool {
+        self.0.len() == 0
     }
 
-    pub fn into_iter(self) -> impl Iterator<Item = EntryNode> {
-        self.0.into_iter()
+    pub fn iter(&self) -> impl Iterator<Item = &EntryNode> {
+        self.0.iter()
     }
 
     fn from_map(map: IndexMap<KeyNode, EntryNode>) -> Self {
@@ -617,7 +618,7 @@ impl Entries {
                     }
 
                     let mut to_insert = new_entry.clone();
-                    to_insert.key = new_key.clone().without_prefix(&old_key);
+                    to_insert.key = new_key.without_prefix(&old_key);
                     t.entries.0.push(to_insert);
 
                     // FIXME(recursion)
@@ -646,7 +647,7 @@ impl Entries {
                                 match old_arr.items.last_mut().unwrap() {
                                     ValueNode::Table(arr_t) => {
                                         let mut to_insert = new_entry.clone();
-                                        to_insert.key = new_key.clone().without_prefix(&old_key);
+                                        to_insert.key = new_key.without_prefix(&old_key);
 
                                         arr_t.entries.0.push(to_insert);
 
@@ -664,7 +665,7 @@ impl Entries {
                             match old_arr.items.last_mut().unwrap() {
                                 ValueNode::Table(arr_t) => {
                                     let mut to_insert = new_entry.clone();
-                                    to_insert.key = new_key.clone().without_prefix(&old_key);
+                                    to_insert.key = new_key.without_prefix(&old_key);
 
                                     arr_t.entries.0.push(to_insert);
 
@@ -730,6 +731,14 @@ impl Entries {
     }
 }
 
+impl IntoIterator for Entries {
+    type Item = EntryNode;
+    type IntoIter = std::vec::IntoIter<EntryNode>;
+    fn into_iter(self) -> std::vec::IntoIter<EntryNode> {
+        self.0.into_iter()
+    }
+}
+
 impl FromIterator<EntryNode> for Entries {
     fn from_iter<T: IntoIterator<Item = EntryNode>>(iter: T) -> Self {
         let i = iter.into_iter();
@@ -776,7 +785,7 @@ impl Cast for ArrayNode {
                     .as_node()
                     .unwrap()
                     .descendants_with_tokens()
-                    .filter_map(|c| Cast::cast(c))
+                    .filter_map(Cast::cast)
                     .collect(),
                 tables: false,
                 syntax: syntax.into_node().unwrap(),
@@ -857,21 +866,17 @@ impl Cast for EntryNode {
                 .first_child_or_token()
                 .and_then(Cast::cast);
 
-            if key.is_none() {
-                return None;
-            }
+            key.as_ref()?;
 
             let val = element
                 .as_node()
                 .unwrap()
                 .first_child()
                 .and_then(|k| k.next_sibling())
-                .map(|n| rowan::NodeOrToken::Node(n))
+                .map(rowan::NodeOrToken::Node)
                 .and_then(Cast::cast);
 
-            if val.is_none() {
-                return None;
-            }
+            val.as_ref()?;
 
             Some(Self {
                 key: key.unwrap(),
@@ -909,7 +914,6 @@ impl KeyNode {
     /// Parts of a dotted key
     pub fn keys(&self) -> Vec<String> {
         self.keys_str()
-            .into_iter()
             .map(ToString::to_string)
             .collect()
     }
@@ -918,15 +922,8 @@ impl KeyNode {
         self.idents.iter().map(|t| {
             let mut s = t.text().as_str();
 
-            // We have to check in case a quote
-            // is in a string literal, we would otherwise
-            // remove both.
-            if s.starts_with("\"") {
-                s = s.trim_start_matches("\"").trim_end_matches("\"");
-            }
-
-            if s.starts_with("'") {
-                s = s.trim_start_matches("'").trim_end_matches("'");
+            if s.starts_with('\"') || s.starts_with('\'') {
+                s = &s[1..s.len()];
             }
 
             s
@@ -1098,7 +1095,7 @@ impl Cast for KeyNode {
                                 }
                             })
                             .collect();
-                        if i.len() == 0 {
+                        if i.is_empty() {
                             return None;
                         }
                         i
@@ -1136,17 +1133,17 @@ impl Default for ValueNode {
 impl ValueNode {
     fn cdom_inner(element: SyntaxElement) -> Option<Self> {
         match element.kind() {
-            INLINE_TABLE => Cast::cast(element).map(|v| ValueNode::Table(v)),
-            ARRAY => Cast::cast(element).map(|v| ValueNode::Array(v)),
-            BOOL => Cast::cast(element).map(|v| ValueNode::Bool(v)),
+            INLINE_TABLE => Cast::cast(element).map(ValueNode::Table),
+            ARRAY => Cast::cast(element).map(ValueNode::Array),
+            BOOL => Cast::cast(element).map(ValueNode::Bool),
             STRING | STRING_LITERAL | MULTI_LINE_STRING | MULTI_LINE_STRING_LITERAL => {
-                Cast::cast(element).map(|v| ValueNode::String(v))
+                Cast::cast(element).map(ValueNode::String)
             }
             INTEGER | INTEGER_BIN | INTEGER_HEX | INTEGER_OCT => {
-                Cast::cast(element).map(|v| ValueNode::Integer(v))
+                Cast::cast(element).map(ValueNode::Integer)
             }
-            FLOAT => Cast::cast(element).map(|v| ValueNode::Float(v)),
-            DATE => Cast::cast(element).map(|v| ValueNode::Date(v)),
+            FLOAT => Cast::cast(element).map(ValueNode::Float),
+            DATE => Cast::cast(element).map(ValueNode::Date),
             _ => None,
         }
     }
@@ -1199,17 +1196,17 @@ impl Cast for ValueNode {
             .into_node()
             .and_then(|n| n.first_child_or_token())
             .and_then(|c| match c.kind() {
-                INLINE_TABLE => Cast::cast(c).map(|v| ValueNode::Table(v)),
-                ARRAY => Cast::cast(c).map(|v| ValueNode::Array(v)),
-                BOOL => Cast::cast(c).map(|v| ValueNode::Bool(v)),
+                INLINE_TABLE => Cast::cast(c).map(ValueNode::Table),
+                ARRAY => Cast::cast(c).map(ValueNode::Array),
+                BOOL => Cast::cast(c).map(ValueNode::Bool),
                 STRING | STRING_LITERAL | MULTI_LINE_STRING | MULTI_LINE_STRING_LITERAL => {
-                    Cast::cast(c).map(|v| ValueNode::String(v))
+                    Cast::cast(c).map(ValueNode::String)
                 }
                 INTEGER | INTEGER_BIN | INTEGER_HEX | INTEGER_OCT => {
-                    Cast::cast(c).map(|v| ValueNode::Integer(v))
+                    Cast::cast(c).map(ValueNode::Integer)
                 }
-                FLOAT => Cast::cast(c).map(|v| ValueNode::Float(v)),
-                DATE => Cast::cast(c).map(|v| ValueNode::Date(v)),
+                FLOAT => Cast::cast(c).map(ValueNode::Float),
+                DATE => Cast::cast(c).map(ValueNode::Date),
                 _ => None,
             })
     }

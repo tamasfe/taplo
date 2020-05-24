@@ -171,7 +171,7 @@ fn symbols_for_entry(
             children: None,
         }),
         ValueNode::Table(t) => {
-            let range = if t.entries().len() == 0 {
+            let range = if t.entries().is_empty() {
                 mapper.range(entry.key().text_range()).unwrap()
             } else {
                 mapper

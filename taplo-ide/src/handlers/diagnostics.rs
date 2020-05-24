@@ -5,17 +5,17 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
     let mut diag: Vec<Diagnostic> = parse
         .errors
         .iter()
-        .filter_map(|e| {
+        .map(|e| {
             let range = mapper.range(e.range).unwrap();
-            Some(Diagnostic {
+            Diagnostic {
                 range,
                 severity: Some(DiagnosticSeverity::Error),
                 code: None,
                 source: Some("Even Better TOML".into()),
-                message: e.message.clone().into(),
+                message: e.message.clone(),
                 related_information: None,
                 tags: None,
-            })
+            }
         })
         .collect();
 
@@ -86,13 +86,13 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
                     source: Some("Even Better TOML".into()),
-                    message: format!(r#"array conflicts with array of tables"#),
+                    message: "array conflicts with array of tables".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
                             range: second_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"array of tables declaration"#),
+                        message: "array of tables declaration".to_string(),
                     }]),
                     tags: None,
                 });
@@ -102,13 +102,13 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
                     source: Some("Even Better TOML".into()),
-                    message: format!(r#"array conflicts with array of tables"#),
+                    message: "array conflicts with array of tables".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
                             range: target_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"array declaration"#),
+                        message: "array declaration".to_string(),
                     }]),
                     tags: None,
                 });
@@ -122,7 +122,7 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
                     source: Some("Even Better TOML".into()),
-                    message: format!(r#"inline table cannot be modified"#),
+                    message: "inline table cannot be modified".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
                             range: second_range,
@@ -138,7 +138,7 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
                     source: Some("Even Better TOML".into()),
-                    message: format!(r#"inline table cannot be modified"#),
+                    message: "inline table cannot be modified".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
                             range: target_range,

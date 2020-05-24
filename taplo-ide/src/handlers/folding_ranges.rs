@@ -37,7 +37,9 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                                 start_character: None,
                                 end_line: mapper
                                     .position(
-                                        e.end().checked_sub(TextSize::from(1)).unwrap_or(e.end()),
+                                        e.end()
+                                            .checked_sub(TextSize::from(1))
+                                            .unwrap_or_else(|| e.end()),
                                     )
                                     .unwrap()
                                     .line,
@@ -66,23 +68,19 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                 match element {
                     SyntaxElement::Node(n) => {
                         for d in n.descendants() {
-                            match d.kind() {
-                                ARRAY => {
-                                    if d.descendants_with_tokens().any(|t| t.kind() == NEWLINE) {
-                                        let start =
-                                            mapper.position(d.text_range().start()).unwrap();
-                                        let end = mapper.position(d.text_range().end()).unwrap();
+                            if let ARRAY = d.kind() {
+                                if d.descendants_with_tokens().any(|t| t.kind() == NEWLINE) {
+                                    let start = mapper.position(d.text_range().start()).unwrap();
+                                    let end = mapper.position(d.text_range().end()).unwrap();
 
-                                        folding_ranges.push(FoldingRange {
-                                            start_line: start.line,
-                                            start_character: Some(start.character),
-                                            end_line: end.line,
-                                            end_character: Some(end.character),
-                                            kind: Some(FoldingRangeKind::Region),
-                                        });
-                                    }
+                                    folding_ranges.push(FoldingRange {
+                                        start_line: start.line,
+                                        start_character: Some(start.character),
+                                        end_line: end.line,
+                                        end_character: Some(end.character),
+                                        kind: Some(FoldingRangeKind::Region),
+                                    });
                                 }
-                                _ => {}
                             }
                         }
                     }
@@ -95,7 +93,7 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                             is_comment = true;
                         }
                         NEWLINE => {
-                            if was_comment && t.text().matches("\n").count() == 1 {
+                            if was_comment && t.text().matches('\n').count() == 1 {
                                 // Ignore a single newline when counting comments
                                 is_comment = true;
                             }
@@ -130,7 +128,11 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                 start_line: mapper.position(h.start()).unwrap().line,
                 start_character: None,
                 end_line: mapper
-                    .position(e.end().checked_sub(TextSize::from(1)).unwrap_or(e.end()))
+                    .position(
+                        e.end()
+                            .checked_sub(TextSize::from(1))
+                            .unwrap_or_else(|| e.end()),
+                    )
                     .unwrap()
                     .line,
                 end_character: None,

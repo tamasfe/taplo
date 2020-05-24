@@ -141,7 +141,7 @@ impl Mapper {
 
     pub fn split_lines(&self, range: Range) -> Vec<Range> {
         if range.start.line == range.end.line {
-            return vec![range.clone()];
+            return vec![range];
         }
 
         let mut lines = Vec::with_capacity((range.end.line - range.start.line) as usize);

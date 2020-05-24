@@ -206,7 +206,7 @@ impl<'p> Parser<'p> {
 
                     not_newline = true;
 
-                    if self.lexer.remainder().starts_with("[") {
+                    if self.lexer.remainder().starts_with('[') {
                         self.with_node(TABLE_ARRAY_HEADER, Self::parse_table_array_header)
                     } else {
                         self.with_node(TABLE_HEADER, Self::parse_table_header)
@@ -252,7 +252,7 @@ impl<'p> Parser<'p> {
     fn parse_entry(&mut self) -> ParserResult<()> {
         self.with_node(KEY, Self::parse_key)?;
         self.must_token_or(EQ, r#"expected "=""#)?;
-        if let Err(_) = self.with_node(VALUE, Self::parse_value) {
+        if self.with_node(VALUE, Self::parse_value).is_err() {
             self.error("expected value")?;
         }
 
@@ -260,7 +260,7 @@ impl<'p> Parser<'p> {
     }
 
     fn parse_key(&mut self) -> ParserResult<()> {
-        if let Err(_) = self.parse_ident() {
+        if self.parse_ident().is_err() {
             return self.error("expected identifier");
         }
 
@@ -307,7 +307,7 @@ impl<'p> Parser<'p> {
         match t {
             IDENT => self.token(),
             INTEGER => {
-                if self.lexer.slice().starts_with("+") {
+                if self.lexer.slice().starts_with('+') {
                     Err(())
                 } else {
                     self.token_as(IDENT)
@@ -368,10 +368,10 @@ impl<'p> Parser<'p> {
                 }
             }
             FLOAT => {
-                if self.lexer.slice().starts_with("+") {
+                if self.lexer.slice().starts_with('+') {
                     Err(())
                 } else {
-                    for (i, s) in self.lexer.slice().split(".").enumerate() {
+                    for (i, s) in self.lexer.slice().split('.').enumerate() {
                         if i != 0 {
                             self.insert_token(PERIOD, ".".into());
                         }
@@ -499,7 +499,7 @@ impl<'p> Parser<'p> {
             }
             INTEGER => {
                 // This could've been done more elegantly probably.
-                if (self.lexer.slice().starts_with("0") && self.lexer.slice() != "0")
+                if (self.lexer.slice().starts_with('0') && self.lexer.slice() != "0")
                     || (self.lexer.slice().starts_with("+0") && self.lexer.slice() != "+0")
                     || (self.lexer.slice().starts_with("-0") && self.lexer.slice() != "-0")
                 {
@@ -519,7 +519,7 @@ impl<'p> Parser<'p> {
 
         let mut first = true;
         let mut comma_last = false;
-        Ok(loop {
+        loop {
             let t = self.get_token()?;
 
             match t {
@@ -547,7 +547,8 @@ impl<'p> Parser<'p> {
             }
 
             first = false;
-        })
+        }
+        Ok(())
     }
 
     fn parse_array(&mut self) -> ParserResult<()> {
@@ -555,7 +556,7 @@ impl<'p> Parser<'p> {
 
         let mut first = true;
         let mut comma_last = false;
-        Ok(loop {
+        loop {
             let t = self.get_token()?;
 
             match t {
@@ -581,7 +582,8 @@ impl<'p> Parser<'p> {
             }
 
             first = false;
-        })
+        }
+        Ok(())
     }
 }
 

@@ -44,7 +44,6 @@ mod utils;
 
 struct Document {
     parse: Parse,
-    text: String,
     mapper: Mapper,
 }
 

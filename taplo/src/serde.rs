@@ -109,7 +109,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
     where
         E: serde::de::Error,
     {
-        Ok(Value::Integer(v.into()))
+        Ok(Value::Integer(v))
     }
 
     fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
@@ -172,7 +172,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
     where
         E: serde::de::Error,
     {
-        Ok(Value::String(v.to_string()))
+        Ok(Value::String(v))
     }
 
     fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>

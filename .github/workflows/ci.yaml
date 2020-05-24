@@ -82,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#release-lib-})"
+        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-lib-})"
       - name: Set release version in Cargo.toml
         run: |
           awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo/Cargo.toml > cargo_tmp
@@ -112,7 +112,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#release-vscode-})"
+        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-vscode-})"
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:

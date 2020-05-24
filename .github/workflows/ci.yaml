@@ -2,24 +2,29 @@ on:
   push:
     branches:
       - master
+    tags:
+      - release-lib-*
+      - release-vscode-*
   pull_request:
     branches:
       - master
 
 name: Continuous integration
 
-jobs: 
+jobs:
   test_gen:
     name: TOML Test Generation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-      - uses: actions-rs/cargo@v1
+      - name: Run test generator
+        uses: actions-rs/cargo@v1
         with:
           command: run
           args: --manifest-path=test-gen/Cargo.toml -- -i test-data -o taplo/src/tests/
@@ -35,10 +40,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v1
+      - name: Download generated tests
+        uses: actions/download-artifact@v1
         with:
           name: generated_tests
-      - uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
@@ -52,13 +59,77 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-      - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
+      - name: Install Clippy
+        run: rustup component add clippy
+      - name: Run Clippy
+        uses: actions-rs/cargo@v1
         with:
           command: clippy
           args: -- -D warnings
+
+  # Run on tags like "release-lib-1.0.0-alpha.1"
+  publish_taplo_crate:
+    name: Publish Taplo Crate
+    needs: test
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-lib-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Retrieve release version
+        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#release-lib-})"
+      - name: Set release version in Cargo.toml
+        run: |
+          sed -i '0,/version\s*=.*/{s/version\s*=.*/version="'${RELEASE_VERSION}'"/}' taplo/Cargo.toml
+      - name: Copy Readme
+        run: yes | cp README.md taplo/
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Publish to Crates.io
+        uses: actions-rs/cargo@v1
+        with:
+          command: publish
+          args: --manifest-path=taplo/Cargo.toml --token $CRATES_IO_TOKEN
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  # Run on tags like "release-vscode-1.0.0-alpha.1"
+  publish_vscode_ext:
+    name: Publish VSCode Extension
+    needs: test
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-vscode-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Retrieve release version
+        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#release-vscode-})"
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Install WASM Pack
+        uses: jetli/wasm-pack-action@v0.3.0
+      - name: Build WASM LSP
+        run: wasm-pack build --target nodejs
+        working-directory: taplo-ide
+      - name: Extension NPM Install
+        run: npm i
+        working-directory: taplo-ide/vscode
+      - name: Install vsce
+        run: npm install -g vsce
+      - name: Publish Extension
+        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/taplo-ide/vscode/images -p $VSCE_TOKEN $RELEASE_VERSION
+        working-directory: taplo-ide/vscode
+        env:
+          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}

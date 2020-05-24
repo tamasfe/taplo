@@ -85,7 +85,8 @@ jobs:
         run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#release-lib-})"
       - name: Set release version in Cargo.toml
         run: |
-          sed -i '0,/version\s*=.*/{s/version\s*=.*/version="'${RELEASE_VERSION}'"/}' taplo/Cargo.toml
+          awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo/Cargo.toml > cargo_tmp
+          mv cargo_tmp taplo/Cargo.toml
       - name: Copy Readme
         run: yes | cp README.md taplo/
       - name: Install Rust toolchain

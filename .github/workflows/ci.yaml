@@ -1,8 +1,14 @@
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 name: Continuous integration
 
-jobs:
+jobs: 
   test_gen:
     name: TOML Test Generation
     runs-on: ubuntu-latest

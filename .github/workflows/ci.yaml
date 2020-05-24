@@ -1,0 +1,58 @@
+on: [push, pull_request]
+
+name: Continuous integration
+
+jobs:
+  test_gen:
+    name: TOML Test Generation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: --manifest-path=test-gen/Cargo.toml -- -i test-data -o taplo/src/tests/
+      - name: Upload generated tests
+        uses: actions/upload-artifact@v1
+        with:
+          name: generated_tests
+          path: taplo/src/tests/generated
+
+  test:
+    name: Cargo Test
+    needs: test_gen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v1
+        with:
+          name: generated_tests
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add clippy
+      - uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings

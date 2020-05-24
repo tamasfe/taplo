@@ -98,7 +98,7 @@ impl<T: Serialize + DeserializeOwned> Request<T> {
 }
 
 impl Request<serde_json::Value> {
-    pub fn as_params<P: DeserializeOwned>(self) -> Result<Request<P>, serde_json::Error> {
+    pub fn into_params<P: DeserializeOwned>(self) -> Result<Request<P>, serde_json::Error> {
         match self.params {
             None => Ok(Request {
                 id: self.id,
@@ -172,7 +172,7 @@ impl<R: Serialize + DeserializeOwned> Response<R> {
 }
 
 impl Response<serde_json::Value> {
-    pub fn as_params<P: DeserializeOwned>(self) -> Response<P> {
+    pub fn into_params<P: DeserializeOwned>(self) -> Response<P> {
         Response {
             jsonrpc: self.jsonrpc,
             id: self.id,

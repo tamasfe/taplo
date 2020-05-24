@@ -218,7 +218,7 @@ impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
             let res = recv.await.unwrap();
             self.last_req_id = None;
 
-            return Ok(res.as_params());
+            return Ok(res.into_params());
         }
 
         Err(io::Error::new(io::ErrorKind::Other, "not supported"))
@@ -285,6 +285,7 @@ pub struct Server<W: Clone + Send + Sync> {
 }
 
 impl<W: Clone + Send + Sync> Server<W> {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> ServerBuilder<W> {
         ServerBuilder {
             inner: Inner {
@@ -357,11 +358,11 @@ impl<W: Clone + Send + Sync> Server<W> {
                     return;
                 }
 
-                if &request.method == req::Shutdown::METHOD {
+                if request.method == req::Shutdown::METHOD {
                     s.shutting_down = true;
                 }
 
-                let is_initialize = &request.method == req::Initialize::METHOD;
+                let is_initialize = request.method == req::Initialize::METHOD;
 
                 if !s.initialized && !is_initialize {
                     response_writer
@@ -403,11 +404,8 @@ impl<W: Clone + Send + Sync> Server<W> {
             } else {
                 if request.method == lsp_types::notification::Cancel::METHOD {
                     if let Some(p) = request.params {
-                        match serde_json::from_value::<lsp_types::CancelParams>(p) {
-                            Ok(c) => {
-                                inner.lock().await.task_done(&c.id);
-                            }
-                            Err(_) => {}
+                        if let Ok(c) = serde_json::from_value::<lsp_types::CancelParams>(p) {
+                            inner.lock().await.task_done(&c.id);
                         }
                     }
                     return;
@@ -524,7 +522,7 @@ where
 {
     fn clone(&self) -> Self {
         Self {
-            f: self.f.clone(),
+            f: self.f,
             t: Default::default(),
         }
     }
@@ -562,7 +560,7 @@ where
         message: rpc::Request<serde_json::Value>,
         writer: Option<&mut ResponseWriterBuffer>,
     ) {
-        let req = match message.as_params::<R::Params>() {
+        let req = match message.into_params::<R::Params>() {
             Ok(r) => r,
             Err(e) => {
                 if let Some(w) = writer {
@@ -627,7 +625,7 @@ where
 {
     fn clone(&self) -> Self {
         Self {
-            f: self.f.clone(),
+            f: self.f,
             t: Default::default(),
         }
     }
@@ -651,7 +649,7 @@ where
         message: rpc::Request<serde_json::Value>,
         _writer: Option<&mut ResponseWriterBuffer>,
     ) {
-        let req = match message.as_params::<N::Params>() {
+        let req = match message.into_params::<N::Params>() {
             Ok(r) => r,
             Err(_) => return,
         };

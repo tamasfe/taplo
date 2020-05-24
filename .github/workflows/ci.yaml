@@ -99,7 +99,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: publish
-          args: --manifest-path=taplo/Cargo.toml --token $CRATES_IO_TOKEN
+          args: --manifest-path=taplo/Cargo.toml --allow-dirty --token $CRATES_IO_TOKEN
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 

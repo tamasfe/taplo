@@ -140,6 +140,16 @@ impl RootNode {
     pub fn errors(&self) -> &[Error] {
         &self.errors
     }
+
+    pub fn text_range(&self) -> TextRange {
+        let mut range = self.syntax.text_range();
+
+        if let Some(r) = self.entries().text_range() {
+            range = range.cover(r)
+        }
+
+        range
+    }
 }
 
 // TODO(refactor)
@@ -417,6 +427,16 @@ impl TableNode {
     pub fn is_pseudo(&self) -> bool {
         self.pseudo
     }
+
+    pub fn text_range(&self) -> TextRange {
+        let mut range = self.syntax.text_range();
+
+        if let Some(r) = self.entries().text_range() {
+            range = range.cover(r)
+        }
+
+        range
+    }
 }
 
 impl Cast for TableNode {
@@ -471,6 +491,17 @@ impl Entries {
 
     pub fn iter(&self) -> impl Iterator<Item = &EntryNode> {
         self.0.iter()
+    }
+
+    pub fn text_range(&self) -> Option<TextRange> {
+        let mut range = None;
+        for e in &self.0 {
+            match &mut range {
+                None => range = Some(e.key().text_range()),
+                Some(r) => *r = r.cover(e.value().text_range()),
+            }
+        }
+        range
     }
 
     fn from_map(map: IndexMap<KeyNode, EntryNode>) -> Self {
@@ -774,6 +805,16 @@ impl ArrayNode {
     pub fn into_items(self) -> Vec<ValueNode> {
         self.items
     }
+
+    pub fn text_range(&self) -> TextRange {
+        let mut range = self.syntax.text_range();
+
+        for item in &self.items {
+            range = range.cover(item.text_range())
+        }
+
+        range
+    }
 }
 
 impl Cast for ArrayNode {
@@ -853,6 +894,10 @@ impl EntryNode {
             self.key = new_key;
         }
     }
+
+    pub fn text_range(&self) -> TextRange {
+        self.key().text_range().cover(self.value.text_range())
+    }
 }
 
 impl Cast for EntryNode {
@@ -913,9 +958,7 @@ impl KeyNode {
 
     /// Parts of a dotted key
     pub fn keys(&self) -> Vec<String> {
-        self.keys_str()
-            .map(ToString::to_string)
-            .collect()
+        self.keys_str().map(ToString::to_string).collect()
     }
 
     pub fn keys_str(&self) -> impl Iterator<Item = &str> {
@@ -1230,6 +1273,10 @@ impl IntegerNode {
     pub fn repr(&self) -> IntegerRepr {
         self.repr
     }
+
+    pub fn text_range(&self) -> TextRange {
+        self.syntax.text_range()
+    }
 }
 
 impl Cast for IntegerNode {
@@ -1284,6 +1331,10 @@ impl StringNode {
 
     pub fn into_content(self) -> String {
         self.content
+    }
+
+    pub fn text_range(&self) -> TextRange {
+        self.syntax.text_range()
     }
 }
 

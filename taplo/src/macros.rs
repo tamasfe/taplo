@@ -60,10 +60,6 @@ macro_rules! dom_common {
     ($($ast:ident),*) => {
         $(
             impl $ast {
-                pub fn text_range(&self) -> TextRange {
-                    self.syntax.text_range()
-                }
-
                 pub fn kind(&self) -> SyntaxKind {
                     self.syntax.kind()
                 }

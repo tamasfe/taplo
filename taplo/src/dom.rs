@@ -825,7 +825,7 @@ impl Cast for ArrayNode {
                 items: syntax
                     .as_node()
                     .unwrap()
-                    .descendants_with_tokens()
+                    .children_with_tokens()
                     .filter_map(Cast::cast)
                     .collect(),
                 tables: false,

@@ -96,10 +96,8 @@ jobs:
           toolchain: stable
           override: true
       - name: Publish to Crates.io
-        uses: actions-rs/cargo@v1
-        with:
-          command: publish
-          args: --manifest-path=taplo/Cargo.toml --allow-dirty --token $CRATES_IO_TOKEN
+        run: cargo publish --allow-dirty --token $CRATES_IO_TOKEN
+        working-directory: taplo
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 

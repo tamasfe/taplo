@@ -49,7 +49,16 @@ export function register(
             return;
           }
 
-          await clipboardy.write(res.text!);
+          try {
+            await clipboardy.write(res.text!);
+          } catch (e) {
+            getOutput().appendLine(e);
+            await vscode.window.showErrorMessage(
+              "Copy failed! (Details under the output tab)"
+            );
+            return;
+          }
+
           await vscode.window.showInformationMessage("JSON has been copied!");
         }
       )

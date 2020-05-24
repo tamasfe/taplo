@@ -10,7 +10,7 @@ export function getOutput(): vscode.OutputChannel {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  let p = context.asAbsolutePath(path.join("out", "server.js"));
+  let p = context.asAbsolutePath(path.join("dist", "server.js"));
 
   let serverOpts: client.ServerOptions = {
     run: { module: p, transport: client.TransportKind.ipc },

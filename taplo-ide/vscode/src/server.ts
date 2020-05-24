@@ -1,3 +1,10 @@
+// Wrapper over the WASM module.
+//
+// Proxies all messages between the IPC
+// channel and the WASM module.
+//
+// And provides some utilities.
+
 import * as taplo from "taplo";
 
 (global as any).sendMessage = (msg: any) => {

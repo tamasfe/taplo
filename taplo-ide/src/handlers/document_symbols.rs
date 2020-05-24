@@ -4,7 +4,7 @@ use lsp_types::DocumentSymbol;
 use lsp_types::SymbolKind;
 
 use taplo::{
-    dom::{EntryNode, ValueNode},
+    dom::{KeyNode, ValueNode},
     util::coords::Mapper,
 };
 
@@ -13,203 +13,157 @@ pub(crate) fn create_symbols(doc: &Document) -> Vec<DocumentSymbol> {
     let mut symbols: Vec<DocumentSymbol> = Vec::new();
 
     for entry in doc.parse.clone().into_dom().entries().iter() {
-        symbols.extend(symbols_for_entry(entry, mapper, None).into_iter());
+        symbols_for_value(
+            KeyOrString::Key(entry.key()),
+            entry.value(),
+            mapper,
+            &mut symbols,
+        );
     }
 
     symbols
 }
 
-fn symbols_for_entry(
-    entry: &EntryNode,
+enum KeyOrString<'a> {
+    Key(&'a KeyNode),
+    String(String),
+}
+
+fn symbols_for_value(
+    key: KeyOrString,
+    value: &ValueNode,
     mapper: &Mapper,
-    prefix: Option<String>,
-) -> Vec<DocumentSymbol> {
-    let mut p = prefix.clone().unwrap_or_default();
-    if !p.is_empty() {
-        p += "."
-    }
+    symbols: &mut Vec<DocumentSymbol>,
+) {
+    let range = mapper
+        .range(match &key {
+            KeyOrString::Key(k) => k.text_range().clone().cover(value.text_range()),
+            KeyOrString::String(_) => value.text_range().clone(),
+        })
+        .unwrap();
 
-    let mut symbols = Vec::new();
+    let selection_range = mapper
+        .range(match &key {
+            KeyOrString::Key(k) => k.text_range(),
+            KeyOrString::String(_) => value.text_range(),
+        })
+        .unwrap();
 
-    match entry.value() {
+    let name = match key {
+        KeyOrString::Key(k) => k
+            .keys()
+            .last()
+            .cloned()
+            .map(ensure_non_empty_key)
+            .unwrap_or_else(|| String::from("{error}")),
+        KeyOrString::String(s) => s,
+    };
+
+    match value {
         ValueNode::Bool(_) => symbols.push(DocumentSymbol {
-            name: p + &entry
-                .key()
-                .keys()
-                .into_iter()
-                .map(ensure_non_empty_key)
-                .last()
-                .unwrap(),
+            name,
             kind: SymbolKind::Boolean,
-            range: mapper
-                .range(
-                    entry
-                        .key()
-                        .text_range()
-                        .clone()
-                        .cover(entry.value().text_range()),
-                )
-                .unwrap(),
-            selection_range: mapper.range(entry.key().text_range()).unwrap(),
+            range,
+            selection_range,
             detail: None,
             deprecated: None,
             children: None,
         }),
         ValueNode::String(_) => symbols.push(DocumentSymbol {
-            name: p + &entry
-                .key()
-                .keys()
-                .into_iter()
-                .map(ensure_non_empty_key)
-                .last()
-                .unwrap(),
+            name,
             kind: SymbolKind::String,
-            range: mapper
-                .range(
-                    entry
-                        .key()
-                        .text_range()
-                        .clone()
-                        .cover(entry.value().text_range()),
-                )
-                .unwrap(),
-            selection_range: mapper.range(entry.key().text_range()).unwrap(),
+            range,
+            selection_range,
             detail: None,
             deprecated: None,
             children: None,
         }),
         ValueNode::Integer(_) => symbols.push(DocumentSymbol {
-            name: p + &entry
-                .key()
-                .keys()
-                .into_iter()
-                .map(ensure_non_empty_key)
-                .last()
-                .unwrap(),
+            name,
             kind: SymbolKind::Number,
-            range: mapper
-                .range(
-                    entry
-                        .key()
-                        .text_range()
-                        .clone()
-                        .cover(entry.value().text_range()),
-                )
-                .unwrap(),
-            selection_range: mapper.range(entry.key().text_range()).unwrap(),
+            range,
+            selection_range,
             detail: None,
             deprecated: None,
             children: None,
         }),
         ValueNode::Float(_) => symbols.push(DocumentSymbol {
-            name: p + &entry
-                .key()
-                .keys()
-                .into_iter()
-                .map(ensure_non_empty_key)
-                .last()
-                .unwrap(),
+            name,
             kind: SymbolKind::Number,
-            range: mapper
-                .range(
-                    entry
-                        .key()
-                        .text_range()
-                        .clone()
-                        .cover(entry.value().text_range()),
-                )
-                .unwrap(),
-            selection_range: mapper.range(entry.key().text_range()).unwrap(),
+            range,
+            selection_range,
             detail: None,
             deprecated: None,
             children: None,
         }),
         ValueNode::Date(_) => symbols.push(DocumentSymbol {
-            name: p + &entry
-                .key()
-                .keys()
-                .into_iter()
-                .map(ensure_non_empty_key)
-                .last()
-                .unwrap(),
+            name,
             kind: SymbolKind::Field,
-            range: mapper
-                .range(
-                    entry
-                        .key()
-                        .text_range()
-                        .clone()
-                        .cover(entry.value().text_range()),
-                )
-                .unwrap(),
-            selection_range: mapper.range(entry.key().text_range()).unwrap(),
+            range,
+            selection_range,
             detail: None,
             deprecated: None,
             children: None,
         }),
-        ValueNode::Array(_) => symbols.push(DocumentSymbol {
-            name: p + &entry
-                .key()
-                .keys()
-                .into_iter()
-                .map(ensure_non_empty_key)
-                .last()
-                .unwrap(),
+        ValueNode::Array(arr) => symbols.push(DocumentSymbol {
+            name,
             kind: SymbolKind::Array,
-            range: mapper
-                .range(
-                    entry
-                        .key()
-                        .text_range()
-                        .clone()
-                        .cover(entry.value().text_range()),
-                )
-                .unwrap(),
-            selection_range: mapper.range(entry.key().text_range()).unwrap(),
+            range,
+            selection_range,
             detail: None,
             deprecated: None,
-            children: None,
+            children: {
+                let mut child_symbols = Vec::with_capacity(arr.items().len());
+
+                for (i, c) in arr.items().iter().enumerate() {
+                    symbols_for_value(
+                        KeyOrString::String(i.to_string()),
+                        c,
+                        mapper,
+                        &mut child_symbols,
+                    );
+                }
+
+                Some(child_symbols)
+            },
         }),
         ValueNode::Table(t) => {
-            let range = if t.entries().is_empty() {
-                mapper.range(entry.key().text_range()).unwrap()
-            } else {
-                mapper
-                    .range(
-                        entry
-                            .key()
-                            .text_range()
-                            .cover(t.entries().iter().last().unwrap().text_range()),
-                    )
-                    .unwrap()
-            };
-
-            let mut child_symbols = Vec::new();
+            let mut child_symbols = Vec::with_capacity(t.entries().len());
 
             for c in t.entries().iter() {
-                child_symbols.extend(symbols_for_entry(c, mapper, prefix.clone()).into_iter());
+                symbols_for_value(
+                    KeyOrString::Key(c.key()),
+                    c.value(),
+                    mapper,
+                    &mut child_symbols,
+                );
             }
 
             symbols.push(DocumentSymbol {
-                name: p + &entry
-                    .key()
-                    .keys()
-                    .into_iter()
-                    .map(ensure_non_empty_key)
-                    .last()
-                    .unwrap(),
+                name,
                 kind: SymbolKind::Object,
                 range,
-                selection_range: mapper.range(entry.key().text_range()).unwrap(),
+                selection_range,
                 detail: None,
                 deprecated: None,
-                children: Some(child_symbols),
+                children: {
+                    let mut child_symbols = Vec::with_capacity(t.entries().len());
+
+                    for c in t.entries().iter() {
+                        symbols_for_value(
+                            KeyOrString::Key(c.key()),
+                            c.value(),
+                            mapper,
+                            &mut child_symbols,
+                        );
+                    }
+
+                    Some(child_symbols)
+                },
             });
         }
         _ => {}
     }
-
-    symbols
 }
 
 fn ensure_non_empty_key(s: String) -> String {

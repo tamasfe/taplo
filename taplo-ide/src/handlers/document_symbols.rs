@@ -38,7 +38,7 @@ fn symbols_for_value(
     let range = mapper
         .range(match &key {
             KeyOrString::Key(k) => k.text_range().clone().cover(value.text_range()),
-            KeyOrString::String(_) => value.text_range().clone(),
+            KeyOrString::String(_) => value.text_range(),
         })
         .unwrap();
 

@@ -46,7 +46,7 @@ impl Mapper {
             total_chars = i as u64;
         }
 
-        if line_start_char < total_chars {
+        if line_start_char < total_chars + 1 {
             lines.push(line_start_char..total_chars as u64 + 1);
         }
 
@@ -94,7 +94,7 @@ impl Mapper {
     }
 
     pub fn range(&self, range: TextRange) -> Option<Range> {
-        // Special case for a single 0-length range
+        // Special case for a 0-length range
         if range.start() == range.end() {
             return self
                 .mapping
@@ -102,7 +102,7 @@ impl Mapper {
                 .or_else(|| self.mapping.last())
                 .and_then(|c| {
                     self.lines().iter().enumerate().find_map(|(i, l)| {
-                        if l.start <= *c || l.end >= *c {
+                        if l.start <= *c && l.end >= *c {
                             Some(Range {
                                 start: Position {
                                     line: i as u64,

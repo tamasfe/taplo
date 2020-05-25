@@ -560,23 +560,26 @@ where
         message: rpc::Request<serde_json::Value>,
         writer: Option<&mut ResponseWriterBuffer>,
     ) {
+        let req_id = message.id.clone();
         let req = match message.into_params::<R::Params>() {
             Ok(r) => r,
             Err(e) => {
                 if let Some(w) = writer {
-                    w.write_response(rpc::Response::error(
-                        rpc::Error::invalid_params().with_data(e.to_string()),
-                    ));
+                    w.write_response(
+                        rpc::Response::error(rpc::Error::invalid_params().with_data(e.to_string()))
+                            .with_request_id(req_id.unwrap()),
+                    );
                 }
 
                 return;
             }
         };
 
-        let res = rpc::Response::from((self.f)(context, req.params.into()).await)
-            .with_request_id(req.id.unwrap());
+        let call_result = (self.f)(context, req.params.into()).await;
 
         if let Some(w) = writer {
+            let res = rpc::Response::from(call_result)
+            .with_request_id(req.id.unwrap());
             w.write_response(res);
         }
     }

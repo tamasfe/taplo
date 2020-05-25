@@ -295,3 +295,44 @@ pub(crate) async fn toml_to_json(
         errors: None,
     })
 }
+
+
+pub(crate) async fn line_mappings(
+    mut context: Context<World>,
+    params: Params<LineMappingsParams>,
+) -> Result<LineMappingsResponse, Error> {
+    let p = params.required()?;
+
+    let w = context.world().lock().await;
+
+    let doc = w
+        .documents
+        .get(&p.uri)
+        .ok_or_else(Error::invalid_params)?;
+
+    
+    Ok(LineMappingsResponse {
+        utf8: doc.mapper.lines().iter().map(|r| format!("{:?}", r)).collect(),
+        utf16: doc.mapper.lines_utf16().iter().map(|r| format!("{:?}", r)).collect(),
+    })
+}
+
+pub(crate) async fn syntax_tree(
+    mut context: Context<World>,
+    params: Params<SyntaxTreeParams>,
+) -> Result<SyntaxTreeResponse, Error> {
+    let p = params.required()?;
+
+
+    let w = context.world().lock().await;
+
+    let doc = w
+        .documents
+        .get(&p.uri)
+        .ok_or_else(Error::invalid_params)?;
+
+    
+    Ok(SyntaxTreeResponse {
+        text: format!("{:#?}", doc.parse.clone().into_syntax()),
+    })
+}

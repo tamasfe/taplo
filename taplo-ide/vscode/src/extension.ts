@@ -34,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   let c = new client.LanguageClient(
     "evenBetterToml",
-    "Even Better Toml LSP",
+    "Even Better TOML LSP",
     serverOpts,
     clientOpts
   );

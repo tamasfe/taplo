@@ -104,7 +104,7 @@ pub fn init() {
 
 #[wasm_bindgen]
 pub fn message(message: JsValue) {
-    // log_debug!("message: {:?}", message);
+    log_debug!("message: {:?}", message);
     spawn_local(SERVER.handle_message(WORLD.clone(), message.into_serde().unwrap(), ResWriter));
 }
 
@@ -144,6 +144,12 @@ static SERVER: Lazy<Server<World>> = Lazy::new(|| {
         ))
         .handler(RequestHandler::<request_ext::TomlToJsonRequest, _, _>::new(
             handlers::toml_to_json,
+        ))
+        .handler(RequestHandler::<request_ext::LineMappingsRequest, _, _>::new(
+            handlers::line_mappings,
+        ))
+        .handler(RequestHandler::<request_ext::SyntaxTreeRequest, _, _>::new(
+            handlers::syntax_tree,
         ))
         .request_writer(RequestWriter)
         .build()
@@ -190,7 +196,7 @@ impl ResponseWriter for ResWriter {
         mut self,
         response: &rpc::Response<R>,
     ) -> Result<(), io::Error> {
-        // log_debug!("response: {}", serde_json::to_string(&response).unwrap());
+        log_debug!("response: {}", serde_json::to_string(&response).unwrap());
         send_message(JsValue::from_serde(response).unwrap());
         Ok(())
     }

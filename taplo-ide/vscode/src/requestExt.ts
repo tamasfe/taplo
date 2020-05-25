@@ -1,14 +1,48 @@
 // Requests that are not in the LSP spec
 
-export interface TomlToJsonParams {
-  // TOML text
-  text: string;
+import { Uri } from "vscode";
+
+export namespace TomlToJson {
+  export interface Params {
+    // TOML text
+    text: string;
+  }
+
+  export interface Response {
+    // JSON text
+    text?: string;
+    errors?: string[];
+  }
+
+  export const METHOD = "taplo/tomlToJson";
 }
 
-export interface TomlToJsonResponse {
-  // JSON text
-  text?: string;
-  errors?: string[];
+export namespace SyntaxTree {
+  export interface Params {
+    // URI of the TOML document
+    uri: string;
+  }
+
+  export interface Response {
+    // Syntax tree to show
+    text: string;
+  }
+
+  export const METHOD = "taplo/syntaxTree";
 }
 
-export const TOML_TO_JSON = "taplo/tomlToJson";
+export namespace LineMappings {
+  export interface Params {
+    // URI of the TOML document
+    uri: string;
+  }
+
+  export interface Response {
+    // Line mappings
+    utf8: string[];
+    utf16: string[]
+  }
+
+  export const METHOD = "taplo/lineMappings";
+}
+

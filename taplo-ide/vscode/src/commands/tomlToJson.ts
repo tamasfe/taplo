@@ -25,12 +25,12 @@ export function register(
             return;
           }
 
-          let params: requestExt.TomlToJsonParams = {
+          let params: requestExt.TomlToJson.Params = {
             text: selectedText,
           };
 
-          const res = await c.sendRequest<requestExt.TomlToJsonResponse>(
-            requestExt.TOML_TO_JSON,
+          const res = await c.sendRequest<requestExt.TomlToJson.Response>(
+            requestExt.TomlToJson.METHOD,
             params
           );
 

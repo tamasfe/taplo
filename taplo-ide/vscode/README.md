@@ -36,7 +36,7 @@ Value highlighting based on their types, and semantic key highlighting for table
 
 ### Folding
 
-Arrays, and top level tables and comments can be folded.
+Arrays, multi-line strings and top level tables and comments can be folded.
 
 ![Folding](folding.gif)
 

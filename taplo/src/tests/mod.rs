@@ -3,4 +3,5 @@ mod generated {
     mod valid;
 }
 
-mod benches;
+// Requires nightly
+// mod benches;

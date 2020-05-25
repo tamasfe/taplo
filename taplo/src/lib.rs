@@ -1,4 +1,5 @@
-#![feature(test)]
+// Uncomment this to run benchmarks
+// #![feature(test)]
 
 #[macro_use]
 mod macros;

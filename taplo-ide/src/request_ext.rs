@@ -66,8 +66,7 @@ pub(crate) struct LineMappingsParams {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct LineMappingsResponse {
-    pub utf8: Vec<String>,
-    pub utf16: Vec<String>,
+    pub lines: Vec<String>,
 }
 
 impl Request for LineMappingsRequest {

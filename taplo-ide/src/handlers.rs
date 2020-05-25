@@ -88,7 +88,7 @@ pub(crate) async fn document_open(
 
     let parse = taplo::parser::parse(&p.text_document.text);
 
-    let mapper = Mapper::new(&p.text_document.text, true);
+    let mapper = Mapper::new(&p.text_document.text);
 
     let diag = PublishDiagnosticsParams {
         uri: p.text_document.uri.clone(),
@@ -125,7 +125,7 @@ pub(crate) async fn document_change(
     };
 
     let parse = taplo::parser::parse(&change.text);
-    let mapper = Mapper::new(&change.text, true);
+    let mapper = Mapper::new(&change.text);
 
     let diag = PublishDiagnosticsParams {
         uri: p.text_document.uri.clone(),
@@ -312,8 +312,7 @@ pub(crate) async fn line_mappings(
 
     
     Ok(LineMappingsResponse {
-        utf8: doc.mapper.lines().iter().map(|r| format!("{:?}", r)).collect(),
-        utf16: doc.mapper.lines_utf16().iter().map(|r| format!("{:?}", r)).collect(),
+        lines: doc.mapper.lines().iter().map(|r| format!("{:?}", r)).collect(),
     })
 }
 

@@ -1,5 +1,5 @@
 use lsp_types::{FoldingRange, FoldingRangeKind};
-use rowan::{TextRange};
+use rowan::TextRange;
 use taplo::{
     syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode},
     util::coords::Mapper,
@@ -33,9 +33,9 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                     header_starts.retain(|(k, h)| {
                         if k == &key || !key.starts_with(k) {
                             folding_ranges.push(FoldingRange {
-                                start_line: mapper.position(h.start(), false).unwrap().line,
+                                start_line: mapper.position(h.start()).unwrap().line,
                                 start_character: None,
-                                end_line: mapper.position(e.end(), true).unwrap().line,
+                                end_line: mapper.position_end(e.end()).unwrap().line,
                                 end_character: None,
                                 kind: Some(FoldingRangeKind::Region),
                             });
@@ -63,8 +63,8 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                         for d in n.descendants() {
                             if let ARRAY = d.kind() {
                                 if d.descendants_with_tokens().any(|t| t.kind() == NEWLINE) {
-                                    let start = mapper.position(d.text_range().start(), false).unwrap();
-                                    let end = mapper.position(d.text_range().end(), true).unwrap();
+                                    let start = mapper.position(d.text_range().start()).unwrap();
+                                    let end = mapper.position_end(d.text_range().end()).unwrap();
 
                                     folding_ranges.push(FoldingRange {
                                         start_line: start.line,
@@ -102,11 +102,11 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
         if !is_comment && last_comment.is_some() {
             folding_ranges.push(FoldingRange {
                 start_line: mapper
-                    .position(comments_start.unwrap().start(), false)
+                    .position(comments_start.unwrap().start())
                     .unwrap()
                     .line,
                 start_character: None,
-                end_line: mapper.position(last_comment.unwrap().start(), false).unwrap().line,
+                end_line: mapper.position(last_comment.unwrap().start()).unwrap().line,
                 end_character: None,
                 kind: Some(FoldingRangeKind::Comment),
             });
@@ -118,9 +118,9 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
     if let Some(e) = &last_non_header {
         for (_, h) in header_starts {
             folding_ranges.push(FoldingRange {
-                start_line: mapper.position(h.start(), false).unwrap().line,
+                start_line: mapper.position(h.start()).unwrap().line,
                 start_character: None,
-                end_line: mapper.position(e.end(), true).unwrap().line,
+                end_line: mapper.position_end(e.end()).unwrap().line,
                 end_character: None,
                 kind: Some(FoldingRangeKind::Region),
             });
@@ -130,9 +130,9 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
     if let Some(c) = comments_start {
         if let Some(l) = last_comment {
             folding_ranges.push(FoldingRange {
-                start_line: mapper.position(c.start(), false).unwrap().line,
+                start_line: mapper.position(c.start()).unwrap().line,
                 start_character: None,
-                end_line: mapper.position(l.start(), false).unwrap().line,
+                end_line: mapper.position(l.start()).unwrap().line,
                 end_character: None,
                 kind: Some(FoldingRangeKind::Comment),
             });

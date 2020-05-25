@@ -1,165 +1,129 @@
-//! Utilities for mapping between offset:length and row:col character positions.
+//! Utilities for mapping between offset:length bytes and col:row character positions.
 
 use rowan::{TextRange, TextSize};
 
 pub use lsp_types::{Position, Range};
+use std::iter;
 
-/// A mapper that translates offset:length positions to
-/// row:col positions.
+/// Offset in characters instead of bytes.
+/// It is u64 because lsp_types uses u64.
+pub type CharacterOffset = u64;
+
+/// Offset range in characters instead of bytes.
+pub type CharacterRange = std::ops::Range<CharacterOffset>;
+
+/// A mapper that translates offset:length bytes to
+/// col:row characters.
 pub struct Mapper {
-    lines: Vec<TextRange>,
-    utf16: bool,
-    utf16_mapping: Vec<u32>,
+    /// These are characters, not byte offsets.
+    lines: Vec<CharacterRange>,
+
+    /// A character position mapped to each byte offset.
+    /// If there was a single character that is 3 bytes long,
+    /// then this will contain 3 elements that are zero each.
+    mapping: Vec<CharacterOffset>,
 }
 
-// TODO not all methods are UTF-16 aware.
 impl Mapper {
     /// Creates a new Mapper that remembers where
     /// each line starts and ends.
-    pub fn new(source: &str, utf16: bool) -> Self {
-        let mut offset = 0;
-        let mut total_len = 0;
-        let mut lines = Vec::new();
+    pub fn new(source: &str) -> Self {
+        let mut line_start_char = 0;
 
-        let mut total_len_utf16 = 0;
-        let mut utf16_mapping = if utf16 {
-            Vec::with_capacity(source.len() * 2)
-        } else {
-            Vec::new()
-        };
+        let mut total_chars = 0;
 
-        for c in source.chars() {
-            total_len += c.len_utf8();
-            if utf16 {
-                utf16_mapping.push(total_len_utf16);
-                total_len_utf16 += c.len_utf16() as u32;
-            }
+        let mut lines = Vec::with_capacity(512); // a guess
+        let mut mapping = Vec::with_capacity(source.len() * 4); // We assume the worst case
+
+        for (i, c) in source.chars().enumerate() {
+            mapping.extend(iter::repeat(i as u64).take(c.len_utf8()));
 
             if c == '\n' {
-                lines.push(TextRange::new(
-                    (offset as u32).into(),
-                    (total_len as u32).into(),
-                ));
-                offset = total_len;
+                lines.push(line_start_char..i as u64 + 1);
+                line_start_char = i as u64 + 1;
             }
-        }
-        utf16_mapping.push(total_len_utf16);
 
-        if offset < total_len {
-            lines.push(TextRange::new(
-                (offset as u32).into(),
-                (total_len as u32).into(),
-            ));
+            total_chars = i as u64;
         }
 
-        Self {
-            lines,
-            utf16,
-            utf16_mapping,
+        if line_start_char < total_chars {
+            lines.push(line_start_char..total_chars as u64 + 1);
         }
+
+        Self { lines, mapping }
     }
 
-    pub fn lines(&self) -> &[TextRange] {
+    pub fn lines(&self) -> &[CharacterRange] {
         &self.lines
     }
 
-    pub fn lines_utf16(&self) -> Vec<TextRange> {
-        self.lines()
-            .iter()
-            .map(|l| {
-                TextRange::new(
-                    self.utf16_mapping[(u32::from(l.start()) as usize)].into(),
-                    self.utf16_mapping[(u32::from(l.end()) as usize)].into(),
-                )
-            })
-            .collect()
-    }
-
     pub fn offset(&self, position: Position) -> Option<TextSize> {
-        self.lines
-            .get(position.line as usize)
-            .map(|l| (u32::from(l.start()) + position.character as u32).into())
-    }
-
-    pub fn text_range(&self, position: Range) -> Option<TextRange> {
-        self.lines
-            .get(position.start.line as usize)
-            .map(|l| {
-                TextRange::empty((u32::from(l.start()) + position.start.character as u32).into())
-            })
-            .and_then(|r| {
-                self.lines.get(position.end.line as usize).map(|l| {
-                    r.cover_offset((u32::from(l.start()) + position.end.character as u32).into())
-                })
-            })
-    }
-
-    /// If ending_newline is false, and the offset is the end of a line,
-    /// the position will be the start of the next line if there's any.
-    /// This is required because line ranges overlap.
-    pub fn position(&self, offset: TextSize, ending_newline: bool) -> Option<Position> {
-        for (mut line_idx, mut line_range) in self.lines.iter().enumerate() {
-            if line_range.contains_inclusive(offset) {
-                if !ending_newline
-                    && line_range.end() == offset
-                    && line_idx < self.lines().len() - 1
-                {
-                    line_idx += 1;
-                    line_range = self.lines().get(line_idx).unwrap();
+        self.lines().get(position.line as usize).and_then(|l| {
+            self.mapping.iter().enumerate().find_map(|(i, p)| {
+                if *p == position.character - l.start {
+                    Some(TextSize::from(i as u32))
+                } else {
+                    None
                 }
+            })
+        })
+    }
 
-                let mut p = Position {
+    pub fn text_range(&self, range: Range) -> Option<TextRange> {
+        self.offset(range.start)
+            .and_then(|start| self.offset(range.end).map(|end| TextRange::new(start, end)))
+    }
+
+    pub fn position(&self, offset: TextSize) -> Option<Position> {
+        self.mapping.get(u32::from(offset) as usize).and_then(|c| {
+            self.lines
+                .iter()
+                .enumerate()
+                .find(|(_, line)| line.start <= *c && line.end > *c)
+                .map(|(line_idx, line)| Position {
                     line: line_idx as u64,
-                    character: u32::from(offset - line_range.start()) as u64,
-                };
+                    character: *c - line.start,
+                })
+        })
+    }
 
-                if self.utf16 {
-                    p.character = self.utf16_mapping[p.character as usize] as u64;
-                }
-
-                return Some(p);
-            }
-        }
-
-        None
+    /// A convenience method for finding range endings.
+    /// Since ranges are exclusive, one must be subtracted for endings.
+    pub fn position_end(&self, offset: TextSize) -> Option<Position> {
+        self.position(offset.checked_sub(TextSize::from(1)).unwrap_or_default())
     }
 
     pub fn range(&self, range: TextRange) -> Option<Range> {
-        let mut r = Range::default();
-
-        let mut start_found = false;
-        let mut end_found = false;
-
-        for (line_idx, line_range) in self.lines.iter().enumerate() {
-            if line_range.contains_inclusive(range.start()) {
-                r.start = Position {
-                    line: line_idx as u64,
-                    character: u32::from(range.start() - line_range.start()) as u64,
-                };
-
-                start_found = true;
-            }
-
-            if line_range.contains_inclusive(range.end()) {
-                r.end = Position {
-                    line: line_idx as u64,
-                    character: u32::from(range.end() - line_range.start()) as u64,
-                };
-
-                end_found = true;
-            }
-
-            if start_found && end_found {
-                if self.utf16 {
-                    r.start.character = self.utf16_mapping[r.start.character as usize] as u64;
-                    r.end.character = self.utf16_mapping[r.end.character as usize] as u64;
-                }
-
-                return Some(r);
-            }
+        // Special case for a single 0-length range
+        if range.start() == range.end() {
+            return self
+                .mapping
+                .get(u32::from(range.start()) as usize)
+                .or_else(|| self.mapping.last())
+                .and_then(|c| {
+                    self.lines().iter().enumerate().find_map(|(i, l)| {
+                        if l.start <= *c || l.end >= *c {
+                            Some(Range {
+                                start: Position {
+                                    line: i as u64,
+                                    character: *c - 1,
+                                },
+                                end: Position {
+                                    line: i as u64,
+                                    character: *c,
+                                },
+                            })
+                        } else {
+                            None
+                        }
+                    })
+                });
         }
 
-        None
+        self.position(range.start()).and_then(|start| {
+            self.position_end(range.end())
+                .map(|end| Range { start, end })
+        })
     }
 
     pub fn split_lines(&self, range: Range) -> Vec<Range> {
@@ -169,18 +133,18 @@ impl Mapper {
 
         let mut lines = Vec::with_capacity((range.end.line - range.start.line) as usize);
 
-        let l = self.lines[range.start.line as usize];
+        let start_line = self.lines[range.start.line as usize].clone();
 
         lines.push(Range {
             start: range.start,
             end: Position {
                 line: range.start.line,
-                character: (u32::from(l.end()) - u32::from(l.start())) as u64,
+                character: start_line.end - start_line.start,
             },
         });
 
         for i in (range.start.line + 1)..range.end.line {
-            let l = self.lines[i as usize];
+            let l = self.lines[i as usize].clone();
             lines.push(Range {
                 start: Position {
                     line: i,
@@ -188,7 +152,7 @@ impl Mapper {
                 },
                 end: Position {
                     line: i,
-                    character: (u32::from(l.end()) - u32::from(l.start())) as u64,
+                    character: l.end - l.start,
                 },
             })
         }
@@ -214,14 +178,10 @@ impl Mapper {
                 .lines
                 .last()
                 .map(|l| Position {
-                    line: ((self.lines.len()) as u64),
-                    character: if self.utf16 {
-                        (self.utf16_mapping[u32::from(l.start()) as usize]
-                            .checked_sub(self.utf16_mapping[u32::from(l.end()) as usize])
-                            .unwrap_or_default()) as u64
-                    } else {
-                        u32::from(l.start() - l.end()) as u64
-                    },
+                    line: ((self.lines.len()) as u64)
+                        .checked_sub(1)
+                        .unwrap_or_default(),
+                    character: l.end - l.start,
                 })
                 .unwrap_or_default(),
         }
@@ -261,7 +221,7 @@ pub fn relative_position(position: Position, to: Position) -> Position {
     }
 }
 
-/// Ranges are relative to others' starts, not ends.
+/// Ranges are relative start to start, not end to start.
 pub fn relative_range(range: Range, to: Range) -> Range {
     let line_diff = range.end.line - range.start.line;
     let start = relative_position(range.start, to.start);

@@ -62,12 +62,8 @@ function registerShowLineMappings(
           params
         );
 
-        let s = "UTF8:\n\n";
-        for (const line of res.utf8) {
-          s += line + "\n";
-        }
-        s += "\nUTF16:\n\n";
-        for (const line of res.utf16) {
+        let s = "";
+        for (const line of res.lines) {
           s += line + "\n";
         }
 

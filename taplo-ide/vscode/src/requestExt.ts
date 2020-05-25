@@ -39,8 +39,7 @@ export namespace LineMappings {
 
   export interface Response {
     // Line mappings
-    utf8: string[];
-    utf16: string[]
+    lines: string[];
   }
 
   export const METHOD = "taplo/lineMappings";

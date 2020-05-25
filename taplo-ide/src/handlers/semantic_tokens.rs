@@ -122,7 +122,7 @@ impl<'b> SemanticTokensBuilder<'b> {
             self.tokens.push(SemanticToken {
                 delta_line: relative.start.line as u32,
                 delta_start: relative.start.character as u32,
-                length: (relative.end.character - relative.start.character) as u32,
+                length: (relative.end.character - relative.start.character) as u32 + 1,
                 token_type: ty as u32,
                 token_modifiers_bitset: 0,
             });
@@ -136,7 +136,7 @@ impl<'b> SemanticTokensBuilder<'b> {
                 self.tokens.push(SemanticToken {
                     delta_line: relative.start.line as u32,
                     delta_start: relative.start.character as u32,
-                    length: (relative.end.character - relative.start.character) as u32,
+                    length: (relative.end.character - relative.start.character) as u32 + 1,
                     token_type: ty as u32,
                     token_modifiers_bitset: 0,
                 });

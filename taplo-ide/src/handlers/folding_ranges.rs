@@ -60,20 +60,45 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
 
                 match element {
                     SyntaxElement::Node(n) => {
-                        for d in n.descendants() {
-                            if let ARRAY = d.kind() {
-                                if d.descendants_with_tokens().any(|t| t.kind() == NEWLINE) {
-                                    let start = mapper.position(d.text_range().start()).unwrap();
-                                    let end = mapper.position_end(d.text_range().end()).unwrap();
+                        for d in n.descendants_with_tokens() {
+                            match d.kind() {
+                                ARRAY => {
+                                    if d.as_node()
+                                        .unwrap()
+                                        .descendants_with_tokens()
+                                        .any(|t| t.kind() == NEWLINE)
+                                    {
+                                        let start =
+                                            mapper.position(d.text_range().start()).unwrap();
+                                        let end =
+                                            mapper.position_end(d.text_range().end()).unwrap();
 
-                                    folding_ranges.push(FoldingRange {
-                                        start_line: start.line,
-                                        start_character: Some(start.character),
-                                        end_line: end.line,
-                                        end_character: Some(end.character),
-                                        kind: Some(FoldingRangeKind::Region),
-                                    });
+                                        folding_ranges.push(FoldingRange {
+                                            start_line: start.line,
+                                            start_character: Some(start.character),
+                                            end_line: end.line,
+                                            end_character: Some(end.character),
+                                            kind: Some(FoldingRangeKind::Region),
+                                        });
+                                    }
                                 }
+                                MULTI_LINE_STRING | MULTI_LINE_STRING_LITERAL => {
+                                    if d.as_token().unwrap().text().contains("\n") {
+                                        let start =
+                                            mapper.position(d.text_range().start()).unwrap();
+                                        let end =
+                                            mapper.position_end(d.text_range().end()).unwrap();
+
+                                        folding_ranges.push(FoldingRange {
+                                            start_line: start.line,
+                                            start_character: Some(start.character),
+                                            end_line: end.line,
+                                            end_character: Some(end.character),
+                                            kind: Some(FoldingRangeKind::Region),
+                                        });
+                                    }
+                                }
+                                _ => {}
                             }
                         }
                     }

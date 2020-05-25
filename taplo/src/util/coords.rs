@@ -45,7 +45,7 @@ impl Mapper {
         }
         utf16_mapping.push(total_len_utf16);
 
-        if offset != total_len {
+        if offset < total_len {
             lines.push(TextRange::new(
                 (offset as u32).into(),
                 (total_len as u32).into(),
@@ -61,6 +61,18 @@ impl Mapper {
 
     pub fn lines(&self) -> &[TextRange] {
         &self.lines
+    }
+
+    pub fn lines_utf16(&self) -> Vec<TextRange> {
+        self.lines()
+            .iter()
+            .map(|l| {
+                TextRange::new(
+                    self.utf16_mapping[(u32::from(l.start()) as usize)].into(),
+                    self.utf16_mapping[(u32::from(l.end()) as usize)].into(),
+                )
+            })
+            .collect()
     }
 
     pub fn offset(&self, position: Position) -> Option<TextSize> {
@@ -82,9 +94,20 @@ impl Mapper {
             })
     }
 
-    pub fn position(&self, offset: TextSize) -> Option<Position> {
-        for (line_idx, line_range) in self.lines.iter().enumerate() {
+    /// If ending_newline is false, and the offset is the end of a line,
+    /// the position will be the start of the next line if there's any.
+    /// This is required because line ranges overlap.
+    pub fn position(&self, offset: TextSize, ending_newline: bool) -> Option<Position> {
+        for (mut line_idx, mut line_range) in self.lines.iter().enumerate() {
             if line_range.contains_inclusive(offset) {
+                if !ending_newline
+                    && line_range.end() == offset
+                    && line_idx < self.lines().len() - 1
+                {
+                    line_idx += 1;
+                    line_range = self.lines().get(line_idx).unwrap();
+                }
+
                 let mut p = Position {
                     line: line_idx as u64,
                     character: u32::from(offset - line_range.start()) as u64,

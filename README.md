@@ -6,7 +6,7 @@
 
 # Taplo
 
-Taplo is a [TOML](https://github.com/toml-lang/toml) fault-tolerant parser, analyzer and formatter library written in Rust.
+Taplo is a fault-tolerant [TOML](https://github.com/toml-lang/toml) parser, analyzer and formatter library written in Rust.
 
 It uses [Rowan](https://github.com/rust-analyzer/rowan) for the syntax tree.
 

@@ -9,7 +9,7 @@ export function getOutput(): vscode.OutputChannel {
   return output;
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   let p = context.asAbsolutePath(path.join("dist", "server.js"));
 
   let serverOpts: client.ServerOptions = {
@@ -45,8 +45,23 @@ export function activate(context: vscode.ExtensionContext) {
 
   registerCommands(context, c);
 
-  context.subscriptions.push(
-    output,
-    c.start()
-  );
+  context.subscriptions.push(output, c.start());
+
+  const showNotification = vscode.workspace.getConfiguration().get('evenBetterToml.activationStatus');
+
+  if (showNotification)  {
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Window,
+        title: "TOML loading...",
+      },
+      async (p) => {
+        await c.onReady();
+      }
+    );
+  } else {
+    await c.onReady();
+  }
+
+
 }

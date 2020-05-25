@@ -31,13 +31,16 @@
 	],
 	"activationEvents": [
 		"onLanguage:toml",
-		"onLanguage:cargoLock"
+		"onLanguage:cargoLock",
+		"onCommand:evenBetterToml.pasteTomlAsJson",
+		"onCommand:evenBetterToml.copyTomlAsJson"
 	],
 	"keywords": [
 		"toml",
 		"syntax",
 		"rust",
-		"formatter"
+		"formatter",
+		"config"
 	],
 	"contributes": {
 		"languages": [
@@ -66,7 +69,11 @@
 			"commandPalette": [
 				{
 					"command": "evenBetterToml.copyTomlAsJson",
-					"when": "editorLangId == toml"
+					"when": "config.evenBetterToml.commands.copyTomlAsJson"
+				},
+				{
+					"command": "evenBetterToml.pasteTomlAsJson",
+					"when": "config.evenBetterToml.commands.pasteTomlAsJson"
 				},
 				{
 					"command": "evenBetterToml.debug.showSyntaxTree",
@@ -82,22 +89,44 @@
 			{
 				"command": "evenBetterToml.copyTomlAsJson",
 				"title": "TOML: Copy Selection as JSON",
-				"enablement": "editorLangId == toml && editorHasSelection"
+				"enablement": "editorHasSelection"
+			},
+			{
+				"command": "evenBetterToml.pasteTomlAsJson",
+				"title": "TOML: Paste as JSON"
 			},
 			{
 				"command": "evenBetterToml.debug.showSyntaxTree",
-				"title": "TOML (debug): Show syntax tree",
+				"title": "TOML (debug): Show Syntax Tree",
 				"enablement": "editorLangId == toml && config.evenBetterToml.debug"
 			},
 			{
 				"command": "evenBetterToml.debug.showLineMappings",
-				"title": "TOML (debug): Show Offset line mappings",
+				"title": "TOML (debug): Show Offset Line Mappings",
 				"enablement": "editorLangId == toml && config.evenBetterToml.debug"
 			}
 		],
 		"configuration": {
 			"title": "Even Better TOML",
 			"properties": {
+				"evenBetterToml.activationStatus": {
+					"description": "Show a status bar message while the extension is activating.",
+					"type": "boolean",
+					"scope": "resource",
+					"default": true
+				},
+				"evenBetterToml.commands.copyTomlAsJson": {
+					"description": "Show the \"Copy Selection as JSON\" command in the palette.",
+					"type": "boolean",
+					"scope": "resource",
+					"default": true
+				},
+				"evenBetterToml.commands.pasteTomlAsJson": {
+					"description": "Show the \"Paste as JSON\" command in the palette.",
+					"type": "boolean",
+					"scope": "resource",
+					"default": true
+				},
 				"evenBetterToml.formatter.arrayTrailingComma": {
 					"description": "Append trailing commas for multi-line arrays.",
 					"type": "boolean",
@@ -129,7 +158,10 @@
 				},
 				"evenBetterToml.formatter.indentString": {
 					"description": "The substring that is used for indentation, should be tabs or spaces, but technically can be anything. Uses the IDE setting if not set.",
-					"type": "string",
+					"type": [
+						"string",
+						"null"
+					],
 					"scope": "resource",
 					"default": null
 				},

@@ -1,5 +1,17 @@
 # Change Log
 
+## next
+
+#### New Features
+- Activation message in the status bar
+- Paste as JSON command
+
+#### Fixes
+
+#### Other
+- Non-debug commands are always in the palette unless disabled
+- Better error notifications
+
 ## 0.3.0
 
 #### New Features

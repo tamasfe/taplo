@@ -14,6 +14,7 @@ It is currently a **preview extension**, it might contain bugs, and might even c
     - [Formatting](#formatting)
     - [Commands](#commands)
       - [Copy Selection as JSON](#copy-selection-as-json)
+      - [Paste as JSON](#paste-as-json)
   - [Planned Features](#planned-features)
     - [Autocompletion and validation based on JSON Schema](#autocompletion-and-validation-based-on-json-schema)
     - [TextMate syntax highlighting](#textmate-syntax-highlighting)
@@ -52,9 +53,15 @@ Most of the formatting features are enabled by default, but almost everything ca
 
 ### Commands
 
+Some commands are always in the palette, these can be hidden in the settings.
+
 #### Copy Selection as JSON
 
-Copies the selected TOML text converted to JSON to the system clipboard. It is only enabled for TOML documents.
+Copies the selected TOML text converted to JSON to the system clipboard.
+
+#### Paste as JSON
+
+Parses the TOML text from the system clipboard and pastes it converted into JSON in the active selection.
 
 ## Planned Features
 

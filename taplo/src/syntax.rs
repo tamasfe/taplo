@@ -193,7 +193,13 @@ fn lex_multi_line_string(lex: &mut Lexer<SyntaxKind>) -> bool {
         escaped = false;
     }
 
-    false
+    // End of input
+    if quotes_found {
+        lex.bump(remainder[0..total_len].as_bytes().len());
+        true
+    } else {
+        false
+    }
 }
 
 fn lex_string_literal(lex: &mut Lexer<SyntaxKind>) -> bool {
@@ -240,8 +246,6 @@ fn lex_multi_line_string_literal(lex: &mut Lexer<SyntaxKind>) -> bool {
         }
         total_len += c.len_utf8();
 
- 
-
         if c == '\'' {
             quote_count += 1;
         } else {
@@ -251,8 +255,13 @@ fn lex_multi_line_string_literal(lex: &mut Lexer<SyntaxKind>) -> bool {
         if quote_count == 3 {
             quotes_found = true;
         }
-
     }
 
-    false
+    // End of input
+    if quotes_found {
+        lex.bump(remainder[0..total_len].as_bytes().len());
+        true
+    } else {
+        false
+    }
 }

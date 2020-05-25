@@ -6,6 +6,9 @@
 	"repository": {
 		"url": "https://github.com/tamasfe/taplo"
 	},
+	"bugs": {
+		"url": "https://github.com/tamasfe/taplo/issues"
+	},
 	"publisher": "tamasfe",
 	"author": {
 		"name": "tamasfe"

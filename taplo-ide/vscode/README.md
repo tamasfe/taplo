@@ -12,6 +12,8 @@ It is currently a **preview extension**, it might contain bugs, and might even c
     - [Folding](#folding)
     - [Symbol tree and navigation (even for tables out of order)](#symbol-tree-and-navigation-even-for-tables-out-of-order)
     - [Formatting](#formatting)
+    - [Commands](#commands)
+      - [Copy selection as JSON](#copy-selection-as-json)
   - [Planned Features](#planned-features)
     - [Autocompletion and validation based on JSON Schema](#autocompletion-and-validation-based-on-json-schema)
     - [TextMate syntax highlighting](#textmate-syntax-highlighting)
@@ -47,6 +49,12 @@ Arrays, and top level tables and comments can be folded.
 Most of the formatting features are enabled by default, but almost everything can be tweaked in the settings. If you're missing a setting, feel free to open an issue about it!
 
 ![Formatting](formatting.gif)
+
+### Commands
+
+#### Copy selection as JSON
+
+Copies the selected TOML text converted to JSON to the system clipboard. It is only enabled for TOML documents.
 
 ## Planned Features
 

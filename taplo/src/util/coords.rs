@@ -106,7 +106,7 @@ impl Mapper {
                             Some(Range {
                                 start: Position {
                                     line: i as u64,
-                                    character: *c - 1,
+                                    character: (*c).checked_sub(1).unwrap_or_default(),
                                 },
                                 end: Position {
                                     line: i as u64,

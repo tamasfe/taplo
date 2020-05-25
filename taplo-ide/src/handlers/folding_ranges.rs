@@ -83,7 +83,7 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                                     }
                                 }
                                 MULTI_LINE_STRING | MULTI_LINE_STRING_LITERAL => {
-                                    if d.as_token().unwrap().text().contains("\n") {
+                                    if d.as_token().unwrap().text().contains('\n') {
                                         let start =
                                             mapper.position(d.text_range().start()).unwrap();
                                         let end =

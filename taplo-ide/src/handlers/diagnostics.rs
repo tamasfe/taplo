@@ -19,6 +19,11 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
         })
         .collect();
 
+    if !diag.is_empty() {
+        // Only syntax errors
+        return diag;
+    }
+
     for err in parse.clone().into_dom().errors() {
         match err {
             dom::Error::DuplicateKey { first, second } => {

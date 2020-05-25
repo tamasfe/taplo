@@ -5,7 +5,7 @@ use crate::{
 };
 use dom::Cast;
 use logos::{Lexer, Logos};
-use rowan::{GreenNode, GreenNodeBuilder, SmolStr, TextRange};
+use rowan::{GreenNode, GreenNodeBuilder, SmolStr, TextRange, TextSize};
 use std::convert::TryInto;
 
 pub fn parse(source: &str) -> Parse {
@@ -62,7 +62,10 @@ impl<'p> Parser<'p> {
     fn error(&mut self, message: &str) -> ParserResult<()> {
         let span = self.lexer.span();
         self.add_error(&Error {
-            range: TextRange::new(span.start.try_into().unwrap(), span.end.try_into().unwrap()),
+            range: TextRange::new(
+                TextSize::from(span.start as u32),
+                TextSize::from(span.end as u32),
+            ),
             message: message.into(),
         });
         self.token_as(ERROR).ok();

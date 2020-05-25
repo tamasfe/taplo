@@ -49,7 +49,8 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                     let mut ty = TokenType::Variable;
                     if let Some(p) = parent_node.parent() {
                         match p.kind() {
-                            TABLE_HEADER | TABLE_ARRAY_HEADER => ty = TokenType::Namespace,
+                            TABLE_HEADER => ty = TokenType::Namespace,
+                            TABLE_ARRAY_HEADER => ty = TokenType::Struct,
                             _ => {}
                         }
                     }

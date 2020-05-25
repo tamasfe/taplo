@@ -1,4 +1,6 @@
 mod generated {
-    mod valid;
     mod invalid;
+    mod valid;
 }
+
+mod benches;

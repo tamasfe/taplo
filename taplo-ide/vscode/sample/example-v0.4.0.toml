@@ -142,8 +142,9 @@ key3 = -0.01
 
   [float.underscores]
 
-  key1 = 9_224_617.445_991_228_313
-  key2 = 1e1_000
+  # This file is used for benches and toml-rs doesn't yet support these:
+  # key1 = 9_224_617.445_991_228_313
+  # key2 = 1e1_000
 
   ################################################################################
   ## Boolean

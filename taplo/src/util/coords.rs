@@ -121,8 +121,10 @@ impl Mapper {
         }
 
         self.position(range.start()).and_then(|start| {
-            self.position_end(range.end())
-                .map(|end| Range { start, end })
+            self.position_end(range.end()).map(|mut end| {
+                end.character += 1;
+                Range { start, end }
+            })
         })
     }
 

@@ -1,5 +1,4 @@
-// Uncomment this to run benchmarks
-// #![feature(test)]
+#![cfg_attr(feature = "bench", feature(test))]
 
 #[macro_use]
 mod macros;

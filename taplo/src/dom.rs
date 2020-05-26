@@ -153,6 +153,7 @@ impl RootNode {
 }
 
 // TODO(refactor)
+// This has become a mess, it screams for a refactor
 #[allow(clippy::cognitive_complexity)]
 impl Cast for RootNode {
     fn cast(syntax: SyntaxElement) -> Option<Self> {
@@ -175,14 +176,20 @@ impl Cast for RootNode {
         let mut entries: IndexMap<KeyNode, EntryNode> =
             IndexMap::with_capacity(n.descendants().count());
 
-        // Current table prefix for its entries
+        // TODO this is a temporary solution
+        let mut prefixes: Vec<Option<KeyNode>> = Vec::new();
+
+        // Table prefix for the entries following
         let mut prefix: Option<KeyNode> = None;
 
         // We have to track which entry is defined
         // under which table, because TOML
         // forbids mixing top level tables with dotted keys,
         // which are otherwise technically the same.
-        let mut tables: IndexMap<KeyNode, Vec<KeyNode>> = IndexMap::new();
+        // let mut tables: IndexMap<KeyNode, Vec<KeyNode>> = IndexMap::new();
+
+        // All top-level tables for a given index
+        let mut tables: Vec<Vec<KeyNode>> = Vec::new();
 
         let mut errors = Vec::new();
 
@@ -260,6 +267,26 @@ impl Cast for RootNode {
                         );
                     }
 
+                    // Search for an entry that clashes with this table
+                    for (i, (k, e)) in entries.iter().enumerate().rev().skip(1) {
+                        let entry_prefix = prefixes.get(i).unwrap();
+                        if let Some(p) = entry_prefix {
+                            if k.contains(&key) && p.common_prefix_count(&key) < key.key_count() {
+                                errors.push(Error::TopLevelTableDefined {
+                                    table: key.clone(),
+                                    key: e.key.clone(),
+                                });
+                            }
+                        }
+                    }
+
+                    if tables.len() == key.index {
+                        tables.push(vec![key.clone()]);
+                    } else {
+                        tables[key.index].push(key.clone());
+                    }
+
+                    prefixes.push(None);
                     prefix = Some(key);
                 }
                 ENTRY => {
@@ -270,21 +297,28 @@ impl Cast for RootNode {
 
                     let insert_key = match &prefix {
                         None => entry.key().clone(),
-                        Some(p) => {
-                            match tables.get_mut(p) {
-                                None => {
-                                    let mut v = Vec::with_capacity(10); // A wild guess
-                                    v.push(entry.key().clone());
-                                    tables.insert(p.clone(), v);
-                                }
-                                Some(v) => {
-                                    v.push(entry.key().clone());
-                                }
-                            }
-
-                            entry.key().clone().with_prefix(p)
-                        }
+                        Some(p) => entry.key().clone().with_prefix(p),
                     };
+
+                    if let Some(p) = &prefix {
+                        let table_containing_entry =
+                            tables.get(insert_key.index).and_then(|same_index_tables| {
+                                same_index_tables.iter().find(|table| {
+                                    insert_key
+                                        .clone()
+                                        .without_prefix(p)
+                                        .contains(&(&**table).clone().without_prefix(p))
+                                })
+                            });
+
+                        if let Some(table_key) = table_containing_entry {
+                            errors.push(Error::TopLevelTableDefined {
+                                table: table_key.clone(),
+                                key: entry.key().clone(),
+                            });
+                            continue;
+                        }
+                    }
 
                     if let Some(existing) = entries.get(&insert_key) {
                         errors.push(Error::DuplicateKey {
@@ -294,34 +328,10 @@ impl Cast for RootNode {
                         continue;
                     }
 
+                    prefixes.push(prefix.clone());
                     entries.insert(insert_key, entry);
                 }
                 _ => {}
-            }
-        }
-
-        if let Some(p) = prefix {
-            if !tables.contains_key(&p) {
-                tables.insert(p, Vec::new());
-            }
-        }
-
-        // Look for mixed top level tables and dotted keys.
-        // This is ugly as hell, but I couldn't bother.
-        for (k, entries) in &tables {
-            for entry in entries {
-                for (k2, _) in &tables {
-                    if k.index != k2.index || k == k2 || k2.key_count() < k.key_count() {
-                        continue;
-                    }
-
-                    if k2.is_part_of(&entry.clone().with_prefix(k)) {
-                        errors.push(Error::DuplicateKey {
-                            first: k.clone(),
-                            second: k2.clone(),
-                        })
-                    }
-                }
             }
         }
 
@@ -1415,6 +1425,7 @@ pub enum Error {
     DuplicateKey { first: KeyNode, second: KeyNode },
     ExpectedTableArray { target: KeyNode, key: KeyNode },
     ExpectedTable { target: KeyNode, key: KeyNode },
+    TopLevelTableDefined { table: KeyNode, key: KeyNode },
     InlineTable { target: KeyNode, key: KeyNode },
     Spanned { range: TextRange, message: String },
     Generic(String),
@@ -1436,6 +1447,14 @@ impl core::fmt::Display for Error {
                 "Expected \"{}\" ({:?}) to be a table, but it is not, required by \"{}\" ({:?})",
                 &target.full_key(),
                 &target.text_range(),
+                &key.full_key(),
+                &key.text_range()
+            ),
+            Error::TopLevelTableDefined { table, key } => write!(
+                f,
+                "full table definition \"{}\" ({:?}) conflicts with dotted keys \"{}\" ({:?})",
+                &table.full_key(),
+                &table.text_range(),
                 &key.full_key(),
                 &key.text_range()
             ),

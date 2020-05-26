@@ -149,7 +149,43 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                             range: target_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"inline table "{}" here"#, key.full_key()),
+                        message: format!(r#"inline table "{}" here"#, target.full_key()),
+                    }]),
+                    tags: None,
+                });
+            }
+            dom::Error::TopLevelTableDefined { table, key } => {
+                let table_range = mapper.range(table.text_range()).unwrap();
+                let key_range = mapper.range(key.text_range()).unwrap();
+
+                diag.push(Diagnostic {
+                    range: table_range,
+                    severity: Some(DiagnosticSeverity::Error),
+                    code: None,
+                    source: Some("Even Better TOML".into()),
+                    message: "table conflicts with entry".to_string(),
+                    related_information: Some(vec![DiagnosticRelatedInformation {
+                        location: Location {
+                            range: key_range,
+                            uri: uri.clone(),
+                        },
+                        message: format!(r#"entry here "{}""#, key.full_key()),
+                    }]),
+                    tags: None,
+                });
+
+                diag.push(Diagnostic {
+                    range: key_range,
+                    severity: Some(DiagnosticSeverity::Error),
+                    code: None,
+                    source: Some("Even Better TOML".into()),
+                    message: "entry conflicts with table".to_string(),
+                    related_information: Some(vec![DiagnosticRelatedInformation {
+                        location: Location {
+                            range: table_range,
+                            uri: uri.clone(),
+                        },
+                        message: format!(r#"table "{}" here"#, table.full_key()),
                     }]),
                     tags: None,
                 });
@@ -167,6 +203,7 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                     tags: None,
                 });
             }
+
             dom::Error::Generic(_) => {
                 // todo show this as well somewhere?
             }

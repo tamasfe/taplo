@@ -1,5 +1,3 @@
-#![cfg_attr(feature = "bench", feature(test))]
-
 #[macro_use]
 mod macros;
 

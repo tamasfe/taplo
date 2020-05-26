@@ -19,7 +19,7 @@ use crate::{
 };
 use indexmap::IndexMap;
 use rowan::TextRange;
-use std::{hash::Hash, iter::FromIterator, mem};
+use std::{hash::Hash, iter::FromIterator, mem, rc::Rc};
 
 /// Casting allows constructing DOM nodes from syntax nodes.
 pub trait Cast: Sized {
@@ -59,7 +59,7 @@ impl Cast for Node {
             | FLOAT
             | BOOL
             | DATE
-            | INLINE_TABLE => ValueNode::cdom_inner(element).map(Node::Value),
+            | INLINE_TABLE => ValueNode::dom_inner(element).map(Node::Value),
             KEY => KeyNode::cast(element).map(Node::Key),
             VALUE => ValueNode::cast(element).map(Node::Value),
             TABLE_HEADER | TABLE_ARRAY_HEADER => TableNode::cast(element).map(Node::Table),
@@ -303,6 +303,7 @@ impl Cast for RootNode {
                     if let Some(p) = &prefix {
                         let table_containing_entry =
                             tables.get(insert_key.index).and_then(|same_index_tables| {
+
                                 same_index_tables.iter().find(|table| {
                                     insert_key
                                         .clone()
@@ -946,9 +947,17 @@ impl Cast for EntryNode {
 pub struct KeyNode {
     syntax: SyntaxNode,
 
+    // To avoid cloning the idents vec,
+    // we mask them instead.
+    mask_left: usize,
+    mask_right: usize,
+
+    // The visible ident count, can never be 0
+    mask_visible: usize,
+
     // Hash and equality is based on only
     // the string values of the idents.
-    idents: Vec<SyntaxToken>,
+    idents: Rc<Vec<SyntaxToken>>,
 
     // This also contributes to equality and hashes.
     //
@@ -958,44 +967,40 @@ pub struct KeyNode {
 }
 
 impl KeyNode {
-    pub fn idents(&self) -> &[SyntaxToken] {
-        &self.idents
+    pub fn kind(&self) -> SyntaxKind {
+        self.syntax.kind()
+    }
+
+    pub fn idents(&self) -> impl Iterator<Item = &SyntaxToken> {
+        self.idents[..self.idents.len() - self.mask_right]
+            .iter()
+            .skip(self.mask_left)
     }
 
     pub fn key_count(&self) -> usize {
-        self.idents.len()
-    }
-
-    /// Parts of a dotted key
-    pub fn keys(&self) -> Vec<String> {
-        self.keys_str().map(ToString::to_string).collect()
+        self.mask_visible
     }
 
     pub fn keys_str(&self) -> impl Iterator<Item = &str> {
-        self.idents.iter().map(|t| {
+        self.idents().map(|t| {
             let mut s = t.text().as_str();
 
             if s.starts_with('\"') || s.starts_with('\'') {
-                s = &s[1..s.len()];
+                s = &s[1..s.len() - 1];
             }
 
             s
         })
     }
 
-    /// Full dotted key
-    pub fn full_key(&self) -> String {
-        self.keys().join(".")
-    }
-
-    pub fn kind(&self) -> SyntaxKind {
-        self.syntax.kind()
+    pub fn full_key_string(&self) -> String {
+        let s: Vec<String> = self.keys_str().map(|s| s.to_string()).collect();
+        s.join(".")
     }
 
     pub fn text_range(&self) -> TextRange {
         self.idents()
-            .iter()
-            .fold(self.idents()[0].text_range(), |r, t| {
+            .fold(self.idents().next().unwrap().text_range(), |r, t| {
                 r.cover(t.text_range())
             })
     }
@@ -1003,7 +1008,7 @@ impl KeyNode {
     /// Determines whether the key starts with
     /// the same dotted keys as other.
     pub fn is_part_of(&self, other: &KeyNode) -> bool {
-        if other.idents().len() < self.idents().len() {
+        if other.mask_visible < self.mask_visible {
             return false;
         }
 
@@ -1026,7 +1031,9 @@ impl KeyNode {
     /// e.g.: outer.inner => super
     /// there will be at least one ident remaining
     pub fn outer(mut self, n: usize) -> Self {
-        self.idents.truncate(usize::max(1, n));
+        let skip = usize::min(self.mask_visible - 1, n);
+        self.mask_right += skip;
+        self.mask_visible -= skip;
         self
     }
 
@@ -1034,18 +1041,9 @@ impl KeyNode {
     /// e.g.: outer.inner => inner
     /// there will be at least one ident remaining
     pub fn inner(mut self, n: usize) -> Self {
-        let mut max_end_range = self.idents.len();
-        if max_end_range > 0 {
-            max_end_range -= 1;
-        }
-
-        let max_range = usize::min(n, max_end_range);
-
-        if max_range == 0 {
-            return self;
-        }
-
-        self.idents.drain(0..max_range);
+        let skip = usize::min(self.mask_visible - 1, n);
+        self.mask_left += skip;
+        self.mask_visible -= skip;
         self
     }
 
@@ -1071,7 +1069,16 @@ impl KeyNode {
     /// Prepends other's idents, and also inherits
     /// other's index.
     fn with_prefix(mut self, other: &KeyNode) -> Self {
-        self.idents.splice(0..0, other.idents.clone().into_iter());
+        // We have to modify our existing vec here
+        let mut new_idents = (*self.idents).clone();
+        new_idents.truncate(new_idents.len() - self.mask_right);
+        new_idents.drain(0..self.mask_left);
+        new_idents.splice(0..0, other.idents().cloned());
+
+        self.mask_visible = new_idents.len();
+        self.idents = Rc::new(new_idents);
+        self.mask_left = 0;
+        self.mask_right = 0;
         self.index = other.index;
         self
     }
@@ -1123,7 +1130,7 @@ impl Hash for KeyNode {
 
 impl core::fmt::Display for KeyNode {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        self.full_key().fmt(f)
+        self.full_key_string().fmt(f)
     }
 }
 
@@ -1133,26 +1140,28 @@ impl Cast for KeyNode {
             None
         } else {
             element.into_node().and_then(|n| {
-                Some(Self {
-                    idents: {
-                        let i: Vec<SyntaxToken> = n
-                            .children_with_tokens()
-                            .filter_map(|c| {
-                                if let rowan::NodeOrToken::Token(t) = c {
-                                    match t.kind() {
-                                        IDENT => Some(t),
-                                        _ => None,
-                                    }
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect();
-                        if i.is_empty() {
-                            return None;
+                let i: Vec<SyntaxToken> = n
+                    .children_with_tokens()
+                    .filter_map(|c| {
+                        if let rowan::NodeOrToken::Token(t) = c {
+                            match t.kind() {
+                                IDENT => Some(t),
+                                _ => None,
+                            }
+                        } else {
+                            None
                         }
-                        i
-                    },
+                    })
+                    .collect();
+                if i.is_empty() {
+                    return None;
+                }
+
+                Some(Self {
+                    mask_left: 0,
+                    mask_right: 0,
+                    mask_visible: i.len(),
+                    idents: Rc::new(i),
                     index: 0,
                     syntax: n,
                 })
@@ -1184,7 +1193,7 @@ impl Default for ValueNode {
 }
 
 impl ValueNode {
-    fn cdom_inner(element: SyntaxElement) -> Option<Self> {
+    fn dom_inner(element: SyntaxElement) -> Option<Self> {
         match element.kind() {
             INLINE_TABLE => Cast::cast(element).map(ValueNode::Table),
             ARRAY => Cast::cast(element).map(ValueNode::Array),
@@ -1437,41 +1446,41 @@ impl core::fmt::Display for Error {
             Error::DuplicateKey { first, second } => write!(
                 f,
                 "duplicate keys: \"{}\" ({:?}) and \"{}\" ({:?})",
-                &first.full_key(),
+                &first.full_key_string(),
                 &first.text_range(),
-                &second.full_key(),
+                &second.full_key_string(),
                 &second.text_range()
             ),
             Error::ExpectedTable { target, key } => write!(
                 f,
                 "Expected \"{}\" ({:?}) to be a table, but it is not, required by \"{}\" ({:?})",
-                &target.full_key(),
+                &target.full_key_string(),
                 &target.text_range(),
-                &key.full_key(),
+                &key.full_key_string(),
                 &key.text_range()
             ),
             Error::TopLevelTableDefined { table, key } => write!(
                 f,
                 "full table definition \"{}\" ({:?}) conflicts with dotted keys \"{}\" ({:?})",
-                &table.full_key(),
+                &table.full_key_string(),
                 &table.text_range(),
-                &key.full_key(),
+                &key.full_key_string(),
                 &key.text_range()
             ),
             Error::ExpectedTableArray { target, key } => write!(
                 f,
                 "\"{}\" ({:?}) conflicts with array of tables: \"{}\" ({:?})",
-                &target.full_key(),
+                &target.full_key_string(),
                 &target.text_range(),
-                &key.full_key(),
+                &key.full_key_string(),
                 &key.text_range()
             ),
             Error::InlineTable { target, key } => write!(
                 f,
                 "inline tables cannot be modified: \"{}\" ({:?}), modification attempted here: \"{}\" ({:?})",
-                &target.full_key(),
+                &target.full_key_string(),
                 &target.text_range(),
-                &key.full_key(),
+                &key.full_key_string(),
                 &key.text_range()
             ),
             Error::Spanned { range, message } => write!(f, "{} ({:?})", message, range),

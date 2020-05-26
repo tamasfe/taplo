@@ -54,7 +54,7 @@ impl TryFrom<dom::RootNode> for Value {
         let mut children: IndexMap<String, Value, _> = IndexMap::new();
 
         for entry in node.into_entries().into_iter() {
-            children.insert(entry.key().full_key(), entry.into_value().try_into()?);
+            children.insert(entry.key().full_key_string(), entry.into_value().try_into()?);
         }
 
         Ok(Value::Map(children))
@@ -70,7 +70,7 @@ impl TryFrom<dom::TableNode> for Value {
                 .try_fold::<_, _, Result<IndexMap<String, Value>, Self::Error>>(
                     IndexMap::new(),
                     |mut m, entry| {
-                        m.insert(entry.key().full_key(), entry.into_value().try_into()?);
+                        m.insert(entry.key().full_key_string(), entry.into_value().try_into()?);
                         Ok(m)
                     },
                 )?,

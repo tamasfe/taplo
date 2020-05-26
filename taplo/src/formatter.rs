@@ -175,8 +175,8 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                                 let eb = EntryNode::cast(NodeOrToken::Node(b.clone())).unwrap();
 
                                 ea.key()
-                                    .full_key()
-                                    .partial_cmp(&eb.key().full_key())
+                                    .full_key_string()
+                                    .partial_cmp(&eb.key().full_key_string())
                                     .unwrap()
                             });
                         }
@@ -263,8 +263,8 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                                     let eb = EntryNode::cast(NodeOrToken::Node(b.clone())).unwrap();
 
                                     ea.key()
-                                        .full_key()
-                                        .partial_cmp(&eb.key().full_key())
+                                        .full_key_string()
+                                        .partial_cmp(&eb.key().full_key_string())
                                         .unwrap()
                                 });
                             }
@@ -297,8 +297,8 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                             let eb = EntryNode::cast(NodeOrToken::Node(b.clone())).unwrap();
 
                             ea.key()
-                                .full_key()
-                                .partial_cmp(&eb.key().full_key())
+                                .full_key_string()
+                                .partial_cmp(&eb.key().full_key_string())
                                 .unwrap()
                         });
                     }
@@ -346,8 +346,8 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
             let eb = EntryNode::cast(NodeOrToken::Node(b.clone())).unwrap();
 
             ea.key()
-                .full_key()
-                .partial_cmp(&eb.key().full_key())
+                .full_key_string()
+                .partial_cmp(&eb.key().full_key_string())
                 .unwrap()
         });
     }

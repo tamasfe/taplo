@@ -35,7 +35,7 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
                     source: Some("Even Better TOML".into()),
-                    message: format!(r#"duplicate key "{}""#, first.full_key()),
+                    message: format!(r#"duplicate key "{}""#, first.full_key_string()),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
                             range: second_range,
@@ -51,7 +51,7 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
                     source: Some("Even Better TOML".into()),
-                    message: format!(r#"duplicate key "{}""#, first.full_key()),
+                    message: format!(r#"duplicate key "{}""#, first.full_key_string()),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
                             range: first_range,
@@ -71,13 +71,13 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
                     source: Some("Even Better TOML".into()),
-                    message: format!(r#"expected table for "{}""#, target.full_key()),
+                    message: format!(r#"expected table for "{}""#, target.full_key_string()),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
                             range: second_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"required by "{}""#, key.full_key()),
+                        message: format!(r#"required by "{}""#, key.full_key_string()),
                     }]),
                     tags: None,
                 });
@@ -133,7 +133,7 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                             range: second_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"modified here by "{}""#, key.full_key()),
+                        message: format!(r#"modified here by "{}""#, key.full_key_string()),
                     }]),
                     tags: None,
                 });
@@ -149,7 +149,7 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                             range: target_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"inline table "{}" here"#, target.full_key()),
+                        message: format!(r#"inline table "{}" here"#, target.full_key_string()),
                     }]),
                     tags: None,
                 });
@@ -169,7 +169,7 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                             range: key_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"entry here "{}""#, key.full_key()),
+                        message: format!(r#"entry here "{}""#, key.full_key_string()),
                     }]),
                     tags: None,
                 });
@@ -185,7 +185,7 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                             range: table_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"table "{}" here"#, table.full_key()),
+                        message: format!(r#"table "{}" here"#, table.full_key_string()),
                     }]),
                     tags: None,
                 });

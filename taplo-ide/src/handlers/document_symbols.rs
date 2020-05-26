@@ -51,9 +51,9 @@ fn symbols_for_value(
 
     let name = match key {
         KeyOrString::Key(k) => k
-            .keys()
+            .keys_str()
             .last()
-            .cloned()
+            .map(|s| s.to_string())
             .map(ensure_non_empty_key)
             .unwrap_or_else(|| String::from("{error}")),
         KeyOrString::String(s) => s,

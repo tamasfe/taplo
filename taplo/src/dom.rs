@@ -164,32 +164,25 @@ impl Cast for RootNode {
         // Syntax node of the root.
         let n = syntax.into_node().unwrap();
 
+        let child_count = n.children_with_tokens().count();
+
         // All the entries in the TOML document.
         // The key is their full path, including all parent tables.
         //
         // The contents of inline tables are not checked, and they are
         // treated like any other value.
-        //
-        // We allocate much more than we'll need, as descendants includes pretty much
-        // every key and value, even inside arrays and inline tables,
-        // but this will be more performant than allocating after each entry.
-        let mut entries: IndexMap<KeyNode, EntryNode> =
-            IndexMap::with_capacity(n.descendants().count());
+        let mut entries: IndexMap<KeyNode, EntryNode> = IndexMap::with_capacity(child_count);
 
-        // TODO this is a temporary solution
-        let mut prefixes: Vec<Option<KeyNode>> = Vec::new();
+        // Prefixes are remembered for each entry.
+        // this is to determine which table owns which entry.
+        // Its length should match the entries' length.
+        let mut prefixes: Vec<Option<KeyNode>> = Vec::with_capacity(child_count);
 
         // Table prefix for the entries following
         let mut prefix: Option<KeyNode> = None;
 
-        // We have to track which entry is defined
-        // under which table, because TOML
-        // forbids mixing top level tables with dotted keys,
-        // which are otherwise technically the same.
-        // let mut tables: IndexMap<KeyNode, Vec<KeyNode>> = IndexMap::new();
-
         // All top-level tables for a given index
-        let mut tables: Vec<Vec<KeyNode>> = Vec::new();
+        let mut tables: Vec<Vec<KeyNode>> = Vec::with_capacity(child_count);
 
         let mut errors = Vec::new();
 
@@ -216,10 +209,9 @@ impl Cast for RootNode {
                         }
                     };
 
-                    // We have to iterate due to arrays of tables :(
-                    // The key hashes contain their indices, and we don't
-                    // know the last index. And we cannot know because arrays of
-                    // tables can be nested and we'd have to track all of them.
+                    // We have to go through everything because we don't
+                    // know the last index. And the existing table can be anything
+                    // anywhere.
                     let existing_table = entries.iter().rev().find(|(k, _)| k.eq_keys(&key));
 
                     // The entries below still belong to this table,
@@ -267,7 +259,7 @@ impl Cast for RootNode {
                         );
                     }
 
-                    // Search for an entry that clashes with this table
+                    // Search for an entry that clashes with this table.
                     for (i, (k, e)) in entries.iter().enumerate().rev().skip(1) {
                         let entry_prefix = prefixes.get(i).unwrap();
                         if let Some(p) = entry_prefix {
@@ -303,7 +295,6 @@ impl Cast for RootNode {
                     if let Some(p) = &prefix {
                         let table_containing_entry =
                             tables.get(insert_key.index).and_then(|same_index_tables| {
-
                                 same_index_tables.iter().find(|table| {
                                     insert_key
                                         .clone()

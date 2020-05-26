@@ -1,6 +1,6 @@
 # Change Log
 
-## next
+## 0.4.0
 
 #### New Features
 - Activation message in the status bar
@@ -14,7 +14,7 @@
 #### Other
 - Non-debug commands are always visible in the palette unless disabled
 - Better error notifications
-
+1
 ## 0.3.0
 
 #### New Features

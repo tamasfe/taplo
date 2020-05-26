@@ -12,8 +12,9 @@ repository  = "https://github.com/tamasfe/taplo"
 version     = "1.0.0-alpha.1"
 
 [features]
-default   = [ "bench" ]
-bench = []
+default = []
+
+bench     = []
 serialize = [ "serde" ]
 
 [dependencies]

@@ -12,7 +12,7 @@
 - Fixed incorrect indentation
 
 #### Other
-- Non-debug commands are always in the palette unless disabled
+- Non-debug commands are always visible in the palette unless disabled
 - Better error notifications
 
 ## 0.3.0

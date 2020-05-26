@@ -117,7 +117,7 @@ pub fn format_syntax(node: SyntaxNode, options: Options) -> String {
 
 // This is private because the layout of the formatted tree will
 // not be compatible with the tree given as input.
-fn format_impl(node: SyntaxNode, mut options: Options) -> SyntaxNode {
+fn format_impl(node: SyntaxNode, options: Options) -> SyntaxNode {
     let kind: SyntaxKind = node.kind();
 
     let mut builder = GreenNodeBuilder::new();

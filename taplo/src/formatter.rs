@@ -149,8 +149,16 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
 
     // Entries without an empty line between them
     let mut entry_group: Vec<SyntaxNode> = Vec::new();
+
+    // Needed for indentation to stop incorrectly indenting
+    // tables that have no super table defined before them.
+    let mut base_prefix_count = 0;
+
     let mut indent_level: usize = 0;
     let mut last_table_key: Option<KeyNode> = None;
+
+    // New line after each entry should be skipped,
+    // because it is manually added if needed.
     let mut skip_newline = 0;
 
     for c in node.children_with_tokens() {
@@ -198,7 +206,14 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                                         if key.key_count() == 1 {
                                             indent_level = 0
                                         } else if key != last_key {
-                                            indent_level = last_key.common_prefix_count(&key);
+                                            indent_level = last_key
+                                                .common_prefix_count(&key)
+                                                .checked_sub(base_prefix_count)
+                                                .unwrap_or_default();
+                                        }
+
+                                        if indent_level == 0 {
+                                            base_prefix_count = key.key_count() - 1;
                                         }
                                     }
                                     last_table_key = Some(key);

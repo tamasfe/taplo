@@ -258,8 +258,11 @@ pub(crate) async fn format(
         format_opts.reorder_keys = v;
     }
 
+    let mut range = doc.mapper.all_range();
+    range.end.line += 1; // Make sure to cover everything
+
     Ok(Some(vec![TextEdit {
-        range: doc.mapper.all_range(),
+        range,
         new_text: taplo::formatter::format_syntax(doc.parse.clone().into_syntax(), format_opts),
     }]))
 }

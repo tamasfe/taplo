@@ -122,10 +122,6 @@ fn format_impl(node: SyntaxNode, mut options: Options) -> SyntaxNode {
 
     let mut builder = GreenNodeBuilder::new();
 
-    if !options.crlf {
-        options.crlf = node.text().to_string().chars().any(|c| c == '\r');
-    }
-
     match kind {
         KEY => format_key(node, &mut builder, &options, &mut Context::default()),
         VALUE => format_value(node, &mut builder, &options, Context::default()),
@@ -203,7 +199,9 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                             if let Some(key_syntax) = n.first_child() {
                                 if let Some(key) = KeyNode::cast(NodeOrToken::Node(key_syntax)) {
                                     if let Some(last_key) = last_table_key.take() {
-                                        if key.key_count() == 1 {
+                                        if key.key_count() == 1
+                                            || last_key.key_count() > key.key_count()
+                                        {
                                             indent_level = 0
                                         } else if key != last_key {
                                             indent_level = last_key

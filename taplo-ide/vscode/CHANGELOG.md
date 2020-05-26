@@ -7,6 +7,9 @@
 - Paste as JSON command
 
 #### Fixes
+- Tables that conflict with dotted keys are no longer accepted
+- Fixed too many new lines at the end when formatting
+- Fixed incorrect indentation
 
 #### Other
 - Non-debug commands are always in the palette unless disabled

@@ -295,12 +295,21 @@ impl Cast for RootNode {
                     if let Some(p) = &prefix {
                         let table_containing_entry =
                             tables.get(insert_key.index).and_then(|same_index_tables| {
-                                same_index_tables.iter().find(|table| {
-                                    insert_key
-                                        .clone()
-                                        .without_prefix(p)
-                                        .contains(&(&**table).clone().without_prefix(p))
-                                })
+                                same_index_tables
+                                    .iter()
+                                    .find(|table| {
+                                        insert_key
+                                            .clone()
+                                            .without_prefix(p)
+                                            .contains(&(&**table).clone().without_prefix(p))
+                                    })
+                                    .and_then(|table| {
+                                        if table != same_index_tables.last().unwrap() {
+                                            Some(table)
+                                        } else {
+                                            None
+                                        }
+                                    })
                             });
 
                         if let Some(table_key) = table_containing_entry {

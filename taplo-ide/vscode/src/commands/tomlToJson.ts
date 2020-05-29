@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import * as client from "vscode-languageclient";
 import * as requestExt from "../requestExt";
-import * as clipboardy from "clipboardy";
 import { getOutput } from "../extension";
 
 export function register(
@@ -55,7 +54,19 @@ export function register(
           }
 
           try {
-            await clipboardy.write(res.text!);
+            if (!res.text) {
+              out.appendLine(`The response shouldn't be empty, but it is.`);
+              const show = await vscode.window.showErrorMessage(
+                "Copying has failed!",
+                "Show Details"
+              );
+
+              if (show) {
+                out.show();
+              }
+              return;
+            }
+            await vscode.env.clipboard.writeText(res.text);
           } catch (e) {
             out.appendLine(`Couldn't write to clipboard: ${e}`);
             const show = await vscode.window.showErrorMessage(
@@ -78,7 +89,7 @@ export function register(
           const out = getOutput();
           let input;
           try {
-            input = await clipboardy.read();
+            input = await vscode.env.clipboard.readText();
           } catch (e) {
             out.appendLine(`Failed to read from clipboard:${e}`);
             const show = await vscode.window.showErrorMessage(

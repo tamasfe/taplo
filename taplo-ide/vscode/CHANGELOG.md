@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.4.1
+
+### Fixes
+- Use the VSCode clipboard API instead of clipboardy
+- Remote workspaces should be supported
+- Fixed incorrect detection of top level table conflicts with dotted keys
+
 ## 0.4.0
 
 #### New Features
@@ -14,7 +21,7 @@
 #### Other
 - Non-debug commands are always visible in the palette unless disabled
 - Better error notifications
-1
+
 ## 0.3.0
 
 #### New Features

@@ -12,3 +12,4 @@ tsconfig.json
 tslint.json
 sample
 images
+node_modules

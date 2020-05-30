@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.4.2
+
+### Fixes
+- Restored accidentally deleted README
+
 ## 0.4.1
 
 ### Fixes

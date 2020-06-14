@@ -57,6 +57,7 @@ pub struct WorldState {
 #[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FormatterConfiguration {
+    pub align_entries: Option<bool>,
     pub array_trailing_comma: Option<bool>,
     pub array_auto_expand: Option<bool>,
     pub array_auto_collapse: Option<bool>,

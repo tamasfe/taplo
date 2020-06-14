@@ -130,6 +130,12 @@
 					"scope": "resource",
 					"default": true
 				},
+				"evenBetterToml.formatter.alignEntries": {
+					"description": "Align consecutive entries vertically.",
+					"type": "boolean",
+					"scope": "resource",
+					"default": true
+				},
 				"evenBetterToml.formatter.arrayTrailingComma": {
 					"description": "Append trailing commas for multi-line arrays.",
 					"type": "boolean",

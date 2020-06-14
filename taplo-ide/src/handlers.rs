@@ -216,6 +216,10 @@ pub(crate) async fn format(
 
     let mut format_opts = formatter::Options::default();
 
+    if let Some(v) = w.configuration.formatter.align_entries {
+        format_opts.align_entries = v;
+    }
+
     if let Some(v) = w.configuration.formatter.array_auto_collapse {
         format_opts.array_auto_collapse = v;
     }

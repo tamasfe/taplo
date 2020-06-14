@@ -2,7 +2,8 @@
 //!
 //! The formatting can be done on documents that might
 //! contain invalid syntax. In that case the invalid part is skipped.
-// TODO refactor and documentation
+// TODO This is fine for now, but will need a refactor
+// of more features are added either to the formatter or the toml spec.
 
 use crate::{
     dom::{Cast, EntryNode, KeyNode},
@@ -14,6 +15,12 @@ use std::mem;
 /// All the formatting options.
 #[derive(Debug, Clone)]
 pub struct Options {
+    /// Align entries vertically.
+    ///
+    /// Entries that have table headers, comments,
+    /// or empty lines between them are not aligned.
+    pub align_entries: bool,
+
     /// Put trailing commas for multiline
     /// arrays
     pub array_trailing_comma: bool,
@@ -25,7 +32,7 @@ pub struct Options {
     /// Automatically collapse arrays if they
     /// fit in one line.
     ///
-    /// The table won't be collapsed if it
+    /// The array won't be collapsed if it
     /// contains a comment.
     pub array_auto_collapse: bool,
 
@@ -56,6 +63,7 @@ pub struct Options {
 impl Default for Options {
     fn default() -> Self {
         Options {
+            align_entries: true,
             array_trailing_comma: true,
             array_auto_expand: true,
             array_auto_collapse: true,
@@ -190,6 +198,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                                 } else {
                                     None
                                 },
+                                if options.align_entries { None } else { Some(1) },
                             );
                             builder.token(NEWLINE.into(), options.newline().into());
                         }
@@ -277,6 +286,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                                 } else {
                                     None
                                 },
+                                if options.align_entries { None } else { Some(1) },
                             );
                             builder.token(NEWLINE.into(), options.newline().into());
                         }
@@ -312,6 +322,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                             } else {
                                 None
                             },
+                            if options.align_entries { None } else { Some(1) },
                         );
                         builder.token(NEWLINE.into(), options.newline().into());
                     }
@@ -360,6 +371,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
         } else {
             None
         },
+        if options.align_entries { None } else { Some(1) },
     );
 
     builder.finish_node();
@@ -693,6 +705,7 @@ fn add_aligned(
     builder: &mut GreenNodeBuilder,
     newline: &str,
     indent: Option<&str>,
+    exact_tabs: Option<usize>,
 ) {
     let mut max_lengths: Vec<u32> = Vec::new();
 
@@ -726,7 +739,10 @@ fn add_aligned(
             .filter(|c| c.kind() != WHITESPACE)
             .enumerate()
         {
-            let ws_count = max_lengths[i] - u32::from(c.text_range().len()) + 1;
+            let ws_count = match &exact_tabs {
+                Some(t) => *t,
+                None => (max_lengths[i] - u32::from(c.text_range().len()) + 1) as usize,
+            };
 
             match c {
                 NodeOrToken::Node(n) => add_all(n, builder),
@@ -735,8 +751,8 @@ fn add_aligned(
                 }
             }
 
-            if ws_count > 0 && i != max_lengths.len() - 1 {
-                builder.token(WHITESPACE.into(), " ".repeat(ws_count as usize).into())
+            if ws_count > 0 && i != max_lengths.len().checked_sub(1).unwrap_or_default() {
+                builder.token(WHITESPACE.into(), " ".repeat(ws_count).into())
             }
         }
 

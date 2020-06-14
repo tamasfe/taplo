@@ -20,39 +20,35 @@ It uses [Rowan](https://github.com/rust-analyzer/rowan) for the syntax tree.
 
 The main purpose of the library is to provide tools for analyzing TOML data where the layout must be preserved and the original position of every parsed token must be known. Good examples of target applications would be linters, IDE extensions, or language servers.
 
-Taplo also exposes a `Value` type that can be serialized with [Serde](https://github.com/serde-rs/serde) and allows converting it to JSON, YAML or any other format.
+Taplo also exposes a `Value` type that can be serialized with [Serde](https://github.com/serde-rs/serde) and allows converting it to JSON, YAML or any other format. Serialization is not the main goal of the library, and is not supported yet.
 
 ## Status
 
 The library is **WIP**, it might have bugs, and the API can change anytime. It is currently used and tested in the [Even Better TOML](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) Visual Studio Code extension.
 
-The correctness of the decoding is not yet entirely guaranteed (as there is no 1.0.0-rc.1 compliant test suite), and the performance is not the best ([see below](#performance)). Until the library reaches 1.0.0, you should probably use a more mature TOML parser.
-
-The documentation is lacking, and probably won't be any good until the library becomes stable. However the API surface is not too large and should be more or less straightforward to use.
-
-If you need something that is not exposed by the library feel free to open an issue or submit a pull request!
+The correctness of the decoding is not yet entirely guaranteed (as there is no official 1.0.0-rc.1 compliance test suite yet), and the performance is not yet up to par with other parsers ([see below](#performance)), however it has deemed to be fast enough so far.
 
 ## Performance
 
-The lexing is mostly done with [Logos](https://github.com/maciejhirsz/logos), so that should be pretty fast. The overall performance is _good enough_ for now. There have been no optimization efforts made yet.
+The lexing is mostly done with [Logos](https://github.com/maciejhirsz/logos), so that should be pretty fast. The overall performance is _good enough_. There have been no major optimization efforts made yet.
 
-For those of you who are curious, here's a comparison to [toml-rs](https://github.com/alexcrichton/toml-rs) as of *v1.0.0-alpha.3*:
+For those of you who are curious, here's a comparison to [toml-rs](https://github.com/alexcrichton/toml-rs) as of *1.0.0-alpha.5*:
 
 ```
-test tests::benches::bench_taplo_parse          ... bench:     224,934 ns/iter (+/- 27,494)
-test tests::benches::bench_taplo_parse_validate ... bench:     708,415 ns/iter (+/- 77,386)
-test tests::benches::bench_toml_rs              ... bench:     213,743 ns/iter (+/- 31,816)
+test bench_taplo_parse          ... bench:     218,674 ns/iter (+/- 12,876)
+test bench_taplo_parse_validate ... bench:     576,393 ns/iter (+/- 38,857)
+test bench_toml_rs              ... bench:     230,086 ns/iter (+/- 54,954)
 ```
 
 And the memory usage of the `taplo/examples` applications:
 
 ```
-taplo_parse:  total heap usage: 6,368 allocs, 6,368 frees, 391,941 bytes allocated
-toml_rs_parse: total heap usage:   840 allocs,   840 frees,  78,677 bytes allocated
+taplo_parse:   total heap usage: 2,597 allocs, 2,597 frees, 324,388 bytes allocated
+toml_rs_parse: total heap usage:   840 allocs,   840 frees,  78,750 bytes allocated
 ```
 
-Taplo is around 3 times slower compared to toml-rs, and allocates 5 times more memory.
-This is not too terrible considering how immature the library is but there's a lot of room to improve.
+Taplo is around 2.5 times slower compared to toml-rs, and allocates about 4 times as much memory.
+This is not too terrible, but there's a lot of room to improve.
 
 ## Contributing
 

@@ -138,8 +138,6 @@ jobs:
         run: |
           awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo/Cargo.toml > cargo_tmp
           mv cargo_tmp taplo/Cargo.toml
-      - name: Copy Readme
-        run: yes | cp README.md taplo/
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:

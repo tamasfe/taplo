@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.5.0
+
+#### New Features
+- Added formatter entry alignment setting
+
 ## 0.4.2
 
 ### Fixes

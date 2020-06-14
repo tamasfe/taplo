@@ -191,7 +191,7 @@ pub fn collect_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Dia
                 });
             }
             dom::Error::Spanned { range, message } => {
-                let r = mapper.range(range.clone()).unwrap();
+                let r = mapper.range(*range).unwrap();
 
                 diag.push(Diagnostic {
                     range: r,

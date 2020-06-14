@@ -1,6 +1,8 @@
+//! TOML document to syntax tree parsing.
+
 use crate::{
     dom,
-    syntax::{Error, SyntaxKind, SyntaxKind::*, SyntaxNode},
+    syntax::{SyntaxKind, SyntaxKind::*, SyntaxNode},
     util::{allowed_chars, check_escape},
 };
 use dom::Cast;
@@ -8,13 +10,24 @@ use logos::{Lexer, Logos};
 use rowan::{GreenNode, GreenNodeBuilder, SmolStr, TextRange, TextSize};
 use std::convert::TryInto;
 
-pub fn parse(source: &str) -> Parse {
-    Parser::new(source).parse()
+/// A syntax error that can occur during parsing.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct Error {
+    /// The span of the error.
+    pub range: TextRange,
+
+    /// Human-friendly error message.
+    pub message: String,
 }
 
-/// A hand-written parser that uses the Logos lexer
-/// to tokenize the source, then constructs
-/// a Rowan green tree from them.
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ({:?})", &self.message, &self.range)
+    }
+}
+impl std::error::Error for Error {}
+
+/// Parse a TOML document into a [Rowan green tree](rowan::GreenNode).
 ///
 /// The parsing will not stop at unexpected or invalid tokens.
 /// Instead errors will be collected with their character offsets and lengths,
@@ -23,7 +36,16 @@ pub fn parse(source: &str) -> Parse {
 /// The parser will also validate comment and string contents, looking for
 /// invalid escape sequences and invalid characters.
 /// These will also be reported as syntax errors.
-pub struct Parser<'p> {
+///
+/// This does not check for semantic errors such as duplicate keys.
+pub fn parse(source: &str) -> Parse {
+    Parser::new(source).parse()
+}
+
+/// A hand-written parser that uses the Logos lexer
+/// to tokenize the source, then constructs
+/// a Rowan green tree from them.
+struct Parser<'p> {
     skip_whitespace: bool,
     current_token: Option<SyntaxKind>,
     lexer: Lexer<'p, SyntaxKind>,
@@ -40,7 +62,7 @@ type ParserResult<T> = Result<T, ()>;
 // this probably has to be rewritten into a state machine
 // that contains minimal function calls.
 impl<'p> Parser<'p> {
-    pub fn new(source: &'p str) -> Self {
+    fn new(source: &'p str) -> Self {
         Parser {
             current_token: None,
             skip_whitespace: true,
@@ -50,7 +72,7 @@ impl<'p> Parser<'p> {
         }
     }
 
-    pub fn parse(mut self) -> Parse {
+    fn parse(mut self) -> Parse {
         self.with_node(ROOT, Self::parse_root).ok();
 
         Parse {
@@ -592,7 +614,7 @@ impl<'p> Parser<'p> {
 
 /// The final results of a parsing.
 /// It contains the green tree, and
-/// the syntax errors that ocurred during parsing.
+/// the errors that ocurred during parsing.
 #[derive(Debug, Clone)]
 pub struct Parse {
     pub green_node: GreenNode,
@@ -606,6 +628,9 @@ impl Parse {
     }
 
     /// Turn the parse into a DOM tree.
+    ///
+    /// Any semantic errors that occur will be collected
+    /// in the returned DOM node.
     pub fn into_dom(self) -> dom::RootNode {
         dom::RootNode::cast(rowan::NodeOrToken::Node(self.into_syntax())).unwrap()
     }

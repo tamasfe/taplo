@@ -1,8 +1,10 @@
+//! Declaration of the syntax tokens and lexer implementation.
+
 #![allow(non_camel_case_types)]
 
 use logos::{Lexer, Logos};
-use rowan::TextRange;
 
+/// Enum containing all the tokens in a syntax tree.
 #[derive(Logos, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u16)]
 pub enum SyntaxKind {
@@ -111,19 +113,6 @@ impl rowan::Language for Lang {
 pub type SyntaxNode = rowan::SyntaxNode<Lang>;
 pub type SyntaxToken = rowan::SyntaxToken<Lang>;
 pub type SyntaxElement = rowan::NodeOrToken<SyntaxNode, SyntaxToken>;
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Error {
-    pub range: TextRange,
-    pub message: String,
-}
-
-impl core::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({:?})", &self.message, &self.range)
-    }
-}
-impl std::error::Error for Error {}
 
 fn lex_string(lex: &mut Lexer<SyntaxKind>) -> bool {
     let remainder: &str = lex.remainder();

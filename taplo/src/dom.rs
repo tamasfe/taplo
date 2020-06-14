@@ -5,6 +5,7 @@
 //!
 //! When constructed from the root (which is practically always),
 //! the tree is semantically analyzed according to the TOML specification.
+//!
 //! All the dotted keys and arrays of tables are also merged and collected
 //! into tables and arrays. The order is always preserved when possible.
 //!

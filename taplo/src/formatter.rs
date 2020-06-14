@@ -105,7 +105,7 @@ pub fn format_green(green: GreenNode, options: Options) -> String {
 /// Parses then formats a TOML document, ignoring errors.
 pub fn format(src: &str, options: Options) -> String {
     format_syntax(
-        crate::parser::Parser::new(src).parse().into_syntax(),
+        crate::parser::parse(src).into_syntax(),
         options,
     )
 }

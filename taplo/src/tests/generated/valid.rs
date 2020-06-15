@@ -1,4 +1,27 @@
 #[test]
+#[ignore]
+fn qa_array_inline_nested_1000() {
+    let src = "key = [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]] ]\n" ;
+    let p = crate::parser::parse(&src);
+    assert!(
+        p.errors.is_empty(),
+        "Parse errors:\n{}",
+        p.errors
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+    let dom = p.into_dom();
+    assert!(
+        dom.errors().is_empty(),
+        "Semantic errors:\n{}",
+        dom.errors()
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+}
+#[test]
 fn spec_string_basic_multiline_3() {
     let src = "str = \"\"\"\\\n      The quick brown \\\n      fox jumps over \\\n      the lazy dog.\\\n      \"\"\"\n" ;
     let p = crate::parser::parse(&src);
@@ -618,6 +641,29 @@ fn spec_date_time_4() {
 #[test]
 fn spec_int_3() {
     let src = "int3 = 0\n";
+    let p = crate::parser::parse(&src);
+    assert!(
+        p.errors.is_empty(),
+        "Parse errors:\n{}",
+        p.errors
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+    let dom = p.into_dom();
+    assert!(
+        dom.errors().is_empty(),
+        "Semantic errors:\n{}",
+        dom.errors()
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+}
+#[test]
+#[ignore]
+fn qa_table_inline_nested_1000() {
+    let src = "key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {key = {}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} }\n" ;
     let p = crate::parser::parse(&src);
     assert!(
         p.errors.is_empty(),

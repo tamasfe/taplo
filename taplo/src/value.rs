@@ -6,6 +6,8 @@ use chrono::{DateTime, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime};
 use indexmap::IndexMap;
 use std::convert::{TryFrom, TryInto};
 
+pub type Map = IndexMap<String, Value>;
+
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum Date {
     OffsetDateTime(DateTime<FixedOffset>),
@@ -24,7 +26,121 @@ pub enum Value {
     Date(Date),
     String(String),
     Array(Vec<Value>),
-    Map(IndexMap<String, Value>),
+    Map(Map),
+}
+
+impl Value {
+    pub fn as_bool(&self) -> Option<&bool> {
+        match self {
+            Value::Bool(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn into_bool(self) -> Option<bool> {
+        match self {
+            Value::Bool(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn as_u64(&self) -> Option<&u64> {
+        match self {
+            Value::UnsizedInteger(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn into_u64(self) -> Option<u64> {
+        match self {
+            Value::UnsizedInteger(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn as_i64(&self) -> Option<&i64> {
+        match self {
+            Value::Integer(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn into_i64(self) -> Option<i64> {
+        match self {
+            Value::Integer(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn as_f64(&self) -> Option<&f64> {
+        match self {
+            Value::Float(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn into_f64(self) -> Option<f64> {
+        match self {
+            Value::Float(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn as_date(&self) -> Option<&Date> {
+        match self {
+            Value::Date(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn into_date(self) -> Option<Date> {
+        match self {
+            Value::Date(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn as_str(&self) -> Option<&str> {
+        match self {
+            Value::String(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn into_string(self) -> Option<String> {
+        match self {
+            Value::String(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn as_array(&self) -> Option<&Vec<Value>> {
+        match self {
+            Value::Array(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn into_array(self) -> Option<Vec<Value>> {
+        match self {
+            Value::Array(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn as_map(&self) -> Option<&Map> {
+        match self {
+            Value::Map(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn into_map(self) -> Option<Map> {
+        match self {
+            Value::Map(v) => Some(v),
+            _ => None,
+        }
+    }
 }
 
 impl TryFrom<dom::Node> for Value {
@@ -54,7 +170,10 @@ impl TryFrom<dom::RootNode> for Value {
         let mut children: IndexMap<String, Value, _> = IndexMap::new();
 
         for entry in node.into_entries().into_iter() {
-            children.insert(entry.key().full_key_string(), entry.into_value().try_into()?);
+            children.insert(
+                entry.key().full_key_string(),
+                entry.into_value().try_into()?,
+            );
         }
 
         Ok(Value::Map(children))
@@ -70,7 +189,10 @@ impl TryFrom<dom::TableNode> for Value {
                 .try_fold::<_, _, Result<IndexMap<String, Value>, Self::Error>>(
                     IndexMap::new(),
                     |mut m, entry| {
-                        m.insert(entry.key().full_key_string(), entry.into_value().try_into()?);
+                        m.insert(
+                            entry.key().full_key_string(),
+                            entry.into_value().try_into()?,
+                        );
                         Ok(m)
                     },
                 )?,

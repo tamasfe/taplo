@@ -22,6 +22,9 @@ use indexmap::IndexMap;
 use rowan::TextRange;
 use std::{hash::Hash, iter::FromIterator, mem, rc::Rc};
 
+#[macro_use]
+mod macros;
+
 /// Casting allows constructing DOM nodes from syntax nodes.
 pub trait Cast: Sized {
     fn cast(element: SyntaxElement) -> Option<Self>;
@@ -132,10 +135,6 @@ impl RootNode {
 
     pub fn into_entries(self) -> Entries {
         self.entries
-    }
-
-    pub fn entry_count(&self) -> usize {
-        self.entries.len()
     }
 
     pub fn errors(&self) -> &[Error] {

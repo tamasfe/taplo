@@ -10,6 +10,9 @@ use logos::{Lexer, Logos};
 use rowan::{GreenNode, GreenNodeBuilder, SmolStr, TextRange, TextSize};
 use std::convert::TryInto;
 
+#[macro_use]
+mod macros;
+
 /// A syntax error that can occur during parsing.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Error {
@@ -73,7 +76,7 @@ impl<'p> Parser<'p> {
     }
 
     fn parse(mut self) -> Parse {
-        self.with_node(ROOT, Self::parse_root).ok();
+        with_node!(self.builder, ROOT, self.parse_root()).ok();
 
         Parse {
             green_node: self.builder.finish(),
@@ -206,17 +209,6 @@ impl<'p> Parser<'p> {
         self.current_token.ok_or(())
     }
 
-    fn with_node<F: FnOnce(&mut Self) -> ParserResult<()>>(
-        &mut self,
-        kind: SyntaxKind,
-        f: F,
-    ) -> ParserResult<()> {
-        self.builder.start_node(kind.into());
-        let res = f(self);
-        self.builder.finish_node();
-        res
-    }
-
     fn parse_root(&mut self) -> ParserResult<()> {
         // Ensure we have newlines between entries
         let mut not_newline = false;
@@ -232,9 +224,13 @@ impl<'p> Parser<'p> {
                     not_newline = true;
 
                     if self.lexer.remainder().starts_with('[') {
-                        self.with_node(TABLE_ARRAY_HEADER, Self::parse_table_array_header)
+                        with_node!(
+                            self.builder,
+                            TABLE_ARRAY_HEADER,
+                            self.parse_table_array_header()
+                        )
                     } else {
-                        self.with_node(TABLE_HEADER, Self::parse_table_header)
+                        with_node!(self.builder, TABLE_HEADER, self.parse_table_header())
                     }
                 }
                 NEWLINE => {
@@ -247,7 +243,7 @@ impl<'p> Parser<'p> {
                         continue;
                     }
                     not_newline = true;
-                    self.with_node(ENTRY, Self::parse_entry)
+                    with_node!(self.builder, ENTRY, self.parse_entry())
                 }
             }
             .ok();
@@ -258,7 +254,7 @@ impl<'p> Parser<'p> {
 
     fn parse_table_header(&mut self) -> ParserResult<()> {
         self.must_token_or(BRACKET_START, r#"expected "[""#)?;
-        self.with_node(KEY, Self::parse_key)?;
+        with_node!(self.builder, KEY, self.parse_key())?;
         self.must_token_or(BRACKET_END, r#"expected "]""#)?;
 
         Ok(())
@@ -267,7 +263,7 @@ impl<'p> Parser<'p> {
     fn parse_table_array_header(&mut self) -> ParserResult<()> {
         self.must_token_or(BRACKET_START, r#"expected "[[""#)?;
         self.must_token_or(BRACKET_START, r#"expected "[[""#)?;
-        self.with_node(KEY, Self::parse_key)?;
+        with_node!(self.builder, KEY, self.parse_key())?;
         self.must_token_or(BRACKET_END, r#"expected "]]""#)?;
         self.must_token_or(BRACKET_END, r#"expected "]]""#)?;
 
@@ -275,9 +271,9 @@ impl<'p> Parser<'p> {
     }
 
     fn parse_entry(&mut self) -> ParserResult<()> {
-        self.with_node(KEY, Self::parse_key)?;
+        with_node!(self.builder, KEY, self.parse_key())?;
         self.must_token_or(EQ, r#"expected "=""#)?;
-        if self.with_node(VALUE, Self::parse_value).is_err() {
+        if with_node!(self.builder, VALUE, self.parse_value()).is_err() {
             self.error("expected value")?;
         }
 
@@ -533,8 +529,8 @@ impl<'p> Parser<'p> {
                     self.token()
                 }
             }
-            BRACKET_START => self.with_node(ARRAY, Self::parse_array),
-            BRACE_START => self.with_node(INLINE_TABLE, Self::parse_inline_table),
+            BRACKET_START => with_node!(self.builder, ARRAY, self.parse_array()),
+            BRACE_START => with_node!(self.builder, INLINE_TABLE, self.parse_inline_table()),
             _ => self.error("expected value"),
         }
     }
@@ -566,7 +562,7 @@ impl<'p> Parser<'p> {
                     if !comma_last && !first {
                         break self.error(r#"expected ",""#)?;
                     }
-                    self.with_node(ENTRY, Self::parse_entry)?;
+                    with_node!(self.builder, ENTRY, self.parse_entry())?;
                     comma_last = false;
                 }
             }
@@ -601,7 +597,7 @@ impl<'p> Parser<'p> {
                     if !comma_last && !first {
                         break self.error(r#"expected ",""#)?;
                     }
-                    self.with_node(VALUE, Self::parse_value)?;
+                    with_node!(self.builder, VALUE, self.parse_value())?;
                     comma_last = false;
                 }
             }

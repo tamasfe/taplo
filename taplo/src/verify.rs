@@ -3,7 +3,10 @@ use crate::{
     value::{Date, Value},
 };
 
-use verify::{span::Spanned, Validate, ValidateMap, ValidateSeq};
+use verify::{
+    span::{Span, Spanned},
+    Validate, ValidateMap, ValidateSeq,
+};
 
 use rowan::TextRange;
 use std::{convert::TryFrom, ops::AddAssign};
@@ -11,6 +14,21 @@ use std::{convert::TryFrom, ops::AddAssign};
 #[derive(Debug, Clone, Copy)]
 #[repr(transparent)]
 pub struct NodeSpan(pub TextRange);
+
+impl Span for NodeSpan {}
+
+impl From<TextRange> for NodeSpan {
+    fn from(r: TextRange) -> Self {
+        Self(r)
+    }
+}
+
+impl AddAssign for NodeSpan {
+    fn add_assign(&mut self, rhs: Self) {
+        // We don't need hierarchy, so just set the new span as the current one.
+        *self = rhs
+    }
+}
 
 macro_rules! impl_spanned {
     ($($ident:ident),*) => {
@@ -24,29 +42,51 @@ macro_rules! impl_spanned {
     };
 }
 
-impl From<TextRange> for NodeSpan {
-    fn from(r: TextRange) -> Self {
-        Self(r)
-    }
-}
-
-impl AddAssign for NodeSpan {
-    fn add_assign(&mut self, _rhs: Self) {
-        // No hierarchy supported.
-    }
-}
-
 impl_spanned!(
     Node,
-    RootNode,
-    TableNode,
     EntryNode,
     KeyNode,
     ValueNode,
-    ArrayNode,
     IntegerNode,
     StringNode
 );
+
+// Don't highlight the entire document
+impl Spanned for RootNode {
+    type Span = NodeSpan;
+
+    fn span(&self) -> Option<Self::Span> {
+        Some(NodeSpan(TextRange::new(0.into(), 1.into())))
+    }
+}
+
+// Only highlight the key instead of
+// everything for table headers.
+impl Spanned for TableNode {
+    type Span = NodeSpan;
+
+    fn span(&self) -> Option<Self::Span> {
+        if self.is_inline() {
+            Some(self.text_range().into())
+        } else {
+            Some(self.syntax().text_range().into())
+        }
+    }
+}
+
+// Only highlight the key instead of
+// everything for table headers.
+impl Spanned for ArrayNode {
+    type Span = NodeSpan;
+
+    fn span(&self) -> Option<Self::Span> {
+        if self.is_array_of_tables() {
+            Some(self.syntax().text_range().into())
+        } else {
+            Some(self.text_range().into())
+        }
+    }
+}
 
 impl Validate for Node {
     fn validate<V: verify::Validator<Self::Span>>(&self, validator: V) -> Result<(), V::Error> {
@@ -68,7 +108,7 @@ impl Validate for RootNode {
         let mut errs: Option<V::Error> = None;
 
         for entry in self.entries().iter() {
-            if let Err(err) = map.validate_entry(entry.key(), entry.value()) {
+            if let Err(err) = map.validate_string_entry(entry.key(), entry.value()) {
                 match &mut errs {
                     Some(errs) => {
                         *errs += err;
@@ -80,21 +120,31 @@ impl Validate for RootNode {
             }
         }
 
+        if let Err(err) = map.end() {
+            match &mut errs {
+                Some(errs) => {
+                    *errs += err;
+                }
+                None => errs = Some(err),
+            }
+        }
+
         match errs {
             Some(e) => Err(e),
-            None => map.end(),
+            None => Ok(()),
         }
     }
 }
 
 impl Validate for TableNode {
-    fn validate<V: verify::Validator<Self::Span>>(&self, validator: V) -> Result<(), V::Error> {
+    fn validate<V: verify::Validator<Self::Span>>(&self, mut validator: V) -> Result<(), V::Error> {
+        validator = validator.with_span(self.span());
         let mut map = validator.validate_map(Some(self.entries().len()))?;
 
         let mut errs: Option<V::Error> = None;
 
         for entry in self.entries().iter() {
-            if let Err(err) = map.validate_entry(entry.key(), entry.value()) {
+            if let Err(err) = map.validate_string_entry(entry.key(), entry.value()) {
                 match &mut errs {
                     Some(errs) => {
                         *errs += err;
@@ -106,9 +156,18 @@ impl Validate for TableNode {
             }
         }
 
+        if let Err(err) = map.end() {
+            match &mut errs {
+                Some(errs) => {
+                    *errs += err;
+                }
+                None => errs = Some(err),
+            }
+        }
+
         match errs {
             Some(e) => Err(e),
-            None => map.end(),
+            None => Ok(()),
         }
     }
 }
@@ -162,29 +221,7 @@ impl Validate for ValueNode {
             ValueNode::Float(v) => {
                 validator.validate_f64(Value::try_from(v.clone()).unwrap().into_f64().unwrap())
             }
-            ValueNode::Array(v) => {
-                let mut seq = validator.validate_seq(Some(v.items().len()))?;
-
-                let mut errs: Option<V::Error> = None;
-
-                for item in v.items() {
-                    if let Err(err) = seq.validate_element(item) {
-                        match &mut errs {
-                            Some(errs) => {
-                                *errs += err;
-                            }
-                            None => {
-                                errs = Some(err);
-                            }
-                        }
-                    }
-                }
-
-                match errs {
-                    Some(e) => Err(e),
-                    None => seq.end(),
-                }
-            }
+            ValueNode::Array(v) => v.validate(validator),
             ValueNode::Date(v) => {
                 let date = Value::try_from(v.clone()).unwrap().into_date().unwrap();
 
@@ -195,36 +232,16 @@ impl Validate for ValueNode {
                     Date::LocalTime(d) => validator.validate_str(&d.to_string()),
                 }
             }
-            ValueNode::Table(v) => {
-                let mut map = validator.validate_map(Some(v.entries().len()))?;
-
-                let mut errs: Option<V::Error> = None;
-
-                for entry in v.entries().iter() {
-                    if let Err(err) = map.validate_entry(entry.key(), entry.value()) {
-                        match &mut errs {
-                            Some(errs) => {
-                                *errs += err;
-                            }
-                            None => {
-                                errs = Some(err);
-                            }
-                        }
-                    }
-                }
-
-                match errs {
-                    Some(e) => Err(e),
-                    None => map.end(),
-                }
-            }
+            ValueNode::Table(v) => v.validate(validator),
             ValueNode::Empty => unimplemented!("empty node should not be used"),
         }
     }
 }
 
 impl Validate for ArrayNode {
-    fn validate<V: verify::Validator<Self::Span>>(&self, validator: V) -> Result<(), V::Error> {
+    fn validate<V: verify::Validator<Self::Span>>(&self, mut validator: V) -> Result<(), V::Error> {
+        validator = validator.with_span(self.span());
+        
         let mut seq = validator.validate_seq(Some(self.items().len()))?;
 
         let mut errs: Option<V::Error> = None;
@@ -242,9 +259,18 @@ impl Validate for ArrayNode {
             }
         }
 
+        if let Err(err) = seq.end() {
+            match &mut errs {
+                Some(errs) => {
+                    *errs += err;
+                }
+                None => errs = Some(err),
+            }
+        }
+
         match errs {
             Some(e) => Err(e),
-            None => seq.end(),
+            None => Ok(()),
         }
     }
 }

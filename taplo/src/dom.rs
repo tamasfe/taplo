@@ -448,6 +448,10 @@ impl TableNode {
 
         range
     }
+
+    pub fn syntax(&self) -> SyntaxNode {
+        self.syntax.clone()
+    }
 }
 
 impl Cast for TableNode {
@@ -825,6 +829,14 @@ impl ArrayNode {
         }
 
         range
+    }
+
+    pub fn is_array_of_tables(&self) -> bool {
+        self.tables
+    }
+
+    pub fn syntax(&self) -> SyntaxNode {
+        self.syntax.clone()
     }
 }
 

@@ -57,7 +57,7 @@ assert_eq!(root_node.errors().len(), 1);
 mod serde;
 
 #[cfg(feature = "verify")]
-mod verify;
+pub mod verify;
 
 pub mod dom;
 pub mod formatter;

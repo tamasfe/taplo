@@ -14,6 +14,7 @@ pub type CharacterRange = std::ops::Range<CharacterOffset>;
 
 /// A mapper that translates offset:length bytes to
 /// col:row characters.
+#[derive(Debug, Clone)]
 pub struct Mapper {
     /// These are characters, not byte offsets.
     lines: Vec<CharacterRange>,

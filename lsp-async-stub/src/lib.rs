@@ -33,7 +33,7 @@ impl Cancellation {
     pub fn token(&self) -> CancelToken {
         CancelToken {
             cancelled: self.cancelled.clone(),
-            waker_set: AtomicBool::new(false),
+            waker_set: Arc::new(AtomicBool::new(false)),
             waker: self.waker.clone(),
         }
     }
@@ -47,10 +47,10 @@ impl Cancellation {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CancelToken {
     cancelled: Arc<AtomicBool>,
-    waker_set: AtomicBool,
+    waker_set: Arc<AtomicBool>,
     waker: Arc<Mutex<Option<Waker>>>,
 }
 
@@ -156,7 +156,7 @@ impl ResponseWriterBuffer {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Context<W: Clone + Send + Sync> {
     inner: Arc<AsyncMutex<Inner<W>>>,
     cancel_token: CancelToken,

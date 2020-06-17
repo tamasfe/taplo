@@ -49,6 +49,10 @@ impl Mapper {
 
         if line_start_char < total_chars + 1 {
             lines.push(line_start_char..total_chars as u64 + 1);
+        } else {
+            // last empty line
+            let last_mapping = mapping.last().map(|v| *v).unwrap_or_default();
+            lines.push(last_mapping..last_mapping + 1);
         }
 
         Self { lines, mapping }
@@ -58,10 +62,18 @@ impl Mapper {
         &self.lines
     }
 
+    pub fn mapping(&self) -> &[CharacterOffset] {
+        &self.mapping
+    }
+
     pub fn offset(&self, position: Position) -> Option<TextSize> {
         self.lines().get(position.line as usize).and_then(|l| {
             self.mapping.iter().enumerate().find_map(|(i, p)| {
-                if *p == position.character - l.start {
+                if *p
+                    == (l.start + position.character)
+                        .checked_sub(1) // because positions are inclusive
+                        .unwrap_or_default()
+                {
                     Some(TextSize::from(i as u32))
                 } else {
                     None

@@ -5,7 +5,7 @@ use crate::{
 
 use verify::{
     span::{Span, Spanned},
-    Validate, ValidateMap, ValidateSeq,
+    Error, Validate, ValidateMap, ValidateSeq,
 };
 
 use rowan::TextRange;
@@ -42,14 +42,7 @@ macro_rules! impl_spanned {
     };
 }
 
-impl_spanned!(
-    Node,
-    EntryNode,
-    KeyNode,
-    ValueNode,
-    IntegerNode,
-    StringNode
-);
+impl_spanned!(Node, EntryNode, KeyNode, ValueNode, IntegerNode, StringNode);
 
 // Don't highlight the entire document
 impl Spanned for RootNode {
@@ -175,21 +168,31 @@ impl Validate for TableNode {
 impl Validate for KeyNode {
     fn validate<V: verify::Validator<Self::Span>>(&self, validator: V) -> Result<(), V::Error> {
         // We assume that there are no dotted keys anymore at this point.
-        validator.validate_str(self.keys_str().next().unwrap())
+        validator.validate_str(
+            self.keys_str()
+                .next()
+                .ok_or_else(|| V::Error::custom("no keys"))?,
+        )
     }
 }
 
 impl Validate for ValueNode {
     fn validate<V: verify::Validator<Self::Span>>(&self, validator: V) -> Result<(), V::Error> {
         match self {
-            ValueNode::Bool(v) => {
-                validator.validate_bool(Value::try_from(v.clone()).unwrap().into_bool().unwrap())
-            }
-            ValueNode::String(v) => {
-                validator.validate_str(&Value::try_from(v.clone()).unwrap().into_string().unwrap())
-            }
+            ValueNode::Bool(v) => validator.validate_bool(
+                Value::try_from(v.clone())
+                    .map_err(|err| V::Error::custom(err.to_string()))?
+                    .into_bool()
+                    .ok_or_else(|| V::Error::custom("invalid value".to_string()))?,
+            ),
+            ValueNode::String(v) => validator.validate_str(
+                &Value::try_from(v.clone())
+                    .map_err(|err| V::Error::custom(err.to_string()))?
+                    .into_string()
+                    .ok_or_else(|| V::Error::custom("invalid value".to_string()))?,
+            ),
             ValueNode::Integer(v) => {
-                match Value::try_from(v.clone()).unwrap() {
+                match Value::try_from(v.clone()).map_err(|err| V::Error::custom(err.to_string()))? {
                     // We try to use the smallest type,
                     // since some validators have size constraints,
                     // but we store everything as 64bits.
@@ -218,12 +221,18 @@ impl Validate for ValueNode {
                     _ => panic!("invalid value"),
                 }
             }
-            ValueNode::Float(v) => {
-                validator.validate_f64(Value::try_from(v.clone()).unwrap().into_f64().unwrap())
-            }
+            ValueNode::Float(v) => validator.validate_f64(
+                Value::try_from(v.clone())
+                    .map_err(|err| V::Error::custom(err.to_string()))?
+                    .into_f64()
+                    .ok_or_else(|| V::Error::custom("invalid value".to_string()))?,
+            ),
             ValueNode::Array(v) => v.validate(validator),
             ValueNode::Date(v) => {
-                let date = Value::try_from(v.clone()).unwrap().into_date().unwrap();
+                let date = Value::try_from(v.clone())
+                    .map_err(|err| V::Error::custom(err.to_string()))?
+                    .into_date()
+                    .ok_or_else(|| V::Error::custom("invalid value".to_string()))?;
 
                 match date {
                     Date::OffsetDateTime(d) => validator.validate_str(&d.to_rfc3339()),
@@ -233,7 +242,7 @@ impl Validate for ValueNode {
                 }
             }
             ValueNode::Table(v) => v.validate(validator),
-            ValueNode::Empty => unimplemented!("empty node should not be used"),
+            ValueNode::Empty => Err(V::Error::custom("empty value")),
         }
     }
 }
@@ -241,7 +250,7 @@ impl Validate for ValueNode {
 impl Validate for ArrayNode {
     fn validate<V: verify::Validator<Self::Span>>(&self, mut validator: V) -> Result<(), V::Error> {
         validator = validator.with_span(self.span());
-        
+
         let mut seq = validator.validate_seq(Some(self.items().len()))?;
 
         let mut errs: Option<V::Error> = None;

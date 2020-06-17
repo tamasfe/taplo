@@ -19,7 +19,7 @@ use crate::{
     util::{unescape, StringExt},
 };
 use indexmap::IndexMap;
-use rowan::TextRange;
+use rowan::{TextRange, TextSize};
 use std::{hash::Hash, iter::FromIterator, mem, rc::Rc};
 
 #[macro_use]
@@ -162,9 +162,9 @@ impl Cast for RootNode {
         }
 
         // Syntax node of the root.
-        let n = syntax.into_node().unwrap();
+        let syntax_node = syntax.into_node().unwrap();
 
-        let child_count = n.children_with_tokens().count();
+        let child_count = syntax_node.children_with_tokens().count();
 
         // All the entries in the TOML document.
         // The key is their full path, including all parent tables.
@@ -186,7 +186,7 @@ impl Cast for RootNode {
 
         let mut errors = Vec::new();
 
-        for child in n.children_with_tokens() {
+        for child in syntax_node.children_with_tokens() {
             match child.kind() {
                 TABLE_HEADER | TABLE_ARRAY_HEADER => {
                     let t = match TableNode::cast(child) {
@@ -245,6 +245,7 @@ impl Cast for RootNode {
                                     syntax: t.syntax.clone(),
                                     key: key.clone(),
                                     value: ValueNode::Table(t),
+                                    next_entry: None,
                                 },
                             );
                         }
@@ -255,6 +256,7 @@ impl Cast for RootNode {
                                 syntax: t.syntax.clone(),
                                 key: key.clone(),
                                 value: ValueNode::Table(t),
+                                next_entry: None,
                             },
                         );
                     }
@@ -390,10 +392,12 @@ impl Cast for RootNode {
             final_entries.normalize();
         }
 
+        final_entries.set_table_spans(Some(syntax_node.text_range().end()));
+
         Some(Self {
             entries: final_entries,
             errors,
-            syntax: n,
+            syntax: syntax_node,
         })
     }
 }
@@ -411,6 +415,11 @@ pub struct TableNode {
     /// These are actually not part of the parsed
     /// source.
     pseudo: bool,
+
+    // Offset of the next entry if any,
+    // this is needed because tables span
+    // longer than their actual syntax in TOML.
+    next_entry: Option<TextSize>,
 
     entries: Entries,
 }
@@ -446,6 +455,10 @@ impl TableNode {
             range = range.cover(r)
         }
 
+        if let Some(r) = self.next_entry.as_ref() {
+            range = range.cover_offset(*r);
+        }
+
         range
     }
 
@@ -468,6 +481,7 @@ impl Cast for TableNode {
 
                 Some(Self {
                     entries: Entries::default(),
+                    next_entry: None,
                     pseudo: false,
                     array: n.kind() == TABLE_ARRAY_HEADER,
                     syntax: n,
@@ -481,6 +495,7 @@ impl Cast for TableNode {
                     .children_with_tokens()
                     .filter_map(Cast::cast)
                     .collect(),
+                next_entry: None,
                 array: false,
                 pseudo: false,
                 syntax: syntax.into_node().unwrap(),
@@ -517,6 +532,32 @@ impl Entries {
             }
         }
         range
+    }
+
+    // Top level tables and arrays of tables
+    // need to span across whitespace as well.
+    fn set_table_spans(&mut self, mut end: Option<TextSize>) {
+        for entry in self.0.iter_mut().rev() {
+            if let TABLE_ARRAY_HEADER | TABLE_HEADER = entry.kind() {
+                if let Some(last) = end.take() {
+                    match &mut entry.value {
+                        ValueNode::Array(arr) => {
+                            arr.next_entry = Some(last);
+                        }
+                        ValueNode::Table(t) => {
+                            t.next_entry = Some(last);
+                        }
+                        _ => panic!("invalid syntax kind"),
+                    }
+                    entry.next_entry = Some(last);
+                }
+                end = Some(entry.text_range().start());
+
+                if let ValueNode::Table(t) = &mut entry.value {
+                    t.entries.set_table_spans(None)
+                }
+            }
+        }
     }
 
     fn from_map(map: IndexMap<KeyNode, EntryNode>) -> Self {
@@ -581,6 +622,7 @@ impl Entries {
                             ValueNode::Array(ArrayNode {
                                 syntax: t.syntax.clone(),
                                 items: vec![ValueNode::Table(t)],
+                                next_entry: None,
                                 tables: true,
                             })
                         } else {
@@ -765,6 +807,7 @@ impl Entries {
                 old_entry.key = common_prefix;
                 old_entry.value = ValueNode::Table(TableNode {
                     syntax: old_entry.syntax.clone(),
+                    next_entry: None,
                     array: false,
                     pseudo: true,
                     entries: Entries(vec![a, b]),
@@ -810,6 +853,11 @@ pub struct ArrayNode {
     syntax: SyntaxNode,
     tables: bool,
     items: Vec<ValueNode>,
+
+    // Offset of the next entry if any,
+    // this is needed because tables span
+    // longer than their actual syntax in TOML.
+    next_entry: Option<TextSize>,
 }
 
 impl ArrayNode {
@@ -826,6 +874,10 @@ impl ArrayNode {
 
         for item in &self.items {
             range = range.cover(item.text_range())
+        }
+
+        if let Some(r) = self.next_entry.as_ref() {
+            range = range.cover_offset(*r);
         }
 
         range
@@ -851,11 +903,13 @@ impl Cast for ArrayNode {
                     .children_with_tokens()
                     .filter_map(Cast::cast)
                     .collect(),
+                next_entry: None,
                 tables: false,
                 syntax: syntax.into_node().unwrap(),
             }),
             TABLE_ARRAY_HEADER => Some(Self {
                 items: Vec::new(),
+                next_entry: None,
                 tables: false,
                 syntax: syntax.into_node().unwrap(),
             }),
@@ -869,6 +923,10 @@ pub struct EntryNode {
     syntax: SyntaxNode,
     key: KeyNode,
     value: ValueNode,
+    // Offset of the next entry if any,
+    // this is needed because tables span
+    // longer than their actual syntax in TOML.
+    next_entry: Option<TextSize>,
 }
 
 impl EntryNode {
@@ -901,6 +959,7 @@ impl EntryNode {
             let inner_entry = EntryNode {
                 syntax: self.syntax.clone(),
                 key: inner_key.clone(),
+                next_entry: None,
                 value,
             };
 
@@ -911,6 +970,7 @@ impl EntryNode {
             self.value = ValueNode::Table(TableNode {
                 syntax: inner_key.syntax.clone(),
                 array: is_array_table,
+                next_entry: None,
                 pseudo: true,
                 entries,
             });
@@ -919,7 +979,12 @@ impl EntryNode {
     }
 
     pub fn text_range(&self) -> TextRange {
-        self.key().text_range().cover(self.value.text_range())
+        let r = self.key().text_range().cover(self.value.text_range());
+
+        match self.next_entry {
+            Some(next_entry) => r.cover_offset(next_entry),
+            None => r,
+        }
     }
 }
 
@@ -949,6 +1014,7 @@ impl Cast for EntryNode {
             Some(Self {
                 key: key.unwrap(),
                 value: val.unwrap(),
+                next_entry: None,
                 syntax: element.into_node().unwrap(),
             })
         }

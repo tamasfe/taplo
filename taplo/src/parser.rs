@@ -51,6 +51,14 @@ pub fn parse(source: &str) -> Parse {
 struct Parser<'p> {
     skip_whitespace: bool,
     current_token: Option<SyntaxKind>,
+
+    // These tokens are not consumed on errors.
+    //
+    // The syntax error is still reported,
+    // but the the surrounding context can still
+    // be parsed.
+    error_whitelist: u16,
+
     lexer: Lexer<'p, SyntaxKind>,
     builder: GreenNodeBuilder<'p>,
     errors: Vec<Error>,
@@ -69,6 +77,7 @@ impl<'p> Parser<'p> {
         Parser {
             current_token: None,
             skip_whitespace: true,
+            error_whitelist: 0,
             lexer: SyntaxKind::lexer(source),
             builder: Default::default(),
             errors: Default::default(),
@@ -76,7 +85,7 @@ impl<'p> Parser<'p> {
     }
 
     fn parse(mut self) -> Parse {
-        with_node!(self.builder, ROOT, self.parse_root()).ok();
+        let _ = with_node!(self.builder, ROOT, self.parse_root());
 
         Parse {
             green_node: self.builder.finish(),
@@ -93,7 +102,24 @@ impl<'p> Parser<'p> {
             ),
             message: message.into(),
         });
-        self.token_as(ERROR).ok();
+        if let Some(t) = self.current_token {
+            if !self.whitelisted(t) {
+                self.token_as(ERROR).ok();
+            }
+        }
+        Err(())
+    }
+
+    // report error without consuming the current the token
+    fn report_error(&mut self, message: &str) -> ParserResult<()> {
+        let span = self.lexer.span();
+        self.add_error(&Error {
+            range: TextRange::new(
+                TextSize::from(span.start as u32),
+                TextSize::from(span.end as u32),
+            ),
+            message: message.into(),
+        });
         Err(())
     }
 
@@ -105,6 +131,21 @@ impl<'p> Parser<'p> {
         }
 
         self.errors.push(e.clone());
+    }
+
+    #[inline]
+    fn whitelist_token(&mut self, token: SyntaxKind) {
+        self.error_whitelist |= token as u16;
+    }
+
+    #[inline]
+    fn blacklist_token(&mut self, token: SyntaxKind) {
+        self.error_whitelist &= !(token as u16);
+    }
+
+    #[inline]
+    fn whitelisted(&self, token: SyntaxKind) -> bool {
+        self.error_whitelist & token as u16 != 0
     }
 
     fn insert_token(&mut self, kind: SyntaxKind, s: SmolStr) {
@@ -217,36 +258,43 @@ impl<'p> Parser<'p> {
             match token {
                 BRACKET_START => {
                     if not_newline {
-                        self.error("expected new line").ok();
+                        let _ = self.error("expected new line");
                         continue;
                     }
 
                     not_newline = true;
 
                     if self.lexer.remainder().starts_with('[') {
-                        with_node!(
+                        let _ = with_node!(
                             self.builder,
                             TABLE_ARRAY_HEADER,
                             self.parse_table_array_header()
-                        )
+                        );
                     } else {
-                        with_node!(self.builder, TABLE_HEADER, self.parse_table_header())
+                        let _ = whitelisted!(
+                            self,
+                            NEWLINE,
+                            with_node!(self.builder, TABLE_HEADER, self.parse_table_header())
+                        );
                     }
                 }
                 NEWLINE => {
                     not_newline = false;
-                    self.token()
+                    let _ = self.token();
                 }
                 _ => {
                     if not_newline {
-                        self.error("expected new line").ok();
+                        let _ = self.error("expected new line");
                         continue;
                     }
                     not_newline = true;
-                    with_node!(self.builder, ENTRY, self.parse_entry())
+                    let _ = whitelisted!(
+                        self,
+                        NEWLINE,
+                        with_node!(self.builder, ENTRY, self.parse_entry())
+                    );
                 }
             }
-            .ok();
         }
 
         Ok(())
@@ -254,7 +302,7 @@ impl<'p> Parser<'p> {
 
     fn parse_table_header(&mut self) -> ParserResult<()> {
         self.must_token_or(BRACKET_START, r#"expected "[""#)?;
-        with_node!(self.builder, KEY, self.parse_key())?;
+        let _ = with_node!(self.builder, KEY, self.parse_key());
         self.must_token_or(BRACKET_END, r#"expected "]""#)?;
 
         Ok(())
@@ -273,9 +321,7 @@ impl<'p> Parser<'p> {
     fn parse_entry(&mut self) -> ParserResult<()> {
         with_node!(self.builder, KEY, self.parse_key())?;
         self.must_token_or(EQ, r#"expected "=""#)?;
-        if with_node!(self.builder, VALUE, self.parse_value()).is_err() {
-            self.error("expected value")?;
-        }
+        with_node!(self.builder, VALUE, self.parse_value())?;
 
         Ok(())
     }
@@ -403,15 +449,46 @@ impl<'p> Parser<'p> {
                     Ok(())
                 }
             }
-            _ => Err(()),
+            _ => self.error("expected identifier"),
         }
     }
 
     fn parse_value(&mut self) -> ParserResult<()> {
-        let t = self.get_token()?;
+        let t = match self.get_token() {
+            Ok(t) => t,
+            Err(_) => return self.error("expected value"),
+        };
 
         match t {
-            INTEGER_HEX | INTEGER_OCT | INTEGER_BIN | FLOAT | BOOL | DATE => self.token(),
+            BOOL | DATE => self.token(),
+            INTEGER_BIN => {
+                if !check_underscores(self.lexer.slice(), 2) {
+                    self.error("invalid underscores")
+                } else {
+                    self.token()
+                }
+            }
+            INTEGER_HEX => {
+                if !check_underscores(self.lexer.slice(), 16) {
+                    self.error("invalid underscores")
+                } else {
+                    self.token()
+                }
+            }
+            INTEGER_OCT => {
+                if !check_underscores(self.lexer.slice(), 8) {
+                    self.error("invalid underscores")
+                } else {
+                    self.token()
+                }
+            }
+            FLOAT => {
+                if !check_underscores(self.lexer.slice(), 10) {
+                    self.error("invalid underscores")
+                } else {
+                    self.token()
+                }
+            }
             STRING_LITERAL => {
                 match allowed_chars::string_literal(self.lexer.slice()) {
                     Ok(_) => {}
@@ -525,6 +602,8 @@ impl<'p> Parser<'p> {
                     || (self.lexer.slice().starts_with("-0") && self.lexer.slice() != "-0")
                 {
                     self.error("zero-padded integers are not allowed")
+                } else if !check_underscores(self.lexer.slice(), 10) {
+                    self.error("invalid underscores")
                 } else {
                     self.token()
                 }
@@ -546,23 +625,33 @@ impl<'p> Parser<'p> {
             match t {
                 BRACE_END => {
                     if comma_last {
-                        break self.error("expected value")?;
+                        // it is still reported as a syntax error,
+                        // but we can still analyze it as if it was a valid
+                        // table.
+                        let _ = self.report_error("expected value, trailing comma is not allowed");
                     }
                     break self.token()?;
                 }
-                NEWLINE => break self.error("newline is not allowed in an inline table")?,
+                NEWLINE => {
+                    let _ = self.error("newline is not allowed in an inline table");
+                }
                 COMMA => {
                     if first {
-                        break self.error(r#"unexpected ",""#)?;
+                        let _ = self.error(r#"unexpected ",""#);
+                    } else {
+                        self.token()?;
                     }
-                    self.token()?;
                     comma_last = true;
                 }
                 _ => {
                     if !comma_last && !first {
-                        break self.error(r#"expected ",""#)?;
+                        let _ = self.error(r#"expected ",""#);
                     }
-                    with_node!(self.builder, ENTRY, self.parse_entry())?;
+                    let _ = whitelisted!(
+                        self,
+                        COMMA,
+                        with_node!(self.builder, ENTRY, self.parse_entry())
+                    );
                     comma_last = false;
                 }
             }
@@ -588,16 +677,21 @@ impl<'p> Parser<'p> {
                 }
                 COMMA => {
                     if first {
-                        break self.error(r#"unexpected ",""#)?;
+                        let _ = self.error(r#"unexpected ",""#);
+                    } else {
+                        self.token()?;
                     }
-                    self.token()?;
                     comma_last = true;
                 }
                 _ => {
                     if !comma_last && !first {
-                        break self.error(r#"expected ",""#)?;
+                        let _ = self.error(r#"expected ",""#);
                     }
-                    with_node!(self.builder, VALUE, self.parse_value())?;
+                    let _ = whitelisted!(
+                        self,
+                        COMMA,
+                        with_node!(self.builder, VALUE, self.parse_value())
+                    );
                     comma_last = false;
                 }
             }
@@ -606,6 +700,28 @@ impl<'p> Parser<'p> {
         }
         Ok(())
     }
+}
+
+fn check_underscores(s: &str, radix: u32) -> bool {
+    if s.starts_with('_') || s.ends_with('_') {
+        return false;
+    }
+
+    let mut last_char = 0 as char;
+
+    for c in s.chars() {
+        if c == '_' {
+            if !last_char.is_digit(radix) {
+                return false;
+            }
+        }
+        if !c.is_digit(radix) && last_char == '_' {
+            return false;
+        }
+        last_char = c;
+    }
+
+    true
 }
 
 /// The final results of a parsing.

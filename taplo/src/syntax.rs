@@ -54,7 +54,7 @@ pub enum SyntaxKind {
     #[regex(r"0b(0|1|_)+")]
     INTEGER_BIN,
 
-    #[regex(r"[-+]?([0-9_]+\.?[0-9_]*([eE][+-]?[0-9_]*)?|nan|inf)", priority = 2)]
+    #[regex(r"[-+]?([0-9_]+(\.[0-9_]+)?([eE][+-]?[0-9_]+)?|nan|inf)", priority = 2)]
     FLOAT,
 
     #[regex(r"true|false")]

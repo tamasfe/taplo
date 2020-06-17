@@ -1,4 +1,4 @@
-use lsp_types::{Range, SemanticToken, SemanticTokenType};
+use lsp_types::{Range, SemanticToken, SemanticTokenModifier, SemanticTokenType};
 use taplo::{
     syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
     util::coords::{relative_range, Mapper, SplitLines},
@@ -8,31 +8,38 @@ use taplo::{
 #[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum TokenType {
-    Operator = 0,
-    Function,
+    Function = 0,
     Comment,
     Keyword,
     Namespace,
-    Struct,
-    Type,
     String,
     Number,
     Variable,
+    TomlArray,
 }
 
 impl TokenType {
     pub const LEGEND: &'static [SemanticTokenType] = &[
-        SemanticTokenType::OPERATOR,
         SemanticTokenType::FUNCTION,
         SemanticTokenType::COMMENT,
         SemanticTokenType::KEYWORD,
         SemanticTokenType::NAMESPACE,
-        SemanticTokenType::STRUCT,
-        SemanticTokenType::TYPE,
         SemanticTokenType::STRING,
         SemanticTokenType::NUMBER,
         SemanticTokenType::VARIABLE,
+        SemanticTokenType::new("tomlArray"),
     ];
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Copy, Clone)]
+#[repr(u32)]
+pub enum TokenModifier {
+    ReadOnly,
+}
+
+impl TokenModifier {
+    pub const MODIFIERS: &'static [SemanticTokenModifier] = &[SemanticTokenModifier::READONLY];
 }
 
 pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken> {
@@ -50,7 +57,7 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                     if let Some(p) = parent_node.parent() {
                         match p.kind() {
                             TABLE_HEADER => ty = TokenType::Namespace,
-                            TABLE_ARRAY_HEADER => ty = TokenType::Struct,
+                            TABLE_ARRAY_HEADER => ty = TokenType::TomlArray,
                             _ => {}
                         }
                     }
@@ -76,20 +83,20 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                         .unwrap_or(false);
 
                     if is_array_key {
-                        ty = TokenType::Struct;
+                        ty = TokenType::TomlArray;
                     }
 
-                    builder.add_token(&token, ty);
+                    builder.add_token(&token, ty, &[]);
                 }
-                COMMENT => builder.add_token(&token, TokenType::Comment),
+                COMMENT => builder.add_token(&token, TokenType::Comment, &[]),
                 FLOAT | INTEGER | INTEGER_BIN | INTEGER_HEX | INTEGER_OCT => {
-                    builder.add_token(&token, TokenType::Number)
+                    builder.add_token(&token, TokenType::Number, &[])
                 }
                 STRING | MULTI_LINE_STRING | STRING_LITERAL | MULTI_LINE_STRING_LITERAL => {
-                    builder.add_token(&token, TokenType::String)
+                    builder.add_token(&token, TokenType::String, &[])
                 }
-                DATE => builder.add_token(&token, TokenType::Function),
-                BOOL => builder.add_token(&token, TokenType::Keyword),
+                DATE => builder.add_token(&token, TokenType::Function, &[]),
+                BOOL => builder.add_token(&token, TokenType::Keyword, &[]),
                 _ => {}
             },
         }
@@ -113,7 +120,12 @@ impl<'b> SemanticTokensBuilder<'b> {
         }
     }
 
-    fn add_token(&mut self, token: &SyntaxToken, ty: TokenType) {
+    fn add_token(
+        &mut self,
+        token: &SyntaxToken,
+        ty: TokenType,
+        modifiers: &[SemanticTokenModifier],
+    ) {
         let range = self.mapper.range(token.text_range()).unwrap();
 
         if range.is_single_line() {
@@ -124,7 +136,13 @@ impl<'b> SemanticTokensBuilder<'b> {
                 delta_start: relative.start.character as u32,
                 length: (relative.end.character - relative.start.character) as u32,
                 token_type: ty as u32,
-                token_modifiers_bitset: 0,
+                token_modifiers_bitset: modifiers.iter().enumerate().fold(
+                    0,
+                    |mut total, (i, _)| {
+                        total += 1 << i;
+                        total
+                    },
+                ),
             });
 
             self.last_range = Some(range);

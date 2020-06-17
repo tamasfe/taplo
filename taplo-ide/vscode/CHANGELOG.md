@@ -1,5 +1,12 @@
 # Change Log
 
+## next
+
+### Fixes
+- Fixed incorrect parsing of floats
+- Fixed some incorrectly accepted table headers
+- Incorrect underscores in numbers are no longer accepted
+
 ## 0.5.0
 
 #### New Features

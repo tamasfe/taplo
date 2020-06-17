@@ -2,14 +2,16 @@
 
 use async_trait::async_trait;
 use futures::{lock::Mutex as AsyncMutex, Sink};
+use indexmap::IndexMap;
 use lsp_async_stub::{
     rpc::{self, Message},
     NotificationHandler, RequestHandler, ResponseWriter, Server,
 };
-use lsp_types::{notification, request};
+use lsp_types::{notification, request, Url};
 use once_cell::sync::Lazy;
+use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, io, sync::Arc, task};
+use std::{collections::HashMap, hash::Hash, io, sync::Arc, task};
 use taplo::{parser::Parse, util::coords::Mapper};
 use task::Poll;
 use wasm_bindgen::prelude::*;
@@ -39,19 +41,74 @@ macro_rules! log_debug {
     };
 }
 
-mod request_ext;
 mod handlers;
+mod request_ext;
+mod schema;
 mod utils;
 
+#[derive(Clone)]
 struct Document {
     parse: Parse,
     mapper: Mapper,
 }
 
+/// Regex with hash and Eq
+struct HashRegex(pub regex::Regex);
+
+impl Hash for HashRegex {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.as_str().hash(state)
+    }
+}
+
+impl PartialEq for HashRegex {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.as_str() == other.0.as_str()
+    }
+}
+
+impl Eq for HashRegex {}
+
+impl From<regex::Regex> for HashRegex {
+    fn from(re: regex::Regex) -> Self {
+        Self(re)
+    }
+}
+
 #[derive(Default)]
 pub struct WorldState {
     documents: HashMap<lsp_types::Url, Document>,
+    schemas: HashMap<String, RootSchema>,
+    schema_associations: IndexMap<HashRegex, String>,
     configuration: Configuration,
+}
+
+impl WorldState {
+    fn get_schema_name(&self, uri: &Url) -> Option<&str> {
+        let s = uri.as_str();
+
+        for (re, name) in self.schema_associations.iter() {
+            if re.0.is_match(s) {
+                return Some(name);
+            }
+        }
+
+        None
+    }
+
+    fn get_schema(&self, name: &str) -> Option<&RootSchema> {
+        self.schemas.get(name)
+    }
+
+    fn get_schema_by_uri(&self, uri: &Url) -> Option<&RootSchema> {
+        for (re, name) in &self.schema_associations {
+            if re.0.is_match(uri.as_str()) {
+                return self.get_schema(name);
+            }
+        }
+        
+        None
+    }
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -99,13 +156,14 @@ extern {
 }
 
 #[wasm_bindgen]
-pub fn init() {
+pub async fn init() {
     utils::set_panic_hook();
+    schema::register_built_in_schemas(&mut *WORLD.lock().await);
 }
 
 #[wasm_bindgen]
 pub fn message(message: JsValue) {
-    log_debug!("message: {:?}", message);
+    // log_debug!("message: {:?}", message);
     spawn_local(SERVER.handle_message(WORLD.clone(), message.into_serde().unwrap(), ResWriter));
 }
 
@@ -146,11 +204,14 @@ static SERVER: Lazy<Server<World>> = Lazy::new(|| {
         .handler(RequestHandler::<request_ext::TomlToJsonRequest, _, _>::new(
             handlers::toml_to_json,
         ))
-        .handler(RequestHandler::<request_ext::LineMappingsRequest, _, _>::new(
-            handlers::line_mappings,
-        ))
+        .handler(
+            RequestHandler::<request_ext::LineMappingsRequest, _, _>::new(handlers::line_mappings),
+        )
         .handler(RequestHandler::<request_ext::SyntaxTreeRequest, _, _>::new(
             handlers::syntax_tree,
+        ))
+        .handler(RequestHandler::<request::Completion, _, _>::new(
+            handlers::completion,
         ))
         .request_writer(RequestWriter)
         .build()
@@ -197,7 +258,7 @@ impl ResponseWriter for ResWriter {
         mut self,
         response: &rpc::Response<R>,
     ) -> Result<(), io::Error> {
-        log_debug!("response: {}", serde_json::to_string(&response).unwrap());
+        // log_debug!("response: {}", serde_json::to_string(&response).unwrap());
         send_message(JsValue::from_serde(response).unwrap());
         Ok(())
     }

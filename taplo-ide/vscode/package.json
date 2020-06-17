@@ -109,6 +109,22 @@
 				"enablement": "editorLangId == toml && config.evenBetterToml.debug"
 			}
 		],
+		"semanticTokenTypes": [
+			{
+				"id": "tomlArray",
+				"superType": "keyword",
+				"description": "Token for array keys."
+			}
+		],
+		"semanticTokenScopes": [
+			{
+				"scopes": {
+					"tomlArray": [
+						"keyword.other"
+					]
+				}
+			}
+		],
 		"configuration": {
 			"title": "Even Better TOML",
 			"properties": {

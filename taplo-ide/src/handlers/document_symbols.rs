@@ -128,17 +128,6 @@ fn symbols_for_value(
             },
         }),
         ValueNode::Table(t) => {
-            let mut child_symbols = Vec::with_capacity(t.entries().len());
-
-            for c in t.entries().iter() {
-                symbols_for_value(
-                    KeyOrString::Key(c.key()),
-                    c.value(),
-                    mapper,
-                    &mut child_symbols,
-                );
-            }
-
             symbols.push(DocumentSymbol {
                 name,
                 kind: SymbolKind::Object,

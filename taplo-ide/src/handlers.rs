@@ -2,10 +2,12 @@ use crate::request_ext::*;
 use crate::{Document, World};
 use lsp_async_stub::{rpc::Error, Context, Params, RequestWriter};
 use lsp_types::*;
+use schemars::schema::RootSchema;
 use std::convert::TryFrom;
 use taplo::{formatter, util::coords::Mapper};
 use wasm_bindgen_futures::spawn_local;
 
+mod completion;
 mod diagnostics;
 mod document_symbols;
 mod folding_ranges;
@@ -30,7 +32,7 @@ pub(crate) async fn initialize(
                     },
                     legend: SemanticTokensLegend {
                         token_types: semantic_tokens::TokenType::LEGEND.into(),
-                        token_modifiers: Vec::new(),
+                        token_modifiers: semantic_tokens::TokenModifier::MODIFIERS.into(),
                     },
                     range_provider: None,
                     document_provider: Some(SemanticTokensDocumentProvider::Bool(true)),
@@ -39,6 +41,10 @@ pub(crate) async fn initialize(
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             document_symbol_provider: Some(true),
             document_formatting_provider: Some(true),
+            completion_provider: Some(CompletionOptions {
+                resolve_provider: Some(true),
+                ..Default::default()
+            }),
             ..Default::default()
         },
         server_info: Some(ServerInfo {
@@ -87,14 +93,8 @@ pub(crate) async fn document_open(
     };
 
     let parse = taplo::parser::parse(&p.text_document.text);
-
     let mapper = Mapper::new(&p.text_document.text);
-
-    let diag = PublishDiagnosticsParams {
-        uri: p.text_document.uri.clone(),
-        diagnostics: diagnostics::collect_diagnostics(&p.text_document.uri, &parse, &mapper),
-        version: None,
-    };
+    let uri = p.text_document.uri.clone();
 
     context
         .world()
@@ -103,10 +103,7 @@ pub(crate) async fn document_open(
         .documents
         .insert(p.text_document.uri, Document { parse, mapper });
 
-    context
-        .write_notification::<notification::PublishDiagnostics, _>(Some(diag))
-        .await
-        .ok();
+    spawn_local(diagnostics::publish_diagnostics(context.clone(), uri));
 }
 
 pub(crate) async fn document_change(
@@ -126,12 +123,7 @@ pub(crate) async fn document_change(
 
     let parse = taplo::parser::parse(&change.text);
     let mapper = Mapper::new(&change.text);
-
-    let diag = PublishDiagnosticsParams {
-        uri: p.text_document.uri.clone(),
-        diagnostics: diagnostics::collect_diagnostics(&p.text_document.uri, &parse, &mapper),
-        version: None,
-    };
+    let uri = p.text_document.uri.clone();
 
     context
         .world()
@@ -140,10 +132,7 @@ pub(crate) async fn document_change(
         .documents
         .insert(p.text_document.uri, Document { parse, mapper });
 
-    context
-        .write_notification::<notification::PublishDiagnostics, _>(Some(diag))
-        .await
-        .ok();
+    spawn_local(diagnostics::publish_diagnostics(context.clone(), uri));
 }
 
 pub(crate) async fn semantic_tokens(
@@ -271,6 +260,35 @@ pub(crate) async fn format(
     }]))
 }
 
+pub(crate) async fn completion(
+    mut context: Context<World>,
+    params: Params<CompletionParams>,
+) -> Result<Option<CompletionResponse>, Error> {
+    let p = params.required()?;
+
+    let uri = p.text_document_position.text_document.uri;
+    let pos = p.text_document_position.position;
+
+    let w = context.world().lock().await;
+
+    let doc: Document = match w.documents.get(&uri) {
+        Some(d) => d.clone(),
+        None => return Err(Error::new("document not found")),
+    };
+
+    let schema: RootSchema = match w.get_schema_by_uri(&uri) {
+        Some(s) => s.clone(),
+        None => return Err(Error::new("associated schema not found")),
+    };
+
+    drop(w);
+
+    Ok(Some(CompletionResponse::List(CompletionList {
+        is_incomplete: false,
+        items: completion::get_completions(doc, pos, schema),
+    })))
+}
+
 pub(crate) async fn toml_to_json(
     _context: Context<World>,
     params: Params<TomlToJsonParams>,
@@ -303,7 +321,6 @@ pub(crate) async fn toml_to_json(
     })
 }
 
-
 pub(crate) async fn line_mappings(
     mut context: Context<World>,
     params: Params<LineMappingsParams>,
@@ -312,14 +329,15 @@ pub(crate) async fn line_mappings(
 
     let w = context.world().lock().await;
 
-    let doc = w
-        .documents
-        .get(&p.uri)
-        .ok_or_else(Error::invalid_params)?;
+    let doc = w.documents.get(&p.uri).ok_or_else(Error::invalid_params)?;
 
-    
     Ok(LineMappingsResponse {
-        lines: doc.mapper.lines().iter().map(|r| format!("{:?}", r)).collect(),
+        lines: doc
+            .mapper
+            .lines()
+            .iter()
+            .map(|r| format!("{:?}", r))
+            .collect(),
     })
 }
 
@@ -329,15 +347,10 @@ pub(crate) async fn syntax_tree(
 ) -> Result<SyntaxTreeResponse, Error> {
     let p = params.required()?;
 
-
     let w = context.world().lock().await;
 
-    let doc = w
-        .documents
-        .get(&p.uri)
-        .ok_or_else(Error::invalid_params)?;
+    let doc = w.documents.get(&p.uri).ok_or_else(Error::invalid_params)?;
 
-    
     Ok(SyntaxTreeResponse {
         text: format!("{:#?}", doc.parse.clone().into_syntax()),
     })

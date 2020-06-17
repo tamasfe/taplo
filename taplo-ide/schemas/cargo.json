@@ -1,0 +1,534 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cargo",
+  "type": "object",
+  "properties": {
+    "badges": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      }
+    },
+    "bench": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Target"
+      }
+    },
+    "bin": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Target"
+      }
+    },
+    "build-dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Dependency"
+      }
+    },
+    "build_dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Dependency"
+      }
+    },
+    "cargo-features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Dependency"
+      }
+    },
+    "dev-dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Dependency"
+      }
+    },
+    "dev_dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Dependency"
+      }
+    },
+    "example": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Target"
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "lib": {
+      "$ref": "#/definitions/Target"
+    },
+    "package": {
+      "$ref": "#/definitions/Project"
+    },
+    "patch": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/definitions/Dependency"
+        }
+      }
+    },
+    "profile": {
+      "$ref": "#/definitions/Profiles"
+    },
+    "project": {
+      "$ref": "#/definitions/Project"
+    },
+    "replace": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Dependency"
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Platform"
+      }
+    },
+    "test": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Target"
+      }
+    },
+    "workspace": {
+      "$ref": "#/definitions/Workspace"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "DebugLevel": {
+      "title": "Debug Level",
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "Dependency": {
+      "title": "Dependency",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/DetailedDependency"
+        }
+      ]
+    },
+    "DetailedDependency": {
+      "title": "Detailed Dependency",
+      "type": "object",
+      "properties": {
+        "branch": {
+          "type": "string"
+        },
+        "default-features": {
+          "type": "boolean"
+        },
+        "default_features": {
+          "type": "boolean"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "git": {
+          "type": "string"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "package": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "public": {
+          "type": "boolean"
+        },
+        "registry": {
+          "type": "string"
+        },
+        "registry-index": {
+          "description": "The URL of the `registry` field. This is an internal implementation detail. When Cargo creates a package, it replaces `registry` with `registry-index` so that the manifest contains the correct URL. All users won't have the same registry names configured, so Cargo can't rely on just the name for crates published by other users.",
+          "type": "string"
+        },
+        "rev": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "default": "0.1.0"
+        }
+      }
+    },
+    "MetaBuild": {
+      "title": "Meta Build",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "OptLevel": {
+      "title": "Optimization Level",
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "int32"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "Platform": {
+      "title": "Platform",
+      "description": "Corresponds to a `target` entry, but `Target` is already used.",
+      "type": "object",
+      "properties": {
+        "build-dependencies": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Dependency"
+          }
+        },
+        "build_dependencies": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Dependency"
+          }
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Dependency"
+          }
+        },
+        "dev-dependencies": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Dependency"
+          }
+        },
+        "dev_dependencies": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Dependency"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Profile": {
+      "title": "Profile",
+      "type": "object",
+      "properties": {
+        "build-override": {
+          "$ref": "#/definitions/Profile"
+        },
+        "codegen-units": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "debug": {
+          "$ref": "#/definitions/DebugLevel"
+        },
+        "debug-assertions": {
+          "type": "boolean"
+        },
+        "dir-name": {
+          "type": "string"
+        },
+        "incremental": {
+          "type": "boolean"
+        },
+        "inherits": {
+          "type": "string"
+        },
+        "lto": {
+          "$ref": "#/definitions/StringOrBool"
+        },
+        "opt-level": {
+          "$ref": "#/definitions/OptLevel"
+        },
+        "overflow-checks": {
+          "type": "boolean"
+        },
+        "package": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Profile"
+          }
+        },
+        "panic": {
+          "type": "string"
+        },
+        "rpath": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Profiles": {
+      "title": "Profiles",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Profile"
+      }
+    },
+    "Project": {
+      "description": "Represents the `package`/`project` sections of a `Cargo.toml`.\n\nNote that the order of the fields matters, since this is the order they are serialized to a TOML file. For example, you cannot have values after the field `metadata`, since it is a table and values cannot appear after tables.",
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "autobenches": {
+          "type": "boolean"
+        },
+        "autobins": {
+          "type": "boolean"
+        },
+        "autoexamples": {
+          "type": "boolean"
+        },
+        "autotests": {
+          "type": "boolean"
+        },
+        "build": {
+          "$ref": "#/definitions/StringOrBool"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "default-run": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "documentation": {
+          "type": "string"
+        },
+        "edition": {
+          "type": "string"
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "im-a-teapot": {
+          "type": "boolean"
+        },
+        "include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "license": {
+          "type": "string"
+        },
+        "license-file": {
+          "type": "string"
+        },
+        "links": {
+          "type": "string"
+        },
+        "metabuild": {
+          "$ref": "#/definitions/MetaBuild"
+        },
+        "metadata": true,
+        "name": {
+          "type": "string"
+        },
+        "namespaced-features": {
+          "type": "boolean"
+        },
+        "publish": {
+          "$ref": "#/definitions/VecStringOrBool"
+        },
+        "publish-lockfile": {
+          "type": "boolean"
+        },
+        "readme": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "default": "0.1.0"
+        },
+        "workspace": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "StringOrBool": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "Target": {
+      "title": "Target",
+      "type": "object",
+      "properties": {
+        "bench": {
+          "type": "boolean"
+        },
+        "crate-type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "crate_type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "doc": {
+          "type": "boolean"
+        },
+        "doctest": {
+          "type": "boolean"
+        },
+        "edition": {
+          "type": "string"
+        },
+        "harness": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "plugin": {
+          "type": "boolean"
+        },
+        "proc-macro": {
+          "type": "boolean"
+        },
+        "proc_macro": {
+          "type": "boolean"
+        },
+        "required-features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "test": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "VecStringOrBool": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "Workspace": {
+      "title": "Workspace",
+      "type": "object",
+      "properties": {
+        "default-members": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

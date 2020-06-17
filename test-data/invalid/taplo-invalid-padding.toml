@@ -1,0 +1,30 @@
+[int]
+padded_middle = 1__2
+padded_start = _1_2
+padded_end = 1_2_
+
+padded_plus = +_2
+padded_minus = -_2
+
+[int.bin]
+padded_middle = 0b1__0
+padded_start = 0b_1_0
+padded_end = 0b1_0_
+
+[int.hex]
+padded_middle = 0x1__0
+padded_start = 0x_1_0
+padded_end = 0x1_0_
+
+[int.oct]
+padded_middle = 0o1__0
+padded_start = 0o_1_0
+padded_end = 0o1_0_
+
+[float]
+padded_middle = 1__2.0
+padded_start = _1_2.0
+padded_end = 1_2_.0
+
+padded_plus = +_2.0
+padded_minus = -_2.0

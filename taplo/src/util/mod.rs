@@ -47,6 +47,7 @@ pub(crate) mod allowed_chars {
         for (i, c) in s.chars().enumerate() {
             if c != '\t'
                 && c != '\n'
+                && c != '\r'
                 && (c >= '\u{0000}' && c <= '\u{0008}'
                     || c >= '\u{000A}' && c <= '\u{001F}'
                     || c == '\u{007F}')
@@ -82,7 +83,7 @@ pub(crate) mod allowed_chars {
         let mut err_indices = Vec::new();
 
         for (i, c) in s.chars().enumerate() {
-            if c != '\t' && c != '\n' && c.is_control() {
+            if c != '\t' && c != '\n' && c != '\r' && c.is_control() {
                 err_indices.push(i);
             }
         }

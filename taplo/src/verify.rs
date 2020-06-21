@@ -242,6 +242,7 @@ impl Validate for ValueNode {
                 }
             }
             ValueNode::Table(v) => v.validate(validator),
+            ValueNode::Invalid(_) => Err(V::Error::custom("invalid node")),
             ValueNode::Empty => Err(V::Error::custom("empty value")),
         }
     }

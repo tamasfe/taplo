@@ -69,11 +69,7 @@ impl Mapper {
     pub fn offset(&self, position: Position) -> Option<TextSize> {
         self.lines().get(position.line as usize).and_then(|l| {
             self.mapping.iter().enumerate().find_map(|(i, p)| {
-                if *p
-                    == (l.start + position.character)
-                        .checked_sub(1) // because positions are inclusive
-                        .unwrap_or_default()
-                {
+                if *p == l.start + position.character {
                     Some(TextSize::from(i as u32))
                 } else {
                     None

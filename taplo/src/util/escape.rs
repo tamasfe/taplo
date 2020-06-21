@@ -12,7 +12,7 @@ use logos::{Lexer, Logos};
 /// \uXXXX     - unicode         (U+XXXX)
 /// \UXXXXXXXX - unicode         (U+XXXXXXXX)
 #[derive(Logos, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum Escape {
+pub enum Escape {
     #[token(r#"\b"#)]
     Backspace,
 
@@ -53,7 +53,7 @@ enum Escape {
 }
 use Escape::*;
 
-/// Unescape all supported sequences found in Escape.
+/// Unescape all supported sequences found in [Escape](Escape).
 ///
 /// If it fails, the index of failure is returned.
 pub fn unescape(s: &str) -> Result<String, usize> {

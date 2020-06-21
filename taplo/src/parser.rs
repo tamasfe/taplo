@@ -254,9 +254,18 @@ impl<'p> Parser<'p> {
         // Ensure we have newlines between entries
         let mut not_newline = false;
 
+        // We want to make sure that an entry spans the
+        // entire line, so we start/close its node manually.
+        let mut entry_started = false;
+
         while let Ok(token) = self.get_token() {
             match token {
                 BRACKET_START => {
+                    if entry_started {
+                        self.builder.finish_node();
+                        entry_started = false;
+                    }
+
                     if not_newline {
                         let _ = self.error("expected new line");
                         continue;
@@ -280,6 +289,10 @@ impl<'p> Parser<'p> {
                 }
                 NEWLINE => {
                     not_newline = false;
+                    if entry_started {
+                        self.builder.finish_node();
+                        entry_started = false;
+                    }
                     let _ = self.token();
                 }
                 _ => {
@@ -287,14 +300,19 @@ impl<'p> Parser<'p> {
                         let _ = self.error("expected new line");
                         continue;
                     }
+                    if entry_started {
+                        self.builder.finish_node();
+                        entry_started = false;
+                    }
                     not_newline = true;
-                    let _ = whitelisted!(
-                        self,
-                        NEWLINE,
-                        with_node!(self.builder, ENTRY, self.parse_entry())
-                    );
+                    self.builder.start_node(ENTRY.into());
+                        entry_started = true;
+                        let _ = whitelisted!(self, NEWLINE, self.parse_entry());
                 }
             }
+        }
+        if entry_started {
+            self.builder.finish_node();
         }
 
         Ok(())

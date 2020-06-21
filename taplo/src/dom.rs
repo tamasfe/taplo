@@ -942,6 +942,16 @@ impl EntryNode {
         self.value
     }
 
+    pub fn token_eq_text_range(&self) -> Option<TextRange> {
+        self.syntax.children_with_tokens().find_map(|t| {
+            if t.kind() == EQ {
+                Some(t.text_range())
+            } else {
+                None
+            }
+        })
+    }
+
     /// Turns a dotted key into nested pseudo-tables.
     fn normalize(&mut self) {
         while self.key.key_count() > 1 {
@@ -1007,13 +1017,12 @@ impl Cast for EntryNode {
                 .first_child()
                 .and_then(|k| k.next_sibling())
                 .map(rowan::NodeOrToken::Node)
-                .and_then(Cast::cast);
-
-            val.as_ref()?;
+                .and_then(Cast::cast)
+                .unwrap_or(ValueNode::Invalid(None));
 
             Some(Self {
                 key: key.unwrap(),
-                value: val.unwrap(),
+                value: val,
                 next_entry: None,
                 syntax: element.into_node().unwrap(),
             })
@@ -1109,7 +1118,10 @@ impl KeyNode {
     /// e.g.: outer.inner => super
     /// there will be at least one ident remaining
     pub fn outer(mut self, n: usize) -> Self {
-        let skip = usize::min(self.mask_visible - 1, n);
+        let skip = usize::min(
+            self.mask_visible - 1,
+            self.mask_visible.checked_sub(n).unwrap_or_default(),
+        );
         self.mask_right += skip;
         self.mask_visible -= skip;
         self
@@ -1142,6 +1154,10 @@ impl KeyNode {
     /// Eq that ignores the index of the key
     pub fn eq_keys(&self, other: &KeyNode) -> bool {
         self.key_count() == other.key_count() && self.is_part_of(other)
+    }
+
+    pub fn syntax(&self) -> SyntaxNode {
+        self.syntax.clone()
     }
 
     /// Prepends other's idents, and also inherits
@@ -1257,10 +1273,7 @@ pub enum ValueNode {
     Array(ArrayNode),
     Date(DateNode),
     Table(TableNode),
-
-    // Only for convenience purposes during parsing,
-    // it is not an actually valid value,
-    // and will probably cause panics if used as one.
+    Invalid(Option<SyntaxElement>),
     Empty,
 }
 
@@ -1297,6 +1310,7 @@ impl ValueNode {
             ValueNode::Array(v) => v.text_range(),
             ValueNode::Date(v) => v.text_range(),
             ValueNode::Table(v) => v.text_range(),
+            ValueNode::Invalid(n) => n.as_ref().map(|n| n.text_range()).unwrap_or_default(),
             _ => panic!("empty value"),
         }
     }
@@ -1332,7 +1346,12 @@ impl core::fmt::Display for ValueNode {
 
 impl Cast for ValueNode {
     fn cast(element: SyntaxElement) -> Option<Self> {
+        if element.kind() != VALUE {
+            return None;
+        }
+
         element
+            .clone()
             .into_node()
             .and_then(|n| n.first_child_or_token())
             .and_then(|c| match c.kind() {
@@ -1349,6 +1368,7 @@ impl Cast for ValueNode {
                 DATE => Cast::cast(c).map(ValueNode::Date),
                 _ => None,
             })
+            .or(Some(ValueNode::Invalid(Some(element))))
     }
 }
 
@@ -1567,3 +1587,12 @@ impl core::fmt::Display for Error {
     }
 }
 impl std::error::Error for Error {}
+
+#[test]
+fn asd() {
+    let src = r#"
+asd.bsd.csd.dsd.esd.fsd = 1
+"#;
+
+    let p = crate::parser::parse(src).into_dom();
+}

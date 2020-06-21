@@ -302,12 +302,11 @@ impl<'p> Parser<'p> {
                     }
                     if entry_started {
                         self.builder.finish_node();
-                        entry_started = false;
                     }
                     not_newline = true;
                     self.builder.start_node(ENTRY.into());
-                        entry_started = true;
-                        let _ = whitelisted!(self, NEWLINE, self.parse_entry());
+                    entry_started = true;
+                    let _ = whitelisted!(self, NEWLINE, self.parse_entry());
                 }
             }
         }

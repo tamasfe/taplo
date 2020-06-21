@@ -8,11 +8,13 @@ use verify::{
     Verifier,
 };
 
+// TODO(schema)
+#[allow(unreachable_code)]
 pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
     let w = context.world().lock().await;
     let doc = w.documents.get(&uri).unwrap().clone();
 
-    let mut diags = collect_toml_diagnostics(&uri, &doc.parse, &doc.mapper);
+    let diags = collect_toml_diagnostics(&uri, &doc.parse, &doc.mapper);
     drop(w);
 
     context
@@ -23,6 +25,9 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
         }))
         .await
         .unwrap_or_else(|err| log_error!("{}", err));
+
+    // TODO(schema)
+    return;
 
     // Schema-related validations
     let w = context.world().lock().await;

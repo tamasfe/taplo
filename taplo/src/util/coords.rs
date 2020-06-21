@@ -51,7 +51,7 @@ impl Mapper {
             lines.push(line_start_char..total_chars as u64 + 1);
         } else {
             // last empty line
-            let last_mapping = mapping.last().map(|v| *v).unwrap_or_default();
+            let last_mapping = mapping.last().copied().unwrap_or_default();
             lines.push(last_mapping..last_mapping + 1);
         }
 

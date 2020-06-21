@@ -1594,5 +1594,5 @@ fn asd() {
 asd.bsd.csd.dsd.esd.fsd = 1
 "#;
 
-    let p = crate::parser::parse(src).into_dom();
+    let _p = crate::parser::parse(src).into_dom();
 }

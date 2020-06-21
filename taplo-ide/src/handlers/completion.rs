@@ -702,7 +702,7 @@ fn empty_value_snippet(schema: &SchemaObject) -> String {
                 let filtered = v
                     .iter()
                     .filter(|ty| **ty != InstanceType::Null)
-                    .map(|ty| *ty)
+                    .copied()
                     .collect::<Vec<InstanceType>>();
 
                 if filtered.len() != 1 {

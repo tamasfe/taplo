@@ -1,11 +1,18 @@
 # Change Log
 
-## next
+## 0.5.1
 
 ### Fixes
 - Fixed incorrect parsing of floats
 - Fixed some incorrectly accepted table headers
 - Incorrect underscores in numbers are no longer accepted
+- Fixed wrong internal DOM representation (relevant to JSON conversions)
+- Array and table keys are different colors again in the default theme (with a workaround until there are proper textmate scopes)
+- CR (`\r`) characters are now allowed in multi-line strings
+
+### Other
+- Foundations of JSON schema support (cannot be enabled without manually building yet)
+- Added DOM tree debug command
 
 ## 0.5.0
 

@@ -1,2 +1,2 @@
 #!/bin/sh
-(cd test-gen && cargo run -- -i ../test-data -o ../taplo/src/tests/)
+(cd util/test-gen && cargo run -- -i ../../test-data -o ../../taplo/src/tests/)

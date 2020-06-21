@@ -52,56 +52,56 @@ point = { x = 1, y = 2 }
 
 basic = "I'm a string. \"You can quote me\". Name\tJos\u00E9\nLocation\tSF."
 
-  [string.multiline]
+[string.multiline]
 
-  # The following strings are byte-for-byte equivalent:
-  key1 = "One\nTwo"
-  key2 = """One\nTwo"""
-  key3 = """
+# The following strings are byte-for-byte equivalent:
+key1 = "One\nTwo"
+key2 = """One\nTwo"""
+key3 = """
 One
 Two"""
 
-    [string.multiline.continued]
+  [string.multiline.continued]
 
-    # The following strings are byte-for-byte equivalent:
-    key1 = "The quick brown fox jumps over the lazy dog."
+  # The following strings are byte-for-byte equivalent:
+  key1 = "The quick brown fox jumps over the lazy dog."
 
-    key2 = """
+  key2 = """
 The quick brown \
 
 
   fox jumps over \
     the lazy dog."""
 
-    key3 = """\
+  key3 = """\
        The quick brown \
        fox jumps over \
        the lazy dog.\
        """
 
-  [string.literal]
+[string.literal]
 
-  # What you see is what you get.
-  quoted   = 'Tom "Dubs" Preston-Werner'
-  regex    = '<\i\c*\s*>'
-  winpath  = 'C:\Users\nodejs\templates'
-  winpath2 = '\\ServerX\admin$\system32\'
+# What you see is what you get.
+quoted   = 'Tom "Dubs" Preston-Werner'
+regex    = '<\i\c*\s*>'
+winpath  = 'C:\Users\nodejs\templates'
+winpath2 = '\\ServerX\admin$\system32\'
 
-    [string.literal.multiline]
+  [string.literal.multiline]
 
-    lines  = '''
+  lines  = '''
 The first newline is
 trimmed in raw strings.
    All other whitespace
    is preserved.
 '''
-    regex2 = '''I [dw]on't need \d{2} apples'''
+  regex2 = '''I [dw]on't need \d{2} apples'''
 
-    ################################################################################
-    ## Integer
+  ################################################################################
+  ## Integer
 
-    # Integers are whole numbers. Positive numbers may be prefixed with a plus sign.
-    # Negative numbers are prefixed with a minus sign.
+  # Integers are whole numbers. Positive numbers may be prefixed with a plus sign.
+  # Negative numbers are prefixed with a minus sign.
 
 [integer]
 
@@ -130,26 +130,26 @@ key1 = +1.0
 key2 = 3.1415
 key3 = -0.01
 
-  [float.exponent]
+[float.exponent]
 
-  key1 = 5e+22
-  key2 = 1e6
-  key3 = -2E-2
+key1 = 5e+22
+key2 = 1e6
+key3 = -2E-2
 
-  [float.both]
+[float.both]
 
-  key = 6.626e-34
+key = 6.626e-34
 
-  [float.underscores]
+[float.underscores]
 
-  # This file is used for benches and toml-rs doesn't yet support these:
-  # key1 = 9_224_617.445_991_228_313
-  # key2 = 1e1_000
+# This file is used for benches and toml-rs doesn't yet support these:
+# key1 = 9_224_617.445_991_228_313
+# key2 = 1e1_000
 
-  ################################################################################
-  ## Boolean
+################################################################################
+## Boolean
 
-  # Booleans are just the tokens you're used to. Always lowercase.
+# Booleans are just the tokens you're used to. Always lowercase.
 
 [boolean]
 
@@ -230,4 +230,3 @@ name = "banana"
 
   [[fruit.variety]]
   name = "plantain"
-

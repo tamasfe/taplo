@@ -1,5 +1,5 @@
 [workspace]
-exclude = [ "test-gen" ]
+exclude = [ "util/cargo-schema", "util/test-gen" ]
 members = [ "taplo-ide", "taplo", "lsp-async-stub" ]
 
 [profile.release]

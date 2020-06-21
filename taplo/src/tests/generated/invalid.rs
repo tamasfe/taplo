@@ -1,4 +1,10 @@
 #[test]
+fn taplo_invalid_padding() {
+    let src = "[int]\npadded_middle = 1__2\npadded_start = _1_2\npadded_end = 1_2_\n\npadded_plus = +_2\npadded_minus = -_2\n\n[int.bin]\npadded_middle = 0b1__0\npadded_start = 0b_1_0\npadded_end = 0b1_0_\n\n[int.hex]\npadded_middle = 0x1__0\npadded_start = 0x_1_0\npadded_end = 0x1_0_\n\n[int.oct]\npadded_middle = 0o1__0\npadded_start = 0o_1_0\npadded_end = 0o1_0_\n\n[float]\npadded_middle = 1__2.0\npadded_start = _1_2.0\npadded_end = 1_2_.0\n\npadded_plus = +_2.0\npadded_minus = -_2.0" ;
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
 fn string_literal_control_3() {
     let src = "a = 'null\u{1f}'\n";
     let p = crate::parser::parse(&src);
@@ -230,6 +236,12 @@ fn string_basic_multiline_control_4() {
 #[test]
 fn string_basic_multiline_out_of_range_unicode_escape_2() {
     let src = "a = \"\"\"\\U00D80000\"\"\"\n";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
+fn taplo_invalid_float() {
+    let src = "what = 1.";
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }

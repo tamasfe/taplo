@@ -2599,6 +2599,28 @@ fn spec_array_5() {
     );
 }
 #[test]
+fn taplo_crlf() {
+    let src = "[tool.black]\r\nline-length = 88\r\ntarget-version = ['py37']\r\ninclude = '\\.pyi?$'\r\nexclude = '''\r\n\r\n(\r\n  /(\r\n      \\.eggs         # exclude a few common directories in the\r\n    | \\.git          # root of the project\r\n    | \\.hg\r\n    | \\.mypy_cache\r\n    | \\.tox\r\n    | \\.venv\r\n    | _build\r\n    | buck-out\r\n    | build\r\n    | dist\r\n  )/\r\n  | foo.py           # also separately exclude a file named foo.py in\r\n                     # the root of the project\r\n)\r\n'''" ;
+    let p = crate::parser::parse(&src);
+    assert!(
+        p.errors.is_empty(),
+        "Parse errors:\n{}",
+        p.errors
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+    let dom = p.into_dom();
+    assert!(
+        dom.errors().is_empty(),
+        "Semantic errors:\n{}",
+        dom.errors()
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+}
+#[test]
 fn spec_string_basic_multiline_5() {
     let src = "ml-escaped-nl = \"\"\"\n  foo \\\n  bar \\\\\n  baz \\\\\\\n  quux\"\"\"\n";
     let p = crate::parser::parse(&src);

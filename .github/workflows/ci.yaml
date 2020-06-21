@@ -57,10 +57,10 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Download generated tests
-        uses: actions/download-artifact@v1
-        with:
-          name: generated_tests
+      # - name: Download generated tests
+      #   uses: actions/download-artifact@v1
+      #   with:
+      #     name: generated_tests
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:

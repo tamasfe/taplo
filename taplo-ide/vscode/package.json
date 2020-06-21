@@ -83,6 +83,10 @@
 					"when": "editorLangId == toml && config.evenBetterToml.debug"
 				},
 				{
+					"command": "evenBetterToml.debug.showDomTree",
+					"when": "editorLangId == toml && config.evenBetterToml.debug"
+				},
+				{
 					"command": "evenBetterToml.debug.showLineMappings",
 					"when": "editorLangId == toml && config.evenBetterToml.debug"
 				}
@@ -101,6 +105,11 @@
 			{
 				"command": "evenBetterToml.debug.showSyntaxTree",
 				"title": "TOML (debug): Show Syntax Tree",
+				"enablement": "editorLangId == toml && config.evenBetterToml.debug"
+			},
+			{
+				"command": "evenBetterToml.debug.showDomTree",
+				"title": "TOML (debug): Show DOM Tree",
 				"enablement": "editorLangId == toml && config.evenBetterToml.debug"
 			},
 			{

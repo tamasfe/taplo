@@ -53,6 +53,27 @@ impl Request for SyntaxTreeRequest {
     const METHOD: &'static str = "taplo/syntaxTree";
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct DomTreeParams {
+    /// URI of the document
+    pub uri: Url,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct DomTreeResponse {
+    pub text: String,
+}
+
+pub(crate) enum DomTreeRequest {}
+
+impl Request for DomTreeRequest {
+    type Params = DomTreeParams;
+    type Result = DomTreeResponse;
+    const METHOD: &'static str = "taplo/domTree";
+}
+
 /// Show Line mappings
 pub(crate) enum LineMappingsRequest {}
 

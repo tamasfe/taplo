@@ -31,6 +31,20 @@ export namespace SyntaxTree {
   export const METHOD = "taplo/syntaxTree";
 }
 
+export namespace DomTree {
+  export interface Params {
+    // URI of the TOML document
+    uri: string;
+  }
+
+  export interface Response {
+    // Syntax tree to show
+    text: string;
+  }
+
+  export const METHOD = "taplo/domTree";
+}
+
 export namespace LineMappings {
   export interface Params {
     // URI of the TOML document

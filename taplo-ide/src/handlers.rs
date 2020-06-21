@@ -355,3 +355,18 @@ pub(crate) async fn syntax_tree(
         text: format!("{:#?}", doc.parse.clone().into_syntax()),
     })
 }
+
+pub(crate) async fn dom_tree(
+    mut context: Context<World>,
+    params: Params<DomTreeParams>,
+) -> Result<DomTreeResponse, Error> {
+    let p = params.required()?;
+
+    let w = context.world().lock().await;
+
+    let doc = w.documents.get(&p.uri).ok_or_else(Error::invalid_params)?;
+
+    Ok(DomTreeResponse {
+        text: format!("{:#?}", doc.parse.clone().into_dom()),
+    })
+}

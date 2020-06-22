@@ -7,6 +7,12 @@ use quote::quote;
 use std::{env, fs, io::prelude::*, path::Path, process::Command};
 use walkdir::WalkDir;
 
+const IGNORED_TESTS: &'static [&'static str] = &[
+    "qa-array-inline-nested-1000",
+    "qa-table-inline-nested-1000"
+
+];
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -79,6 +85,12 @@ fn main() {
             continue;
         }
 
+        let ignore_attr = if IGNORED_TESTS.contains(&base_name.as_str()) {
+            quote!(#[ignore])
+        } else {
+            quote!()
+        };
+
         let test_name = base_name.replace("-", "_");
 
         let test_src = match fs::read_to_string(valid_file.path()) {
@@ -129,6 +141,7 @@ fn main() {
 
         valid_src.extend(quote! {
             #[test]
+            #ignore_attr
             fn #test_fn_ident() {
                 let src = #test_src;
 
@@ -205,7 +218,7 @@ fn main() {
             continue;
         }
 
-        let test_name = invalid_file
+        let base_name = invalid_file
             .path()
             .file_stem()
             .map(|s| {
@@ -215,6 +228,14 @@ fn main() {
                     .replace("-", "_")
             })
             .unwrap_or_default();
+
+        let ignore_attr = if IGNORED_TESTS.contains(&base_name.as_str()) {
+            quote!(#[ignore])
+        } else {
+            quote!()
+        };
+
+        let test_name = base_name.replace("-", "_");
 
         if test_name.is_empty() {
             println!(
@@ -236,6 +257,7 @@ fn main() {
 
         invalid_src.extend(quote! {
             #[test]
+            #ignore_attr
             fn #test_fn_ident() {
                 let src = #test_src;
 

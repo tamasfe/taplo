@@ -1,10 +1,11 @@
 use crate::Document;
 use lsp_types::DocumentSymbol;
 
-use lsp_types::SymbolKind;
+use lsp_types::{Range, SymbolKind};
 
+use rowan::TextRange;
 use taplo::{
-    dom::{Common, KeyNode, ValueNode},
+    dom::{Common, ValueNode},
     util::coords::Mapper,
 };
 
@@ -14,7 +15,8 @@ pub(crate) fn create_symbols(doc: &Document) -> Vec<DocumentSymbol> {
 
     for entry in doc.parse.clone().into_dom().entries().iter() {
         symbols_for_value(
-            KeyOrString::Key(entry.key()),
+            ensure_non_empty_key(entry.key().full_key_string()),
+            None,
             entry.value(),
             mapper,
             &mut symbols,
@@ -24,40 +26,27 @@ pub(crate) fn create_symbols(doc: &Document) -> Vec<DocumentSymbol> {
     symbols
 }
 
-enum KeyOrString<'a> {
-    Key(&'a KeyNode),
-    String(String),
-}
-
 fn symbols_for_value(
-    key: KeyOrString,
+    name: String,
+    key_range: Option<TextRange>,
     value: &ValueNode,
     mapper: &Mapper,
     symbols: &mut Vec<DocumentSymbol>,
 ) {
-    let range = mapper
-        .range(match &key {
-            KeyOrString::Key(k) => k.text_range().clone().cover(value.text_range()),
-            KeyOrString::String(_) => value.text_range(),
-        })
-        .unwrap();
+    let own_range = mapper.range(value.text_range()).unwrap_or_else(|| Range {
+        start: mapper.position(value.text_range().start()).unwrap(),
+        end: mapper.end(),
+    });
 
-    let selection_range = mapper
-        .range(match &key {
-            KeyOrString::Key(k) => k.text_range(),
-            KeyOrString::String(_) => value.text_range(),
-        })
-        .unwrap();
-
-    let name = match key {
-        KeyOrString::Key(k) => k
-            .keys_str()
-            .last()
-            .map(|s| s.to_string())
-            .map(ensure_non_empty_key)
-            .unwrap_or_else(|| String::from("{error}")),
-        KeyOrString::String(s) => s,
+    let range = if let Some(key_r) = key_range {
+        mapper.range(key_r.cover(value.text_range())).unwrap()
+    } else {
+        own_range
     };
+
+    let selection_range = key_range
+        .map(|r| mapper.range(r).unwrap())
+        .unwrap_or(own_range);
 
     match value {
         ValueNode::Bool(_) => symbols.push(DocumentSymbol {
@@ -116,12 +105,7 @@ fn symbols_for_value(
                 let mut child_symbols = Vec::with_capacity(arr.items().len());
 
                 for (i, c) in arr.items().iter().enumerate() {
-                    symbols_for_value(
-                        KeyOrString::String(i.to_string()),
-                        c,
-                        mapper,
-                        &mut child_symbols,
-                    );
+                    symbols_for_value(i.to_string(), None, c, mapper, &mut child_symbols);
                 }
 
                 Some(child_symbols)
@@ -140,7 +124,8 @@ fn symbols_for_value(
 
                     for c in t.entries().iter() {
                         symbols_for_value(
-                            KeyOrString::Key(c.key()),
+                            c.key().full_key_string(),
+                            Some(c.key().text_range()),
                             c.value(),
                             mapper,
                             &mut child_symbols,

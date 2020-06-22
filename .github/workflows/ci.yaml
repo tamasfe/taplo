@@ -12,31 +12,31 @@ on:
 name: Continuous integration
 
 jobs:
-  # test_gen:
-  #   name: TOML Test Generation
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Install Rust toolchain
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         profile: minimal
-  #         toolchain: stable
-  #         override: true
-  #     - name: Run test generator
-  #       uses: actions-rs/cargo@v1
-  #       with:
-  #         command: run
-  #         args: --manifest-path=test-gen/Cargo.toml -- -i test-data -o taplo/src/tests/
-  #     - name: Upload generated tests
-  #       uses: actions/upload-artifact@v1
-  #       with:
-  #         name: generated_tests
-  #         path: taplo/src/tests/generated
+  test_gen:
+    name: TOML Test Generation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Run test generator
+        uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: --manifest-path=test-gen/Cargo.toml -- -i test-data -o taplo/src/tests/
+      - name: Upload generated tests
+        uses: actions/upload-artifact@v1
+        with:
+          name: generated_tests
+          path: taplo/src/tests/generated
 
   test:
     name: Cargo Test
-    # needs: test_gen
+    needs: test_gen
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -57,10 +57,10 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-      # - name: Download generated tests
-      #   uses: actions/download-artifact@v1
-      #   with:
-      #     name: generated_tests
+      - name: Download generated tests
+        uses: actions/download-artifact@v1
+        with:
+          name: generated_tests
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:

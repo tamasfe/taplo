@@ -274,10 +274,14 @@ impl<'p> Parser<'p> {
                     not_newline = true;
 
                     if self.lexer.remainder().starts_with('[') {
-                        let _ = with_node!(
-                            self.builder,
-                            TABLE_ARRAY_HEADER,
-                            self.parse_table_array_header()
+                        let _ = whitelisted!(
+                            self,
+                            NEWLINE,
+                            with_node!(
+                                self.builder,
+                                TABLE_ARRAY_HEADER,
+                                self.parse_table_array_header()
+                            )
                         );
                     } else {
                         let _ = whitelisted!(
@@ -328,9 +332,9 @@ impl<'p> Parser<'p> {
     fn parse_table_array_header(&mut self) -> ParserResult<()> {
         self.must_token_or(BRACKET_START, r#"expected "[[""#)?;
         self.must_token_or(BRACKET_START, r#"expected "[[""#)?;
-        with_node!(self.builder, KEY, self.parse_key())?;
-        self.must_token_or(BRACKET_END, r#"expected "]]""#)?;
-        self.must_token_or(BRACKET_END, r#"expected "]]""#)?;
+        let _ = with_node!(self.builder, KEY, self.parse_key());
+        let _ = self.must_token_or(BRACKET_END, r#"expected "]]""#);
+        let _ = self.must_token_or(BRACKET_END, r#"expected "]]""#);
 
         Ok(())
     }

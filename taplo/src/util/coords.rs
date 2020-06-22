@@ -51,7 +51,7 @@ impl Mapper {
             lines.push(line_start_char..total_chars as u64 + 1);
         } else {
             // last empty line
-            let last_mapping = mapping.last().copied().unwrap_or_default();
+            let last_mapping = mapping.last().copied().unwrap_or_default() + 1;
             lines.push(last_mapping..last_mapping + 1);
         }
 
@@ -67,14 +67,22 @@ impl Mapper {
     }
 
     pub fn offset(&self, position: Position) -> Option<TextSize> {
-        self.lines().get(position.line as usize).and_then(|l| {
-            self.mapping.iter().enumerate().find_map(|(i, p)| {
-                if *p == l.start + position.character {
-                    Some(TextSize::from(i as u32))
-                } else {
-                    None
-                }
-            })
+        self.lines().get(position.line as usize).map(|l| {
+            let idx = (l.start + position.character)
+                .checked_sub(1)
+                .unwrap_or_default();
+
+            self.mapping
+                .iter()
+                .enumerate()
+                .find_map(|(i, p)| {
+                    if *p == idx {
+                        Some(TextSize::from(i as u32))
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(TextSize::from(self.mapping.len() as u32)) // Last empty line
         })
     }
 
@@ -185,15 +193,17 @@ impl Mapper {
                 line: 0,
                 character: 0,
             },
-            end: self
+            end: self.end(),
+        }
+    }
+
+    pub fn end(&self) -> Position {
+        Position {
+            line: (self.lines.len() as u64).checked_sub(1).unwrap_or_default(),
+            character: self
                 .lines
                 .last()
-                .map(|l| Position {
-                    line: ((self.lines.len()) as u64)
-                        .checked_sub(1)
-                        .unwrap_or_default(),
-                    character: l.end - l.start,
-                })
+                .map(|l| l.end - l.start)
                 .unwrap_or_default(),
         }
     }

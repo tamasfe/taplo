@@ -421,7 +421,10 @@ impl Cast for RootNode {
             final_entries.normalize();
         }
 
-        final_entries.set_table_spans(Some(syntax_node.text_range().end()));
+        final_entries.set_table_spans(
+            &syntax_node,
+            Some(syntax_node.text_range().end() + TextSize::from(1)),
+        );
 
         Some(Self {
             entries: final_entries,
@@ -567,26 +570,89 @@ impl Entries {
 
     // Top level tables and arrays of tables
     // need to span across whitespace as well.
-    fn set_table_spans(&mut self, mut end: Option<TextSize>) {
-        for entry in self.0.iter_mut().rev() {
-            if let TABLE_ARRAY_HEADER | TABLE_HEADER = entry.syntax.kind() {
-                if let Some(last) = end.take() {
-                    match &mut entry.value {
-                        ValueNode::Array(arr) => {
-                            arr.next_entry = Some(last);
-                        }
-                        ValueNode::Table(t) => {
-                            t.next_entry = Some(last);
-                        }
-                        _ => panic!("invalid syntax kind"),
-                    }
-                    entry.next_entry = Some(last);
-                }
-                end = Some(entry.text_range().start());
+    fn set_table_spans(&mut self, root_syntax: &SyntaxNode, end: Option<TextSize>) {
+        for entry in self.0.iter_mut() {
+            // We search for the next headers that don't
+            // have the current entry as a prefix.
+            if let TABLE_HEADER = entry.syntax.kind() {
+                let mut found = false;
 
-                if let ValueNode::Table(t) = &mut entry.value {
-                    t.entries.set_table_spans(None)
+                let entry_header_string = entry.syntax.to_string();
+
+                for n in root_syntax.children() {
+                    if n.text_range().start() < entry.syntax.text_range().end() {
+                        continue;
+                    }
+
+                    let new_header_string = n.to_string();
+
+                    if let TABLE_HEADER | TABLE_ARRAY_HEADER = n.kind() {
+                        if !new_header_string
+                            .trim_start_matches('[')
+                            .trim_end_matches(']')
+                            .starts_with(
+                                entry_header_string
+                                    .trim_start_matches('[')
+                                    .trim_end_matches(']'),
+                            )
+                        {
+                            entry.next_entry = Some(n.text_range().start());
+                            found = true;
+                            break;
+                        }
+                    }
                 }
+
+                if !found {
+                    entry.next_entry = end.clone();
+                }
+            }
+
+            if let TABLE_ARRAY_HEADER = entry.syntax.kind() {
+                let mut found = false;
+
+                let entry_header_string = entry.syntax.to_string();
+
+                for n in root_syntax.children() {
+                    if n.text_range().start() < entry.syntax.text_range().end() {
+                        continue;
+                    }
+
+                    let new_header_string = n.to_string();
+
+                    if let TABLE_ARRAY_HEADER = n.kind() {
+                        if !new_header_string
+                            .trim_start_matches('[')
+                            .trim_end_matches(']')
+                            .starts_with(
+                                entry_header_string
+                                    .trim_start_matches('[')
+                                    .trim_end_matches(']'),
+                            )
+                        {
+                            entry.next_entry = Some(n.text_range().start());
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if !found {
+                    entry.next_entry = end.clone();
+                }
+            }
+
+            match &mut entry.value {
+                ValueNode::Table(t) => {
+                    t.next_entry = entry.next_entry.clone();
+                    t.entries.set_table_spans(root_syntax, end);
+                }
+                ValueNode::Array(arr) => {
+                    if arr.is_array_of_tables() {
+                        arr.set_table_spans(root_syntax, end)
+                    }
+                }
+                _ => {}
             }
         }
     }
@@ -653,7 +719,7 @@ impl Entries {
                             ValueNode::Array(ArrayNode {
                                 syntax: t.syntax.clone(),
                                 items: vec![ValueNode::Table(t)],
-                                next_entry: None,
+                                next_header_start: None,
                                 tables: true,
                             })
                         } else {
@@ -888,7 +954,7 @@ pub struct ArrayNode {
     // Offset of the next entry if any,
     // this is needed because tables span
     // longer than their actual syntax in TOML.
-    next_entry: Option<TextSize>,
+    next_header_start: Option<TextSize>,
 }
 
 impl ArrayNode {
@@ -907,7 +973,7 @@ impl ArrayNode {
             range = range.cover(item.text_range())
         }
 
-        if let Some(r) = self.next_entry.as_ref() {
+        if let Some(r) = self.next_header_start.as_ref() {
             range = range.cover_offset(*r);
         }
 
@@ -916,6 +982,56 @@ impl ArrayNode {
 
     pub fn is_array_of_tables(&self) -> bool {
         self.tables
+    }
+
+    // Top level tables and arrays of tables
+    // need to span across whitespace as well.
+    fn set_table_spans(&mut self, root_syntax: &SyntaxNode, end: Option<TextSize>) {
+        if !self.tables {
+            return;
+        }
+
+        for value in &mut self.items {
+            let table = match value {
+                ValueNode::Table(t) => t,
+                _ => panic!("expected table"),
+            };
+
+            let mut found = false;
+
+            let entry_header_string = table.syntax.to_string();
+
+            for n in root_syntax.children() {
+                if n.text_range().start() < table.syntax.text_range().end() {
+                    continue;
+                }
+
+                let new_header_string = n.to_string();
+
+                if let TABLE_ARRAY_HEADER = n.kind() {
+                    if !new_header_string
+                        .trim_start_matches('[')
+                        .trim_end_matches(']')
+                        .starts_with(
+                            entry_header_string
+                                .trim_start_matches('[')
+                                .trim_end_matches(']'),
+                        )
+                        || new_header_string == entry_header_string
+                    {
+                        table.next_entry = Some(n.text_range().start());
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if !found {
+                table.next_entry = end.clone();
+            }
+
+            table.entries.set_table_spans(root_syntax, end);
+        }
     }
 }
 
@@ -931,7 +1047,7 @@ impl Common for ArrayNode {
             range = range.cover(item.text_range())
         }
 
-        if let Some(r) = self.next_entry.as_ref() {
+        if let Some(r) = self.next_header_start.as_ref() {
             range = range.cover_offset(*r);
         }
 
@@ -950,13 +1066,13 @@ impl Cast for ArrayNode {
                     .children_with_tokens()
                     .filter_map(Cast::cast)
                     .collect(),
-                next_entry: None,
+                next_header_start: None,
                 tables: false,
                 syntax: syntax.into_node().unwrap(),
             }),
             TABLE_ARRAY_HEADER => Some(Self {
                 items: Vec::new(),
-                next_entry: None,
+                next_header_start: None,
                 tables: false,
                 syntax: syntax.into_node().unwrap(),
             }),
@@ -1042,7 +1158,7 @@ impl Common for EntryNode {
     }
 
     fn text_range(&self) -> TextRange {
-        let r = self.key().text_range().cover(self.value.text_range());
+        let r = self.syntax.text_range();
 
         match self.next_entry {
             Some(next_entry) => r.cover_offset(next_entry),
@@ -1380,6 +1496,13 @@ impl Common for ValueNode {
             _ => panic!("empty value"),
         }
     }
+
+    fn is_valid(&self) -> bool {
+        match self {
+            ValueNode::Invalid(_) | ValueNode::Empty => false,
+            _ => true,
+        }
+    }
 }
 
 impl core::fmt::Display for ValueNode {
@@ -1523,7 +1646,6 @@ impl Common for StringNode {
         self.syntax.text_range()
     }
 }
-
 
 impl Cast for StringNode {
     fn cast(element: SyntaxElement) -> Option<Self> {

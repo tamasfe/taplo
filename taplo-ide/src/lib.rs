@@ -100,8 +100,6 @@ impl WorldState {
         self.schemas.get(name)
     }
 
-    // TODO(schema)
-    #[allow(dead_code)]
     fn get_schema_by_uri(&self, uri: &Url) -> Option<&RootSchema> {
         for (re, name) in &self.schema_associations {
             if re.0.is_match(uri.as_str()) {
@@ -215,10 +213,9 @@ static SERVER: Lazy<Server<World>> = Lazy::new(|| {
         .handler(RequestHandler::<request_ext::DomTreeRequest, _, _>::new(
             handlers::dom_tree,
         ))
-        // TODO(schema)
-        // .handler(RequestHandler::<request::Completion, _, _>::new(
-        //     handlers::completion,
-        // ))
+        .handler(RequestHandler::<request::Completion, _, _>::new(
+            handlers::completion,
+        ))
         .request_writer(RequestWriter)
         .build()
 });

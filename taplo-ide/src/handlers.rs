@@ -41,11 +41,10 @@ pub(crate) async fn initialize(
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             document_symbol_provider: Some(true),
             document_formatting_provider: Some(true),
-            // TODO(schema)
-            // completion_provider: Some(CompletionOptions {
-            //     resolve_provider: Some(true),
-            //     ..Default::default()
-            // }),
+            completion_provider: Some(CompletionOptions {
+                resolve_provider: Some(true),
+                ..Default::default()
+            }),
             ..Default::default()
         },
         server_info: Some(ServerInfo {
@@ -261,8 +260,6 @@ pub(crate) async fn format(
     }]))
 }
 
-// TODO(schema)
-#[allow(dead_code)]
 pub(crate) async fn completion(
     mut context: Context<World>,
     params: Params<CompletionParams>,

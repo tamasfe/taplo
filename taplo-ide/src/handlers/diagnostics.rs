@@ -2,19 +2,22 @@ use crate::World;
 use lsp_async_stub::{Context, RequestWriter};
 use lsp_types::*;
 use schemars::schema::{InstanceType, Metadata, RootSchema, SingleOrVec};
-use taplo::{dom::{self, Common}, parser::Parse, util::coords::Mapper, verify::NodeSpan};
+use taplo::{
+    dom::{self, Common},
+    parser::Parse,
+    util::coords::Mapper,
+    verify::NodeSpan,
+};
 use verify::{
     schemars::errors::{Error, ErrorValue},
     Verifier,
 };
 
-// TODO(schema)
-#[allow(unreachable_code)]
 pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
     let w = context.world().lock().await;
     let doc = w.documents.get(&uri).unwrap().clone();
 
-    let diags = collect_toml_diagnostics(&uri, &doc.parse, &doc.mapper);
+    let mut diags = collect_toml_diagnostics(&uri, &doc.parse, &doc.mapper);
     drop(w);
 
     context
@@ -26,10 +29,14 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
         .await
         .unwrap_or_else(|err| log_error!("{}", err));
 
-    // TODO(schema)
-    return;
-
     // Schema-related validations
+
+    // If there are errors already, further ones
+    // could be misleading
+    if !diags.is_empty() {
+        return;
+    }
+
     let w = context.world().lock().await;
 
     let mut schema_diag = Vec::new();
@@ -42,6 +49,7 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
             unresolved_schema_name = Some(schema_name.to_string());
         }
     }
+
     drop(w);
 
     if !schema_diag.is_empty() {
@@ -548,6 +556,9 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                 .unwrap_or_default(),
             err = err
         ),
+        ErrorValue::Custom(_) => {
+            // Incomplete DOM tree errors are expected.
+        }
         error_value => {
             diags.push(Diagnostic {
                 range: error

@@ -7,7 +7,7 @@ use schemars::{
 };
 use taplo::{
     dom::{self, Common},
-    syntax::SyntaxKind,
+    syntax::{SyntaxKind, SyntaxNode},
 };
 
 pub(crate) fn get_completions(
@@ -27,9 +27,11 @@ pub(crate) fn get_completions(
         node: None,
         doc,
         offset,
-        table_array_header: false,
         position,
+        key_only: false,
         table_header: false,
+        table_array_header: false,
+        part_of_ident: false,
     };
 
     get_dom_info(&dom.into(), &mut info);
@@ -37,24 +39,31 @@ pub(crate) fn get_completions(
     // Empty table headers ("[]") and empty table array headers ("[[]]") aren't
     // in the DOM.
     for n in info.doc.parse.clone().into_syntax().descendants() {
-        if info
-            .doc
-            .mapper
-            .position(n.text_range().start())
-            .unwrap_or_default()
-            .line
-            == position.line
+        if n.text_range().contains(info.offset)
+            && (n.kind() == SyntaxKind::TABLE_HEADER || n.kind() == SyntaxKind::TABLE_ARRAY_HEADER)
         {
             if n.kind() == SyntaxKind::TABLE_HEADER {
                 info.table_header = true;
-                break;
-            }
-            if n.kind() == SyntaxKind::TABLE_ARRAY_HEADER {
+            } else {
                 info.table_array_header = true;
-                break;
             }
+
+            // No completion outside the headers
+            if !inside_header_brackets(n, offset) {
+                return Vec::new();
+            }
+
+            info.key_only = true;
+
+            break;
         }
     }
+
+    info.part_of_ident = info
+        .node
+        .as_ref()
+        .map(|n| part_of_ident(n, offset))
+        .unwrap_or_default();
 
     root_schema_completions(&mut info, &schema)
 }
@@ -69,8 +78,10 @@ enum Key {
 struct DomInfo {
     keys: Vec<Key>,
     node: Option<dom::Node>,
+    key_only: bool,
     table_header: bool,
     table_array_header: bool,
+    part_of_ident: bool,
     doc: Document,
     position: Position,
     offset: TextSize,
@@ -81,15 +92,7 @@ fn get_dom_info(node: &dom::Node, info: &mut DomInfo) {
         dom::Node::Root(r) => {
             info.node = Some(r.clone().into());
             for entry in r.entries().iter() {
-                if entry.text_range().contains(info.offset)
-                    || info
-                        .doc
-                        .mapper
-                        .position(entry.text_range().start())
-                        .unwrap()
-                        .line
-                        == info.position.line
-                {
+                if entry.text_range().contains(info.offset) {
                     info.keys.push(Key::Property(entry.key().full_key_string()));
 
                     get_dom_info(&entry.clone().into(), info);
@@ -100,15 +103,7 @@ fn get_dom_info(node: &dom::Node, info: &mut DomInfo) {
         dom::Node::Table(t) => {
             info.node = Some(t.clone().into());
             for entry in t.entries().iter() {
-                if entry.text_range().contains(info.offset)
-                    || info
-                        .doc
-                        .mapper
-                        .position(entry.text_range().start())
-                        .unwrap()
-                        .line
-                        == info.position.line
-                {
+                if entry.text_range().contains(info.offset) {
                     info.keys.push(Key::Property(entry.key().full_key_string()));
 
                     get_dom_info(&entry.clone().into(), info);
@@ -119,7 +114,7 @@ fn get_dom_info(node: &dom::Node, info: &mut DomInfo) {
         dom::Node::Entry(e) => {
             if e.key().text_range().contains(info.offset) {
                 get_dom_info(&e.key().clone().into(), info);
-            } else if e.value().text_range().contains_inclusive(info.offset) {
+            } else if e.value().text_range().contains(info.offset) {
                 get_dom_info(&e.value().clone().into(), info);
             } else {
                 // Everything after the eq is considered a value
@@ -127,11 +122,14 @@ fn get_dom_info(node: &dom::Node, info: &mut DomInfo) {
                     if info.offset >= eq.end() {
                         get_dom_info(&e.value().clone().into(), info);
                     } else {
-                        info.table_header = true; // so that only the key is completed
+                        info.key_only = true;
                         get_dom_info(&e.key().clone().into(), info);
                     }
+                } else if e.value().is_valid() {
+                    // It's a table header or array of tables header.
+                    get_dom_info(&e.value().clone().into(), info);
                 } else {
-                    // There's no eq, it's all key only.
+                    // There's no eq and it's a regular entry, it's all key only.
                     get_dom_info(&e.key().clone().into(), info);
                 }
             }
@@ -163,15 +161,87 @@ fn get_dom_info(node: &dom::Node, info: &mut DomInfo) {
     }
 }
 
+fn part_of_ident(node: &dom::Node, offset: TextSize) -> bool {
+    match node {
+        dom::Node::Key(k) => {
+            for t in k.syntax().as_node().unwrap().descendants_with_tokens() {
+                match t.kind() {
+                    SyntaxKind::IDENT => {
+                        if t.text_range().contains(offset) {
+                            return true;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            false
+        }
+        dom::Node::Table(t) => {
+            if t.syntax().kind() == SyntaxKind::TABLE_HEADER
+                || t.syntax().kind() == SyntaxKind::TABLE_ARRAY_HEADER
+            {
+                for tok in t.syntax().as_node().unwrap().descendants_with_tokens() {
+                    match tok.kind() {
+                        SyntaxKind::IDENT => {
+                            if tok.text_range().contains(offset) {
+                                return true;
+                            }
+                        }
+
+                        _ => {}
+                    }
+                }
+            }
+            false
+        }
+        dom::Node::Array(arr) => {
+            if arr.syntax().kind() == SyntaxKind::TABLE_ARRAY_HEADER {
+                for tok in arr.syntax().as_node().unwrap().children_with_tokens() {
+                    match tok.kind() {
+                        SyntaxKind::IDENT => {
+                            if tok.text_range().contains(offset) {
+                                return true;
+                            }
+                        }
+
+                        _ => {}
+                    }
+                }
+            }
+            false
+        }
+        _ => false,
+    }
+}
+
+fn inside_header_brackets(node: SyntaxNode, offset: TextSize) -> bool {
+    let last_start_bracket = node
+        .descendants_with_tokens()
+        .filter(|d| d.kind() == SyntaxKind::BRACE_START)
+        .last()
+        .map(|n| n.text_range())
+        .unwrap_or_default();
+
+    let first_ending_bracket = node
+        .descendants_with_tokens()
+        .find(|d| d.kind() == SyntaxKind::BRACKET_END)
+        .map(|n| n.text_range())
+        .unwrap_or_default();
+
+    offset >= last_start_bracket.start() && offset < first_ending_bracket.start()
+}
+
 fn root_schema_completions(info: &mut DomInfo, schema: &RootSchema) -> Vec<CompletionItem> {
     schema_object_completions(info, &schema.definitions, &schema.schema)
 }
 
-fn schema_completions(
+fn schema_completions<'s>(
     info: &mut DomInfo,
-    defs: &Map<String, Schema>,
-    schema: &Schema,
+    defs: &'s Map<String, Schema>,
+    mut schema: &'s Schema,
 ) -> Vec<CompletionItem> {
+    schema = resolve_ref(defs, schema).unwrap();
+
     match schema {
         Schema::Bool(_) => Vec::new(),
         Schema::Object(o) => schema_object_completions(info, defs, o),
@@ -183,127 +253,17 @@ fn schema_object_completions(
     defs: &Map<String, Schema>,
     schema: &SchemaObject,
 ) -> Vec<CompletionItem> {
-    if let Some(r) = &schema.reference {
-        if let Some(local_def) = local_definition(r) {
-            if let Some(s) = defs.get(local_def) {
-                return schema_completions(info, defs, s);
-            }
-        }
-    }
-
-    // see if it is part of an existing key ident like my_key => my_
-    let is_part_of_key = match info.node.as_ref().unwrap() {
-        dom::Node::Key(k) => {
-            let mut part_of_ident = false;
-            let mut contains_error = false;
-
-            for t in k.syntax().descendants_with_tokens() {
-                match t.kind() {
-                    SyntaxKind::IDENT => {
-                        if !part_of_ident {
-                            part_of_ident = t.text_range().contains(info.offset);
-                        }
-                    }
-                    SyntaxKind::ERROR => {
-                        contains_error = true;
-                    }
-                    _ => {}
-                }
-            }
-
-            if contains_error {
-                info.table_header = true; // so that we complete the key only
-            }
-
-            part_of_ident
-        }
-        dom::Node::Table(t) => {
-            if t.kind() == SyntaxKind::TABLE_HEADER {
-                let mut part_of_ident = false;
-
-                for tok in t.syntax().descendants_with_tokens() {
-                    match tok.kind() {
-                        SyntaxKind::IDENT => {
-                            if tok.text_range().contains_inclusive(info.offset) {
-                                part_of_ident = true;
-                                break;
-                            }
-                        }
-
-                        _ => {}
-                    }
-                }
-
-                part_of_ident
-            } else {
-                false
-            }
-        }
-        dom::Node::Array(arr) => {
-            if arr.kind() == SyntaxKind::TABLE_ARRAY_HEADER {
-                let mut part_of_ident = false;
-
-                for tok in arr.syntax().children_with_tokens() {
-                    match tok.kind() {
-                        SyntaxKind::IDENT => {
-                            if tok.text_range().contains_inclusive(info.offset) {
-                                part_of_ident = true;
-                                break;
-                            }
-                        }
-
-                        _ => {}
-                    }
-                }
-
-                part_of_ident
-            } else {
-                false
-            }
-        }
-        _ => false,
-    };
-
-    if info.keys.is_empty() || (info.keys.len() == 1 && is_part_of_key) {
+    if info.keys.is_empty() || (info.keys.len() == 1 && info.part_of_ident) {
         match info.node.as_ref().unwrap() {
-            dom::Node::Root(_r) => match &schema.object {
-                Some(o) => object_completions(info, o),
-                None => Vec::new(),
-            },
-            dom::Node::Table(t) => {
-                if info.table_header {
-                    if info.offset <= t.text_range().start() || info.offset >= t.text_range().end()
-                    {
-                        return Vec::new();
-                    }
-                }
-                match &schema.object {
-                    Some(o) => object_completions(info, o),
-                    None => Vec::new(),
-                }
-            }
-            dom::Node::Key(_) => match &schema.object {
-                Some(o) => object_completions(info, o),
+            dom::Node::Root(_) | dom::Node::Table(_) | dom::Node::Key(_) => match &schema.object {
+                Some(o) => object_completions(info, defs, o),
                 None => Vec::new(),
             },
             dom::Node::Value(_) => value_completions(schema),
-            dom::Node::Array(arr) => {
-                if info.table_array_header {
-                    // See if we're after the last period
-                    let last_period_offset = arr
-                        .syntax()
-                        .descendants_with_tokens()
-                        .filter(|n| n.kind() == SyntaxKind::PERIOD)
-                        .last()
-                        .map(|p| p.text_range().end())
-                        .unwrap_or_default();
-
-                    if last_period_offset != info.offset {
-                        return Vec::new();
-                    }
-
+            dom::Node::Array(_) => {
+                if info.key_only {
                     match &schema.object {
-                        Some(o) => object_completions(info, o),
+                        Some(o) => object_completions(info, defs, o),
                         None => Vec::new(),
                     }
                 } else {
@@ -311,7 +271,31 @@ fn schema_object_completions(
                         match a {
                             SingleOrVec::Single(s) => {
                                 if let Schema::Object(o) = &**s {
-                                    value_completions(o)
+                                    if info.table_array_header {
+                                        if let Some(items) =
+                                            o.array.as_ref().and_then(|arr| arr.items.as_ref())
+                                        {
+                                            match items {
+                                                SingleOrVec::Single(s) => {
+                                                    let s = resolve_ref(defs, s).unwrap();
+                                                    if let Schema::Object(items_obj) = s {
+                                                        if let Some(obj_val) = &items_obj.object {
+                                                            object_completions(info, defs, obj_val)
+                                                        } else {
+                                                            Vec::new()
+                                                        }
+                                                    } else {
+                                                        Vec::new()
+                                                    }
+                                                }
+                                                SingleOrVec::Vec(_) => Vec::new(),
+                                            }
+                                        } else {
+                                            Vec::new()
+                                        }
+                                    } else {
+                                        value_completions(resolve_object_ref(defs, o).unwrap())
+                                    }
                                 } else {
                                     Vec::new()
                                 }
@@ -323,18 +307,7 @@ fn schema_object_completions(
                     }
                 }
             }
-            dom::Node::Entry(e) => {
-                let after_eq = e
-                    .token_eq_text_range()
-                    .map(|t| t.start() <= info.offset)
-                    .unwrap_or_default();
-
-                if !after_eq {
-                    Vec::new()
-                } else {
-                    value_completions(schema)
-                }
-            }
+            dom::Node::Entry(_) => panic!("this should never happen"),
         }
     } else {
         let key = info.keys.remove(0);
@@ -367,213 +340,136 @@ fn schema_object_completions(
     }
 }
 
-fn object_completions(info: &mut DomInfo, obj: &Box<ObjectValidation>) -> Vec<CompletionItem> {
+fn object_completions(
+    info: &mut DomInfo,
+    defs: &Map<String, Schema>,
+    obj: &Box<ObjectValidation>,
+) -> Vec<CompletionItem> {
     let entries = match info.node.as_ref().unwrap() {
         dom::Node::Root(r) => Some(r.entries()),
         dom::Node::Table(t) => Some(t.entries()),
         _ => None,
     };
 
-    if info.table_header {
-        return obj
-            .properties
-            .iter()
-            .filter(|(_, s)| match s {
-                Schema::Bool(_) => true,
-                Schema::Object(o) => {
-                    if let Some(_) = &o.object {
-                        true
-                    } else {
-                        false
-                    }
-                }
-            })
-            .filter_map(|(key, schema)| {
-                if entries
-                    .map(|es| {
-                        es.iter()
-                            .any(|e| e.key().keys_str().next().unwrap() == key.as_str())
-                    })
-                    .unwrap_or_default()
-                {
-                    return None;
-                }
-
-                match &schema {
-                    Schema::Bool(b) => {
-                        if *b {
-                            Some(CompletionItem {
-                                label: key.clone(),
-                                kind: Some(CompletionItemKind::Variable),
-                                preselect: Some(true),
-                                ..Default::default()
-                            })
-                        } else {
-                            None
-                        }
-                    }
-                    Schema::Object(o) => {
-                        if let Some(ty) = &o.instance_type {
-                            match ty {
-                                SingleOrVec::Single(t) => {
-                                    if **t != InstanceType::Object {
-                                        return None;
-                                    }
-                                }
-                                SingleOrVec::Vec(tys) => {
-                                    if !tys.contains(&InstanceType::Object) {
-                                        return None;
-                                    }
-                                }
-                            }
-                        }
-
-                        Some(CompletionItem {
-                            label: key.clone(),
-                            kind: Some(CompletionItemKind::Variable),
-                            preselect: Some(true),
-                            ..Default::default()
-                        })
-                    }
-                }
-            })
-            .collect();
-    }
-
-    if info.table_array_header {
-        return obj
-            .properties
-            .iter()
-            .filter(|(_, s)| match s {
-                Schema::Bool(_) => true,
-                Schema::Object(o) => {
-                    if let Some(arr) = &o.array {
-                        if let Some(items) = &arr.items {
-                            match items {
-                                SingleOrVec::Single(s) => match &**s {
-                                    Schema::Bool(_) => true,
-                                    Schema::Object(o) => {
-                                        if let Some(_) = &o.object {
-                                            true
-                                        } else {
-                                            false
-                                        }
-                                    }
-                                },
-                                SingleOrVec::Vec(_) => false,
-                            }
-                        } else {
-                            false
-                        }
-                    } else {
-                        false
-                    }
-                }
-            })
-            .filter_map(|(key, schema)| {
-                if entries
-                    .map(|es| {
-                        es.iter()
-                            .any(|e| e.key().keys_str().next().unwrap() == key.as_str())
-                    })
-                    .unwrap_or_default()
-                {
-                    return None;
-                }
-
-                match &schema {
-                    Schema::Bool(b) => {
-                        if *b {
-                            Some(CompletionItem {
-                                label: key.clone(),
-                                kind: Some(CompletionItemKind::Variable),
-                                preselect: Some(true),
-                                ..Default::default()
-                            })
-                        } else {
-                            None
-                        }
-                    }
-                    Schema::Object(o) => {
-                        if let Some(ty) = &o.instance_type {
-                            match ty {
-                                SingleOrVec::Single(t) => {
-                                    if **t != InstanceType::Object {
-                                        return None;
-                                    }
-                                }
-                                SingleOrVec::Vec(tys) => {
-                                    if !tys.contains(&InstanceType::Object) {
-                                        return None;
-                                    }
-                                }
-                            }
-                        }
-
-                        Some(CompletionItem {
-                            label: key.clone(),
-                            kind: Some(CompletionItemKind::Variable),
-                            preselect: Some(true),
-                            ..Default::default()
-                        })
-                    }
-                }
-            })
-            .collect();
-    }
-
     obj.properties
         .iter()
-        .filter_map(|(key, schema)| {
-            if entries
+        .filter(|(_, mut schema)| {
+            schema = resolve_ref(defs, schema).unwrap();
+
+            if info.table_header && !contains_type(InstanceType::Object, schema) {
+                return false;
+            }
+
+            if info.table_array_header {
+                if !contains_type(InstanceType::Array, schema) {
+                    return false;
+                }
+
+                if let Schema::Object(o) = schema {
+                    return o
+                        .array
+                        .as_ref()
+                        .map(|arr| match arr.items.as_ref() {
+                            Some(items) => match items {
+                                SingleOrVec::Single(s) => contains_type(
+                                    InstanceType::Object,
+                                    resolve_ref(defs, s).unwrap(),
+                                ),
+                                SingleOrVec::Vec(_) => false,
+                            },
+                            None => false,
+                        })
+                        .unwrap_or_default();
+                }
+            }
+
+            true
+        })
+        .filter(|(key, _)| {
+            !entries
                 .map(|es| {
                     es.iter()
-                        .any(|e| e.key().keys_str().next().unwrap() == key.as_str())
+                        .any(|e| e.key().keys_str().next().unwrap() == *key)
                 })
                 .unwrap_or_default()
-            {
-                None
-            } else {
-                match schema {
-                    Schema::Bool(b) => {
-                        if *b {
-                            // We don't know anything about it.
-                            Some(CompletionItem {
-                                label: key.clone(),
-                                kind: Some(CompletionItemKind::Variable),
-                                insert_text: Some(format!("{} = $0", key)),
-                                insert_text_format: Some(InsertTextFormat::Snippet),
-                                preselect: Some(true),
-                                ..Default::default()
-                            })
-                        } else {
-                            // It's not even allowed.
-                            None
-                        }
+        })
+        .filter_map(|(key, schema)| {
+            match schema {
+                Schema::Bool(b) => {
+                    if *b {
+                        // We don't know anything about it.
+                        Some(CompletionItem {
+                            label: key.clone(),
+                            kind: Some(CompletionItemKind::Variable),
+                            sort_text: obj_sort_text(key, obj),
+                            preselect: Some(true),
+                            ..Default::default()
+                        })
+                    } else {
+                        // It's not even allowed.
+                        None
                     }
-                    Schema::Object(obj) => Some(CompletionItem {
+                }
+                Schema::Object(o) => {
+                    let o = resolve_object_ref(defs, o).unwrap();
+
+                    let (insert_text, insert_text_format) = obj_insert_text(key, info, o);
+
+                    Some(CompletionItem {
                         label: key.clone(),
                         kind: Some(CompletionItemKind::Variable),
-                        insert_text: Some(format!("{} = {}", key, empty_value_snippet(obj))),
-                        insert_text_format: Some(InsertTextFormat::Snippet),
-                        documentation: obj
-                            .metadata
-                            .as_ref()
-                            .and_then(|meta| meta.description.clone())
-                            .map(|desc| {
-                                Some(Documentation::MarkupContent(MarkupContent {
-                                    kind: MarkupKind::Markdown,
-                                    value: desc,
-                                }))
-                            })
-                            .unwrap_or_default(),
+                        insert_text,
+                        insert_text_format,
+                        sort_text: obj_sort_text(key, obj),
+                        documentation: obj_doc(o),
                         preselect: Some(true),
                         ..Default::default()
-                    }),
+                    })
                 }
             }
         })
         .collect()
+}
+
+fn obj_insert_text(
+    key: &str,
+    info: &DomInfo,
+    obj: &SchemaObject,
+) -> (Option<String>, Option<InsertTextFormat>) {
+    if info.key_only || object_contains_type(InstanceType::Object, obj) {
+        // Leave just the key so that
+        // dotted keys can be easily used.
+        (None, None)
+    } else {
+        (
+            Some(format!("{} = {}", key, empty_value_snippet(obj))),
+            Some(InsertTextFormat::Snippet),
+        )
+    }
+}
+
+fn obj_doc(obj: &SchemaObject) -> Option<Documentation> {
+    obj.metadata
+        .as_ref()
+        .and_then(|meta| meta.description.clone())
+        .map(|desc| {
+            Documentation::MarkupContent(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: desc,
+            })
+        })
+}
+
+fn obj_sort_text(key: &str, obj: &ObjectValidation) -> Option<String> {
+    let required = obj.required.iter().any(|k| k == key);
+
+    if required {
+        // Make sure that it's at the top, so we prefix it
+        // with an invisible character
+        Some(format!("{}{}", 1 as char, key))
+    } else {
+        None
+    }
 }
 
 fn value_completions(obj: &SchemaObject) -> Vec<CompletionItem> {
@@ -806,4 +702,51 @@ fn local_definition(rf: &str) -> Option<&str> {
     } else {
         None
     }
+}
+
+fn resolve_ref<'s>(defs: &'s Map<String, Schema>, schema: &'s Schema) -> Option<&'s Schema> {
+    match schema {
+        Schema::Bool(_) => Some(schema),
+        Schema::Object(o) => {
+            if let Some(r) = &o.reference {
+                local_definition(r)
+                    .and_then(|local_def| defs.get(local_def).and_then(|s| resolve_ref(defs, s)))
+            } else {
+                Some(schema)
+            }
+        }
+    }
+}
+
+fn resolve_object_ref<'s>(
+    defs: &'s Map<String, Schema>,
+    obj: &'s SchemaObject,
+) -> Option<&'s SchemaObject> {
+    if let Some(r) = &obj.reference {
+        local_definition(r).and_then(|local_def| {
+            defs.get(local_def).and_then(|s| match s {
+                Schema::Bool(_) => None,
+                Schema::Object(o) => resolve_object_ref(defs, o),
+            })
+        })
+    } else {
+        Some(obj)
+    }
+}
+
+fn contains_type(ty: InstanceType, schema: &Schema) -> bool {
+    match schema {
+        Schema::Bool(b) => *b,
+        Schema::Object(obj) => object_contains_type(ty, obj),
+    }
+}
+
+fn object_contains_type(ty: InstanceType, obj: &SchemaObject) -> bool {
+    obj.instance_type
+        .as_ref()
+        .map(|tys| match tys {
+            SingleOrVec::Single(tp) => **tp == ty,
+            SingleOrVec::Vec(tps) => tps.contains(&ty),
+        })
+        .unwrap_or_default()
 }

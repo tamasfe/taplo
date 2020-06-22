@@ -2,7 +2,7 @@ use crate::World;
 use lsp_async_stub::{Context, RequestWriter};
 use lsp_types::*;
 use schemars::schema::{InstanceType, Metadata, RootSchema, SingleOrVec};
-use taplo::{dom, parser::Parse, util::coords::Mapper, verify::NodeSpan};
+use taplo::{dom::{self, Common}, parser::Parse, util::coords::Mapper, verify::NodeSpan};
 use verify::{
     schemars::errors::{Error, ErrorValue},
     Verifier,

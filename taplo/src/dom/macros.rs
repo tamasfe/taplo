@@ -37,39 +37,39 @@ macro_rules! dom_primitives {
                 }
             }
 
-            impl $ast {
-                pub fn text_range(&self) -> TextRange {
+            impl Common for $ast {
+                fn text_range(&self) -> TextRange {
                     self.0.text_range()
                 }
 
-                pub fn kind(&self) -> SyntaxKind {
-                    self.0.kind()
+                fn syntax(&self) -> SyntaxElement {
+                    SyntaxElement::Token(self.0.clone())
                 }
             }
 
             impl core::fmt::Display for $ast {
                 fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-                self.0.fmt(f)
+                    self.0.fmt(f)
                 }
             }
         )*
     };
 }
 
-macro_rules! dom_common {
+macro_rules! dom_display {
     ($($ast:ident),*) => {
         $(
-            impl $ast {
-                pub fn kind(&self) -> SyntaxKind {
-                    self.syntax.kind()
-                }
-            }
-
             impl core::fmt::Display for $ast {
                 fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-                   self.syntax.fmt(f)
+                   self.syntax().fmt(f)
                 }
             }
         )*
+    };
+}
+
+macro_rules! dom_sealed {
+    ($($id:ty),*) => {
+        $(impl Sealed for $id {})*
     };
 }

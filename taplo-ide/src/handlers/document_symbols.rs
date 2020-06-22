@@ -4,7 +4,7 @@ use lsp_types::DocumentSymbol;
 use lsp_types::SymbolKind;
 
 use taplo::{
-    dom::{KeyNode, ValueNode},
+    dom::{Common, KeyNode, ValueNode},
     util::coords::Mapper,
 };
 

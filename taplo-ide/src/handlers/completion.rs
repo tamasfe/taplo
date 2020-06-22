@@ -5,7 +5,10 @@ use schemars::{
     schema::{InstanceType, ObjectValidation, RootSchema, Schema, SchemaObject, SingleOrVec},
     Map,
 };
-use taplo::{dom, syntax::SyntaxKind};
+use taplo::{
+    dom::{self, Common},
+    syntax::SyntaxKind,
+};
 
 pub(crate) fn get_completions(
     doc: Document,

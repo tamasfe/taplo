@@ -727,10 +727,8 @@ fn check_underscores(s: &str, radix: u32) -> bool {
     let mut last_char = 0 as char;
 
     for c in s.chars() {
-        if c == '_' {
-            if !last_char.is_digit(radix) {
-                return false;
-            }
+        if c == '_' && !last_char.is_digit(radix) {
+            return false;
         }
         if !c.is_digit(radix) && last_char == '_' {
             return false;

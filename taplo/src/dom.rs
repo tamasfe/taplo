@@ -26,8 +26,37 @@ use std::{hash::Hash, iter::FromIterator, mem, rc::Rc};
 mod macros;
 
 /// Casting allows constructing DOM nodes from syntax nodes.
-pub trait Cast: Sized {
+pub trait Cast: Sized + private::Sealed {
     fn cast(element: SyntaxElement) -> Option<Self>;
+}
+
+pub trait Common: core::fmt::Display + core::fmt::Debug + private::Sealed {
+    fn syntax(&self) -> SyntaxElement;
+    fn text_range(&self) -> TextRange;
+
+    fn is_valid(&self) -> bool {
+        true
+    }
+}
+
+mod private {
+    use super::*;
+
+    pub trait Sealed {}
+    dom_sealed!(
+        Node,
+        RootNode,
+        EntryNode,
+        KeyNode,
+        ValueNode,
+        ArrayNode,
+        TableNode,
+        IntegerNode,
+        StringNode,
+        BoolNode,
+        FloatNode,
+        DateNode
+    );
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -89,17 +118,17 @@ impl Node {
 
     pub fn kind(&self) -> SyntaxKind {
         match self {
-            Node::Root(v) => v.kind(),
-            Node::Table(v) => v.kind(),
-            Node::Entry(v) => v.kind(),
-            Node::Key(v) => v.kind(),
-            Node::Value(v) => v.kind(),
-            Node::Array(v) => v.kind(),
+            Node::Root(v) => v.syntax().kind(),
+            Node::Table(v) => v.syntax().kind(),
+            Node::Entry(v) => v.syntax().kind(),
+            Node::Key(v) => v.syntax().kind(),
+            Node::Value(v) => v.syntax().kind(),
+            Node::Array(v) => v.syntax().kind(),
         }
     }
 }
 
-dom_common!(
+dom_display!(
     RootNode,
     TableNode,
     EntryNode,
@@ -140,15 +169,15 @@ impl RootNode {
     pub fn errors(&self) -> &[Error] {
         &self.errors
     }
+}
 
-    pub fn text_range(&self) -> TextRange {
-        let mut range = self.syntax.text_range();
+impl Common for RootNode {
+    fn syntax(&self) -> SyntaxElement {
+        self.syntax.clone().into()
+    }
 
-        if let Some(r) = self.entries().text_range() {
-            range = range.cover(r)
-        }
-
-        range
+    fn text_range(&self) -> TextRange {
+        self.syntax.text_range()
     }
 }
 
@@ -438,7 +467,7 @@ impl TableNode {
     }
 
     pub fn is_inline(&self) -> bool {
-        match self.kind() {
+        match self.syntax.kind() {
             INLINE_TABLE => true,
             _ => false,
         }
@@ -447,8 +476,14 @@ impl TableNode {
     pub fn is_pseudo(&self) -> bool {
         self.pseudo
     }
+}
 
-    pub fn text_range(&self) -> TextRange {
+impl Common for TableNode {
+    fn syntax(&self) -> SyntaxElement {
+        self.syntax.clone().into()
+    }
+
+    fn text_range(&self) -> TextRange {
         let mut range = self.syntax.text_range();
 
         if let Some(r) = self.entries().text_range() {
@@ -460,10 +495,6 @@ impl TableNode {
         }
 
         range
-    }
-
-    pub fn syntax(&self) -> SyntaxNode {
-        self.syntax.clone()
     }
 }
 
@@ -538,7 +569,7 @@ impl Entries {
     // need to span across whitespace as well.
     fn set_table_spans(&mut self, mut end: Option<TextSize>) {
         for entry in self.0.iter_mut().rev() {
-            if let TABLE_ARRAY_HEADER | TABLE_HEADER = entry.kind() {
+            if let TABLE_ARRAY_HEADER | TABLE_HEADER = entry.syntax.kind() {
                 if let Some(last) = end.take() {
                     match &mut entry.value {
                         ValueNode::Array(arr) => {
@@ -886,9 +917,25 @@ impl ArrayNode {
     pub fn is_array_of_tables(&self) -> bool {
         self.tables
     }
+}
 
-    pub fn syntax(&self) -> SyntaxNode {
-        self.syntax.clone()
+impl Common for ArrayNode {
+    fn syntax(&self) -> SyntaxElement {
+        self.syntax.clone().into()
+    }
+
+    fn text_range(&self) -> TextRange {
+        let mut range = self.syntax.text_range();
+
+        for item in &self.items {
+            range = range.cover(item.text_range())
+        }
+
+        if let Some(r) = self.next_entry.as_ref() {
+            range = range.cover_offset(*r);
+        }
+
+        range
     }
 }
 
@@ -987,8 +1034,14 @@ impl EntryNode {
             self.key = new_key;
         }
     }
+}
 
-    pub fn text_range(&self) -> TextRange {
+impl Common for EntryNode {
+    fn syntax(&self) -> SyntaxElement {
+        self.syntax.clone().into()
+    }
+
+    fn text_range(&self) -> TextRange {
         let r = self.key().text_range().cover(self.value.text_range());
 
         match self.next_entry {
@@ -1054,10 +1107,6 @@ pub struct KeyNode {
 }
 
 impl KeyNode {
-    pub fn kind(&self) -> SyntaxKind {
-        self.syntax.kind()
-    }
-
     pub fn idents(&self) -> impl Iterator<Item = &SyntaxToken> {
         self.idents[..self.idents.len() - self.mask_right]
             .iter()
@@ -1083,13 +1132,6 @@ impl KeyNode {
     pub fn full_key_string(&self) -> String {
         let s: Vec<String> = self.keys_str().map(|s| s.to_string()).collect();
         s.join(".")
-    }
-
-    pub fn text_range(&self) -> TextRange {
-        self.idents()
-            .fold(self.idents().next().unwrap().text_range(), |r, t| {
-                r.cover(t.text_range())
-            })
     }
 
     /// Determines whether the key starts with
@@ -1156,10 +1198,6 @@ impl KeyNode {
         self.key_count() == other.key_count() && self.is_part_of(other)
     }
 
-    pub fn syntax(&self) -> SyntaxNode {
-        self.syntax.clone()
-    }
-
     /// Prepends other's idents, and also inherits
     /// other's index.
     fn with_prefix(mut self, other: &KeyNode) -> Self {
@@ -1201,6 +1239,19 @@ impl KeyNode {
     fn last(self) -> Self {
         let count = self.key_count();
         self.inner(count)
+    }
+}
+
+impl Common for KeyNode {
+    fn syntax(&self) -> SyntaxElement {
+        self.syntax.clone().into()
+    }
+
+    fn text_range(&self) -> TextRange {
+        self.idents()
+            .fold(self.idents().next().unwrap().text_range(), |r, t| {
+                r.cover(t.text_range())
+            })
     }
 }
 
@@ -1300,8 +1351,23 @@ impl ValueNode {
             _ => None,
         }
     }
+}
 
-    pub fn text_range(&self) -> TextRange {
+impl Common for ValueNode {
+    fn syntax(&self) -> SyntaxElement {
+        match self {
+            ValueNode::Bool(v) => v.syntax(),
+            ValueNode::String(v) => v.syntax(),
+            ValueNode::Integer(v) => v.syntax(),
+            ValueNode::Float(v) => v.syntax(),
+            ValueNode::Array(v) => v.syntax(),
+            ValueNode::Date(v) => v.syntax(),
+            ValueNode::Table(v) => v.syntax(),
+            _ => panic!("empty value"),
+        }
+    }
+
+    fn text_range(&self) -> TextRange {
         match self {
             ValueNode::Bool(v) => v.text_range(),
             ValueNode::String(v) => v.text_range(),
@@ -1311,19 +1377,6 @@ impl ValueNode {
             ValueNode::Date(v) => v.text_range(),
             ValueNode::Table(v) => v.text_range(),
             ValueNode::Invalid(n) => n.as_ref().map(|n| n.text_range()).unwrap_or_default(),
-            _ => panic!("empty value"),
-        }
-    }
-
-    pub fn kind(&self) -> SyntaxKind {
-        match self {
-            ValueNode::Bool(v) => v.kind(),
-            ValueNode::String(v) => v.kind(),
-            ValueNode::Integer(v) => v.kind(),
-            ValueNode::Float(v) => v.kind(),
-            ValueNode::Array(v) => v.kind(),
-            ValueNode::Date(v) => v.kind(),
-            ValueNode::Table(v) => v.kind(),
             _ => panic!("empty value"),
         }
     }
@@ -1396,6 +1449,16 @@ impl IntegerNode {
     }
 }
 
+impl Common for IntegerNode {
+    fn syntax(&self) -> SyntaxElement {
+        self.syntax.clone().into()
+    }
+
+    fn text_range(&self) -> TextRange {
+        self.syntax.text_range()
+    }
+}
+
 impl Cast for IntegerNode {
     fn cast(element: SyntaxElement) -> Option<Self> {
         match element.kind() {
@@ -1433,7 +1496,7 @@ pub struct StringNode {
     syntax: SyntaxToken,
     kind: StringKind,
 
-    /// Escaped and trimmed value.
+    /// Unescaped (and trimmed where defined by TOML) value.
     content: String,
 }
 
@@ -1449,11 +1512,18 @@ impl StringNode {
     pub fn into_content(self) -> String {
         self.content
     }
+}
 
-    pub fn text_range(&self) -> TextRange {
+impl Common for StringNode {
+    fn syntax(&self) -> SyntaxElement {
+        self.syntax.clone().into()
+    }
+
+    fn text_range(&self) -> TextRange {
         self.syntax.text_range()
     }
 }
+
 
 impl Cast for StringNode {
     fn cast(element: SyntaxElement) -> Option<Self> {

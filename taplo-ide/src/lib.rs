@@ -119,6 +119,8 @@ pub struct FormatterConfiguration {
     pub array_auto_expand: Option<bool>,
     pub array_auto_collapse: Option<bool>,
     pub column_width: Option<usize>,
+    pub compact_arrays: Option<bool>,
+    pub compact_inline_tables: Option<bool>,
     pub indent_tables: Option<bool>,
     pub indent_string: Option<String>,
     pub trailing_newline: Option<bool>,

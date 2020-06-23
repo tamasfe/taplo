@@ -36,6 +36,12 @@ pub struct Options {
     /// contains a comment.
     pub array_auto_collapse: bool,
 
+    /// Omit whitespace padding inside single-line arrays.
+    pub compact_arrays: bool,
+
+    /// Omit whitespace padding inside inline tables.
+    pub compact_inline_tables: bool,
+
     /// Target maximum column width after which
     /// arrays are expanded into new lines.
     ///
@@ -67,6 +73,8 @@ impl Default for Options {
             array_trailing_comma: true,
             array_auto_expand: true,
             array_auto_collapse: true,
+            compact_arrays: true,
+            compact_inline_tables: false,
             column_width: 80,
             indent_tables: true,
             trailing_newline: true,
@@ -104,10 +112,7 @@ pub fn format_green(green: GreenNode, options: Options) -> String {
 
 /// Parses then formats a TOML document, ignoring errors.
 pub fn format(src: &str, options: Options) -> String {
-    format_syntax(
-        crate::parser::parse(src).into_syntax(),
-        options,
-    )
+    format_syntax(crate::parser::parse(src).into_syntax(), options)
 }
 
 /// Formats a parsed TOML syntax tree.
@@ -403,10 +408,14 @@ fn format_inline_table(
                 NodeOrToken::Token(t) => match t.kind() {
                     BRACE_START => {
                         builder.token(t.kind().into(), t.text().clone());
-                        builder.token(WHITESPACE.into(), " ".into());
+                        if !options.compact_inline_tables {
+                            builder.token(WHITESPACE.into(), " ".into());
+                        }
                     }
                     BRACE_END => {
-                        builder.token(WHITESPACE.into(), " ".into());
+                        if !options.compact_inline_tables {
+                            builder.token(WHITESPACE.into(), " ".into());
+                        }
                         builder.token(t.kind().into(), t.text().clone());
                     }
                     WHITESPACE | NEWLINE | COMMA => {}
@@ -532,7 +541,7 @@ fn format_array(
 
                         if multiline {
                             builder.token(NEWLINE.into(), options.newline().into());
-                        } else {
+                        } else if !options.compact_arrays {
                             builder.token(WHITESPACE.into(), " ".into());
                         }
                     }
@@ -543,7 +552,7 @@ fn format_array(
                                 WHITESPACE.into(),
                                 options.indent_string.repeat(context.indent_level).into(),
                             );
-                        } else {
+                        } else if !options.compact_arrays {
                             builder.token(WHITESPACE.into(), " ".into());
                         }
                         builder.token(t.kind().into(), t.text().clone());

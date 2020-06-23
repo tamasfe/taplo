@@ -229,6 +229,14 @@ pub(crate) async fn format(
         format_opts.trailing_newline = v;
     }
 
+    if let Some(v) = w.configuration.formatter.compact_arrays {
+        format_opts.compact_arrays = v;
+    }
+
+    if let Some(v) = w.configuration.formatter.compact_inline_tables {
+        format_opts.compact_inline_tables = v;
+    }
+
     if let Some(v) = w.configuration.formatter.indent_string.clone() {
         format_opts.indent_string = v;
     } else {

@@ -179,6 +179,18 @@
 					"scope": "resource",
 					"default": true
 				},
+				"evenBetterToml.formatter.compactArrays": {
+					"description": "Omit white space padding from single-line arrays.",
+					"type": "boolean",
+					"scope": "resource",
+					"default": true
+				},
+				"evenBetterToml.formatter.compactInlineTables": {
+					"description": "Omit white space padding from the start and end of inline tables.",
+					"type": "boolean",
+					"scope": "resource",
+					"default": false
+				},
 				"evenBetterToml.formatter.columnWidth": {
 					"description": "Maximum column width in characters, affects array expansion and collapse, this doesn't take whitespace into account.",
 					"type": "number",

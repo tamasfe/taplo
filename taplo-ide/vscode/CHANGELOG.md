@@ -1,5 +1,15 @@
 # Change Log
 
+## next
+
+#### New Features
+- Added compact arrays formatter option
+- Added compact inline tables formatter option
+- Initial JSON schema-based completion and validation
+
+#### Fixes
+- Fixed broken document symbols
+
 ## 0.5.1
 
 ### Fixes

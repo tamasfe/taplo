@@ -41,8 +41,17 @@ pub(crate) async fn initialize(
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             document_symbol_provider: Some(true),
             document_formatting_provider: Some(true),
+            hover_provider: Some(true),
             completion_provider: Some(CompletionOptions {
-                resolve_provider: Some(true),
+                resolve_provider: Some(false),
+                trigger_characters: Some(vec![
+                    ".".into(),
+                    "=".into(),
+                    "[".into(),
+                    "{".into(),
+                    ",".into(),
+                    "\"".into(),
+                ]),
                 ..Default::default()
             }),
             ..Default::default()
@@ -295,6 +304,32 @@ pub(crate) async fn completion(
         is_incomplete: false,
         items: completion::get_completions(doc, pos, schema),
     })))
+}
+
+pub(crate) async fn hover(
+    mut context: Context<World>,
+    params: Params<HoverParams>,
+) -> Result<Option<Hover>, Error> {
+    let p = params.required()?;
+
+    let uri = p.text_document_position_params.text_document.uri;
+    let pos = p.text_document_position_params.position;
+
+    let w = context.world().lock().await;
+
+    let doc: Document = match w.documents.get(&uri) {
+        Some(d) => d.clone(),
+        None => return Err(Error::new("document not found")),
+    };
+
+    let schema: RootSchema = match w.get_schema_by_uri(&uri) {
+        Some(s) => s.clone(),
+        None => return Err(Error::new("associated schema not found")),
+    };
+
+    let dom = doc.parse.clone().into_dom();
+
+    Ok(None)
 }
 
 pub(crate) async fn toml_to_json(

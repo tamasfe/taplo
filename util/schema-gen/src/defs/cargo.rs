@@ -101,10 +101,17 @@ pub enum OptLevel {
 #[derive(Clone, Debug, Serialize, JsonSchema, Eq, PartialEq)]
 #[serde(untagged)]
 #[schemars(title = "Debug Level")]
+// enum of 0, 1, 2
 pub enum DebugLevel {
     U32(u32),
     Bool(bool),
 }
+
+#[derive(Clone, Debug, Serialize, JsonSchema, Eq, PartialEq)]
+#[serde(transparent)]
+#[schemars(title = "Panic")]
+// enum of "unwind" or "abort"
+pub struct Panic(String);
 
 #[derive(Serialize, JsonSchema, Clone, Debug, Default, Eq, PartialEq)]
 #[serde(rename_all = "kebab-case")]
@@ -112,12 +119,12 @@ pub enum DebugLevel {
 #[serde(deny_unknown_fields)]
 pub struct Profile {
     pub opt_level: Option<OptLevel>,
-    pub lto: Option<StringOrBool>,
+    pub lto: Option<Lto>,
     pub codegen_units: Option<u32>,
     pub debug: Option<DebugLevel>,
     pub debug_assertions: Option<bool>,
     pub rpath: Option<bool>,
-    pub panic: Option<String>,
+    pub panic: Option<Panic>,
     pub overflow_checks: Option<bool>,
     pub incremental: Option<bool>,
 
@@ -143,18 +150,6 @@ Specs like:
 #[schemars(title = "Package Spec")]
 pub struct PackageSpec(String);
 
-// impl ser::Serialize for ProfilePackageSpec {
-//     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: ser::Serializer,
-//     {
-//         match *self {
-//             ProfilePackageSpec::Spec(ref spec) => spec.serialize(s),
-//             ProfilePackageSpec::All => "*".serialize(s),
-//         }
-//     }
-// }
-
 #[derive(Clone, Debug, Serialize, JsonSchema, Eq, PartialEq)]
 #[schemars(title = "Meta Build")]
 pub struct MetaBuild(Vec<String>);
@@ -166,16 +161,42 @@ pub enum StringOrBool {
     Bool(bool),
 }
 
-#[derive(PartialEq, Clone, Debug, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, JsonSchema, Eq, PartialEq)]
 #[serde(untagged)]
-pub enum VecStringOrBool {
-    VecString(Vec<String>),
+#[schemars(title = "Lto")]
+pub enum Lto {
+    // enum of "fat", "thin", "off"
+    String(String),
     Bool(bool),
 }
 
 #[derive(Serialize, JsonSchema, Clone, Debug)]
+#[serde(untagged)]
+#[schemars(title = "Publish")]
+pub enum Publish {
+    VecString(Vec<String>),
+    Disable(Disable)
+}
+
+#[derive(Serialize, JsonSchema, Clone, Debug)]
 #[serde(transparent)]
+#[schemars(title = "Semantic Version")]
+// regex ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
 pub struct SemVer(String);
+
+#[derive(Serialize, JsonSchema, Clone, Debug)]
+#[serde(untagged)]
+#[schemars(title = "Build")]
+pub enum Build {
+    String(String),
+    Disable(Disable)
+}
+
+#[derive(Serialize, JsonSchema, Clone, Debug)]
+#[serde(transparent)]
+#[schemars(title = "Disable")]
+// Enum of only false
+pub struct Disable(bool);
 
 /// Represents the `package`/`project` sections of a `Cargo.toml`.
 ///
@@ -185,17 +206,18 @@ pub struct SemVer(String);
 /// tables.
 #[derive(Serialize, JsonSchema, Clone, Debug)]
 #[serde(deny_unknown_fields)]
+#[schemars(title = "Project")]
 pub struct Project {
     edition: Option<String>,
     name: String,
     version: SemVer,
     authors: Option<Vec<String>>,
-    build: Option<StringOrBool>,
+    build: Option<Build>,
     metabuild: Option<MetaBuild>,
     links: Option<String>,
     exclude: Option<Vec<String>>,
     include: Option<Vec<String>>,
-    publish: Option<VecStringOrBool>,
+    publish: Option<Publish>,
     #[serde(rename = "publish-lockfile")]
     publish_lockfile: Option<bool>,
     workspace: Option<String>,
@@ -221,7 +243,7 @@ pub struct Project {
     #[serde(rename = "license-file")]
     license_file: Option<String>,
     repository: Option<String>,
-    metadata: Option<serde_json::Value>,
+    metadata: Option<BTreeMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Serialize, JsonSchema)]

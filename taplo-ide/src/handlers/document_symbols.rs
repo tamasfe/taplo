@@ -39,7 +39,10 @@ fn symbols_for_value(
     });
 
     let range = if let Some(key_r) = key_range {
-        mapper.range(key_r.cover(value.text_range())).unwrap()
+        mapper.range(key_r.cover(value.text_range())).unwrap_or_else(|| Range {
+            start: mapper.position(key_r.start()).unwrap(),
+            end: mapper.end()
+        })
     } else {
         own_range
     };

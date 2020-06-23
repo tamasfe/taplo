@@ -78,6 +78,54 @@ dom_node_from!(
     ArrayNode => Array
 );
 
+impl core::fmt::Display for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Node::Root(v) => v.fmt(f),
+            Node::Table(v) => v.fmt(f),
+            Node::Entry(v) => v.fmt(f),
+            Node::Key(v) => v.fmt(f),
+            Node::Value(v) => v.fmt(f),
+            Node::Array(v) => v.fmt(f),
+        }
+    }
+}
+
+impl Common for Node {
+    fn syntax(&self) -> SyntaxElement {
+        match self {
+            Node::Root(v) => v.syntax(),
+            Node::Table(v) => v.syntax(),
+            Node::Entry(v) => v.syntax(),
+            Node::Key(v) => v.syntax(),
+            Node::Value(v) => v.syntax(),
+            Node::Array(v) => v.syntax(),
+        }
+    }
+
+    fn text_range(&self) -> TextRange {
+        match self {
+            Node::Root(v) => v.text_range(),
+            Node::Table(v) => v.text_range(),
+            Node::Entry(v) => v.text_range(),
+            Node::Key(v) => v.text_range(),
+            Node::Value(v) => v.text_range(),
+            Node::Array(v) => v.text_range(),
+        }
+    }
+
+    fn is_valid(&self) -> bool {
+        match self {
+            Node::Root(v) => v.is_valid(),
+            Node::Table(v) => v.is_valid(),
+            Node::Entry(v) => v.is_valid(),
+            Node::Key(v) => v.is_valid(),
+            Node::Value(v) => v.is_valid(),
+            Node::Array(v) => v.is_valid(),
+        }
+    }
+}
+
 impl Cast for Node {
     fn cast(element: SyntaxElement) -> Option<Self> {
         match element.kind() {

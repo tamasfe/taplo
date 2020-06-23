@@ -45,6 +45,7 @@ mod handlers;
 mod request_ext;
 mod schema;
 mod utils;
+mod analytics;
 
 #[derive(Debug, Clone)]
 struct Document {
@@ -217,6 +218,9 @@ static SERVER: Lazy<Server<World>> = Lazy::new(|| {
         ))
         .handler(RequestHandler::<request::Completion, _, _>::new(
             handlers::completion,
+        ))
+        .handler(RequestHandler::<request::HoverRequest, _, _>::new(
+            handlers::hover,
         ))
         .request_writer(RequestWriter)
         .build()

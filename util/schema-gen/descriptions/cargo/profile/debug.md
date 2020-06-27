@@ -1,0 +1,2 @@
+The `debug` setting controls the [`-C debuginfo` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#debuginfo) which controls the
+amount of debug information included in the compiled binary.

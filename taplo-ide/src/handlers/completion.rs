@@ -2,13 +2,13 @@ use crate::{
     analytics::PositionInfo,
     schema::{
         contains_type, get_schema_objects, object_contains_type, resolve_object_ref, resolve_ref,
-        ExtMeta, EXTENSION_KEY,
+        ExtMeta, ExtendedSchema, EXTENSION_KEY,
     },
     Document,
 };
 use lsp_types::*;
 use schemars::{
-    schema::{InstanceType, ObjectValidation, RootSchema, Schema, SchemaObject, SingleOrVec},
+    schema::{InstanceType, ObjectValidation, RootSchema, Schema, SingleOrVec},
     Map,
 };
 use taplo::dom::{self, Common};
@@ -57,7 +57,7 @@ pub(crate) fn get_completions(
 fn key_completions(
     info: &PositionInfo,
     defs: &Map<String, Schema>,
-    schemas: &[&SchemaObject],
+    schemas: &[ExtendedSchema],
 ) -> Vec<CompletionItem> {
     let single_schema = schemas.len() == 1;
 
@@ -70,7 +70,7 @@ fn key_completions(
     let mut completions = Vec::new();
 
     for schema in schemas {
-        if let Some(obj) = &schema.object {
+        if let Some(obj) = &schema.schema.object {
             completions.extend(
                 obj.properties
                     .iter()
@@ -121,17 +121,14 @@ fn key_completions(
                             })
                             .unwrap_or_default()
                     })
-                    .filter_map(|(prop_key, mut prop_schema)| {
-                        prop_schema = match resolve_ref(defs, prop_schema) {
-                            Some(s) => s,
-                            None => {
-                                return None;
-                            }
-                        };
-
+                    .filter_map(|(prop_key, prop_schema)| {
                         let required = is_required(prop_key, obj);
 
-                        let current_schema = if single_schema { None } else { Some(*schema) };
+                        let current_schema = if single_schema {
+                            None
+                        } else {
+                            Some(schema.clone())
+                        };
 
                         match prop_schema {
                             Schema::Bool(b) => {
@@ -164,13 +161,17 @@ fn key_completions(
                             }
                             Schema::Object(prop_schema_obj) => {
                                 let prop_schema_obj =
-                                    match resolve_object_ref(defs, prop_schema_obj) {
+                                    match resolve_object_ref(defs, prop_schema_obj.into()) {
                                         Some(o) => o,
                                         None => return None,
                                     };
 
+                                if prop_schema_obj.ext.hidden.unwrap_or_default() {
+                                    return None;
+                                }
+
                                 let (insert_text, insert_text_format, text_edit) =
-                                    insert_text(prop_key, info, prop_schema_obj);
+                                    insert_text(prop_key, info, prop_schema_obj.clone());
 
                                 Some(CompletionItem {
                                     label: prop_key.clone(),
@@ -204,7 +205,7 @@ fn is_required(key: &str, obj: &ObjectValidation) -> bool {
 fn insert_text(
     key: &str,
     info: &PositionInfo,
-    obj: &SchemaObject,
+    obj: ExtendedSchema,
 ) -> (
     Option<String>,
     Option<InsertTextFormat>,
@@ -214,7 +215,7 @@ fn insert_text(
         .ident_range
         .and_then(|ident_range| info.doc.mapper.range(ident_range));
 
-    if info.key_only || object_contains_type(InstanceType::Object, obj) {
+    if info.key_only || object_contains_type(InstanceType::Object, obj.schema) {
         // Leave just the key so that
         // dotted keys can be easily used.
 
@@ -248,26 +249,40 @@ fn insert_text(
     }
 }
 
-fn documentation(schema: &SchemaObject) -> Option<Documentation> {
+fn documentation(schema: ExtendedSchema) -> Option<Documentation> {
     schema
-        .metadata
+        .ext
+        .docs
         .as_ref()
-        .and_then(|meta| meta.description.clone())
-        .map(|desc| {
+        .and_then(|docs| docs.main.as_ref())
+        .map(|doc| {
             Documentation::MarkupContent(MarkupContent {
                 kind: MarkupKind::Markdown,
-                value: desc,
+                value: doc.clone(),
             })
+        })
+        .or_else(|| {
+            schema
+                .schema
+                .metadata
+                .as_ref()
+                .and_then(|meta| meta.description.clone())
+                .map(|desc| {
+                    Documentation::MarkupContent(MarkupContent {
+                        kind: MarkupKind::Markdown,
+                        value: desc,
+                    })
+                })
         })
 }
 
-fn detail_text(schema: Option<&SchemaObject>, text: Option<&str>) -> Option<String> {
+fn detail_text(schema: Option<ExtendedSchema>, text: Option<&str>) -> Option<String> {
     if schema.is_none() && text.is_none() {
         return None;
     }
 
     let schema_title = schema
-        .and_then(|o| o.metadata.as_ref())
+        .and_then(|o| o.schema.metadata.as_ref())
         .and_then(|meta| meta.title.clone())
         .unwrap_or_default();
 
@@ -294,14 +309,15 @@ fn sort_text(key: &str, required: bool) -> Option<String> {
     }
 }
 
-fn empty_value_snippet(schema: &SchemaObject) -> String {
-    if let Some(en) = &schema.enum_values {
+fn empty_value_snippet(schema: ExtendedSchema) -> String {
+    if let Some(en) = &schema.schema.enum_values {
         if !en.is_empty() {
             return "$0".into();
         }
     }
 
     if let Some(def) = schema
+        .schema
         .metadata
         .as_ref()
         .and_then(|meta| meta.default.as_ref())
@@ -309,7 +325,7 @@ fn empty_value_snippet(schema: &SchemaObject) -> String {
         return format!(r#"${{0:{}}}"#, def.to_string());
     }
 
-    let ty = match &schema.instance_type {
+    let ty = match &schema.schema.instance_type {
         Some(it) => match it {
             SingleOrVec::Single(s) => **s,
             SingleOrVec::Vec(v) => {
@@ -321,6 +337,7 @@ fn empty_value_snippet(schema: &SchemaObject) -> String {
 
                 if filtered.len() != 1 {
                     match schema
+                        .schema
                         .metadata
                         .as_ref()
                         .and_then(|meta| meta.default.as_ref())
@@ -349,15 +366,20 @@ fn empty_value_snippet(schema: &SchemaObject) -> String {
 fn value_completions(
     info: &PositionInfo,
     _defs: &Map<String, Schema>,
-    schemas: &[&SchemaObject],
+    schemas: &[ExtendedSchema],
 ) -> Vec<CompletionItem> {
     let single_schema = schemas.len() == 1;
     let mut completions = Vec::new();
 
-    for schema in schemas {
-        let current_schema = if single_schema { None } else { Some(*schema) };
+    for (schema_idx, schema) in schemas.iter().enumerate() {
+        let current_schema = if single_schema {
+            None
+        } else {
+            Some(schema.clone())
+        };
 
         let ebt_ext: ExtMeta = schema
+            .schema
             .extensions
             .get(EXTENSION_KEY)
             .and_then(|v| {
@@ -370,6 +392,7 @@ fn value_completions(
             .unwrap_or_default();
 
         let docs = schema
+            .schema
             .metadata
             .as_ref()
             .and_then(|meta| meta.description.clone())
@@ -395,7 +418,7 @@ fn value_completions(
             _ => None,
         });
 
-        if let Some(en) = &schema.enum_values {
+        if let Some(en) = &schema.schema.enum_values {
             completions.extend(en.iter().enumerate().map(|(idx, v)| {
                 let insert_text = to_snippet(v.to_string());
 
@@ -409,11 +432,11 @@ fn value_completions(
                 CompletionItem {
                     label: v.to_string(),
                     kind: Some(CompletionItemKind::EnumMember),
-                    detail: detail_text(current_schema, None),
+                    detail: detail_text(current_schema.clone(), None),
                     documentation: ebt_ext
                         .docs
-                        .enum_values
                         .as_ref()
+                        .and_then(|docs| docs.enum_values.as_ref())
                         .and_then(|v| v.get(idx).and_then(|o| o.clone()))
                         .map(|value| {
                             Documentation::MarkupContent(MarkupContent {
@@ -429,10 +452,16 @@ fn value_completions(
                     ..Default::default()
                 }
             }));
-            break;
+            if schema_idx == 0 {
+                // It's the "parent" schema, not any of its
+                // subschemas.
+                break;
+            }
+            continue;
         }
 
         if let Some(def) = &schema
+            .schema
             .metadata
             .as_ref()
             .and_then(|meta| meta.default.as_ref())
@@ -449,28 +478,33 @@ fn value_completions(
             completions.push(CompletionItem {
                 label: def.to_string(),
                 kind: Some(CompletionItemKind::Value),
-                detail: detail_text(current_schema, Some("default")),
+                detail: detail_text(current_schema.clone(), Some("default")),
                 insert_text: Some(insert_text),
                 insert_text_format: Some(InsertTextFormat::Snippet),
                 text_edit,
                 documentation: ebt_ext
                     .docs
-                    .default_value
-                    .clone()
+                    .as_ref()
+                    .and_then(|docs| docs.default_value.as_ref())
                     .map(|value| {
                         Documentation::MarkupContent(MarkupContent {
                             kind: MarkupKind::Markdown,
-                            value,
+                            value: value.clone(),
                         })
                     })
-                    .or(docs),
+                    .or(docs.clone()),
                 preselect: Some(true),
                 ..Default::default()
             });
-            break;
+            if schema_idx == 0 {
+                // It's the "parent" schema, not any of its
+                // subschemas.
+                break;
+            }
+            continue;
         }
 
-        if let Some(it) = &schema.instance_type {
+        if let Some(it) = &schema.schema.instance_type {
             let tys = match it {
                 SingleOrVec::Single(i) => vec![**i],
                 SingleOrVec::Vec(v) => v.clone(),
@@ -482,7 +516,7 @@ fn value_completions(
                         completions.push(CompletionItem {
                             label: "true".into(),
                             kind: Some(CompletionItemKind::Value),
-                            detail: detail_text(current_schema, None),
+                            detail: detail_text(current_schema.clone(), None),
                             insert_text: Some(to_snippet("true".into())),
                             insert_text_format: Some(InsertTextFormat::Snippet),
                             text_edit: insert_range.map(|range| {
@@ -499,7 +533,7 @@ fn value_completions(
                         completions.push(CompletionItem {
                             label: "false".into(),
                             kind: Some(CompletionItemKind::Value),
-                            detail: detail_text(current_schema, None),
+                            detail: detail_text(current_schema.clone(), None),
                             insert_text: Some(to_snippet("false".into())),
                             insert_text_format: Some(InsertTextFormat::Snippet),
                             text_edit: insert_range.map(|range| {
@@ -517,7 +551,7 @@ fn value_completions(
                         completions.push(CompletionItem {
                             label: "{}".into(),
                             kind: Some(CompletionItemKind::Value),
-                            detail: detail_text(current_schema, Some("empty table")),
+                            detail: detail_text(current_schema.clone(), Some("empty table")),
                             insert_text: Some(r#"{$0}"#.into()),
                             insert_text_format: Some(InsertTextFormat::Snippet),
                             text_edit: insert_range.map(|range| {
@@ -535,7 +569,7 @@ fn value_completions(
                         completions.push(CompletionItem {
                             label: "[]".into(),
                             kind: Some(CompletionItemKind::Value),
-                            detail: detail_text(current_schema, Some("empty array")),
+                            detail: detail_text(current_schema.clone(), Some("empty array")),
                             insert_text: Some(r#"[$0]"#.into()),
                             insert_text_format: Some(InsertTextFormat::Snippet),
                             text_edit: insert_range.map(|range| {
@@ -553,7 +587,7 @@ fn value_completions(
                         completions.push(CompletionItem {
                             label: r#""""#.into(),
                             kind: Some(CompletionItemKind::Value),
-                            detail: detail_text(current_schema, Some("empty string")),
+                            detail: detail_text(current_schema.clone(), Some("empty string")),
                             insert_text: Some(r#""$0""#.into()),
                             insert_text_format: Some(InsertTextFormat::Snippet),
                             text_edit: insert_range.map(|range| {

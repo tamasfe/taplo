@@ -43,12 +43,12 @@ macro_rules! log_debug {
 
 mod handlers;
 mod request_ext;
-mod schema;
+pub mod schema;
 mod utils;
-mod analytics;
+pub mod analytics;
 
 #[derive(Debug, Clone)]
-struct Document {
+pub struct Document {
     parse: Parse,
     mapper: Mapper,
 }
@@ -221,6 +221,9 @@ static SERVER: Lazy<Server<World>> = Lazy::new(|| {
         ))
         .handler(RequestHandler::<request::HoverRequest, _, _>::new(
             handlers::hover,
+        ))
+        .handler(RequestHandler::<request::DocumentLinkRequest, _, _>::new(
+            handlers::links,
         ))
         .request_writer(RequestWriter)
         .build()

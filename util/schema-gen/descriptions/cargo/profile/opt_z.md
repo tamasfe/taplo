@@ -1,0 +1,1 @@
+Optimize for binary size, but also turn off loop vectorization.

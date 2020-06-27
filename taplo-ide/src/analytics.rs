@@ -8,29 +8,29 @@ use taplo::{
 };
 
 #[derive(Debug, Clone)]
-pub(crate) enum Key {
+pub enum Key {
     Index(usize),
     Property(String),
 }
 
 #[derive(Debug)]
-pub(crate) struct PositionInfo {
-    pub(crate) keys: Vec<Key>,
-    pub(crate) node: Option<dom::Node>,
-    pub(crate) key_only: bool,
-    pub(crate) table_header: bool,
-    pub(crate) table_array_header: bool,
-    pub(crate) inside_comment: bool,
-    pub(crate) ident_range: Option<TextRange>,
-    pub(crate) not_completable: bool,
-    pub(crate) doc: Document,
-    pub(crate) dom: RootNode,
-    pub(crate) position: Position,
-    pub(crate) offset: TextSize,
+pub struct PositionInfo {
+    pub keys: Vec<Key>,
+    pub node: Option<dom::Node>,
+    pub key_only: bool,
+    pub table_header: bool,
+    pub table_array_header: bool,
+    pub inside_comment: bool,
+    pub ident_range: Option<TextRange>,
+    pub not_completable: bool,
+    pub doc: Document,
+    pub dom: RootNode,
+    pub position: Position,
+    pub offset: TextSize,
 }
 
 impl PositionInfo {
-    pub(crate) fn new(doc: Document, position: Position) -> Self {
+    pub fn new(doc: Document, position: Position) -> Self {
         let mut info = PositionInfo {
             offset: doc
                 .mapper
@@ -103,6 +103,16 @@ impl PositionInfo {
             if token.kind() == SyntaxKind::COMMENT {
                 if token.text_range().contains(info.offset) {
                     info.inside_comment = true;
+                    info.not_completable = true;
+                    break;
+                }
+            }
+
+            if let SyntaxKind::TABLE_HEADER | SyntaxKind::TABLE_ARRAY_HEADER | SyntaxKind::ENTRY =
+                token.kind()
+            {
+                // Entry at the start of the line
+                if token.text_range().start() == info.offset + TextSize::from(1) {
                     info.not_completable = true;
                     break;
                 }
@@ -241,4 +251,61 @@ fn ident_range(node: &dom::Node, offset: TextSize) -> Option<TextRange> {
     }
 
     None
+}
+
+#[derive(Debug)]
+pub struct KeyInfo {
+    pub key: dom::KeyNode,
+    pub parent_keys: Vec<Key>,
+}
+
+pub fn collect_keys(node: &dom::Node, parent_keys: Vec<Key>) -> Vec<KeyInfo> {
+    let mut keys = Vec::new();
+
+    match node {
+        dom::Node::Root(r) => {
+            for entry in r.entries().iter() {
+                keys.push(KeyInfo {
+                    key: entry.key().clone(),
+                    parent_keys: parent_keys.clone(),
+                });
+
+                let mut next_keys = parent_keys.clone();
+                next_keys.push(Key::Property(entry.key().full_key_string()));
+                keys.extend(collect_keys(&entry.value().clone().into(), next_keys));
+            }
+        }
+        dom::Node::Table(t) => {
+            for entry in t.entries().iter() {
+                keys.push(KeyInfo {
+                    key: entry.key().clone(),
+                    parent_keys: parent_keys.clone(),
+                });
+
+                let mut next_keys = parent_keys.clone();
+                next_keys.push(Key::Property(entry.key().full_key_string()));
+                keys.extend(collect_keys(&entry.value().clone().into(), next_keys));
+            }
+        }
+        dom::Node::Value(v) => match v {
+            dom::ValueNode::Array(arr) => {
+                keys.extend(collect_keys(&arr.clone().into(), parent_keys));
+            }
+            dom::ValueNode::Table(t) => {
+                keys.extend(collect_keys(&t.clone().into(), parent_keys));
+            }
+            _ => {}
+        },
+        dom::Node::Array(arr) => {
+            for (idx, item) in arr.items().iter().enumerate() {
+                let mut next_keys = parent_keys.clone();
+                next_keys.push(Key::Index(idx));
+
+                keys.extend(collect_keys(&item.clone().into(), next_keys));
+            }
+        }
+        dom::Node::Entry(_) | dom::Node::Key(_) => unimplemented!(),
+    }
+
+    keys
 }

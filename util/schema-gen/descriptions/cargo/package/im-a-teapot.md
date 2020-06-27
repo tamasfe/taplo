@@ -1,0 +1,1 @@
+Sets whether the current package is a teapot or something else that is not capable of brewing tea.

@@ -1,10 +1,14 @@
 use crate::request_ext::*;
-use crate::{Document, World};
+use crate::{
+    analytics::{collect_keys, Key, PositionInfo},
+    schema::{get_schema_objects},
+    Document, World,
+};
 use lsp_async_stub::{rpc::Error, Context, Params, RequestWriter};
 use lsp_types::*;
 use schemars::schema::RootSchema;
 use std::convert::TryFrom;
-use taplo::{formatter, util::coords::Mapper};
+use taplo::{dom::Common, formatter, util::coords::Mapper};
 use wasm_bindgen_futures::spawn_local;
 
 mod completion;
@@ -53,6 +57,10 @@ pub(crate) async fn initialize(
                     "\"".into(),
                 ]),
                 ..Default::default()
+            }),
+            document_link_provider: Some(DocumentLinkOptions {
+                resolve_provider: None,
+                work_done_progress_options: Default::default(),
             }),
             ..Default::default()
         },
@@ -327,9 +335,93 @@ pub(crate) async fn hover(
         None => return Err(Error::new("associated schema not found")),
     };
 
+    let info = PositionInfo::new(doc, pos);
+
+    let range = info.node.as_ref().and_then(|n| match n {
+        taplo::dom::Node::Key(k) => info.doc.mapper.range(k.text_range()),
+        _ => None,
+    });
+
+    let schemas = get_schema_objects(info.keys.clone(), &schema);
+
+    Ok(schemas
+        .first()
+        .and_then(|s| {
+            s.ext
+                .docs
+                .as_ref()
+                .and_then(|docs| docs.main.clone())
+                .or_else(|| {
+                    s.schema
+                        .metadata
+                        .as_ref()
+                        .and_then(|meta| meta.description.clone())
+                })
+        })
+        .and_then(|desc| range.map(|range| (desc, range)))
+        .map(|(value, range)| Hover {
+            contents: HoverContents::Markup(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value,
+            }),
+            range: Some(range),
+        }))
+}
+
+pub(crate) async fn links(
+    mut context: Context<World>,
+    params: Params<DocumentLinkParams>,
+) -> Result<Option<Vec<DocumentLink>>, Error> {
+    let p = params.required()?;
+
+    let uri = p.text_document.uri;
+
+    let w = context.world().lock().await;
+
+    let doc: Document = match w.documents.get(&uri) {
+        Some(d) => d.clone(),
+        None => return Err(Error::new("document not found")),
+    };
+
+    let schema: RootSchema = match w.get_schema_by_uri(&uri) {
+        Some(s) => s.clone(),
+        None => return Err(Error::new("associated schema not found")),
+    };
+
     let dom = doc.parse.clone().into_dom();
 
-    Ok(None)
+    let keys = collect_keys(&dom.into(), Vec::new());
+
+    let mut links = Vec::with_capacity(keys.len());
+
+    for key in keys {
+        let mut all_keys = key.parent_keys;
+        all_keys.push(Key::Property(key.key.full_key_string()));
+
+        let link = get_schema_objects(all_keys, &schema)
+            .first()
+            .and_then(|s| s.ext.links.as_ref().and_then(|links| links.key.clone()));
+
+        if let Some(link) = link {
+            let target = match Url::parse(&link) {
+                Ok(u) => u,
+                Err(e) => {
+                    log_error!("invalid link in schema: {}", e);
+                    continue;
+                }
+            };
+
+            let range = doc.mapper.range(key.key.text_range()).unwrap();
+
+            links.push(DocumentLink {
+                range,
+                target,
+                tooltip: None,
+            })
+        }
+    }
+
+    Ok(Some(links))
 }
 
 pub(crate) async fn toml_to_json(

@@ -1,0 +1,1 @@
+The [version requirement](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html) of the target dependency.

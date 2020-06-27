@@ -1,0 +1,2 @@
+The `rpath` setting controls the [`-C rpath` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#rpath) which controls
+whether or not [`rpath`](https://en.wikipedia.org/wiki/Rpath) is enabled.

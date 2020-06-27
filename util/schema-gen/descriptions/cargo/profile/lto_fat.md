@@ -1,0 +1,1 @@
+Performs "fat" LTO which attempts to perform optimizations across all crates within the dependency graph.

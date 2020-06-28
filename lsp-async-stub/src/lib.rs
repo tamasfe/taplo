@@ -68,7 +68,7 @@ impl Future for CancelToken {
     type Output = ();
 
     fn poll(
-        self: std::pin::Pin<&mut Self>,
+        mut self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Self::Output> {
         if self.cancelled.load(Ordering::SeqCst) {

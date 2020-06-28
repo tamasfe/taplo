@@ -1,5 +1,5 @@
 [package]
-authors = ["tamasf97 <tamasf97@outlook.com>"]
+authors = [ "tamasf97 <tamasf97@outlook.com>" ]
 edition = "2018"
 name    = "schema-gen"
 version = "0.1.0"

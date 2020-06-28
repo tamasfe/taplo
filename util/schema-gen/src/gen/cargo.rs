@@ -1,3 +1,8 @@
+/**
+This is low-effort copy-paste on purpose, I don't expect
+to run this more often than every few months.
+*/
+
 use schemars::schema::SchemaObject;
 use serde_json::json;
 

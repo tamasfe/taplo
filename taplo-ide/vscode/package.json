@@ -236,11 +236,11 @@
 					"default": false
 				},
 				"evenBetterToml.schema.associations": {
-					"markdownDescription": "File and schema associations. \n\n The key must be a regular expression, this pattern is used to associate schemas with full document URIs. On multiple matches the first one is used in an undefined order. \n\n The value must be a full URI to the JSON schema, for supported values and more information [read here](https://github.com/tamasfe/taplo/tree/master/taplo-ide).",
+					"markdownDescription": "File and schema associations. \n\n The key must be a regular expression, this pattern is used to associate schemas with absolute document URIs. On multiple matches the first one is used in an undefined order. \n\n The value must be an absolute URI to the JSON schema, for supported values and more information [read here](https://github.com/tamasfe/taplo/tree/master/taplo-ide/schemas).",
 					"type": "object",
 					"scope": "resource",
 					"default": {
-						".*Cargo\\.toml": "toml_builtin://cargo"
+						".*/Cargo\\.toml": "toml_builtin://cargo"
 					}
 				},
 				"evenBetterToml.debug": {

@@ -652,7 +652,7 @@ impl Entries {
                 }
 
                 if !found {
-                    entry.next_entry = end.clone();
+                    entry.next_entry = end;
                 }
             }
 
@@ -686,13 +686,13 @@ impl Entries {
                 }
 
                 if !found {
-                    entry.next_entry = end.clone();
+                    entry.next_entry = end;
                 }
             }
 
             match &mut entry.value {
                 ValueNode::Table(t) => {
-                    t.next_entry = entry.next_entry.clone();
+                    t.next_entry = entry.next_entry;
                     t.entries.set_table_spans(root_syntax, end);
                 }
                 ValueNode::Array(arr) => {
@@ -1075,7 +1075,7 @@ impl ArrayNode {
             }
 
             if !found {
-                table.next_entry = end.clone();
+                table.next_entry = end;
             }
 
             table.entries.set_table_spans(root_syntax, end);

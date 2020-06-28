@@ -82,7 +82,7 @@ impl Mapper {
                         None
                     }
                 })
-                .unwrap_or(TextSize::from(self.mapping.len() as u32)) // Last empty line
+                .unwrap_or_else(||TextSize::from(self.mapping.len() as u32)) // Last empty line
         })
     }
 

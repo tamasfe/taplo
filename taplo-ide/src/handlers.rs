@@ -10,7 +10,7 @@ use lsp_async_stub::{rpc::Error, Context, Params, RequestWriter};
 use lsp_types::*;
 use regex::Regex;
 use schemars::schema::RootSchema;
-use std::{collections::HashMap, convert::TryFrom};
+use std::{collections::HashMap, convert::TryFrom, mem};
 use taplo::{dom::Common, formatter, util::coords::Mapper};
 use verify::Verify;
 use wasm_bindgen_futures::spawn_local;
@@ -102,15 +102,14 @@ async fn update_configuration(mut context: Context<World>) {
     let mut w = context.world().lock().await;
 
     w.configuration = serde_json::from_value(config_vals.remove(0)).unwrap_or_default();
-    let config = w.configuration.clone();
-
     w.schema_associations.clear();
+    let mut schemas: HashMap<String, RootSchema> = mem::take(&mut w.schemas);
 
     let base_url = w.workspace_uri.clone();
+    let config = w.configuration.clone();
 
     drop(w);
 
-    let mut new_schemas: HashMap<String, RootSchema> = HashMap::new();
     let mut new_schema_associatons: IndexMap<HashRegex, String> = IndexMap::new();
 
     if !config.schema.enabled.unwrap_or_default() {
@@ -130,7 +129,13 @@ async fn update_configuration(mut context: Context<World>) {
 
             new_schema_associatons.insert(HashRegex(re), s.clone());
 
-            if new_schemas.contains_key(&s) || s.starts_with(BUILTIN_SCHEME) {
+            if schemas.contains_key(&s) {
+                continue;
+            }
+
+            if s.starts_with(BUILTIN_SCHEME) && !schemas.iter().any(|(k, _)| k == &s) {
+                log_error!("Invalid built-in schema: {}", s);
+                show_schema_error(context.clone());
                 continue;
             }
 
@@ -186,7 +191,7 @@ async fn update_configuration(mut context: Context<World>) {
                         continue;
                     }
 
-                    new_schemas.insert(s, root_schema);
+                    schemas.insert(s, root_schema);
                 }
                 "http" | "https" => {}
                 scheme => {
@@ -202,7 +207,7 @@ async fn update_configuration(mut context: Context<World>) {
         let mut w = context.world().lock().await;
 
         w.schema_associations.extend(new_schema_associatons);
-        w.schemas.extend(new_schemas);
+        w.schemas = schemas;
     }
 }
 

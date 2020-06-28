@@ -316,7 +316,6 @@ impl<W: Clone + Send + Sync> Server<W> {
         }
     }
 
-    #[allow(clippy::manual_async_fn)]
     fn handle_response(
         inner: Arc<AsyncMutex<Inner<W>>>,
         response: rpc::Response<serde_json::Value>,
@@ -328,7 +327,6 @@ impl<W: Clone + Send + Sync> Server<W> {
         }
     }
 
-    #[allow(clippy::manual_async_fn)]
     fn handle_request(
         inner: Arc<AsyncMutex<Inner<W>>>,
         data: W,

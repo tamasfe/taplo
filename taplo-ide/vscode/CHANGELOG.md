@@ -1,11 +1,11 @@
 # Change Log
 
-## next
+## 0.6.0
 
 #### New Features
-- Completion and validation based on JSON schema
 - Added compact arrays formatter option
 - Added compact inline tables formatter option
+- Completion and validation based on JSON schema (disabled by default)
 
 #### Fixes
 - Fixed broken document symbols

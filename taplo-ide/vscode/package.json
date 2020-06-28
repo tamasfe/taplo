@@ -229,6 +229,20 @@
 					"scope": "resource",
 					"default": false
 				},
+				"evenBetterToml.schema.enabled": {
+					"description": "Enable completion and validation based on JSON schemas.",
+					"type": "boolean",
+					"scope": "resource",
+					"default": false
+				},
+				"evenBetterToml.schema.associations": {
+					"markdownDescription": "File and schema associations. \n\n The key must be a regular expression, this pattern is used to associate schemas with full document URIs. On multiple matches the first one is used in an undefined order. \n\n The value must be a full URI to the JSON schema, for supported values and more information [read here](https://github.com/tamasfe/taplo/tree/master/taplo-ide).",
+					"type": "object",
+					"scope": "resource",
+					"default": {
+						".*Cargo\\.toml": "toml_builtin://cargo"
+					}
+				},
 				"evenBetterToml.debug": {
 					"description": "Enable features to debug the extension.",
 					"type": "boolean",
@@ -247,11 +261,13 @@
 		"test-compile": "tsc -p ./"
 	},
 	"dependencies": {
+		"node-fetch": "^2.6.0",
 		"taplo": "../pkg",
 		"vscode-languageclient": "^6.1.3"
 	},
 	"devDependencies": {
 		"@types/node": "^12.12.0",
+		"@types/node-fetch": "^2.5.7",
 		"@types/vscode": "^1.44.0",
 		"clean-webpack-plugin": "^3.0.0",
 		"copy-webpack-plugin": "^6.0.1",

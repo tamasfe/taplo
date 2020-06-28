@@ -1,14 +1,18 @@
 use crate::request_ext::*;
 use crate::{
     analytics::{collect_keys, Key, PositionInfo},
-    schema::{get_schema_objects},
-    Document, World,
+    read_file,
+    schema::{get_schema_objects, BUILTIN_SCHEME},
+    Document, HashRegex, World,
 };
+use indexmap::IndexMap;
 use lsp_async_stub::{rpc::Error, Context, Params, RequestWriter};
 use lsp_types::*;
+use regex::Regex;
 use schemars::schema::RootSchema;
-use std::convert::TryFrom;
+use std::{collections::HashMap, convert::TryFrom};
 use taplo::{dom::Common, formatter, util::coords::Mapper};
+use verify::Verify;
 use wasm_bindgen_futures::spawn_local;
 
 mod completion;
@@ -18,9 +22,16 @@ mod folding_ranges;
 mod semantic_tokens;
 
 pub(crate) async fn initialize(
-    context: Context<World>,
-    _params: Params<InitializeParams>,
+    mut context: Context<World>,
+    params: Params<InitializeParams>,
 ) -> Result<InitializeResult, Error> {
+    let p = params.required()?;
+
+    context.world().lock().await.workspace_uri = p.root_uri.map(|mut uri| {
+        uri.set_path(&(uri.path().to_string() + "/"));
+        uri
+    });
+
     // Update configuration after initialization.
     // !! This might cause race conditions with this response,
     // !! it is fine in the single-threaded wasm environment.
@@ -91,6 +102,120 @@ async fn update_configuration(mut context: Context<World>) {
     let mut w = context.world().lock().await;
 
     w.configuration = serde_json::from_value(config_vals.remove(0)).unwrap_or_default();
+    let config = w.configuration.clone();
+
+    w.schema_associations.clear();
+
+    let base_url = w.workspace_uri.clone();
+
+    drop(w);
+
+    let mut new_schemas: HashMap<String, RootSchema> = HashMap::new();
+    let mut new_schema_associatons: IndexMap<HashRegex, String> = IndexMap::new();
+
+    if !config.schema.enabled.unwrap_or_default() {
+        return;
+    }
+
+    if let Some(assoc) = config.schema.associations {
+        for (k, s) in assoc {
+            let re = match Regex::new(&k) {
+                Ok(r) => r,
+                Err(err) => {
+                    log_error!("Invalid schema association pattern: {}", err);
+                    show_schema_error(context.clone());
+                    continue;
+                }
+            };
+
+            new_schema_associatons.insert(HashRegex(re), s.clone());
+
+            if new_schemas.contains_key(&s) || s.starts_with(BUILTIN_SCHEME) {
+                continue;
+            }
+
+            let mut url_opts = Url::options();
+
+            if let Some(base_url) = &base_url {
+                if s.starts_with("./") {
+                    url_opts = url_opts.base_url(Some(base_url));
+                }
+            }
+
+            let url = match url_opts.parse(&s) {
+                Ok(u) => u,
+                Err(err) => {
+                    log_error!("Invalid schema URL: {}", err);
+                    show_schema_error(context.clone());
+                    continue;
+                }
+            };
+
+            match url.scheme() {
+                "file" => {
+                    let fpath_str = url.path();
+
+                    let schema_bytes = match read_file(fpath_str) {
+                        Ok(b) => b,
+                        Err(err) => {
+                            log_error!("Failed to read schema file: {:?}", err);
+                            show_schema_error(context.clone());
+                            continue;
+                        }
+                    };
+
+                    let root_schema = match serde_json::from_slice::<RootSchema>(&schema_bytes) {
+                        Ok(s) => s,
+                        Err(err) => {
+                            log_error!("Invalid schema: {}", err);
+                            show_schema_error(context.clone());
+                            continue;
+                        }
+                    };
+
+                    if let Err(errors) = root_schema.verify() {
+                        log_error!(
+                            "Invalid schema: \n{}",
+                            errors
+                                .iter()
+                                .map(|e| format!("{}", e))
+                                .collect::<Vec<String>>()
+                                .join("\n")
+                        );
+                        show_schema_error(context.clone());
+                        continue;
+                    }
+
+                    new_schemas.insert(s, root_schema);
+                }
+                "http" | "https" => {}
+                scheme => {
+                    log_error!("Invalid schema URL scheme: {}", scheme);
+                    show_schema_error(context.clone());
+                    continue;
+                }
+            }
+        }
+    }
+
+    if !new_schema_associatons.is_empty() {
+        let mut w = context.world().lock().await;
+
+        w.schema_associations.extend(new_schema_associatons);
+        w.schemas.extend(new_schemas);
+    }
+}
+
+fn show_schema_error(mut context: Context<World>) {
+    spawn_local(async move {
+        context
+            .write_notification::<notification::ShowMessage, _>(Some(ShowMessageParams {
+                typ: MessageType::Error,
+                message: "Failed to load schema".into(),
+            }))
+            .await
+            .unwrap();
+    });
 }
 
 pub(crate) async fn configuration_change(
@@ -296,6 +421,10 @@ pub(crate) async fn completion(
 
     let w = context.world().lock().await;
 
+    if !w.configuration.schema.enabled.unwrap_or_default() {
+        return Ok(None);
+    }
+
     let doc: Document = match w.documents.get(&uri) {
         Some(d) => d.clone(),
         None => return Err(Error::new("document not found")),
@@ -303,7 +432,7 @@ pub(crate) async fn completion(
 
     let schema: RootSchema = match w.get_schema_by_uri(&uri) {
         Some(s) => s.clone(),
-        None => return Err(Error::new("associated schema not found")),
+        None => return Ok(None),
     };
 
     drop(w);
@@ -325,6 +454,10 @@ pub(crate) async fn hover(
 
     let w = context.world().lock().await;
 
+    if !w.configuration.schema.enabled.unwrap_or_default() {
+        return Ok(None);
+    }
+
     let doc: Document = match w.documents.get(&uri) {
         Some(d) => d.clone(),
         None => return Err(Error::new("document not found")),
@@ -332,7 +465,7 @@ pub(crate) async fn hover(
 
     let schema: RootSchema = match w.get_schema_by_uri(&uri) {
         Some(s) => s.clone(),
-        None => return Err(Error::new("associated schema not found")),
+        None => return Ok(None),
     };
 
     let info = PositionInfo::new(doc, pos);
@@ -378,6 +511,10 @@ pub(crate) async fn links(
 
     let w = context.world().lock().await;
 
+    if !w.configuration.schema.enabled.unwrap_or_default() {
+        return Ok(None);
+    }
+
     let doc: Document = match w.documents.get(&uri) {
         Some(d) => d.clone(),
         None => return Err(Error::new("document not found")),
@@ -385,7 +522,7 @@ pub(crate) async fn links(
 
     let schema: RootSchema = match w.get_schema_by_uri(&uri) {
         Some(s) => s.clone(),
-        None => return Err(Error::new("associated schema not found")),
+        None => return Ok(None),
     };
 
     let dom = doc.parse.clone().into_dom();

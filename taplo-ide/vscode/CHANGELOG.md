@@ -3,9 +3,9 @@
 ## next
 
 #### New Features
+- Completion and validation based on JSON schema
 - Added compact arrays formatter option
 - Added compact inline tables formatter option
-- Initial JSON schema-based completion and validation
 
 #### Fixes
 - Fixed broken document symbols

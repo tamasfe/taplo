@@ -337,10 +337,22 @@
       "type": "object",
       "properties": {
         "branch": {
-          "type": "string"
+          "description": "Specify the Git branch to use in case of a [Git dependency](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories).",
+          "type": "string",
+          "evenBetterToml": {
+            "links": {
+              "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories"
+            }
+          }
         },
         "default-features": {
-          "type": "boolean"
+          "description": "Use the default features of the dependency.",
+          "type": "boolean",
+          "evenBetterToml": {
+            "links": {
+              "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#choosing-features"
+            }
+          }
         },
         "default_features": {
           "type": "boolean",
@@ -349,37 +361,97 @@
           }
         },
         "features": {
+          "description": "List of features to activate in the dependency.",
           "type": "array",
           "items": {
-            "type": "string"
+            "description": "List of features to activate in the dependency.",
+            "type": "string",
+            "evenBetterToml": {
+              "links": {
+                "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#choosing-features"
+              }
+            }
+          },
+          "evenBetterToml": {
+            "links": {
+              "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#choosing-features"
+            }
           }
         },
         "git": {
-          "type": "string"
+          "description": "To depend on a library located in a `git` repository, the minimum information\nyou need to specify is the location of the repository with the `git` key:\n\n```toml\n[dependencies]\nrand = { git = \"https://github.com/rust-lang-nursery/rand\" }\n```\n\nCargo will fetch the `git` repository at this location then look for a\n`Cargo.toml` for the requested crate anywhere inside the `git` repository\n(not necessarily at the root - for example, specifying a member crate name\nof a workspace and setting `git` to the repository containing the workspace).\n\nSince we haven’t specified any other information, Cargo assumes that\nwe intend to use the latest commit on the main branch to build our package.\nYou can combine the `git` key with the `rev`, `tag`, or `branch` keys to\nspecify something else. Here's an example of specifying that you want to use\nthe latest commit on a branch named `next`:\n\n```toml\n[dependencies]\nrand = { git = \"https://github.com/rust-lang-nursery/rand\", branch = \"next\" }\n```\n\nSee [Git Authentication](https://doc.rust-lang.org/cargo/appendix/git-authentication.html) for help with git authentication for private repos.\n\n> **Note**: [crates.io](https://crates.io/) does not allow packages to be published with `git`\n> dependencies (`git` [dev-dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#development-dependencies) are ignored). See the [Multiple\n> locations](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#multiple-locations) section for a fallback alternative.\n",
+          "type": "string",
+          "evenBetterToml": {
+            "links": {
+              "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories"
+            }
+          }
         },
         "optional": {
-          "type": "boolean"
+          "description": "Mark the dependency as optional.\n\nOptional dependencies can be activated through features.",
+          "type": "boolean",
+          "evenBetterToml": {
+            "links": {
+              "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#choosing-features"
+            }
+          }
         },
         "package": {
-          "type": "string"
+          "description": "Specify the name of the package.\n\nWhen writing a `[dependencies]` section in `Cargo.toml` the key you write for a\ndependency typically matches up to the name of the crate you import from in the\ncode. For some projects, though, you may wish to reference the crate with a\ndifferent name in the code regardless of how it's published on crates.io. For\nexample you may wish to:\n\n* Avoid the need to  `use foo as bar` in Rust source.\n* Depend on multiple versions of a crate.\n* Depend on crates with the same name from different registries.\n\nTo support this Cargo supports a `package` key in the `[dependencies]` section\nof which package should be depended on:\n\n```toml\n[package]\nname = \"mypackage\"\nversion = \"0.0.1\"\n\n[dependencies]\nfoo = \"0.1\"\nbar = { git = \"https://github.com/example/project\", package = \"foo\" }\nbaz = { version = \"0.1\", registry = \"custom\", package = \"foo\" }\n```\n\nIn this example, three crates are now available in your Rust code:\n\n```rust\nextern crate foo; // crates.io\nextern crate bar; // git repository\nextern crate baz; // registry `custom`\n```\n\nAll three of these crates have the package name of `foo` in their own\n`Cargo.toml`, so we're explicitly using the `package` key to inform Cargo that\nwe want the `foo` package even though we're calling it something else locally.\nThe `package` key, if not specified, defaults to the name of the dependency\nbeing requested.\n",
+          "type": "string",
+          "evenBetterToml": {
+            "links": {
+              "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#renaming-dependencies-in-cargotoml"
+            }
+          }
         },
         "path": {
-          "type": "string"
+          "description": "Cargo supports **path dependencies** which are typically sub-crates that live within one repository.\nLet’s start off by making a new crate inside of our `hello_world` package:\n\n```console\n# inside of hello_world/\n$ cargo new hello_utils\n```\n\nThis will create a new folder `hello_utils` inside of which a `Cargo.toml` and\n`src` folder are ready to be configured. In order to tell Cargo about this, open\nup `hello_world/Cargo.toml` and add `hello_utils` to your dependencies:\n\n```toml\n[dependencies]\nhello_utils = { path = \"hello_utils\" }\n```\n\nThis tells Cargo that we depend on a crate called `hello_utils` which is found\nin the `hello_utils` folder (relative to the `Cargo.toml` it’s written in).",
+          "type": "string",
+          "evenBetterToml": {
+            "links": {
+              "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-path-dependencies"
+            }
+          }
         },
         "public": {
-          "type": "boolean"
+          "type": "boolean",
+          "evenBetterToml": {
+            "hidden": true
+          }
         },
         "registry": {
-          "type": "string"
+          "description": "To specify a dependency from a registry other than [crates.io](https://crates.io), first the\nregistry must be configured in a `.cargo/config.toml` file. See the [registries\ndocumentation](https://doc.rust-lang.org/cargo/reference/registries.html) for more information. In the dependency, set the `registry` key\nto the name of the registry to use.\n\n```toml\n[dependencies]\nsome-crate = { version = \"1.0\", registry = \"my-registry\" }\n```\n\n> **Note**: [crates.io](https://crates.io) does not allow packages to be published with\n> dependencies on other registries.\n",
+          "type": "string",
+          "evenBetterToml": {
+            "links": {
+              "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-other-registries"
+            }
+          }
         },
         "registry-index": {
-          "type": "string"
+          "type": "string",
+          "evenBetterToml": {
+            "hidden": true
+          }
         },
         "rev": {
-          "type": "string"
+          "description": "Specify the Git revision to use in case of a [Git dependency](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories).",
+          "type": "string",
+          "evenBetterToml": {
+            "links": {
+              "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories"
+            }
+          }
         },
         "tag": {
-          "type": "string"
+          "description": "Specify the Git tag to use in case of a [Git dependency](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories).",
+          "type": "string",
+          "evenBetterToml": {
+            "links": {
+              "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories"
+            }
+          }
         },
         "version": {
           "$ref": "#/definitions/SemVerRequirement"

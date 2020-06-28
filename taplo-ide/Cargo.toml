@@ -1,32 +1,33 @@
 [package]
-authors = [ "tamasf97 <tamasf97@outlook.com>" ]
+authors = ["tamasf97 <tamasf97@outlook.com>"]
 edition = "2018"
 name    = "taplo-ide"
 version = "0.1.0"
 
 [lib]
-crate-type = [ "cdylib", "rlib" ]
+crate-type = ["cdylib", "rlib"]
 
 [features]
-default = [ "console_error_panic_hook" ]
+default = ["console_error_panic_hook"]
 
 [dependencies]
-async-trait          = "0.1.30"
-futures              = "0.3.5"
-indexmap             = "1.4.0"
-js-sys               = "0.3.39"
-lsp-async-stub       = { path = "../lsp-async-stub" }
-lsp-types            = { version = "0.74.1", features = [ "proposed" ] }
-once_cell            = "1.3.1"
-regex                = "1.3"
+async-trait    = "0.1.30"
+futures        = "0.3.5"
+indexmap       = "1.4.0"
+js-sys         = "0.3.39"
+lsp-async-stub = { path = "../lsp-async-stub" }
+lsp-types      = { version = "0.74.1", features = ["proposed"] }
+once_cell      = "1.3.1"
+regex          = "1.3"
+# reqwest              = "0.10.6"
 rowan                = "0.10.0"
 schemars             = "0.8.0-alpha-4"
-serde                = { version = "1.0", features = [ "derive" ] }
+serde                = { version = "1.0", features = ["derive"] }
 serde_json           = "1.0"
 serde_yaml           = "0.8"
-taplo                = { path = "../taplo", features = [ "serde", "verify" ] }
-verify               = { version = "0.3", features = [ "schemars" ] }
-wasm-bindgen         = { version = "0.2", features = [ "serde-serialize" ] }
+taplo                = { path = "../taplo", features = ["serde", "verify"] }
+verify               = { version = "0.3", features = ["schemars"] }
+wasm-bindgen         = { version = "^0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4.12"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by

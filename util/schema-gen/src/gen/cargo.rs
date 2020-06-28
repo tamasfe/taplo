@@ -1459,6 +1459,188 @@ impl schemars::visit::Visitor for CargoVisitor {
                             .into(),
                     )
                 }
+                "Detailed Dependency.branch" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.links = Some(ExtLinks {
+                        key: Some(
+                            "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories"
+                                .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+
+                    schema.metadata().description =
+                        Some(include_str!("../../descriptions/cargo/dependency/branch.md").into())
+                }
+                "Detailed Dependency.git" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.links = Some(ExtLinks {
+                        key: Some(
+                            "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories"
+                                .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+
+                    schema.metadata().description =
+                        Some(include_str!("../../descriptions/cargo/dependency/git.md").into())
+                }
+                "Detailed Dependency.tag" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.links = Some(ExtLinks {
+                        key: Some(
+                            "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories"
+                                .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+
+                    schema.metadata().description =
+                        Some(include_str!("../../descriptions/cargo/dependency/tag.md").into())
+                }
+                "Detailed Dependency.rev" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.links = Some(ExtLinks {
+                        key: Some(
+                            "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories"
+                                .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+
+                    schema.metadata().description =
+                        Some(include_str!("../../descriptions/cargo/dependency/rev.md").into())
+                }
+                "Detailed Dependency.path" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.links = Some(ExtLinks {
+                        key: Some(
+                            "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-path-dependencies"
+                                .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+
+                    schema.metadata().description =
+                        Some(include_str!("../../descriptions/cargo/dependency/path.md").into())
+                }
+                "Detailed Dependency.features" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.links = Some(ExtLinks {
+                        key: Some(
+                            "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#choosing-features"
+                                .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+
+                    schema.metadata().description =
+                        Some(include_str!("../../descriptions/cargo/dependency/features.md").into())
+                }
+                "Detailed Dependency.default-features" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.links = Some(ExtLinks {
+                        key: Some(
+                            "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#choosing-features"
+                                .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+
+                    schema.metadata().description = Some(
+                        include_str!("../../descriptions/cargo/dependency/default-features.md")
+                            .into(),
+                    )
+                }
+                "Detailed Dependency.optional" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.links = Some(ExtLinks {
+                        key: Some(
+                            "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#choosing-features"
+                                .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+
+                    schema.metadata().description =
+                        Some(include_str!("../../descriptions/cargo/dependency/optional.md").into())
+                }
+                "Detailed Dependency.registry" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.links = Some(ExtLinks {
+                        key: Some(
+                            "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-other-registries"
+                                .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+
+                    schema.metadata().description =
+                        Some(include_str!("../../descriptions/cargo/dependency/registry.md").into())
+                }
+                "Detailed Dependency.package" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.links = Some(ExtLinks {
+                        key: Some(
+                            "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#renaming-dependencies-in-cargotoml"
+                                .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+
+                    schema.metadata().description =
+                        Some(include_str!("../../descriptions/cargo/dependency/package.md").into())
+                }
                 "Cargo.replace"
                 | "Profile.dir-name"
                 | "Profile.inherits"
@@ -1473,7 +1655,9 @@ impl schemars::visit::Visitor for CargoVisitor {
                 | "Target.plugin"
                 | "Platform.build_dependencies"
                 | "Cargo.build_dependencies"
-                | "Detailed Dependency.default_features" => {
+                | "Detailed Dependency.default_features"
+                | "Detailed Dependency.public"
+                | "Detailed Dependency.registry-index" => {
                     let mut ext = ExtMeta::default();
                     ext.hidden = Some(true);
 

@@ -1,5 +1,4 @@
 use crate::{analytics::Key, WorldState};
-use regex::Regex;
 use schemars::{
     schema::{InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec},
     Map,
@@ -7,6 +6,7 @@ use schemars::{
 use serde::{Deserialize, Serialize};
 
 pub const EXTENSION_KEY: &'static str = "evenBetterToml";
+pub const BUILTIN_SCHEME: &'static str = "toml_builtin";
 
 pub fn register_built_in_schemas(world: &mut WorldState) {
     register_cargo_schema(world);
@@ -15,14 +15,15 @@ pub fn register_built_in_schemas(world: &mut WorldState) {
 pub fn register_cargo_schema(world: &mut WorldState) {
     let cargo_schema =
         serde_json::from_str::<RootSchema>(include_str!("../schemas/cargo.json")).unwrap();
-    let cargo_schema_name = "ebt_builtin://cargo";
-    let cargo_re = Regex::new(r#".*Cargo\.toml"#).unwrap();
+    let cargo_schema_name = format!("{}://cargo", BUILTIN_SCHEME);
 
-    world
-        .schema_associations
-        .insert(cargo_re.into(), cargo_schema_name.into());
+    // This is supplied from the configuration.
+    // let cargo_re = Regex::new(r#".*Cargo\.toml"#).unwrap();
+    // world
+    //     .schema_associations
+    //     .insert(cargo_re.into(), cargo_schema_name.clone());
 
-    world.schemas.insert(cargo_schema_name.into(), cargo_schema);
+    world.schemas.insert(cargo_schema_name, cargo_schema);
 }
 
 #[derive(Debug, Clone)]

@@ -58,4 +58,3 @@ export namespace LineMappings {
 
   export const METHOD = "taplo/lineMappings";
 }
-

@@ -78,6 +78,7 @@ impl From<regex::Regex> for HashRegex {
 
 #[derive(Default)]
 pub struct WorldState {
+    workspace_uri: Option<Url>,
     documents: HashMap<lsp_types::Url, Document>,
     schemas: HashMap<String, RootSchema>,
     schema_associations: IndexMap<HashRegex, String>,
@@ -112,7 +113,14 @@ impl WorldState {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SchemaConfiguration {
+    pub enabled: Option<bool>,
+    pub associations: Option<HashMap<String, String>>
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FormatterConfiguration {
     pub align_entries: Option<bool>,
@@ -129,9 +137,10 @@ pub struct FormatterConfiguration {
     pub crlf: Option<bool>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Configuration {
+    schema: SchemaConfiguration,
     formatter: FormatterConfiguration,
 }
 
@@ -156,6 +165,9 @@ extern {
 
     #[wasm_bindgen(js_namespace = global, js_name = sendMessage)]
     fn send_message(message: JsValue);
+
+    #[wasm_bindgen(js_namespace = global, js_name = readFile, catch)]
+    fn read_file(path: &str) -> Result<Vec<u8>, JsValue>;
 }
 
 #[wasm_bindgen]

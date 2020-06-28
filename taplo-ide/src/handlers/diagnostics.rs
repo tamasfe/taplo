@@ -39,14 +39,14 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
 
     let w = context.world().lock().await;
 
-    let mut schema_diag = Vec::new();
-    let mut unresolved_schema_name = None;
+    if !w.configuration.schema.enabled.unwrap_or_default() {
+        return;
+    }
 
+    let mut schema_diag = Vec::new();
     if let Some(schema_name) = w.get_schema_name(&uri) {
         if let Some(s) = w.get_schema(schema_name) {
             schema_diag = collect_schema_diagnostics(s, &doc.parse, &uri, &doc.mapper);
-        } else {
-            unresolved_schema_name = Some(schema_name.to_string());
         }
     }
 
@@ -64,9 +64,6 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
             ))
             .await
             .unwrap_or_else(|err| log_error!("{}", err));
-    } else if let Some(_schema_name) = unresolved_schema_name {
-        // resolve external
-        todo!()
     }
 }
 

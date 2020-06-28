@@ -475,7 +475,7 @@ pub(crate) async fn hover(
         _ => None,
     });
 
-    let schemas = get_schema_objects(info.keys.clone(), &schema);
+    let schemas = get_schema_objects(info.keys, &schema);
 
     Ok(schemas
         .first()

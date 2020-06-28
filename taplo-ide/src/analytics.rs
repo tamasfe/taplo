@@ -35,7 +35,7 @@ impl PositionInfo {
             offset: doc
                 .mapper
                 .offset(position)
-                .unwrap_or(doc.parse.green_node.text_len()),
+                .unwrap_or_else(|| doc.parse.green_node.text_len()),
             dom: doc.parse.clone().into_dom(),
             doc,
             key_only: false,
@@ -100,12 +100,10 @@ impl PositionInfo {
             .into_syntax()
             .descendants_with_tokens()
         {
-            if token.kind() == SyntaxKind::COMMENT {
-                if token.text_range().contains(info.offset) {
-                    info.inside_comment = true;
-                    info.not_completable = true;
-                    break;
-                }
+            if token.kind() == SyntaxKind::COMMENT && token.text_range().contains(info.offset) {
+                info.inside_comment = true;
+                info.not_completable = true;
+                break;
             }
 
             if let SyntaxKind::TABLE_HEADER | SyntaxKind::TABLE_ARRAY_HEADER | SyntaxKind::ENTRY =
@@ -240,13 +238,10 @@ fn ident_range(node: &dom::Node, offset: TextSize) -> Option<TextRange> {
     };
 
     for tok in n.descendants_with_tokens() {
-        match tok.kind() {
-            SyntaxKind::IDENT => {
-                if tok.text_range().contains(offset) {
-                    return Some(tok.text_range());
-                }
+        if let SyntaxKind::IDENT = tok.kind() {
+            if tok.text_range().contains(offset) {
+                return Some(tok.text_range());
             }
-            _ => {}
         }
     }
 

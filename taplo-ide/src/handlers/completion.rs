@@ -295,7 +295,7 @@ fn detail_text(schema: Option<ExtendedSchema>, text: Option<&str>) -> Option<Str
         } else {
             format!(" ({})", schema_title)
         },
-        text = text.map(|t| format!("{}", t)).unwrap_or_default()
+        text = text.map(|t| t.to_string()).unwrap_or_default()
     ))
 }
 
@@ -444,7 +444,7 @@ fn value_completions(
                                 value,
                             })
                         })
-                        .or(docs.clone()),
+                        .or_else(|| docs.clone()),
                     insert_text: Some(insert_text),
                     insert_text_format: Some(InsertTextFormat::Snippet),
                     text_edit,
@@ -492,7 +492,7 @@ fn value_completions(
                             value: value.clone(),
                         })
                     })
-                    .or(docs.clone()),
+                    .or_else(|| docs.clone()),
                 preselect: Some(true),
                 ..Default::default()
             });

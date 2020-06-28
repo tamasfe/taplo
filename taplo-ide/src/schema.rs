@@ -5,8 +5,8 @@ use schemars::{
 };
 use serde::{Deserialize, Serialize};
 
-pub const EXTENSION_KEY: &'static str = "evenBetterToml";
-pub const BUILTIN_SCHEME: &'static str = "toml_builtin";
+pub const EXTENSION_KEY: &str = "evenBetterToml";
+pub const BUILTIN_SCHEME: &str = "toml_builtin";
 
 pub fn register_built_in_schemas(world: &mut WorldState) {
     register_cargo_schema(world);
@@ -73,10 +73,10 @@ fn get_schema_objects_impl<'s>(
 
     if keys.is_empty() {
         let subs = collect_subschemas(defs, schema.clone());
-        let mut schemas = vec![schema.into()];
+        let mut schemas = vec![schema];
         schemas.extend(subs);
 
-        return schemas;
+        schemas
     } else {
         let mut schemas = Vec::new();
         let subs = collect_subschemas(defs, schema.clone());
@@ -177,7 +177,7 @@ fn collect_subschemas<'s>(
                     Schema::Bool(_) => {}
                     Schema::Object(o) => {
                         if let Some(s) = resolve_object_ref(defs, o.into()) {
-                            let mut s_ext: ExtendedSchema = s.into();
+                            let mut s_ext: ExtendedSchema = s;
                             if ext != ExtMeta::default() {
                                 s_ext.ext = ext.clone();
                             }
@@ -194,7 +194,7 @@ fn collect_subschemas<'s>(
                     Schema::Bool(_) => {}
                     Schema::Object(o) => {
                         if let Some(s) = resolve_object_ref(defs, o.into()) {
-                            let mut s_ext: ExtendedSchema = s.into();
+                            let mut s_ext: ExtendedSchema = s;
                             if ext != ExtMeta::default() {
                                 s_ext.ext = ext.clone();
                             }
@@ -211,7 +211,7 @@ fn collect_subschemas<'s>(
                     Schema::Bool(_) => {}
                     Schema::Object(o) => {
                         if let Some(s) = resolve_object_ref(defs, o.into()) {
-                            let mut s_ext: ExtendedSchema = s.into();
+                            let mut s_ext: ExtendedSchema = s;
                             if ext != ExtMeta::default() {
                                 s_ext.ext = ext.clone();
                             }
@@ -265,7 +265,7 @@ pub fn resolve_object_ref<'s>(
             })
         })
     } else {
-        Some(obj.into())
+        Some(obj)
     }
 }
 

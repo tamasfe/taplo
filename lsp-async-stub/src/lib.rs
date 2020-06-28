@@ -68,7 +68,7 @@ impl Future for CancelToken {
     type Output = ();
 
     fn poll(
-        mut self: std::pin::Pin<&mut Self>,
+        self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> Poll<Self::Output> {
         if self.cancelled.load(Ordering::SeqCst) {
@@ -316,6 +316,7 @@ impl<W: Clone + Send + Sync> Server<W> {
         }
     }
 
+    #[allow(clippy::manual_async_fn)]
     fn handle_response(
         inner: Arc<AsyncMutex<Inner<W>>>,
         response: rpc::Response<serde_json::Value>,
@@ -327,6 +328,7 @@ impl<W: Clone + Send + Sync> Server<W> {
         }
     }
 
+    #[allow(clippy::manual_async_fn)]
     fn handle_request(
         inner: Arc<AsyncMutex<Inner<W>>>,
         data: W,

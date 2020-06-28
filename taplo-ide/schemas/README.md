@@ -65,7 +65,7 @@ Every schema can have an extension with the key `evenBetterToml` that will be pa
 
 ```javascript
 {
-    "type": "object",
+    "type": "string",
     "title": "My Schema",
     "enum": ["one", "two", "three"],
     "default": "one",

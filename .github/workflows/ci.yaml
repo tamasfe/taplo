@@ -27,7 +27,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: run
-          args: --manifest-path=test-gen/Cargo.toml -- -i test-data -o taplo/src/tests/
+          args: --manifest-path=util/test-gen/Cargo.toml -- -i test-data -o taplo/src/tests/
       - name: Upload generated tests
         uses: actions/upload-artifact@v1
         with:

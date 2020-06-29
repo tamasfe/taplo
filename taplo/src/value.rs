@@ -171,7 +171,7 @@ impl TryFrom<dom::RootNode> for Value {
 
         for entry in node.into_entries().into_iter() {
             children.insert(
-                entry.key().full_key_string(),
+                entry.key().full_key_string_stripped(),
                 entry.into_value().try_into()?,
             );
         }
@@ -190,7 +190,7 @@ impl TryFrom<dom::TableNode> for Value {
                     IndexMap::new(),
                     |mut m, entry| {
                         m.insert(
-                            entry.key().full_key_string(),
+                            entry.key().full_key_string_stripped(),
                             entry.into_value().try_into()?,
                         );
                         Ok(m)

@@ -1,10 +1,23 @@
 //! This module is used to convert the DOM
 //! nodes into the values they contain.
 
-use crate::dom;
+use crate::{dom, util::unescape};
 use chrono::{DateTime, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime};
 use indexmap::IndexMap;
 use std::convert::{TryFrom, TryInto};
+
+/// This occurs when a key has an invalid escape
+/// sequence.
+#[derive(Debug)]
+pub struct UnescapeError;
+
+impl core::fmt::Display for UnescapeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "the key contains invalid escape sequence")
+    }
+}
+
+impl std::error::Error for UnescapeError {}
 
 pub type Map = IndexMap<String, Value>;
 
@@ -167,16 +180,21 @@ impl TryFrom<dom::Node> for Value {
 impl TryFrom<dom::RootNode> for Value {
     type Error = Error;
     fn try_from(node: dom::RootNode) -> Result<Self, Self::Error> {
-        let mut children: IndexMap<String, Value, _> = IndexMap::new();
-
-        for entry in node.into_entries().into_iter() {
-            children.insert(
-                entry.key().full_key_string_stripped(),
-                entry.into_value().try_into()?,
-            );
-        }
-
-        Ok(Value::Map(children))
+        Ok(Value::Map(
+            node.into_entries()
+                .into_iter()
+                .try_fold::<_, _, Result<IndexMap<String, Value>, Self::Error>>(
+                    IndexMap::new(),
+                    |mut m, entry| {
+                        m.insert(
+                            unescape(&entry.key().full_key_string_stripped())
+                                .map_err(|_| UnescapeError)?,
+                            entry.into_value().try_into()?,
+                        );
+                        Ok(m)
+                    },
+                )?,
+        ))
     }
 }
 
@@ -190,7 +208,8 @@ impl TryFrom<dom::TableNode> for Value {
                     IndexMap::new(),
                     |mut m, entry| {
                         m.insert(
-                            entry.key().full_key_string_stripped(),
+                            unescape(&entry.key().full_key_string_stripped())
+                                .map_err(|_| UnescapeError)?,
                             entry.into_value().try_into()?,
                         );
                         Ok(m)

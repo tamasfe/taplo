@@ -556,13 +556,13 @@ pub(crate) async fn links(
                 }
             };
 
-            let range = doc.mapper.range(key.key.text_range()).unwrap();
-
-            links.push(DocumentLink {
-                range,
-                target,
-                tooltip: None,
-            })
+            for text_range in key.key.text_ranges() {
+                links.push(DocumentLink {
+                    range: doc.mapper.range(text_range).unwrap(),
+                    target: target.clone(),
+                    tooltip: None,
+                })
+            }
         }
     }
 

@@ -873,6 +873,12 @@ impl Entries {
                         });
                     }
 
+                    // Otherwise we'd lose it during the merge.
+                    old_entry
+                        .key
+                        .additional_keys
+                        .push(new_key.clone().common_prefix(&old_key));
+
                     let mut to_insert = new_entry.clone();
                     to_insert.key = new_key.without_prefix(&old_key);
                     t.entries.0.push(to_insert);
@@ -898,10 +904,20 @@ impl Entries {
                             if old_key.eq_keys(&new_key) && new_t.array {
                                 new_t.array = false;
                                 old_arr.items.push(final_entry.value);
+
+                                // Otherwise we'd lose it during the merge.
+                                old_entry.key.additional_keys.push(final_entry.key);
+
                                 Ok(true)
                             } else {
                                 match old_arr.items.last_mut().unwrap() {
                                     ValueNode::Table(arr_t) => {
+                                        // Otherwise we'd lose it during the merge.
+                                        old_entry
+                                            .key
+                                            .additional_keys
+                                            .push(new_key.clone().common_prefix(&old_key));
+
                                         let mut to_insert = new_entry.clone();
                                         to_insert.key = new_key.without_prefix(&old_key);
 
@@ -973,6 +989,13 @@ impl Entries {
                 b.key = b.key.without_prefix(&common_prefix);
 
                 old_entry.key = common_prefix;
+
+                // Otherwise we'd lose it during the merge.
+                old_entry
+                    .key
+                    .additional_keys
+                    .push(new_key.clone().outer(common_count));
+
                 old_entry.value = ValueNode::Table(TableNode {
                     syntax: old_entry.syntax.clone(),
                     next_entry: None,
@@ -1286,6 +1309,10 @@ pub struct KeyNode {
     // the string values of the idents.
     idents: Rc<Vec<SyntaxToken>>,
 
+    /// In case the same key appears multiple times (e.g. in multiple dotted keys)
+    /// additional keys will be stored in this.
+    additional_keys: Vec<KeyNode>,
+
     // This also contributes to equality and hashes.
     //
     // It is only used to differentiate arrays of tables
@@ -1361,6 +1388,12 @@ impl KeyNode {
         );
         self.mask_right += skip;
         self.mask_visible -= skip;
+
+        for key in &mut self.additional_keys {
+            // FIXME avoid a clone here
+            *key = key.clone().outer(n);
+        }
+
         self
     }
 
@@ -1371,6 +1404,12 @@ impl KeyNode {
         let skip = usize::min(self.mask_visible - 1, n);
         self.mask_left += skip;
         self.mask_visible -= skip;
+
+        for key in &mut self.additional_keys {
+            // FIXME avoid a clone here
+            *key = key.clone().inner(n);
+        }
+
         self
     }
 
@@ -1391,6 +1430,28 @@ impl KeyNode {
     /// Eq that ignores the index of the key
     pub fn eq_keys(&self, other: &KeyNode) -> bool {
         self.key_count() == other.key_count() && self.is_part_of(other)
+    }
+
+    /// Keys that are identical to this one but exist
+    /// somewhere else in the document.
+    ///
+    /// These are created when two dotted keys or
+    /// arrays of tables are merged.
+    pub fn additional_keys(&self) -> &[KeyNode] {
+        &self.additional_keys
+    }
+
+    /// Text ranges including the additional identical keys.
+    pub fn text_ranges(&self) -> Vec<TextRange> {
+        let mut v = Vec::with_capacity(self.additional_keys.len() + 1);
+
+        v.push(self.text_range());
+
+        for k in self.additional_keys() {
+            v.push(k.text_range());
+        }
+
+        v
     }
 
     /// Prepends other's idents, and also inherits
@@ -1424,6 +1485,11 @@ impl KeyNode {
     fn with_index(mut self, index: usize) -> Self {
         self.index = index;
         self
+    }
+
+    fn common_prefix(self, other: &KeyNode) -> Self {
+        let count = self.common_prefix_count(other);
+        self.outer(count)
     }
 
     fn prefix(self) -> Self {
@@ -1502,6 +1568,7 @@ impl Cast for KeyNode {
                     mask_right: 0,
                     mask_visible: i.len(),
                     idents: Rc::new(i),
+                    additional_keys: Vec::new(),
                     index: 0,
                     syntax: n,
                 })

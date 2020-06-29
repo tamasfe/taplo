@@ -173,7 +173,11 @@ fn get_position_info(node: &dom::Node, info: &mut PositionInfo) {
             }
         }
         dom::Node::Entry(e) => {
-            if e.key().text_range().contains(info.offset) {
+            if e.key()
+                .text_ranges()
+                .iter()
+                .any(|e| e.contains(info.offset))
+            {
                 if e.token_eq_text_range().is_some() {
                     info.key_only = true;
                 }

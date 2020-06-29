@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as client from "vscode-languageclient";
 import * as path from "path";
 import { registerCommands } from "./commands";
+import { MessageWithOutput } from "./requestExt";
 
 let output: vscode.OutputChannel;
 
@@ -47,15 +48,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(output, c.start());
 
-  const showNotification = vscode.workspace.getConfiguration().get('evenBetterToml.activationStatus');
+  const showNotification = vscode.workspace
+    .getConfiguration()
+    .get("evenBetterToml.activationStatus");
 
-  if (showNotification)  {
+  if (showNotification) {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Window,
         title: "TOML loading...",
       },
-      async (p) => {
+      async (_) => {
         await c.onReady();
       }
     );
@@ -63,5 +66,31 @@ export async function activate(context: vscode.ExtensionContext) {
     await c.onReady();
   }
 
+  c.onNotification(
+    MessageWithOutput.METHOD,
+    async (params: MessageWithOutput.Params) => {
+      let show: string | undefined;
+      switch (params.kind) {
+        case MessageWithOutput.MessageKind.Info:
+          show = await vscode.window.showInformationMessage(
+            params.message,
+            "Show Details"
+          );
+        case MessageWithOutput.MessageKind.Warn:
+          show = await vscode.window.showWarningMessage(
+            params.message,
+            "Show Details"
+          );
+        case MessageWithOutput.MessageKind.Error:
+          show = await vscode.window.showErrorMessage(
+            params.message,
+            "Show Details"
+          );
+      }
 
+      if (show) {
+        c.outputChannel.show();
+      }
+    }
+  );
 }

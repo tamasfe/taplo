@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.6.1
+
+#### Fixes
+- Fixed false negative error regarding dotted key and top level table conflicts
+- Added another check for dotted key and top level table conflicts
+- Fixed an error when enabling schemas
+
+#### Other
+- More user-friendly error messages coming from the LSP.
+
 ## 0.6.0
 
 #### New Features

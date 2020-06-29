@@ -58,3 +58,18 @@ export namespace LineMappings {
 
   export const METHOD = "taplo/lineMappings";
 }
+
+export namespace MessageWithOutput {
+  export const enum MessageKind {
+    Info = "info",
+    Warn = "warn",
+    Error = "error",
+  }
+
+  export interface Params {
+    kind: MessageKind,
+    message: string;
+  }
+
+  export const METHOD = "taplo/messageWithOutput";
+}

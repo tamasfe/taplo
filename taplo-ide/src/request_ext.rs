@@ -1,6 +1,5 @@
 /// Requests that are not in the LSP spec
-
-use lsp_types::{Url, request::Request};
+use lsp_types::{notification::Notification, request::Request, Url};
 use serde::{Deserialize, Serialize};
 
 /// Serialize a TOML text to JSON.
@@ -94,4 +93,26 @@ impl Request for LineMappingsRequest {
     type Params = LineMappingsParams;
     type Result = LineMappingsResponse;
     const METHOD: &'static str = "taplo/lineMappings";
+}
+
+pub(crate) enum MessageWithOutput {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum MessageKind {
+    Info,
+    Warn,
+    Error,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct MessageWithOutputParams {
+    pub kind: MessageKind,
+    pub message: String,
+}
+
+impl Notification for MessageWithOutput {
+    type Params = MessageWithOutputParams;
+    const METHOD: &'static str = "taplo/messageWithOutput";
 }

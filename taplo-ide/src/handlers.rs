@@ -14,6 +14,7 @@ use std::{collections::HashMap, convert::TryFrom, mem};
 use taplo::{dom::Common, formatter, util::coords::Mapper};
 use verify::Verify;
 use wasm_bindgen_futures::spawn_local;
+use crate::request_ext;
 
 mod completion;
 mod diagnostics;
@@ -102,7 +103,13 @@ async fn update_configuration(mut context: Context<World>) {
     let mut w = context.world().lock().await;
 
     w.configuration = serde_json::from_value(config_vals.remove(0)).unwrap_or_default();
+
+    if !w.configuration.schema.enabled.unwrap_or_default() {
+        return;
+    }
+
     w.schema_associations.clear();
+
     let mut schemas: HashMap<String, RootSchema> = mem::take(&mut w.schemas);
 
     let base_url = w.workspace_uri.clone();
@@ -111,10 +118,6 @@ async fn update_configuration(mut context: Context<World>) {
     drop(w);
 
     let mut new_schema_associatons: IndexMap<HashRegex, String> = IndexMap::new();
-
-    if !config.schema.enabled.unwrap_or_default() {
-        return;
-    }
 
     if let Some(assoc) = config.schema.associations {
         for (k, s) in assoc {
@@ -202,21 +205,21 @@ async fn update_configuration(mut context: Context<World>) {
             }
         }
     }
+    let mut w = context.world().lock().await;
 
     if !new_schema_associatons.is_empty() {
-        let mut w = context.world().lock().await;
-
         w.schema_associations.extend(new_schema_associatons);
-        w.schemas = schemas;
     }
+
+    w.schemas = schemas;
 }
 
 fn show_schema_error(mut context: Context<World>) {
     spawn_local(async move {
         context
-            .write_notification::<notification::ShowMessage, _>(Some(ShowMessageParams {
-                typ: MessageType::Error,
-                message: "Failed to load schema".into(),
+            .write_notification::<request_ext::MessageWithOutput, _>(Some(MessageWithOutputParams {
+                kind: MessageKind::Error,
+                message: "Failed to load schema!".into(),
             }))
             .await
             .unwrap();

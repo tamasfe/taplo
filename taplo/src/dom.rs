@@ -377,10 +377,10 @@ impl Cast for RootNode {
                                 same_index_tables
                                     .iter()
                                     .find(|table| {
-                                        insert_key
-                                            .clone()
-                                            .without_prefix(p)
-                                            .contains(&(&**table).clone().without_prefix(p))
+                                        let in_key = insert_key.clone().without_prefix(p);
+                                        let table_key = (&**table).clone().without_prefix(p);
+
+                                        in_key.contains(&table_key) && in_key != table_key
                                     })
                                     .and_then(|table| {
                                         if table != same_index_tables.last().unwrap() {

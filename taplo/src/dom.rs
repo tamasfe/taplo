@@ -339,15 +339,37 @@ impl Cast for RootNode {
                     }
 
                     // Search for an entry that clashes with this table.
-                    for (i, (k, e)) in entries.iter().enumerate().rev().skip(1) {
+                    for (i, (entry_key, e)) in
+                        entries
+                            .iter()
+                            .enumerate()
+                            .rev()
+                            .skip(1)
+                            .filter(|(_, (_, e))| {
+                                if let TABLE_ARRAY_HEADER | TABLE_HEADER = e.syntax().kind() {
+                                    false
+                                } else {
+                                    true
+                                }
+                            })
+                    {
                         let entry_prefix = prefixes.get(i).unwrap();
-                        if let Some(p) = entry_prefix {
-                            if k.contains(&key) && p.common_prefix_count(&key) < key.key_count() {
+
+                        if let Some(entry_prefix) = entry_prefix {
+                            let prefix_check =
+                                entry_prefix.common_prefix_count(&key) < key.key_count();
+
+                            if entry_key.contains(&key) && prefix_check {
                                 errors.push(Error::TopLevelTableDefined {
                                     table: key.clone(),
                                     key: e.key.clone(),
                                 });
                             }
+                        } else if entry_key.contains(&key) {
+                            errors.push(Error::TopLevelTableDefined {
+                                table: key.clone(),
+                                key: e.key.clone(),
+                            });
                         }
                     }
 
@@ -357,6 +379,7 @@ impl Cast for RootNode {
                         tables[key.index].push(key.clone());
                     }
 
+                    // A table has no prefix
                     prefixes.push(None);
                     prefix = Some(key);
                 }
@@ -1282,15 +1305,23 @@ impl KeyNode {
     }
 
     pub fn keys_str(&self) -> impl Iterator<Item = &str> {
-        self.idents().map(|t| {
-            let mut s = t.text().as_str();
+        self.idents().map(|t| t.text().as_str())
+    }
 
+    /// Quotes are removed from the keys.
+    pub fn keys_str_stripped(&self) -> impl Iterator<Item = &str> {
+        self.keys_str().map(|s| {
             if s.starts_with('\"') || s.starts_with('\'') {
-                s = &s[1..s.len() - 1];
+                &s[1..s.len() - 1]
+            } else {
+                s
             }
-
-            s
         })
+    }
+
+    pub fn full_key_string_stripped(&self) -> String {
+        let s: Vec<String> = self.keys_str_stripped().map(|s| s.to_string()).collect();
+        s.join(".")
     }
 
     pub fn full_key_string(&self) -> String {

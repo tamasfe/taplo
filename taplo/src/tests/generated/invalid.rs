@@ -294,6 +294,12 @@ fn string_literal_multiline_control_4() {
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
 #[test]
+fn taplo_inner_key_conflict() {
+    let src = "package.something.else = 2\n\n[package]\nsomething.other = 2\n\n";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
 fn string_basic_out_of_range_unicode_escape_1() {
     let src = "a = \"\\UFFFFFFFF\"\n";
     let p = crate::parser::parse(&src);

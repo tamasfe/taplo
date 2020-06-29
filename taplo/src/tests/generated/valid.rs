@@ -2445,6 +2445,28 @@ fn spec_table_6() {
     );
 }
 #[test]
+fn taplo_same_table_name() {
+    let src = "[package] # Cargo.toml(1, 2): table \"package\" here\nname    = \"uuid\"\nversion = \"0.1.0\"\n\n[dependencies.renamed_example]\nversion = \"0.1.0\"\npackage = \"example\" # entry conflicts with table Even Better TOML" ;
+    let p = crate::parser::parse(&src);
+    assert!(
+        p.errors.is_empty(),
+        "Parse errors:\n{}",
+        p.errors
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+    let dom = p.into_dom();
+    assert!(
+        dom.errors().is_empty(),
+        "Semantic errors:\n{}",
+        dom.errors()
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+}
+#[test]
 fn spec_quoted_literal_keys_1() {
     let src = "'quoted \"value\"' = \"value\"\n";
     let p = crate::parser::parse(&src);

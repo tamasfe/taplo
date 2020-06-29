@@ -994,7 +994,7 @@ impl Entries {
                 old_entry
                     .key
                     .additional_keys
-                    .push(new_key.clone().outer(common_count));
+                    .push(new_key.outer(common_count));
 
                 old_entry.value = ValueNode::Table(TableNode {
                     syntax: old_entry.syntax.clone(),

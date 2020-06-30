@@ -258,6 +258,12 @@ fn string_literal_multiline_quotes() {
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
 #[test]
+fn taplo_invalid_inline_table() {
+    let src = "cooldowns = { \n    aggressive = true, \n}";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
 fn table_invalid_2() {
     let src = "# INVALID TOML DOC\nfruit = []\n\n[[fruit]] # Not allowed\n";
     let p = crate::parser::parse(&src);

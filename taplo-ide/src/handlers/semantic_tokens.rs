@@ -156,7 +156,13 @@ impl<'b> SemanticTokensBuilder<'b> {
                     delta_start: relative.start.character as u32,
                     length: (relative.end.character - relative.start.character) as u32,
                     token_type: ty as u32,
-                    token_modifiers_bitset: 0,
+                    token_modifiers_bitset: modifiers.iter().enumerate().fold(
+                        0,
+                        |mut total, (i, _)| {
+                            total += 1 << i;
+                            total
+                        },
+                    ),
                 });
 
                 self.last_range = Some(r);

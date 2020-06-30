@@ -640,6 +640,7 @@ impl<'p> Parser<'p> {
 
         let mut first = true;
         let mut comma_last = false;
+        let mut was_newline = false;
         loop {
             let t = self.get_token()?;
 
@@ -654,7 +655,15 @@ impl<'p> Parser<'p> {
                     break self.token()?;
                 }
                 NEWLINE => {
+                    // To avoid infinite loop in case
+                    // new lines are whitelisted.
+                    if was_newline {
+                        break;
+                    }
+
                     let _ = self.error("newline is not allowed in an inline table");
+                    was_newline = true;
+
                 }
                 COMMA => {
                     if first {
@@ -663,8 +672,10 @@ impl<'p> Parser<'p> {
                         self.token()?;
                     }
                     comma_last = true;
+                    was_newline = false;
                 }
                 _ => {
+                    was_newline = false;
                     if !comma_last && !first {
                         let _ = self.error(r#"expected ",""#);
                     }

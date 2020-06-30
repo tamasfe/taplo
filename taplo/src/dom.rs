@@ -1252,7 +1252,12 @@ impl Common for EntryNode {
     }
 
     fn text_range(&self) -> TextRange {
-        let r = self.syntax.text_range();
+        let r = self
+            .key
+            .text_ranges()
+            .into_iter()
+            .fold(self.key.text_range(), |total, current| total.cover(current))
+            .cover(self.value.text_range());
 
         match self.next_entry {
             Some(next_entry) => r.cover_offset(next_entry),

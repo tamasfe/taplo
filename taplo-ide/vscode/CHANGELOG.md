@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.6.2
+- Invalid inline tables don't cause an infinite loop anymore
+- Hover and links are now better handled in dotted keys
+
 ## 0.6.1
 
 #### Fixes
@@ -8,7 +12,7 @@
 - Fixed an error when enabling schemas
 
 #### Other
-- More user-friendly error messages coming from the LSP.
+- More user-friendly error messages coming from the LSP
 
 ## 0.6.0
 

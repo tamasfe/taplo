@@ -1,3 +1,4 @@
+use crate::request_ext;
 use crate::request_ext::*;
 use crate::{
     analytics::{collect_keys, Key, PositionInfo},
@@ -14,7 +15,6 @@ use std::{collections::HashMap, convert::TryFrom, mem};
 use taplo::{dom::Common, formatter, util::coords::Mapper};
 use verify::Verify;
 use wasm_bindgen_futures::spawn_local;
-use crate::request_ext;
 
 mod completion;
 mod diagnostics;
@@ -217,10 +217,12 @@ async fn update_configuration(mut context: Context<World>) {
 fn show_schema_error(mut context: Context<World>) {
     spawn_local(async move {
         context
-            .write_notification::<request_ext::MessageWithOutput, _>(Some(MessageWithOutputParams {
-                kind: MessageKind::Error,
-                message: "Failed to load schema!".into(),
-            }))
+            .write_notification::<request_ext::MessageWithOutput, _>(Some(
+                MessageWithOutputParams {
+                    kind: MessageKind::Error,
+                    message: "Failed to load schema!".into(),
+                },
+            ))
             .await
             .unwrap();
     });
@@ -283,6 +285,25 @@ pub(crate) async fn document_change(
         .insert(p.text_document.uri, Document { parse, mapper });
 
     spawn_local(diagnostics::publish_diagnostics(context.clone(), uri));
+}
+
+pub(crate) async fn document_close(
+    mut context: Context<World>,
+    params: Params<DidCloseTextDocumentParams>,
+) {
+    let p = match params.optional() {
+        None => return,
+        Some(p) => p,
+    };
+
+    context
+        .world()
+        .lock()
+        .await
+        .documents
+        .remove(&p.text_document.uri);
+
+    spawn_local(diagnostics::clear_diagnostics(context, p.text_document.uri));
 }
 
 pub(crate) async fn semantic_tokens(

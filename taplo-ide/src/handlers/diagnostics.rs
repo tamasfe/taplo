@@ -67,6 +67,17 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
     }
 }
 
+pub async fn clear_diagnostics(mut context: Context<World>, uri: Url) {
+    context
+        .write_notification::<notification::PublishDiagnostics, _>(Some(PublishDiagnosticsParams {
+            uri,
+            diagnostics: Vec::new(),
+            version: None,
+        }))
+        .await
+        .unwrap_or_else(|err| log_error!("{}", err));
+}
+
 // Syntax and TOML rules validations
 fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Diagnostic> {
     let mut diag: Vec<Diagnostic> = parse

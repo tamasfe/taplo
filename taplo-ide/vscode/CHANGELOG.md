@@ -1,5 +1,10 @@
 # Change Log
 
+## next
+
+#### Fixes
+- Document close events are not ignored anymore
+
 ## 0.6.2
 - Invalid inline tables don't cause an infinite loop anymore
 - Hover and links are now better handled in dotted keys

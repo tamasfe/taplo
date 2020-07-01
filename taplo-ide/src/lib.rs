@@ -41,11 +41,11 @@ macro_rules! log_debug {
     };
 }
 
+pub mod analytics;
 mod handlers;
 mod request_ext;
 pub mod schema;
 mod utils;
-pub mod analytics;
 
 #[derive(Debug, Clone)]
 pub struct Document {
@@ -117,7 +117,7 @@ impl WorldState {
 #[serde(rename_all = "camelCase")]
 pub struct SchemaConfiguration {
     pub enabled: Option<bool>,
-    pub associations: Option<HashMap<String, String>>
+    pub associations: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -195,15 +195,20 @@ static SERVER: Lazy<Server<World>> = Lazy::new(|| {
             ),
         )
         .handler(NotificationHandler::<
-            notification::DidChangeConfiguration,
-            _,
-            _,
-        >::new(handlers::configuration_change))
-        .handler(NotificationHandler::<
             notification::DidChangeTextDocument,
             _,
             _,
         >::new(handlers::document_change))
+        .handler(NotificationHandler::<
+            notification::DidCloseTextDocument,
+            _,
+            _,
+        >::new(handlers::document_close))
+        .handler(NotificationHandler::<
+            notification::DidChangeConfiguration,
+            _,
+            _,
+        >::new(handlers::configuration_change))
         .handler(RequestHandler::<request::SemanticTokensRequest, _, _>::new(
             handlers::semantic_tokens,
         ))

@@ -194,6 +194,7 @@
 				"evenBetterToml.formatter.columnWidth": {
 					"description": "Maximum column width in characters, affects array expansion and collapse, this doesn't take whitespace into account.",
 					"type": "number",
+					"minimum": 0,
 					"default": 80
 				},
 				"evenBetterToml.formatter.indentTables": {

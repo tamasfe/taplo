@@ -201,7 +201,7 @@
 					"description": "Indent based on tables and arrays of tables and their subtables, subtables out of order are not indented.",
 					"type": "boolean",
 					"scope": "resource",
-					"default": true
+					"default": false
 				},
 				"evenBetterToml.formatter.indentString": {
 					"description": "The substring that is used for indentation, should be tabs or spaces, but technically can be anything. Uses the IDE setting if not set.",

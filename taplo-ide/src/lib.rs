@@ -135,6 +135,7 @@ pub struct FormatterConfiguration {
     pub trailing_newline: Option<bool>,
     pub reorder_keys: Option<bool>,
     pub crlf: Option<bool>,
+    pub allowed_blank_lines: Option<usize>
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

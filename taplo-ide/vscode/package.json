@@ -218,6 +218,13 @@
 					"scope": "resource",
 					"default": true
 				},
+				"evenBetterToml.formatter.allowedBlankLines": {
+					"description": "Maximum amount of allowed consecutive blank lines. This does not affect the whitespace at the end of the document, as it is always stripped.",
+					"type": "integer",
+					"scope": "resource",
+					"minimum": 0,
+					"default": 2
+				},
 				"evenBetterToml.formatter.trailingNewline": {
 					"description": "Add trailing newline at the end of the file if not present.",
 					"type": "boolean",

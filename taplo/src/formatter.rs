@@ -18,7 +18,7 @@ pub struct Options {
     /// Align entries vertically.
     ///
     /// Entries that have table headers, comments,
-    /// or empty lines between them are not aligned.
+    /// or blank lines between them are not aligned.
     pub align_entries: bool,
 
     /// Put trailing commas for multiline
@@ -59,8 +59,11 @@ pub struct Options {
     /// Add trailing newline to the source.
     pub trailing_newline: bool,
 
-    /// Alphabetically reorder keys that are not separated by empty lines.
+    /// Alphabetically reorder keys that are not separated by blank lines.
     pub reorder_keys: bool,
+
+    /// The maximum amount of consecutive blank lines allowed.
+    pub allowed_blank_lines: usize,
 
     /// Use CRLF line endings
     pub crlf: bool,
@@ -78,6 +81,7 @@ impl Default for Options {
             column_width: 80,
             indent_tables: true,
             trailing_newline: true,
+            allowed_blank_lines: 2,
             indent_string: "  ".into(),
             reorder_keys: true,
             crlf: false,
@@ -86,12 +90,18 @@ impl Default for Options {
 }
 
 impl Options {
-    fn newline(&self) -> &str {
+    fn newline(&self) -> SmolStr {
         if self.crlf {
-            "\r\n"
+            "\r\n".into()
         } else {
-            "\n"
+            "\n".into()
         }
+    }
+
+    fn newlines_like(&self, s: &str) -> SmolStr {
+        self.newline()
+            .repeat(usize::min(s.newline_count(), self.allowed_blank_lines + 1))
+            .into()
     }
 
     fn indent_chars(&self, level: usize) -> usize {
@@ -122,7 +132,7 @@ pub fn format_syntax(node: SyntaxNode, options: Options) -> String {
     s = s.trim_end().into();
 
     if options.trailing_newline {
-        s += options.newline();
+        s += options.newline().as_str();
     }
 
     s
@@ -156,7 +166,7 @@ fn format_impl(node: SyntaxNode, options: Options) -> SyntaxNode {
 fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Options) {
     builder.start_node(ROOT.into());
 
-    // Entries without an empty line between them
+    // Entries without a blank line between them
     let mut entry_group: Vec<SyntaxNode> = Vec::new();
 
     // Needed for indentation to stop incorrectly indenting
@@ -197,7 +207,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                             add_aligned(
                                 mem::take(&mut entry_group),
                                 builder,
-                                &newlines(options.newline(), Some(1)),
+                                &options.newline(),
                                 if options.indent_tables {
                                     Some(&indent_str)
                                 } else {
@@ -267,7 +277,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
             }
             NodeOrToken::Token(t) => match t.kind() {
                 NEWLINE => {
-                    if t.text().as_str().newline_count() > 1 {
+                    if t.text().as_str().newline_count() > 1 && options.allowed_blank_lines != 0 {
                         let indent_str = options.indent_string.repeat(indent_level);
 
                         if !entry_group.is_empty() {
@@ -285,7 +295,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                             add_aligned(
                                 mem::take(&mut entry_group),
                                 builder,
-                                &newlines(options.newline(), Some(1)),
+                                &options.newline(),
                                 if options.indent_tables {
                                     Some(&indent_str)
                                 } else {
@@ -293,13 +303,10 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                                 },
                                 if options.align_entries { None } else { Some(1) },
                             );
-                            builder.token(NEWLINE.into(), options.newline().into());
                         }
-                        builder.token(NEWLINE.into(), options.newline().into());
-                    }
-
-                    if skip_newline == 0 {
-                        builder.token(NEWLINE.into(), newlines(options.newline(), None));
+                        builder.token(NEWLINE.into(), options.newlines_like(t.text().as_str()));
+                    } else if skip_newline == 0 {
+                        builder.token(NEWLINE.into(), options.newlines_like(t.text().as_str()));
                     }
                     skip_newline = i32::max(0, skip_newline - 1);
                 }
@@ -321,7 +328,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                         add_aligned(
                             mem::take(&mut entry_group),
                             builder,
-                            &newlines(options.newline(), Some(1)),
+                            &options.newline(),
                             if options.indent_tables {
                                 Some(&indent_str)
                             } else {
@@ -370,7 +377,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
     add_aligned(
         mem::take(&mut entry_group),
         builder,
-        options.newline(),
+        &options.newline(),
         if options.indent_tables {
             Some(&indent_str)
         } else {
@@ -784,28 +791,6 @@ fn add_all(node: SyntaxNode, builder: &mut GreenNodeBuilder) {
     }
 
     builder.finish_node()
-}
-
-fn newlines(s: &str, count: Option<usize>) -> SmolStr {
-    if s.contains('\r') {
-        if count.is_none() {
-            if s.newline_count() > 2 {
-                "\r\n\r\n".into()
-            } else {
-                "\r\n".into()
-            }
-        } else {
-            "\r\n".repeat(count.unwrap_or(1)).into()
-        }
-    } else if count.is_none() {
-        if s.newline_count() > 2 {
-            "\n\n".into()
-        } else {
-            "\n".into()
-        }
-    } else {
-        "\n".repeat(count.unwrap_or(1)).into()
-    }
 }
 
 // Moves the comment from the value into the entry

@@ -408,6 +408,10 @@ pub(crate) async fn format(
         format_opts.compact_inline_tables = v;
     }
 
+    if let Some(v) = w.configuration.formatter.allowed_blank_lines {
+        format_opts.allowed_blank_lines = v;
+    }
+
     if let Some(v) = w.configuration.formatter.indent_string.clone() {
         format_opts.indent_string = v;
     } else {

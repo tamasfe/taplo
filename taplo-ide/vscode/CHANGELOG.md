@@ -2,6 +2,9 @@
 
 ## next
 
+#### New Features
+- Added allowed blank lines formatter option. (default 2)
+
 #### Fixes
 - Document close events are not ignored anymore
 

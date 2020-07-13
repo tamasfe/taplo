@@ -1,6 +1,6 @@
 # Change Log
 
-## next
+## 0.7.0
 
 #### New Features
 - Added allowed blank lines formatter option. (default 2)

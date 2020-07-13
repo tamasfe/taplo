@@ -215,7 +215,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                                 },
                                 if options.align_entries { None } else { Some(1) },
                             );
-                            builder.token(NEWLINE.into(), options.newline().into());
+                            builder.token(NEWLINE.into(), options.newline());
                         }
 
                         if options.indent_tables {
@@ -336,7 +336,7 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                             },
                             if options.align_entries { None } else { Some(1) },
                         );
-                        builder.token(NEWLINE.into(), options.newline().into());
+                        builder.token(NEWLINE.into(), options.newline());
                     }
 
                     if options.indent_tables {
@@ -495,7 +495,7 @@ fn format_array(
                 NodeOrToken::Node(n) => {
                     if node_index != 0 || was_comment {
                         if multiline {
-                            builder.token(NEWLINE.into(), options.newline().into());
+                            builder.token(NEWLINE.into(), options.newline());
                         } else {
                             builder.token(WHITESPACE.into(), " ".into());
                         }
@@ -547,14 +547,14 @@ fn format_array(
                         builder.token(t.kind().into(), t.text().clone());
 
                         if multiline {
-                            builder.token(NEWLINE.into(), options.newline().into());
+                            builder.token(NEWLINE.into(), options.newline());
                         } else if !options.compact_arrays {
                             builder.token(WHITESPACE.into(), " ".into());
                         }
                     }
                     BRACKET_END => {
                         if multiline {
-                            builder.token(NEWLINE.into(), options.newline().into());
+                            builder.token(NEWLINE.into(), options.newline());
                             builder.token(
                                 WHITESPACE.into(),
                                 options.indent_string.repeat(context.indent_level).into(),
@@ -572,7 +572,7 @@ fn format_array(
                         // Comment after a value
                         } else {
                             if was_comment || was_value {
-                                builder.token(NEWLINE.into(), options.newline().into());
+                                builder.token(NEWLINE.into(), options.newline());
                             }
                             builder.token(
                                 WHITESPACE.into(),

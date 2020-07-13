@@ -36,8 +36,8 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
     for element in syntax.descendants_with_tokens() {
         match element {
             SyntaxElement::Node(_node) => {}
-            SyntaxElement::Token(token) => match token.kind() {
-                IDENT => {
+            SyntaxElement::Token(token) => {
+                if let IDENT = token.kind() {
                     // look for an inline table value
                     let is_table_key = token
                         .parent()
@@ -63,8 +63,7 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                         builder.add_token(&token, TokenType::TomlArrayKey, &[]);
                     }
                 }
-                _ => {}
-            },
+            }
         }
     }
 

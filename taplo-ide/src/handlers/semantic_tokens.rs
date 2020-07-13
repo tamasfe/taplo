@@ -8,26 +8,14 @@ use taplo::{
 #[derive(Debug, Copy, Clone)]
 #[repr(u32)]
 pub enum TokenType {
-    Function = 0,
-    Comment,
-    Keyword,
-    Namespace,
-    String,
-    Number,
-    Variable,
-    TomlArray,
+    TomlArrayKey,
+    TomlTableKey,
 }
 
 impl TokenType {
     pub const LEGEND: &'static [SemanticTokenType] = &[
-        SemanticTokenType::FUNCTION,
-        SemanticTokenType::COMMENT,
-        SemanticTokenType::KEYWORD,
-        SemanticTokenType::NAMESPACE,
-        SemanticTokenType::STRING,
-        SemanticTokenType::NUMBER,
-        SemanticTokenType::VARIABLE,
-        SemanticTokenType::new("tomlArray"),
+        SemanticTokenType::new("tomlArrayKey"),
+        SemanticTokenType::new("tomlTableKey"),
     ];
 }
 
@@ -47,21 +35,9 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
 
     for element in syntax.descendants_with_tokens() {
         match element {
-            SyntaxElement::Node(_node) => {
-                // let n: SyntaxNode = _node;
-            }
+            SyntaxElement::Node(_node) => {}
             SyntaxElement::Token(token) => match token.kind() {
                 IDENT => {
-                    let parent_node: SyntaxNode = token.parent();
-                    let mut ty = TokenType::Variable;
-                    if let Some(p) = parent_node.parent() {
-                        match p.kind() {
-                            TABLE_HEADER => ty = TokenType::Namespace,
-                            TABLE_ARRAY_HEADER => ty = TokenType::TomlArray,
-                            _ => {}
-                        }
-                    }
-
                     // look for an inline table value
                     let is_table_key = token
                         .parent()
@@ -71,7 +47,8 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                         .unwrap_or(false);
 
                     if is_table_key {
-                        ty = TokenType::Namespace;
+                        builder.add_token(&token, TokenType::TomlTableKey, &[]);
+                        continue;
                     }
 
                     // look for an array
@@ -83,20 +60,9 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                         .unwrap_or(false);
 
                     if is_array_key {
-                        ty = TokenType::TomlArray;
+                        builder.add_token(&token, TokenType::TomlArrayKey, &[]);
                     }
-
-                    builder.add_token(&token, ty, &[]);
                 }
-                COMMENT => builder.add_token(&token, TokenType::Comment, &[]),
-                FLOAT | INTEGER | INTEGER_BIN | INTEGER_HEX | INTEGER_OCT => {
-                    builder.add_token(&token, TokenType::Number, &[])
-                }
-                STRING | MULTI_LINE_STRING | STRING_LITERAL | MULTI_LINE_STRING_LITERAL => {
-                    builder.add_token(&token, TokenType::String, &[])
-                }
-                DATE => builder.add_token(&token, TokenType::Function, &[]),
-                BOOL => builder.add_token(&token, TokenType::Keyword, &[]),
                 _ => {}
             },
         }

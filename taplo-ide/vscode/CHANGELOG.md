@@ -4,6 +4,11 @@
 
 #### New Features
 - Added allowed blank lines formatter option. (default 2)
+- TextMate grammar
+- Semantic highlighting option
+
+#### Other
+- Automatic indentation for the formatter is disabled by default
 
 #### Fixes
 - Document close events are not ignored anymore

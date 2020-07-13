@@ -318,6 +318,10 @@ pub(crate) async fn semantic_tokens(
         .get(&p.text_document.uri)
         .ok_or_else(Error::invalid_params)?;
 
+    if !w.configuration.semantic_tokens.unwrap_or_default() {
+        return Ok(None);
+    }
+
     Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
         result_id: None,
         data: semantic_tokens::create_tokens(&doc.parse.clone().into_syntax(), &doc.mapper),

@@ -135,13 +135,14 @@ pub struct FormatterConfiguration {
     pub trailing_newline: Option<bool>,
     pub reorder_keys: Option<bool>,
     pub crlf: Option<bool>,
-    pub allowed_blank_lines: Option<usize>
+    pub allowed_blank_lines: Option<usize>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Configuration {
     schema: SchemaConfiguration,
+    semantic_tokens: Option<bool>,
     formatter: FormatterConfiguration,
 }
 

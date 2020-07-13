@@ -46,6 +46,13 @@
 		"workspace"
 	],
 	"contributes": {
+		"grammars": [
+			{
+				"language": "toml",
+				"scopeName": "source.toml",
+				"path": "./toml.tmLanguage.json"
+			}
+		],
 		"languages": [
 			{
 				"id": "toml",
@@ -120,16 +127,24 @@
 		],
 		"semanticTokenTypes": [
 			{
-				"id": "tomlArray",
-				"superType": "keyword",
-				"description": "Token for array keys."
+				"id": "tomlArrayKey",
+				"superType": "variable",
+				"description": "Keys of regular arrays."
+			},
+			{
+				"id": "tomlTableKey",
+				"superType": "variable",
+				"description": "Keys of inline tables."
 			}
 		],
 		"semanticTokenScopes": [
 			{
 				"scopes": {
-					"tomlArray": [
-						"keyword.other"
+					"tomlArrayKey": [
+						"variable.key.array.toml"
+					],
+					"tomlTableKey": [
+						"variable.key.table.toml"
 					]
 				}
 			}
@@ -142,6 +157,12 @@
 					"type": "boolean",
 					"scope": "resource",
 					"default": true
+				},
+				"evenBetterToml.semanticTokens": {
+					"description": "Enable semantic tokens for inline table and array keys. If enabled, keys of arrays and inline tables will have the same color as table headers and array of tables headers.",
+					"type": "boolean",
+					"scope": "resource",
+					"default": false
 				},
 				"evenBetterToml.commands.copyTomlAsJson": {
 					"description": "Show the \"Copy Selection as JSON\" command in the palette.",
@@ -244,7 +265,8 @@
 					"default": false
 				},
 				"evenBetterToml.schema.associations": {
-					"markdownDescription": "File and schema associations. \n\n The key must be a regular expression, this pattern is used to associate schemas with absolute document URIs. On multiple matches the first one is used in an undefined order. \n\n The value must be an absolute URI to the JSON schema, for supported values and more information [read here](https://github.com/tamasfe/taplo/tree/master/taplo-ide/schemas).",
+					"description": "Document and schema associations.",
+					"markdownDescription": "Document and schema associations. \n\n The key must be a regular expression, this pattern is used to associate schemas with absolute document URIs. On multiple matches the first one is used in an undefined order. \n\n The value must be an absolute URI to the JSON schema, for supported values and more information [read here](https://github.com/tamasfe/taplo/tree/master/taplo-ide/schemas).",
 					"type": "object",
 					"scope": "resource",
 					"default": {
@@ -262,7 +284,8 @@
 	},
 	"main": "./dist/extension.js",
 	"scripts": {
-		"vscode:prepublish": "webpack --mode production && npm run webpack-server",
+		"build:syntax": "ts-node src/syntax/index.ts",
+		"vscode:prepublish": "npm run build:syntax && webpack --mode production && npm run webpack-server",
 		"webpack": "webpack --mode development",
 		"webpack-server": "webpack --config webpack.config.server.js --mode production",
 		"webpack-dev": "webpack --mode development --watch",
@@ -280,6 +303,7 @@
 		"clean-webpack-plugin": "^3.0.0",
 		"copy-webpack-plugin": "^6.0.1",
 		"ts-loader": "^7.0.5",
+		"ts-node": "^8.10.2",
 		"tslint": "^5.19.0",
 		"typescript": "^3.8.3",
 		"webpack": "^4.43.0",

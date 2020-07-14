@@ -62,13 +62,6 @@
 				"extensions": [
 					".toml"
 				],
-				"configuration": "./language-configuration.json"
-			},
-			{
-				"id": "cargoLock",
-				"aliases": [
-					"Cargo Lock"
-				],
 				"filenames": [
 					"Cargo.lock"
 				],

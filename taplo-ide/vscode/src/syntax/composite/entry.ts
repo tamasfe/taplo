@@ -1,14 +1,14 @@
 export const entry = {
   name: "meta.entry.toml",
   patterns: [
-    {
-      name: "invalid.illegal.key.missing.toml",
-      match: "(\\s*=.*)$",
-    },
-    {
-      name: "invalid.illegal.value.missing.toml",
-      match: "(\\s*[A-Za-z_\\-][A-Za-z0-9_\\-]*\\s*=)(?=\\s*$)",
-    },
+    // {
+    //   name: "invalid.illegal.key.missing.toml",
+    //   match: "(\\s*=.*)$",
+    // },
+    // {
+    //   name: "invalid.illegal.value.missing.toml",
+    //   match: "(\\s*[A-Za-z_\\-][A-Za-z0-9_\\-]*\\s*=)(?=\\s*$)",
+    // },
     {
       begin: "\\s*([^\\[{,]*)\\s*(=)\\s*",
       beginCaptures: {
@@ -36,9 +36,9 @@ export const entry = {
         {
           include: "#value",
         },
-        {
-          include: "#illegal",
-        },
+        // {
+        //   include: "#illegal",
+        // },
       ],
     },
   ],

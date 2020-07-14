@@ -28,7 +28,7 @@ const syntax = {
     table,
     entry,
     value,
-    illegal,
+    // illegal,
   },
 };
 

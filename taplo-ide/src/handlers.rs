@@ -4,13 +4,14 @@ use crate::{
     analytics::{collect_keys, Key, PositionInfo},
     read_file,
     schema::{get_schema_objects, BUILTIN_SCHEME},
-    Document, HashRegex, World,
+    Configuration, Document, HashRegex, World,
 };
 use indexmap::IndexMap;
 use lsp_async_stub::{rpc::Error, Context, Params, RequestWriter};
 use lsp_types::*;
 use regex::Regex;
 use schemars::schema::RootSchema;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, convert::TryFrom, mem};
 use taplo::{dom::Common, formatter, util::coords::Mapper};
 use verify::Verify;
@@ -22,21 +23,33 @@ mod document_symbols;
 mod folding_ranges;
 mod semantic_tokens;
 
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct InitializationOptions {
+    configuration: Option<Configuration>,
+}
+
 pub(crate) async fn initialize(
     mut context: Context<World>,
     params: Params<InitializeParams>,
 ) -> Result<InitializeResult, Error> {
     let p = params.required()?;
 
-    context.world().lock().await.workspace_uri = p.root_uri.map(|mut uri| {
+    let mut w = context.world().lock().await;
+
+    w.workspace_uri = p.root_uri.map(|mut uri| {
         uri.set_path(&(uri.path().to_string() + "/"));
         uri
     });
 
-    // Update configuration after initialization.
-    // !! This might cause race conditions with this response,
-    // !! it is fine in the single-threaded wasm environment.
-    spawn_local(update_configuration(context));
+    if let Some(opts_val) = p.initialization_options {
+        let opts: InitializationOptions = serde_json::from_value(opts_val)
+            .map_err(|e| Error::new(&format!("invalid initialization options: {}", e)))?;
+
+        if let Some(config) = opts.configuration {
+            w.configuration = config;
+        }
+    }
 
     Ok(InitializeResult {
         capabilities: ServerCapabilities {

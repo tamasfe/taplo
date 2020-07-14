@@ -24,6 +24,10 @@ export async function activate(context: vscode.ExtensionContext) {
       { scheme: "file", language: "cargoLock" },
     ],
 
+    initializationOptions: {
+      configuration: vscode.workspace.getConfiguration().get("evenBetterToml"),
+    },
+
     synchronize: {
       configurationSection: "evenBetterToml",
       fileEvents: [

@@ -1,6 +1,11 @@
 # Change Log
 
-## next
+## 0.7.1
+
+#### Fixes
+- Fixed incorrectly accepted arrays
+- Fixed infinite loop caused by invalid arrays
+- Better formatter indentation
 
 #### Other
 - Disabled formatter `alignEntries` and `formatKeys` by default ([#29](https://github.com/tamasfe/taplo/issues/29))

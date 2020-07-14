@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.7.2
+
+#### Fixes
+- Extension config should be properly applied now
+- Removed separate language for `Cargo.lock`
+
 ## 0.7.1
 
 #### Fixes

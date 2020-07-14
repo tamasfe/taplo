@@ -130,7 +130,7 @@ async fn update_configuration(mut context: Context<World>) {
 
     drop(w);
 
-    let mut new_schema_associatons: IndexMap<HashRegex, String> = IndexMap::new();
+    let mut new_schema_associations: IndexMap<HashRegex, String> = IndexMap::new();
 
     if let Some(assoc) = config.schema.associations {
         for (k, s) in assoc {
@@ -143,7 +143,7 @@ async fn update_configuration(mut context: Context<World>) {
                 }
             };
 
-            new_schema_associatons.insert(HashRegex(re), s.clone());
+            new_schema_associations.insert(HashRegex(re), s.clone());
 
             if schemas.contains_key(&s) {
                 continue;
@@ -175,8 +175,8 @@ async fn update_configuration(mut context: Context<World>) {
             match url.scheme() {
                 "file" => {
                     let fpath_str = url.path();
-
-                    let schema_bytes = match read_file(fpath_str) {
+                    // unsafe: Extern JS call
+                    let schema_bytes = match unsafe { read_file(fpath_str) } {
                         Ok(b) => b,
                         Err(err) => {
                             log_error!("Failed to read schema file: {:?}", err);
@@ -220,8 +220,8 @@ async fn update_configuration(mut context: Context<World>) {
     }
     let mut w = context.world().lock().await;
 
-    if !new_schema_associatons.is_empty() {
-        w.schema_associations.extend(new_schema_associatons);
+    if !new_schema_associations.is_empty() {
+        w.schema_associations.extend(new_schema_associations);
     }
 
     w.schemas = schemas;

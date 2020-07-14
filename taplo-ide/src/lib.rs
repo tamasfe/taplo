@@ -1,4 +1,7 @@
 #![allow(unused_macros)]
+// extern WASM calls are wrapped in unsafe,
+// but they don't technically have to be.
+#![allow(unused_unsafe)]
 
 use async_trait::async_trait;
 use futures::{lock::Mutex as AsyncMutex, Sink};
@@ -19,25 +22,29 @@ use wasm_bindgen_futures::spawn_local;
 
 macro_rules! log_info {
     ($($arg:tt)*) => {
-        $crate::log_info(&format!($($arg)*))
+        // unsafe: Extern JS call
+        unsafe { $crate::log_info(&format!($($arg)*)) }
     };
 }
 
 macro_rules! log_warn {
     ($($arg:tt)*) => {
-        $crate::log_warn(&format!($($arg)*))
+        // unsafe: Extern JS call
+        unsafe { $crate::log_warn(&format!($($arg)*)) }
     };
 }
 
 macro_rules! log_error {
     ($($arg:tt)*) => {
-        $crate::log_error(&format!($($arg)*))
+        // unsafe: Extern JS call
+        unsafe { $crate::log_error(&format!($($arg)*)) }
     };
 }
 
 macro_rules! log_debug {
     ($($arg:tt)*) => {
-        if cfg!(debug_assertions) {$crate::log_info(&format!($($arg)*)) }
+        // unsafe: Extern JS call
+        if cfg!(debug_assertions) { unsafe { $crate::log_info(&format!($($arg)*)) } }
     };
 }
 
@@ -262,7 +269,8 @@ impl Sink<Message> for RequestWriter {
 
     fn start_send(self: std::pin::Pin<&mut Self>, item: Message) -> Result<(), Self::Error> {
         // log_debug!("request: {}", serde_json::to_string(&item).unwrap());
-        send_message(JsValue::from_serde(&item).unwrap());
+        // unsafe: Extern JS call
+        unsafe { send_message(JsValue::from_serde(&item).unwrap()) };
         Ok(())
     }
 
@@ -290,7 +298,8 @@ impl ResponseWriter for ResWriter {
         response: &rpc::Response<R>,
     ) -> Result<(), io::Error> {
         // log_debug!("response: {}", serde_json::to_string(&response).unwrap());
-        send_message(JsValue::from_serde(response).unwrap());
+        // unsafe: Extern JS call
+        unsafe { send_message(JsValue::from_serde(response).unwrap()) };
         Ok(())
     }
 }

@@ -169,12 +169,11 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
     // Entries without a blank line between them
     let mut entry_group: Vec<SyntaxNode> = Vec::new();
 
-    // Needed for indentation to stop incorrectly indenting
-    // tables that have no super table defined before them.
-    let mut base_prefix_count = 0;
-
     let mut indent_level: usize = 0;
-    let mut last_table_key: Option<KeyNode> = None;
+
+    // Header keys with the indent level.
+    // These are tracked for correct indentation.
+    let mut indent_levels: Vec<(KeyNode, usize)> = Vec::new();
 
     // New line after each entry should be skipped,
     // because it is manually added if needed.
@@ -222,23 +221,27 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                             // We surely have some...
                             if let Some(key_syntax) = n.first_child() {
                                 if let Some(key) = KeyNode::cast(NodeOrToken::Node(key_syntax)) {
-                                    if let Some(last_key) = last_table_key.take() {
-                                        if key.key_count() == 1
-                                            || last_key.key_count() > key.key_count()
-                                        {
-                                            indent_level = 0
-                                        } else if key != last_key {
-                                            indent_level = last_key
-                                                .common_prefix_count(&key)
-                                                .checked_sub(base_prefix_count)
-                                                .unwrap_or_default();
-                                        }
+                                    // Search the previous tables for a common prefix
+                                    // and indent based on that.
+                                    indent_level = indent_levels
+                                        .iter()
+                                        .filter_map(|(k, level)| {
+                                            if k.common_prefix_count(&key) > 0
+                                                && k.key_count() <= key.key_count()
+                                            {
+                                                if k.key_count() == key.key_count() {
+                                                    Some(*level)
+                                                } else {
+                                                    Some(k.common_prefix_count(&key))
+                                                }
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .max()
+                                        .unwrap_or(0);
 
-                                        if indent_level == 0 {
-                                            base_prefix_count = key.key_count() - 1;
-                                        }
-                                    }
-                                    last_table_key = Some(key);
+                                    indent_levels.push((key.clone(), indent_level));
                                 }
                             }
                             builder.token(

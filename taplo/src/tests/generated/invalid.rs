@@ -35,6 +35,12 @@ fn bare_key_3() {
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
 #[test]
+fn taplo_invalid_array_comma_start() {
+    let src = "arr = [,\"value\"]";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
 fn key_value_pair_2() {
     let src = "first = \"Tom\" last = \"Preston-Werner\" # INVALID\n";
     let p = crate::parser::parse(&src);
@@ -85,6 +91,12 @@ fn string_literal_multiline_control_3() {
 #[test]
 fn inline_table_trailing_comma() {
     let src = "abc = { abc = 123, }\n";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
+fn taplo_invalid_array() {
+    let src = "arr = [\"value\",,,,]";
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }

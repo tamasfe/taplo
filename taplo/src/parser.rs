@@ -663,7 +663,6 @@ impl<'p> Parser<'p> {
 
                     let _ = self.error("newline is not allowed in an inline table");
                     was_newline = true;
-
                 }
                 COMMA => {
                     if first {
@@ -708,11 +707,10 @@ impl<'p> Parser<'p> {
                     continue; // as if it wasn't there, so it doesn't count as a first token
                 }
                 COMMA => {
-                    if first {
+                    if first || comma_last {
                         let _ = self.error(r#"unexpected ",""#);
-                    } else {
-                        self.token()?;
                     }
+                    self.token()?;
                     comma_last = true;
                 }
                 _ => {

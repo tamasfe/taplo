@@ -180,7 +180,7 @@
 					"description": "Align consecutive entries vertically.",
 					"type": "boolean",
 					"scope": "resource",
-					"default": true
+					"default": false
 				},
 				"evenBetterToml.formatter.arrayTrailingComma": {
 					"description": "Append trailing commas for multi-line arrays.",
@@ -237,7 +237,7 @@
 					"description": "Alphabetically reorder keys that are not separated by empty lines.",
 					"type": "boolean",
 					"scope": "resource",
-					"default": true
+					"default": false
 				},
 				"evenBetterToml.formatter.allowedBlankLines": {
 					"description": "Maximum amount of allowed consecutive blank lines. This does not affect the whitespace at the end of the document, as it is always stripped.",

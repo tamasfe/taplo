@@ -104,7 +104,7 @@ Works even for tables not in order.
 
 ### Formatting
 
-Most of the formatting features are enabled by default, but almost everything can be tweaked in the settings. If you're missing an option, feel free to open an issue about it!
+The formatter is rather conservative by default, additional features can be enabled in the settings. If you're missing a configuration option, feel free to open an issue about it!
 
 ![Formatting](formatting.gif)
 

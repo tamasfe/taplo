@@ -1,5 +1,10 @@
 # Change Log
 
+## next
+
+#### Other
+- Disabled formatter `alignEntries` and `formatKeys` by default ([#29](https://github.com/tamasfe/taplo/issues/29))
+
 ## 0.7.0
 
 #### New Features

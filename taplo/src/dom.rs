@@ -873,11 +873,12 @@ impl Entries {
                         });
                     }
 
+                    let common = new_key.clone().common_prefix(&old_key);
+
                     // Otherwise we'd lose it during the merge.
-                    old_entry
-                        .key
-                        .additional_keys
-                        .push(new_key.clone().common_prefix(&old_key));
+                    if common.text_range() != old_entry.key.text_range() {
+                        old_entry.key.additional_keys.push(common);
+                    }
 
                     let mut to_insert = new_entry.clone();
                     to_insert.key = new_key.without_prefix(&old_key);

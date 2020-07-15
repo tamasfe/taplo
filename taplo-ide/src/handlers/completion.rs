@@ -1,24 +1,104 @@
 use crate::{
-    analytics::PositionInfo,
+    analytics::{Key, PositionInfo},
     schema::{
         contains_type, get_schema_objects, object_contains_type, resolve_object_ref, resolve_ref,
         ExtMeta, ExtendedSchema, EXTENSION_KEY,
     },
     Document,
 };
+use dom::{Cast, Entries};
 use lsp_types::*;
+use rowan::TextSize;
 use schemars::{
     schema::{InstanceType, ObjectValidation, RootSchema, Schema, SingleOrVec},
     Map,
 };
-use taplo::dom::{self, Common};
+use taplo::{
+    dom::{self, Common},
+    syntax::{SyntaxElement, SyntaxKind},
+    util::SyntaxExt,
+};
 
 pub(crate) fn get_completions(
     doc: Document,
     position: Position,
     schema: RootSchema,
 ) -> Vec<CompletionItem> {
-    let info = PositionInfo::new(doc, position);
+    let mut info = PositionInfo::new(doc, position);
+
+    // Finding everything in the DOM is unreliable, so we also look for edge cases based
+    // on only the syntax tree.
+    //
+    // This can be none only if the document is completely empty.
+    if let Some(syntax_node) = info
+        .doc
+        .parse
+        .clone()
+        .into_syntax()
+        .find_node_deep(info.offset, false)
+    {
+        // Incomplete dotted keys cannot be reliably retrieved
+        // from the DOM.
+        if let SyntaxKind::KEY = syntax_node.kind() {
+            // If inside an ident, we already handle it.
+            if info.ident_range.is_none() {
+                if let Some(k) = dom::KeyNode::cast(SyntaxElement::Node(syntax_node)) {
+                    info.keys
+                        .extend(k.keys_str_stripped().map(|s| Key::Property(s.into())));
+                    info.node = Some(k.into());
+                }
+            }
+        } else if let SyntaxKind::ENTRY = syntax_node.kind() {
+            let value_kind = info
+                .node
+                .as_ref()
+                .map(|n| match n.kind() {
+                    SyntaxKind::STRING
+                    | SyntaxKind::MULTI_LINE_STRING
+                    | SyntaxKind::STRING_LITERAL
+                    | SyntaxKind::MULTI_LINE_STRING_LITERAL
+                    | SyntaxKind::INTEGER
+                    | SyntaxKind::INTEGER_HEX
+                    | SyntaxKind::INTEGER_OCT
+                    | SyntaxKind::INTEGER_BIN
+                    | SyntaxKind::FLOAT
+                    | SyntaxKind::BOOL
+                    | SyntaxKind::DATE
+                    | SyntaxKind::VALUE => true,
+                    _ => false,
+                })
+                .unwrap_or(false);
+
+            // Only if the value wasn't already found
+            if !value_kind {
+                // Check if it is after "=".
+                if let Some(eq) = syntax_node.find(SyntaxKind::EQ) {
+                    if info.offset >= eq.text_range().end() {
+                        // It's a value
+
+                        if let Some(key) = syntax_node
+                            .find(SyntaxKind::KEY)
+                            .and_then(dom::KeyNode::cast)
+                        {
+                            info.keys
+                                .extend(key.keys_str_stripped().map(|s| Key::Property(s.into())));
+
+                            info.node = Some(
+                                dom::ValueNode::cast(syntax_node.find(SyntaxKind::VALUE).unwrap())
+                                    .unwrap()
+                                    .into(),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    log_debug!("node {:#?}", info.node);
+    log_debug!("keys {:?}", info.keys);
+    log_debug!("offset {:?}", info.offset);
+    log_debug!("inside array {:?}", info.inside_array);
 
     let mut search_keys = info.keys.clone();
 
@@ -27,11 +107,11 @@ pub(crate) fn get_completions(
         search_keys.pop();
     };
 
+    let schemas = get_schema_objects(search_keys, &schema);
+
     if info.not_completable {
         return Vec::new();
     }
-
-    let schemas = get_schema_objects(search_keys, &schema);
 
     let node = match &info.node {
         Some(n) => n,
@@ -113,14 +193,7 @@ fn key_completions(
 
                         true
                     })
-                    .filter(|(key, _)| {
-                        !entries
-                            .map(|es| {
-                                es.iter()
-                                    .any(|e| e.key().keys_str().next().unwrap() == *key)
-                            })
-                            .unwrap_or_default()
-                    })
+                    // .filter(|(key, _)| should_complete_key(*key, defs, schema.clone(), entries))
                     .filter_map(|(prop_key, prop_schema)| {
                         let required = is_required(prop_key, obj);
 
@@ -365,7 +438,7 @@ fn empty_value_snippet(schema: ExtendedSchema) -> String {
 
 fn value_completions(
     info: &PositionInfo,
-    _defs: &Map<String, Schema>,
+    defs: &Map<String, Schema>,
     schemas: &[ExtendedSchema],
 ) -> Vec<CompletionItem> {
     let single_schema = schemas.len() == 1;
@@ -566,22 +639,42 @@ fn value_completions(
                         });
                     }
                     InstanceType::Array => {
-                        completions.push(CompletionItem {
-                            label: "[]".into(),
-                            kind: Some(CompletionItemKind::Value),
-                            detail: detail_text(current_schema.clone(), Some("empty array")),
-                            insert_text: Some(r#"[$0]"#.into()),
-                            insert_text_format: Some(InsertTextFormat::Snippet),
-                            text_edit: insert_range.map(|range| {
-                                CompletionTextEdit::Edit(TextEdit {
-                                    range,
-                                    new_text: r#"[$0]"#.into(),
-                                })
-                            }),
-                            documentation: docs.clone(),
-                            preselect: Some(true),
-                            ..Default::default()
-                        });
+                        if info.inside_array {
+                            if let Some(arr) = &schema.schema.array {
+                                if let Some(item) = &arr.items {
+                                    if let SingleOrVec::Single(s) = item {
+                                        if let Schema::Object(obj) = &**s {
+                                            if let Some(o) =
+                                                resolve_object_ref(defs, ExtendedSchema::from(obj))
+                                            {
+                                                completions.extend(value_completions(
+                                                    info,
+                                                    defs,
+                                                    &[o],
+                                                ))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            completions.push(CompletionItem {
+                                label: "[]".into(),
+                                kind: Some(CompletionItemKind::Value),
+                                detail: detail_text(current_schema.clone(), Some("empty array")),
+                                insert_text: Some(r#"[$0]"#.into()),
+                                insert_text_format: Some(InsertTextFormat::Snippet),
+                                text_edit: insert_range.map(|range| {
+                                    CompletionTextEdit::Edit(TextEdit {
+                                        range,
+                                        new_text: r#"[$0]"#.into(),
+                                    })
+                                }),
+                                documentation: docs.clone(),
+                                preselect: Some(true),
+                                ..Default::default()
+                            });
+                        }
                     }
                     InstanceType::String => {
                         completions.push(CompletionItem {
@@ -612,4 +705,69 @@ fn value_completions(
 
 fn to_snippet(value: String) -> String {
     format!(r#"${{0:{}}}"#, value)
+}
+
+// Traverse the entire tree to see
+// if the key should be completed or not.
+//
+// If there is no missing key left anywhere, we shouldn't show this suggestion.
+fn should_complete_key(
+    key: &str,
+    defs: &Map<String, Schema>,
+    schema: ExtendedSchema,
+    entries: Option<&Entries>,
+) -> bool {
+    let resolved_schema = match resolve_object_ref(defs, schema.clone()) {
+        Some(s) => s,
+        None => return false,
+    };
+
+    match &resolved_schema.schema.object {
+        Some(obj) => {
+            let mut prop_schema = match (&obj.properties).get(key) {
+                Some(s) => s,
+                None => return false,
+            };
+
+            prop_schema = match resolve_ref(defs, prop_schema) {
+                Some(s) => s,
+                None => return false,
+            };
+
+            let obj_schema = match prop_schema {
+                Schema::Object(o) => o,
+                Schema::Bool(b) => return *b,
+            };
+
+            let inner_entries = entries.and_then(|en| {
+                for e in en.iter() {
+                    if e.key().keys_str_stripped().next().unwrap() == key {
+                        if let dom::ValueNode::Table(t) = e.value() {
+                            return Some(t.entries());
+                        }
+                    }
+                }
+
+                None
+            });
+
+            if let Some(obj_val) = &obj_schema.object {
+                // for (k, _) in &obj_val.properties {
+                // if should_complete_key(k, defs, schema.clone(), inner_entries) {
+                //     return true;
+                // }
+                // TODO segfault here?
+                // }
+                true
+            } else {
+                entries
+                    .map(|en| {
+                        !en.iter()
+                            .any(|e| e.key().keys_str_stripped().next().unwrap() == key)
+                    })
+                    .unwrap_or(false)
+            }
+        }
+        None => false,
+    }
 }

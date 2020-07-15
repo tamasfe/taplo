@@ -5,6 +5,7 @@ use rowan::{TextRange, TextSize};
 use taplo::{
     dom::{self, Common},
     syntax::{SyntaxKind, SyntaxNode},
+    util::SyntaxExt,
 };
 
 #[derive(Debug, Clone)]
@@ -21,6 +22,7 @@ pub struct PositionInfo {
     pub table_header: bool,
     pub table_array_header: bool,
     pub inside_comment: bool,
+    pub inside_array: bool,
     pub ident_range: Option<TextRange>,
     pub not_completable: bool,
     pub doc: Document,
@@ -42,6 +44,7 @@ impl PositionInfo {
             table_header: false,
             table_array_header: false,
             inside_comment: false,
+            inside_array: false,
             node: None,
             not_completable: false,
             ident_range: None,
@@ -218,11 +221,27 @@ fn get_position_info(node: &dom::Node, info: &mut PositionInfo) {
         },
         dom::Node::Array(arr) => {
             info.node = Some(arr.clone().into());
+            let mut value_found = false;
             for (i, value) in arr.items().iter().enumerate() {
                 if value.text_range().contains(info.offset) {
                     info.keys.push(Key::Index(i));
                     get_position_info(&value.clone().into(), info);
+                    value_found = true;
                     break;
+                }
+            }
+            if !value_found {
+                if !arr.is_array_of_tables() {
+                    if let Some(t) = arr
+                        .syntax()
+                        .as_node()
+                        .unwrap()
+                        .find(SyntaxKind::BRACKET_START)
+                    {
+                        if t.text_range().start() <= info.offset {
+                            info.inside_array = true;
+                        }
+                    }
                 }
             }
         }

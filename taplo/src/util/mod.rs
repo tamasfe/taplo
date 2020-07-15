@@ -1,8 +1,10 @@
 pub mod coords;
 mod escape;
 
+use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
 pub use escape::check_escape;
 pub use escape::unescape;
+use rowan::TextSize;
 
 pub(crate) mod allowed_chars {
     pub(crate) fn comment(s: &str) -> Result<(), Vec<usize>> {
@@ -115,5 +117,59 @@ impl StringExt for &str {
         } else {
             self
         }
+    }
+}
+
+/// Utility extension methods for Syntax Nodes.
+pub trait SyntaxExt {
+    /// Return a syntax node that contains the given offset.
+    fn find_node(&self, offset: TextSize, inclusive: bool) -> Option<SyntaxNode>;
+
+    /// Find the deepest node that contains the given offset.
+    fn find_node_deep(&self, offset: TextSize, inclusive: bool) -> Option<SyntaxNode> {
+        let mut node = self.find_node(offset, inclusive);
+        loop {
+            if let Some(n) = &node {
+                let new_node = n.find_node(offset, inclusive);
+                if new_node.is_some() {
+                    node = new_node;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        node
+    }
+
+    /// Find a node or token by its kind.
+    fn find(&self, kind: SyntaxKind) -> Option<SyntaxElement>;
+}
+
+impl SyntaxExt for SyntaxNode {
+    fn find_node(&self, offset: TextSize, inclusive: bool) -> Option<SyntaxNode> {
+        for d in self.descendants().skip(1) {
+            let range = d.text_range();
+
+            if inclusive && range.contains_inclusive(offset) {
+                return Some(d);
+            } else if range.contains(offset) {
+                return Some(d);
+            }
+        }
+
+        None
+    }
+
+    fn find(&self, kind: SyntaxKind) -> Option<SyntaxElement> {
+        for d in self.descendants_with_tokens() {
+            if d.kind() == kind {
+                return Some(d);
+            }
+        }
+
+        None
     }
 }

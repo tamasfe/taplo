@@ -1631,6 +1631,7 @@ impl Common for ValueNode {
             ValueNode::Array(v) => v.syntax(),
             ValueNode::Date(v) => v.syntax(),
             ValueNode::Table(v) => v.syntax(),
+            ValueNode::Invalid(v) => v.clone().unwrap(),
             _ => panic!("empty value"),
         }
     }

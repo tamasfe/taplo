@@ -125,6 +125,7 @@ impl WorldState {
 pub struct SchemaConfiguration {
     pub enabled: Option<bool>,
     pub associations: Option<HashMap<String, String>>,
+    pub links: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

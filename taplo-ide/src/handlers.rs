@@ -1,7 +1,7 @@
 use crate::request_ext;
 use crate::request_ext::*;
 use crate::{
-    analytics::{collect_keys, Key, PositionInfo},
+    analytics::{collect_for_schema, Key, PositionInfo},
     read_file,
     schema::{get_schema_objects, BUILTIN_SCHEME},
     Configuration, Document, HashRegex, World,
@@ -540,14 +540,23 @@ pub(crate) async fn hover(
                         .as_ref()
                         .and_then(|meta| meta.description.clone())
                 })
+                .map(|desc| (desc, s.ext.links.as_ref().and_then(|l| l.key.as_ref())))
         })
         .and_then(|desc| range.map(|range| (desc, range)))
-        .map(|(value, range)| Hover {
-            contents: HoverContents::Markup(MarkupContent {
-                kind: MarkupKind::Markdown,
-                value,
-            }),
-            range: Some(range),
+        .map(|((mut value, link), range)| {
+            if !w.configuration.schema.links.unwrap_or_default() {
+                if let Some(link) = link {
+                    value = format!("[_<sup>more information</sup>_]({})\n\n{}", link, value);
+                }
+            }
+
+            Hover {
+                contents: HoverContents::Markup(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value,
+                }),
+                range: Some(range),
+            }
         }))
 }
 
@@ -561,7 +570,9 @@ pub(crate) async fn links(
 
     let w = context.world().lock().await;
 
-    if !w.configuration.schema.enabled.unwrap_or_default() {
+    if !w.configuration.schema.enabled.unwrap_or_default()
+        || !w.configuration.schema.links.unwrap_or_default()
+    {
         return Ok(None);
     }
 
@@ -577,19 +588,26 @@ pub(crate) async fn links(
 
     let dom = doc.parse.clone().into_dom();
 
-    let keys = collect_keys(&dom.into(), Vec::new());
+    let keys = collect_for_schema(&dom.into(), Vec::new());
 
     let mut links = Vec::with_capacity(keys.len());
 
     for key in keys {
-        let mut all_keys = key.parent_keys;
-        all_keys.push(Key::Property(key.key.full_key_string()));
+        let current_key = match key.key {
+            Some(k) => k,
+            None => continue,
+        };
 
-        let link = get_schema_objects(all_keys, &schema)
+        let mut all_keys = key.parent_keys;
+        all_keys.push(Key::Property(current_key.full_key_string_stripped()));
+
+        let objects = get_schema_objects(all_keys, &schema);
+
+        let key_link = objects
             .first()
             .and_then(|s| s.ext.links.as_ref().and_then(|links| links.key.clone()));
 
-        if let Some(link) = link {
+        if let Some(link) = key_link {
             let target = match Url::parse(&link) {
                 Ok(u) => u,
                 Err(e) => {
@@ -598,12 +616,55 @@ pub(crate) async fn links(
                 }
             };
 
-            for text_range in key.key.text_ranges() {
+            for text_range in current_key.text_ranges() {
                 links.push(DocumentLink {
                     range: doc.mapper.range(text_range).unwrap(),
                     target: target.clone(),
                     tooltip: None,
                 })
+            }
+        }
+
+        if let Some(v) = key.value {
+            if !v.is_valid() {
+                continue;
+            }
+            if let Some(val) = v.syntax().as_token() {
+                'outer: for obj in objects {
+                    if let Some(e) = &obj.schema.enum_values {
+                        let enum_links = match obj.ext.links.and_then(|l| l.enum_values) {
+                            Some(l) => l,
+                            None => {
+                                continue;
+                            }
+                        };
+
+                        for (i, en_val) in e.iter().enumerate() {
+                            if let Some(link_item) = enum_links.get(i) {
+                                if let Some(link) = link_item {
+                                    let en_val_string = serde_json::to_string(en_val).unwrap();
+
+                                    if en_val_string.trim() == val.to_string().trim() {
+                                        let target = match Url::parse(link) {
+                                            Ok(u) => u,
+                                            Err(e) => {
+                                                log_error!("invalid link in schema: {}", e);
+                                                continue;
+                                            }
+                                        };
+
+                                        links.push(DocumentLink {
+                                            range: doc.mapper.range(v.text_range()).unwrap(),
+                                            target,
+                                            tooltip: None,
+                                        });
+                                        break 'outer;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

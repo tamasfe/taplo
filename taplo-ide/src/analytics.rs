@@ -282,44 +282,47 @@ fn ident_range(node: &dom::Node, offset: TextSize) -> Option<TextRange> {
 
 #[derive(Debug)]
 pub struct KeyInfo {
-    pub key: dom::KeyNode,
+    pub key: Option<dom::KeyNode>,
     pub parent_keys: Vec<Key>,
+    pub value: Option<dom::ValueNode>,
 }
 
-pub fn collect_keys(node: &dom::Node, parent_keys: Vec<Key>) -> Vec<KeyInfo> {
+pub fn collect_for_schema(node: &dom::Node, parent_keys: Vec<Key>) -> Vec<KeyInfo> {
     let mut keys = Vec::new();
 
     match node {
         dom::Node::Root(r) => {
             for entry in r.entries().iter() {
                 keys.push(KeyInfo {
-                    key: entry.key().clone(),
+                    key: entry.key().clone().into(),
                     parent_keys: parent_keys.clone(),
+                    value: entry.value().clone().into(),
                 });
 
                 let mut next_keys = parent_keys.clone();
                 next_keys.push(Key::Property(entry.key().full_key_string()));
-                keys.extend(collect_keys(&entry.value().clone().into(), next_keys));
+                keys.extend(collect_for_schema(&entry.value().clone().into(), next_keys));
             }
         }
         dom::Node::Table(t) => {
             for entry in t.entries().iter() {
                 keys.push(KeyInfo {
-                    key: entry.key().clone(),
+                    key: entry.key().clone().into(),
                     parent_keys: parent_keys.clone(),
+                    value: entry.value().clone().into(),
                 });
 
                 let mut next_keys = parent_keys.clone();
                 next_keys.push(Key::Property(entry.key().full_key_string()));
-                keys.extend(collect_keys(&entry.value().clone().into(), next_keys));
+                keys.extend(collect_for_schema(&entry.value().clone().into(), next_keys));
             }
         }
         dom::Node::Value(v) => match v {
             dom::ValueNode::Array(arr) => {
-                keys.extend(collect_keys(&arr.clone().into(), parent_keys));
+                keys.extend(collect_for_schema(&arr.clone().into(), parent_keys));
             }
             dom::ValueNode::Table(t) => {
-                keys.extend(collect_keys(&t.clone().into(), parent_keys));
+                keys.extend(collect_for_schema(&t.clone().into(), parent_keys));
             }
             _ => {}
         },
@@ -328,7 +331,13 @@ pub fn collect_keys(node: &dom::Node, parent_keys: Vec<Key>) -> Vec<KeyInfo> {
                 let mut next_keys = parent_keys.clone();
                 next_keys.push(Key::Index(idx));
 
-                keys.extend(collect_keys(&item.clone().into(), next_keys));
+                keys.push(KeyInfo {
+                    key: None,
+                    parent_keys: parent_keys.clone(),
+                    value: item.clone().into(),
+                });
+
+                keys.extend(collect_for_schema(&item.clone().into(), next_keys));
             }
         }
         dom::Node::Entry(_) | dom::Node::Key(_) => unimplemented!(),

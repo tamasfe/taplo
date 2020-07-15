@@ -14,7 +14,7 @@ pub fn register_built_in_schemas(world: &mut WorldState) {
 
 pub fn register_cargo_schema(world: &mut WorldState) {
     let cargo_schema =
-        serde_json::from_str::<RootSchema>(include_str!("../schemas/cargo.json")).unwrap();
+        serde_json::from_str::<RootSchema>(include_str!("../schemas/Cargo.json")).unwrap();
     let cargo_schema_name = format!("{}://cargo", BUILTIN_SCHEME);
 
     // This is supplied from the configuration.

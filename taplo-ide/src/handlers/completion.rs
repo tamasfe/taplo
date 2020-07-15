@@ -8,11 +8,11 @@ use crate::{
 };
 use dom::{Cast, Entries};
 use lsp_types::*;
-use rowan::TextSize;
 use schemars::{
-    schema::{InstanceType, ObjectValidation, RootSchema, Schema, SingleOrVec},
+    schema::{InstanceType, ObjectValidation, RootSchema, Schema, SchemaObject, SingleOrVec},
     Map,
 };
+use std::collections::HashSet;
 use taplo::{
     dom::{self, Common},
     syntax::{SyntaxElement, SyntaxKind},
@@ -48,7 +48,27 @@ pub(crate) fn get_completions(
                     info.node = Some(k.into());
                 }
             }
-        } else if let SyntaxKind::ENTRY = syntax_node.kind() {
+        } else if let SyntaxKind::ENTRY | SyntaxKind::VALUE = syntax_node.kind() {
+            // FIXME: this should be found in the DOM, but isn't, so we fix it here
+            if let SyntaxKind::VALUE = syntax_node.kind() {
+                if let Some(key) = syntax_node
+                    .parent()
+                    .unwrap()
+                    .find(SyntaxKind::KEY)
+                    .and_then(dom::KeyNode::cast)
+                {
+                    info.not_completable = false;
+                    info.keys
+                        .extend(key.keys_str_stripped().map(|s| Key::Property(s.into())));
+
+                    info.node = Some(
+                        dom::ValueNode::cast(syntax_node.clone().into())
+                            .unwrap()
+                            .into(),
+                    );
+                }
+            }
+
             let value_kind = info
                 .node
                 .as_ref()
@@ -73,13 +93,13 @@ pub(crate) fn get_completions(
             if !value_kind {
                 // Check if it is after "=".
                 if let Some(eq) = syntax_node.find(SyntaxKind::EQ) {
-                    if info.offset >= eq.text_range().end() {
+                    if info.offset >= eq.text_range().start() {
                         // It's a value
-
                         if let Some(key) = syntax_node
                             .find(SyntaxKind::KEY)
                             .and_then(dom::KeyNode::cast)
                         {
+                            info.not_completable = false;
                             info.keys
                                 .extend(key.keys_str_stripped().map(|s| Key::Property(s.into())));
 
@@ -139,8 +159,6 @@ fn key_completions(
     defs: &Map<String, Schema>,
     schemas: &[ExtendedSchema],
 ) -> Vec<CompletionItem> {
-    let single_schema = schemas.len() == 1;
-
     let entries = match info.node.as_ref().unwrap() {
         dom::Node::Root(r) => Some(r.entries()),
         dom::Node::Table(t) => Some(t.entries()),
@@ -150,122 +168,21 @@ fn key_completions(
     let mut completions = Vec::new();
 
     for schema in schemas {
-        if let Some(obj) = &schema.schema.object {
-            completions.extend(
-                obj.properties
-                    .iter()
-                    .filter(|(_, mut prop_schema)| {
-                        prop_schema = match resolve_ref(defs, prop_schema) {
-                            Some(s) => s,
-                            None => {
-                                return false;
-                            }
-                        };
-
-                        if info.table_header && !contains_type(InstanceType::Object, prop_schema) {
-                            return false;
-                        }
-
-                        if info.table_array_header {
-                            if !contains_type(InstanceType::Array, prop_schema) {
-                                return false;
-                            }
-
-                            // We only complete it if we surely know that it contains
-                            // objects.
-                            if let Schema::Object(o) = prop_schema {
-                                return o
-                                    .array
-                                    .as_ref()
-                                    .map(|arr| match arr.items.as_ref() {
-                                        Some(items) => match items {
-                                            SingleOrVec::Single(s) => contains_type(
-                                                InstanceType::Object,
-                                                resolve_ref(defs, s).unwrap(),
-                                            ),
-                                            SingleOrVec::Vec(_) => false,
-                                        },
-                                        None => false,
-                                    })
-                                    .unwrap_or_default();
-                            }
-                        }
-
-                        true
-                    })
-                    // .filter(|(key, _)| should_complete_key(*key, defs, schema.clone(), entries))
-                    .filter_map(|(prop_key, prop_schema)| {
-                        let required = is_required(prop_key, obj);
-
-                        let current_schema = if single_schema {
-                            None
-                        } else {
-                            Some(schema.clone())
-                        };
-
-                        match prop_schema {
-                            Schema::Bool(b) => {
-                                let text_edit = match info.ident_range {
-                                    Some(ident_range) => Some(CompletionTextEdit::Edit(TextEdit {
-                                        new_text: prop_key.clone(),
-                                        range: info.doc.mapper.range(ident_range).unwrap(),
-                                    })),
-                                    None => None,
-                                };
-
-                                if *b {
-                                    // We don't know anything about it.
-                                    Some(CompletionItem {
-                                        label: prop_key.clone(),
-                                        kind: Some(CompletionItemKind::Variable),
-                                        detail: detail_text(
-                                            current_schema,
-                                            if required { Some("required") } else { None },
-                                        ),
-                                        sort_text: sort_text(prop_key, required),
-                                        text_edit,
-                                        preselect: Some(true),
-                                        ..Default::default()
-                                    })
-                                } else {
-                                    // It's not even allowed.
-                                    None
-                                }
-                            }
-                            Schema::Object(prop_schema_obj) => {
-                                let prop_schema_obj =
-                                    match resolve_object_ref(defs, prop_schema_obj.into()) {
-                                        Some(o) => o,
-                                        None => return None,
-                                    };
-
-                                if prop_schema_obj.ext.hidden.unwrap_or_default() {
-                                    return None;
-                                }
-
-                                let (insert_text, insert_text_format, text_edit) =
-                                    insert_text(prop_key, info, prop_schema_obj.clone());
-
-                                Some(CompletionItem {
-                                    label: prop_key.clone(),
-                                    kind: Some(CompletionItemKind::Variable),
-                                    insert_text,
-                                    insert_text_format,
-                                    text_edit,
-                                    sort_text: sort_text(prop_key, required),
-                                    detail: detail_text(
-                                        current_schema,
-                                        if required { Some("required") } else { None },
-                                    ),
-                                    documentation: documentation(prop_schema_obj),
-                                    preselect: Some(true),
-                                    ..Default::default()
-                                })
-                            }
-                        }
-                    }),
-            );
-        }
+        completions.extend(
+            dotted_key_completions(
+                info,
+                defs,
+                Vec::new(),
+                String::new(),
+                schema.clone(),
+                entries,
+                HashSet::new(),
+            )
+            .into_iter()
+            .filter(|c| !info.table_header || c.table)
+            .filter(|c| !(info.table_array_header && c.table))
+            .map(|c| c.completion),
+        );
     }
 
     completions
@@ -273,53 +190,6 @@ fn key_completions(
 
 fn is_required(key: &str, obj: &ObjectValidation) -> bool {
     obj.required.iter().any(|k| k == key)
-}
-
-fn insert_text(
-    key: &str,
-    info: &PositionInfo,
-    obj: ExtendedSchema,
-) -> (
-    Option<String>,
-    Option<InsertTextFormat>,
-    Option<CompletionTextEdit>,
-) {
-    let edit_range = info
-        .ident_range
-        .and_then(|ident_range| info.doc.mapper.range(ident_range));
-
-    if info.key_only || object_contains_type(InstanceType::Object, obj.schema) {
-        // Leave just the key so that
-        // dotted keys can be easily used.
-
-        match edit_range {
-            Some(range) => (
-                None,
-                None,
-                Some(CompletionTextEdit::Edit(TextEdit {
-                    new_text: key.to_string(),
-                    range,
-                })),
-            ),
-            None => (None, None, None),
-        }
-    } else {
-        match edit_range {
-            Some(range) => (
-                None,
-                Some(InsertTextFormat::Snippet),
-                Some(CompletionTextEdit::Edit(TextEdit {
-                    new_text: format!("{} = {}", key, empty_value_snippet(obj)),
-                    range,
-                })),
-            ),
-            None => (
-                Some(format!("{} = {}", key, empty_value_snippet(obj))),
-                Some(InsertTextFormat::Snippet),
-                None,
-            ),
-        }
-    }
 }
 
 fn documentation(schema: ExtendedSchema) -> Option<Documentation> {
@@ -372,14 +242,10 @@ fn detail_text(schema: Option<ExtendedSchema>, text: Option<&str>) -> Option<Str
     ))
 }
 
-fn sort_text(key: &str, required: bool) -> Option<String> {
-    if required {
-        // Make sure that it's at the top, so we prefix it
-        // with an invisible character
-        Some(format!("{}{}", 1 as char, key))
-    } else {
-        None
-    }
+// Make sure that it's at the top, so we prefix it
+// with an invisible character
+fn required_text(key: &str) -> String {
+    format!("{}{}", 1 as char, key)
 }
 
 fn empty_value_snippet(schema: ExtendedSchema) -> String {
@@ -707,67 +573,263 @@ fn to_snippet(value: String) -> String {
     format!(r#"${{0:{}}}"#, value)
 }
 
-// Traverse the entire tree to see
-// if the key should be completed or not.
-//
-// If there is no missing key left anywhere, we shouldn't show this suggestion.
-fn should_complete_key(
-    key: &str,
+#[derive(Debug)]
+struct KeyCompletion {
+    keys: Vec<Key>,
+    table: bool,
+    completion: CompletionItem,
+}
+
+/// Return all the completions examining
+/// the deepest possible values
+fn dotted_key_completions(
+    info: &PositionInfo,
     defs: &Map<String, Schema>,
+    keys: Vec<Key>,
+    sort_text: String,
     schema: ExtendedSchema,
     entries: Option<&Entries>,
-) -> bool {
-    let resolved_schema = match resolve_object_ref(defs, schema.clone()) {
-        Some(s) => s,
-        None => return false,
-    };
+    mut visited_schemas: HashSet<*const SchemaObject>,
+) -> Vec<KeyCompletion> {
+    let mut comps: Vec<KeyCompletion> = Vec::new();
 
-    match &resolved_schema.schema.object {
-        Some(obj) => {
-            let mut prop_schema = match (&obj.properties).get(key) {
-                Some(s) => s,
-                None => return false,
-            };
+    // Prevents infinite recursion
+    visited_schemas.insert(schema.schema as *const SchemaObject);
 
-            prop_schema = match resolve_ref(defs, prop_schema) {
-                Some(s) => s,
-                None => return false,
-            };
+    let insert_range = info.node.as_ref().and_then(|n| match n {
+        dom::Node::Key(v) => info.doc.mapper.range(v.syntax().text_range()),
+        _ => None,
+    });
 
-            let obj_schema = match prop_schema {
-                Schema::Object(o) => o,
-                Schema::Bool(b) => return *b,
-            };
+    let full_key_string: String = format_keys(&keys);
 
-            let inner_entries = entries.and_then(|en| {
-                for e in en.iter() {
-                    if e.key().keys_str_stripped().next().unwrap() == key {
-                        if let dom::ValueNode::Table(t) = e.value() {
-                            return Some(t.entries());
+    if let Some(obj) = &schema.schema.object {
+        for (prop_key, prop_schema) in &obj.properties {
+            if let Schema::Object(prop_obj) = prop_schema {
+                let resolved_prop = ExtendedSchema::resolved(defs, prop_obj);
+
+                if resolved_prop.ext.hidden.unwrap_or(false) {
+                    continue;
+                }
+
+                if let Some(e) = entries {
+                    if resolved_prop.schema.object.is_none() {
+                        if e.iter().any(|entry| {
+                            entry.key().keys_str_stripped().next().unwrap() == prop_key
+                        }) {
+                            continue;
                         }
                     }
                 }
 
-                None
-            });
-
-            if let Some(obj_val) = &obj_schema.object {
-                // for (k, _) in &obj_val.properties {
-                // if should_complete_key(k, defs, schema.clone(), inner_entries) {
-                //     return true;
-                // }
-                // TODO segfault here?
-                // }
-                true
-            } else {
-                entries
-                    .map(|en| {
-                        !en.iter()
-                            .any(|e| e.key().keys_str_stripped().next().unwrap() == key)
+                let prop_entries = entries
+                    .and_then(|en| {
+                        en.iter()
+                            .find(|e| e.key().keys_str_stripped().next().unwrap() == prop_key)
                     })
-                    .unwrap_or(false)
+                    .and_then(|entry| match entry.value() {
+                        dom::ValueNode::Table(t) => Some(t.entries()),
+                        _ => None,
+                    });
+
+                let mut new_keys = keys.clone();
+                new_keys.push(Key::Property(prop_key.clone()));
+                let new_full_key_string = format_keys(&new_keys);
+
+                let required = is_required(prop_key, obj);
+
+                let new_sort_text = {
+                    if required {
+                        let mut nk = keys.clone();
+                        nk.push(Key::Property(required_text(prop_key)));
+                        format_keys(&nk)
+                    } else {
+                        new_full_key_string.clone()
+                    }
+                };
+
+                if visited_schemas.contains(&(resolved_prop.schema as *const SchemaObject)) {
+                    let insert_text = if info.table_header || info.key_only {
+                        new_full_key_string.clone()
+                    } else {
+                        format!("{} = {{$0}}", new_full_key_string.clone())
+                    };
+
+                    comps.push(KeyCompletion {
+                        keys: new_keys,
+                        table: true,
+                        completion: CompletionItem {
+                            label: new_full_key_string.clone(),
+                            kind: Some(CompletionItemKind::Struct),
+                            insert_text_format: if info.table_header {
+                                None
+                            } else {
+                                Some(InsertTextFormat::Snippet)
+                            },
+                            text_edit: insert_range.map(|range| {
+                                CompletionTextEdit::Edit(TextEdit {
+                                    range,
+                                    new_text: insert_text.clone(),
+                                })
+                            }),
+                            sort_text: Some(new_sort_text),
+                            detail: detail_text(
+                                Some(schema.clone()),
+                                if required { Some("required") } else { None },
+                            ),
+                            documentation: documentation(schema.clone()),
+                            preselect: Some(true),
+                            ..Default::default()
+                        },
+                    });
+                    continue;
+                }
+
+                let prop_completions = dotted_key_completions(
+                    info,
+                    defs,
+                    new_keys.clone(),
+                    new_sort_text,
+                    resolved_prop.clone(),
+                    prop_entries,
+                    visited_schemas.clone(),
+                );
+
+                comps.extend(prop_completions.into_iter().map(|mut c| {
+                    if required {
+                        c.completion.detail = match c.completion.detail.take() {
+                            Some(d) => Some(format!("required {}", d)),
+                            None => Some("required".to_string()),
+                        }
+                    }
+
+                    c
+                }));
             }
         }
-        None => false,
+
+        let insert_text = if info.table_header || info.key_only {
+            full_key_string.clone()
+        } else {
+            format!("{} = {{$0}}", full_key_string.clone())
+        };
+
+        let additional_props_allowed = obj
+            .additional_properties
+            .as_ref()
+            .map(|s| match resolve_ref(defs, &**s).unwrap() {
+                Schema::Bool(b) => *b,
+                Schema::Object(_) => true,
+            })
+            .unwrap_or(false)
+            || !obj.pattern_properties.is_empty();
+
+        if !comps.is_empty() || additional_props_allowed {
+            let this_comp = KeyCompletion {
+                keys,
+                table: true,
+                completion: CompletionItem {
+                    label: full_key_string,
+                    kind: Some(CompletionItemKind::Struct),
+                    insert_text: Some(insert_text.clone()),
+                    insert_text_format: if info.table_header {
+                        None
+                    } else {
+                        Some(InsertTextFormat::Snippet)
+                    },
+                    text_edit: insert_range.map(|range| {
+                        CompletionTextEdit::Edit(TextEdit {
+                            range,
+                            new_text: insert_text.clone(),
+                        })
+                    }),
+                    detail: detail_text(Some(schema.clone()), None),
+                    documentation: documentation(schema.clone()),
+                    preselect: Some(true),
+                    ..Default::default()
+                },
+            };
+
+            comps.push(this_comp);
+        }
+    } else {
+        if info.table_array_header {
+            if !object_contains_type(InstanceType::Array, schema.schema) {
+                return comps;
+            }
+
+            let array_of_objects = schema
+                .schema
+                .array
+                .as_ref()
+                .map(|arr| match arr.items.as_ref() {
+                    Some(items) => match items {
+                        SingleOrVec::Single(s) => {
+                            contains_type(InstanceType::Object, resolve_ref(defs, s).unwrap())
+                        }
+                        SingleOrVec::Vec(_) => false,
+                    },
+                    None => false,
+                })
+                .unwrap_or_default();
+
+            if !array_of_objects {
+                return comps;
+            }
+        }
+
+        if schema.schema.instance_type.is_none() {
+            return comps;
+        }
+
+        let insert_text = if info.table_array_header || info.key_only {
+            full_key_string.clone()
+        } else {
+            format!(
+                "{} = {}",
+                full_key_string.clone(),
+                empty_value_snippet(schema.clone())
+            )
+        };
+
+        comps.push(KeyCompletion {
+            keys,
+            table: false,
+            completion: CompletionItem {
+                label: full_key_string,
+                kind: Some(CompletionItemKind::Variable),
+                insert_text: Some(insert_text.clone()),
+                insert_text_format: if info.table_header {
+                    None
+                } else {
+                    Some(InsertTextFormat::Snippet)
+                },
+                text_edit: insert_range.map(|range| {
+                    CompletionTextEdit::Edit(TextEdit {
+                        range,
+                        new_text: insert_text.clone(),
+                    })
+                }),
+                sort_text: if sort_text.is_empty() {
+                    None
+                } else {
+                    Some(sort_text)
+                },
+                detail: detail_text(Some(schema.clone()), None),
+                documentation: documentation(schema.clone()),
+                preselect: Some(true),
+                ..Default::default()
+            },
+        });
     }
+
+    comps
+}
+
+fn format_keys(keys: &[Key]) -> String {
+    keys.iter()
+        .map(|k| k.to_string())
+        .collect::<Vec<String>>()
+        .join(".")
+        .into()
 }

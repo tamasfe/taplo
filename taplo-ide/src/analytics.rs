@@ -14,6 +14,15 @@ pub enum Key {
     Property(String),
 }
 
+impl core::fmt::Display for Key {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Key::Index(i) => i.fmt(f),
+            Key::Property(p) => p.fmt(f),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct PositionInfo {
     pub keys: Vec<Key>,

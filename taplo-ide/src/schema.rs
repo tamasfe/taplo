@@ -32,6 +32,27 @@ pub struct ExtendedSchema<'s> {
     pub ext: ExtMeta,
 }
 
+impl<'s> ExtendedSchema<'s> {
+    pub fn resolved(defs: &'s Map<String, Schema>, schema: &'s SchemaObject) -> Self {
+        let mut s = ExtendedSchema {
+            ext: get_ext(schema),
+            schema,
+        };
+
+        if s.schema.is_ref() {
+            if let Some(resolved_s) = resolve_object_ref(defs, s.clone()) {
+                s = resolved_s;
+            }
+        }
+
+        if s.ext == ExtMeta::default() {
+            s.ext = get_ext(s.schema);
+        }
+
+        s
+    }
+}
+
 impl<'s> From<&'s SchemaObject> for ExtendedSchema<'s> {
     fn from(schema: &'s SchemaObject) -> Self {
         ExtendedSchema {
@@ -226,7 +247,6 @@ fn collect_subschemas<'s>(
     schemas
 }
 
-#[allow(dead_code)]
 pub fn resolve_ref<'s>(defs: &'s Map<String, Schema>, schema: &'s Schema) -> Option<&'s Schema> {
     if !schema.is_ref() {
         return Some(schema);

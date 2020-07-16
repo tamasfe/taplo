@@ -10,7 +10,7 @@ export const entry = {
     //   match: "(\\s*[A-Za-z_\\-][A-Za-z0-9_\\-]*\\s*=)(?=\\s*$)",
     // },
     {
-      begin: "\\s*([^\\[{,]*)\\s*(=)\\s*",
+      begin: "\\s*([^#\\[{,]*)\\s*(=)\\s*",
       beginCaptures: {
         1: {
           patterns: [

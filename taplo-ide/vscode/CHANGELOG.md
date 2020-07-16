@@ -1,5 +1,18 @@
 # Change Log
 
+## 0.8.0
+
+#### New Features
+- Schemas are enabled by default
+- pyproject.toml schema with Poetry
+
+#### Fixes
+- Better schema key completions
+- Fixed excessive links in schemas
+
+#### Other
+- Links have to be enabled explicitly for schemas
+
 ## 0.7.2
 
 #### Fixes

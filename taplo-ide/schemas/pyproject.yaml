@@ -224,13 +224,17 @@ definitions:
         description: The dependencies of the package.
 
           Poetry is configured to look for dependencies on PyPi by default. Only the name and a version string are required in this case.
+
         required:
           - python
         properties:
           python:
             type: string
+            default: "^3"
+            pattern: "^((((>=|>|<|=|\\^|~)?\\s*[0-9]+(.[0-9]+)?(.[0-9]+)?|([0-9]+|\\*)(.([0-9]+|\\*))?(.([0-9]+|\\*))?)+)(,\\s*(((>=|>|<|=|\\^|~)?\\s*[0-9]+(.[0-9]+)?(.[0-9]+)?|([0-9]+|\\*)(.([0-9]+|\\*))?(.([0-9]+|\\*))?)))*|(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?)$"
         additionalProperties:
           type: string
+          pattern: "^((((>=|>|<|=|\\^|~)?\\s*[0-9]+(.[0-9]+)?(.[0-9]+)?|([0-9]+|\\*)(.([0-9]+|\\*))?(.([0-9]+|\\*))?)+)(,\\s*(((>=|>|<|=|\\^|~)?\\s*[0-9]+(.[0-9]+)?(.[0-9]+)?|([0-9]+|\\*)(.([0-9]+|\\*))?(.([0-9]+|\\*))?)))*|(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?)$"
         evenBetterToml:
           links:
             key: https://python-poetry.org/docs/pyproject/#dependencies-and-dev-dependencies
@@ -358,6 +362,7 @@ definitions:
             key: https://python-poetry.org/docs/pyproject/#urls
   BuildSystem:
     title: Build System
+    type: object
     evenBetterToml:
       links:
         key: https://www.python.org/dev/peps/pep-0518/#build-system-table
@@ -384,6 +389,7 @@ definitions:
             key: https://www.python.org/dev/peps/pep-0517/
   Package:
     title: Package
+    type: object
     description: |
       A package to include with Poetry.
     required:
@@ -401,7 +407,7 @@ definitions:
         description: |
           Build format for the package.
         type: string
-
+type: object
 properties:
   build-system:
     $ref: "#/definitions/BuildSystem"

@@ -128,14 +128,10 @@ pub trait SyntaxExt {
     /// Find the deepest node that contains the given offset.
     fn find_node_deep(&self, offset: TextSize, inclusive: bool) -> Option<SyntaxNode> {
         let mut node = self.find_node(offset, inclusive);
-        loop {
-            if let Some(n) = &node {
-                let new_node = n.find_node(offset, inclusive);
-                if new_node.is_some() {
-                    node = new_node;
-                } else {
-                    break;
-                }
+        while let Some(n) = &node {
+            let new_node = n.find_node(offset, inclusive);
+            if new_node.is_some() {
+                node = new_node;
             } else {
                 break;
             }
@@ -153,9 +149,7 @@ impl SyntaxExt for SyntaxNode {
         for d in self.descendants().skip(1) {
             let range = d.text_range();
 
-            if inclusive && range.contains_inclusive(offset) {
-                return Some(d);
-            } else if range.contains(offset) {
+            if (inclusive && range.contains_inclusive(offset)) || range.contains(offset) {
                 return Some(d);
             }
         }

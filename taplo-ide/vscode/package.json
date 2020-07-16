@@ -269,7 +269,8 @@
 					"type": "object",
 					"scope": "resource",
 					"default": {
-						".*/Cargo\\.toml": "toml_builtin://cargo"
+						".*/Cargo\\.toml": "toml_builtin://cargo",
+						".*/pyproject\\.toml": "toml_builtin://pyproject"
 					}
 				},
 				"evenBetterToml.debug": {

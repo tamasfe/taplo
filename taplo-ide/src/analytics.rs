@@ -239,17 +239,15 @@ fn get_position_info(node: &dom::Node, info: &mut PositionInfo) {
                     break;
                 }
             }
-            if !value_found {
-                if !arr.is_array_of_tables() {
-                    if let Some(t) = arr
-                        .syntax()
-                        .as_node()
-                        .unwrap()
-                        .find(SyntaxKind::BRACKET_START)
-                    {
-                        if t.text_range().start() <= info.offset {
-                            info.inside_array = true;
-                        }
+            if !value_found && !arr.is_array_of_tables() {
+                if let Some(t) = arr
+                    .syntax()
+                    .as_node()
+                    .unwrap()
+                    .find(SyntaxKind::BRACKET_START)
+                {
+                    if t.text_range().start() <= info.offset {
+                        info.inside_array = true;
                     }
                 }
             }

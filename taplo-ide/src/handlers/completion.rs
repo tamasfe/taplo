@@ -115,11 +115,6 @@ pub(crate) fn get_completions(
         }
     }
 
-    log_debug!("node {:#?}", info.node);
-    log_debug!("keys {:?}", info.keys);
-    log_debug!("offset {:?}", info.offset);
-    log_debug!("inside array {:?}", info.inside_array);
-
     let mut search_keys = info.keys.clone();
 
     if info.ident_range.is_some() {
@@ -613,12 +608,12 @@ fn dotted_key_completions(
                 }
 
                 if let Some(e) = entries {
-                    if resolved_prop.schema.object.is_none() {
-                        if e.iter().any(|entry| {
-                            entry.key().keys_str_stripped().next().unwrap() == prop_key
-                        }) {
-                            continue;
-                        }
+                    let exists = e
+                        .iter()
+                        .any(|entry| entry.key().keys_str_stripped().next().unwrap() == prop_key);
+
+                    if resolved_prop.schema.object.is_none() && exists {
+                        continue;
                     }
                 }
 
@@ -711,7 +706,7 @@ fn dotted_key_completions(
         let insert_text = if info.table_header || info.key_only {
             full_key_string.clone()
         } else {
-            format!("{} = {{$0}}", full_key_string.clone())
+            format!("{} = {{$0}}", full_key_string)
         };
 
         let additional_props_allowed = obj
@@ -787,7 +782,7 @@ fn dotted_key_completions(
         } else {
             format!(
                 "{} = {}",
-                full_key_string.clone(),
+                full_key_string,
                 empty_value_snippet(schema.clone())
             )
         };
@@ -831,5 +826,4 @@ fn format_keys(keys: &[Key]) -> String {
         .map(|k| k.to_string())
         .collect::<Vec<String>>()
         .join(".")
-        .into()
 }

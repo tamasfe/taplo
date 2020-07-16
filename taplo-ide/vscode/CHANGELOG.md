@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.8.1
+
+#### Fixes
+- Fixed comment highlighting ([#30](https://github.com/tamasfe/taplo/issues/30))
+- Fixed validation for `pyproject.toml` schema
+
 ## 0.8.0
 
 #### New Features

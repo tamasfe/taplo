@@ -15,7 +15,14 @@ use verify::{
 
 pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
     let w = context.world().lock().await;
-    let doc = w.documents.get(&uri).unwrap().clone();
+
+    let doc = match w.documents.get(&uri) {
+        Some(d) => d.clone(),
+        None => {
+            // Doesn't exist anymore
+            return;
+        }
+    };
 
     let mut diags = collect_toml_diagnostics(&uri, &doc.parse, &doc.mapper);
     drop(w);

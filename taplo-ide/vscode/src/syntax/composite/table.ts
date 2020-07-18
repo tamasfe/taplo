@@ -49,14 +49,15 @@ const tableArray = {
 };
 
 export const tableInline = {
-  begin: "(?<!\\w)(\\{)\\s*",
+  // match: "(\\{)(.*)(\\})",
+  begin: "(\\{)",
+  end: "(\\})",
   name: "meta.table.inline.toml",
   beginCaptures: {
     1: {
       name: "punctuation.definition.table.inline.toml",
     },
   },
-  end: "\\s*(\\})(?!\\w)",
   endCaptures: {
     1: {
       name: "punctuation.definition.table.inline.toml",
@@ -64,12 +65,44 @@ export const tableInline = {
   },
   patterns: [
     {
-      include: "#entry",
+      include: "#comment",
     },
     {
-      include: "#literal",
+      match: ",",
+      name: "punctuation.separator.table.inline.toml",
+    },
+    {
+      include: "#entryBegin",
+    },
+    {
+      include: "#value",
     },
   ],
+  // captures: {
+  //   1: {
+  //     name: "punctuation.definition.table.inline.toml",
+  //   },
+  //   2: {
+  //     patterns: [
+  //       {
+  //         include: "#comment",
+  //       },
+  //       {
+  //         match: ",",
+  //         name: "punctuation.separator.table.inline.toml",
+  //       },
+  //       {
+  //         include: "#entryBegin",
+  //       },
+  //       {
+  //         include: "#value",
+  //       },
+  //     ],
+  //   },
+  //   3: {
+  //     name: "punctuation.definition.table.inline.toml",
+  //   },
+  // },
 };
 
 export const table = {

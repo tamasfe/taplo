@@ -1,8 +1,7 @@
 import * as path from "path";
 import { writeFileSync } from "fs";
 import { comment } from "./comment";
-import { table, entry } from "./composite";
-import { illegal } from "./illegal";
+import { table, entryBegin } from "./composite";
 import { value } from "./composite/value";
 
 const syntax = {
@@ -20,13 +19,16 @@ const syntax = {
       include: "#table",
     },
     {
-      include: "#entry",
+      include: "#entryBegin",
+    },
+    {
+      include: "#value",
     },
   ],
   repository: {
     comment,
     table,
-    entry,
+    entryBegin,
     value,
     // illegal,
   },

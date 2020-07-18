@@ -591,10 +591,9 @@ fn dotted_key_completions(
     // Prevents infinite recursion
     visited_schemas.insert(schema.schema as *const SchemaObject);
 
-    let insert_range = info.node.as_ref().and_then(|n| match n {
-        dom::Node::Key(v) => info.doc.mapper.range(v.syntax().text_range()),
-        _ => None,
-    });
+    let insert_range = info
+        .ident_range
+        .and_then(|range| info.doc.mapper.range(range));
 
     let full_key_string: String = format_keys(&keys);
 
@@ -607,16 +606,6 @@ fn dotted_key_completions(
                     continue;
                 }
 
-                if let Some(e) = entries {
-                    let exists = e
-                        .iter()
-                        .any(|entry| entry.key().keys_str_stripped().next().unwrap() == prop_key);
-
-                    if resolved_prop.schema.object.is_none() && exists {
-                        continue;
-                    }
-                }
-
                 let prop_entries = entries
                     .and_then(|en| {
                         en.iter()
@@ -626,6 +615,16 @@ fn dotted_key_completions(
                         dom::ValueNode::Table(t) => Some(t.entries()),
                         _ => None,
                     });
+
+                if let Some(e) = prop_entries {
+                        let exists = e
+                            .iter()
+                            .any(|entry| entry.key().keys_str_stripped().next().unwrap() == prop_key);
+    
+                        if resolved_prop.schema.object.is_none() && exists {
+                            continue;
+                        }
+                    }
 
                 let mut new_keys = keys.clone();
                 new_keys.push(Key::Property(prop_key.clone()));

@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.8.2
+
+### Fixes
+- Syntax highlighting fixes
+- Some completion fixes
+
 ## 0.8.1
 
 #### Fixes

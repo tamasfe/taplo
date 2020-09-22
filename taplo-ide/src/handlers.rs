@@ -393,41 +393,7 @@ pub(crate) async fn format(
 
     let mut format_opts = formatter::Options::default();
 
-    if let Some(v) = w.configuration.formatter.align_entries {
-        format_opts.align_entries = v;
-    }
-
-    if let Some(v) = w.configuration.formatter.array_auto_collapse {
-        format_opts.array_auto_collapse = v;
-    }
-
-    if let Some(v) = w.configuration.formatter.array_auto_expand {
-        format_opts.array_auto_expand = v;
-    }
-
-    if let Some(v) = w.configuration.formatter.column_width {
-        format_opts.column_width = v;
-    }
-
-    if let Some(v) = w.configuration.formatter.array_trailing_comma {
-        format_opts.array_trailing_comma = v;
-    }
-
-    if let Some(v) = w.configuration.formatter.trailing_newline {
-        format_opts.trailing_newline = v;
-    }
-
-    if let Some(v) = w.configuration.formatter.compact_arrays {
-        format_opts.compact_arrays = v;
-    }
-
-    if let Some(v) = w.configuration.formatter.compact_inline_tables {
-        format_opts.compact_inline_tables = v;
-    }
-
-    if let Some(v) = w.configuration.formatter.allowed_blank_lines {
-        format_opts.allowed_blank_lines = v;
-    }
+    format_opts.update_camel(w.configuration.formatter.clone());
 
     if let Some(v) = w.configuration.formatter.indent_string.clone() {
         format_opts.indent_string = v;
@@ -437,18 +403,6 @@ pub(crate) async fn format(
         } else {
             "\t".into()
         }
-    }
-
-    if let Some(v) = w.configuration.formatter.indent_tables {
-        format_opts.indent_tables = v;
-    }
-
-    if let Some(v) = w.configuration.formatter.crlf {
-        format_opts.crlf = v;
-    }
-
-    if let Some(v) = w.configuration.formatter.reorder_keys {
-        format_opts.reorder_keys = v;
     }
 
     let mut range = doc.mapper.all_range();

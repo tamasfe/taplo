@@ -12,62 +12,70 @@ use crate::{
 use rowan::{GreenNode, GreenNodeBuilder, NodeOrToken, SmolStr};
 use std::mem;
 
-/// All the formatting options.
-#[derive(Debug, Clone)]
-pub struct Options {
-    /// Align entries vertically.
-    ///
-    /// Entries that have table headers, comments,
-    /// or blank lines between them are not aligned.
-    pub align_entries: bool,
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
-    /// Put trailing commas for multiline
-    /// arrays
-    pub array_trailing_comma: bool,
+#[macro_use]
+mod macros;
 
-    /// Automatically expand arrays to multi lines
-    /// if they're too long.
-    pub array_auto_expand: bool,
+create_options!(
+    /// All the formatting options.
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct Options {
+        /// Align entries vertically.
+        ///
+        /// Entries that have table headers, comments,
+        /// or blank lines between them are not aligned.
+        pub align_entries: bool,
 
-    /// Automatically collapse arrays if they
-    /// fit in one line.
-    ///
-    /// The array won't be collapsed if it
-    /// contains a comment.
-    pub array_auto_collapse: bool,
+        /// Put trailing commas for multiline
+        /// arrays
+        pub array_trailing_comma: bool,
 
-    /// Omit whitespace padding inside single-line arrays.
-    pub compact_arrays: bool,
+        /// Automatically expand arrays to multi lines
+        /// if they're too long.
+        pub array_auto_expand: bool,
 
-    /// Omit whitespace padding inside inline tables.
-    pub compact_inline_tables: bool,
+        /// Automatically collapse arrays if they
+        /// fit in one line.
+        ///
+        /// The array won't be collapsed if it
+        /// contains a comment.
+        pub array_auto_collapse: bool,
 
-    /// Target maximum column width after which
-    /// arrays are expanded into new lines.
-    ///
-    /// This is best-effort, and currently doesn't
-    /// take whitespace into account.
-    pub column_width: usize,
+        /// Omit whitespace padding inside single-line arrays.
+        pub compact_arrays: bool,
 
-    /// Indent subtables if they come in order.
-    pub indent_tables: bool,
+        /// Omit whitespace padding inside inline tables.
+        pub compact_inline_tables: bool,
 
-    /// Indentation to use, should be tabs or spaces
-    /// but technically could be anything.
-    pub indent_string: String,
+        /// Target maximum column width after which
+        /// arrays are expanded into new lines.
+        ///
+        /// This is best-effort, and currently doesn't
+        /// take whitespace into account.
+        pub column_width: usize,
 
-    /// Add trailing newline to the source.
-    pub trailing_newline: bool,
+        /// Indent subtables if they come in order.
+        pub indent_tables: bool,
 
-    /// Alphabetically reorder keys that are not separated by blank lines.
-    pub reorder_keys: bool,
+        /// Indentation to use, should be tabs or spaces
+        /// but technically could be anything.
+        pub indent_string: String,
 
-    /// The maximum amount of consecutive blank lines allowed.
-    pub allowed_blank_lines: usize,
+        /// Add trailing newline to the source.
+        pub trailing_newline: bool,
 
-    /// Use CRLF line endings
-    pub crlf: bool,
-}
+        /// Alphabetically reorder keys that are not separated by blank lines.
+        pub reorder_keys: bool,
+
+        /// The maximum amount of consecutive blank lines allowed.
+        pub allowed_blank_lines: usize,
+
+        /// Use CRLF line endings
+        pub crlf: bool,
+    }
+);
 
 impl Default for Options {
     fn default() -> Self {

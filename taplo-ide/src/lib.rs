@@ -130,28 +130,10 @@ pub struct SchemaConfiguration {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct FormatterConfiguration {
-    pub align_entries: Option<bool>,
-    pub array_trailing_comma: Option<bool>,
-    pub array_auto_expand: Option<bool>,
-    pub array_auto_collapse: Option<bool>,
-    pub column_width: Option<usize>,
-    pub compact_arrays: Option<bool>,
-    pub compact_inline_tables: Option<bool>,
-    pub indent_tables: Option<bool>,
-    pub indent_string: Option<String>,
-    pub trailing_newline: Option<bool>,
-    pub reorder_keys: Option<bool>,
-    pub crlf: Option<bool>,
-    pub allowed_blank_lines: Option<usize>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Configuration {
     schema: SchemaConfiguration,
     semantic_tokens: Option<bool>,
-    formatter: FormatterConfiguration,
+    formatter: taplo::formatter::OptionsIncompleteCamel,
 }
 
 type World = Arc<AsyncMutex<WorldState>>;

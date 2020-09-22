@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.8.3
+
+### Fixes
+- Fixed false errors in arrays of tables
+- Fixed some incorrect schemas
+
 ## 0.8.2
 
 ### Fixes

@@ -24,6 +24,8 @@ Taplo also exposes a `Value` type that can be serialized with [Serde](https://gi
 
 ## Status
 
+**important**: Due to my lack of free time, the library is not actively published to crates.io, and the focus has temporarily shifted to end-user tools such as the extension mentioned below. The development has slowed down quite a bit, but the project is not abandoned, any contribution is welcome.
+
 The library is **WIP**, it might have bugs, and the API can change anytime, and I don't yet guarantee seamless usage. It is currently used and tested in the [Even Better TOML](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) Visual Studio Code extension.
 
 The correctness of the decoding is not yet entirely guaranteed (as there is no official 1.0.0-rc.1 compliance test suite yet), and the performance is not yet up to par with other parsers ([see below](#performance)), however it has deemed to be fast enough so far.

@@ -286,10 +286,22 @@ impl Cast for RootNode {
                         }
                     };
 
+                    // An owner array of tables, the current table must inherit its index.
+                    let owner_array = entries.iter().rev().find(|(k, e)| {
+                        e.syntax().kind() == TABLE_ARRAY_HEADER && k.is_part_of(&key)
+                    });
+
+                    if let Some((arr_key, _)) = owner_array {
+                        key.index = arr_key.index;
+                    }
+
                     // We have to go through everything because we don't
                     // know the last index. And the existing table can be anything
                     // anywhere.
-                    let existing_table = entries.iter().rev().find(|(k, _)| k.eq_keys(&key));
+                    let existing_table = entries
+                        .iter()
+                        .rev()
+                        .find(|(k, _)| k.eq_keys(&key) && k.index == key.index);
 
                     // The entries below still belong to this table,
                     // so we cannot skip its prefix, even on errors.
@@ -309,7 +321,10 @@ impl Cast for RootNode {
                                 target: key.clone(),
                                 key: existing.key().clone(),
                             });
-                        } else if !existing_table_array && !t.is_part_of_array() {
+                        } else if owner_array.is_none()
+                            && !existing_table_array
+                            && !t.is_part_of_array()
+                        {
                             errors.push(Error::DuplicateKey {
                                 first: existing.key().clone(),
                                 second: key.clone(),

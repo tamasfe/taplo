@@ -1,0 +1,8 @@
+[[thing]]
+[thing.test]
+test = 'other data'
+
+
+[[thing]]
+[thing.test]
+test = 'data'

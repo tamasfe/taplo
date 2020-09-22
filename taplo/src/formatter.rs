@@ -7,7 +7,7 @@
 
 use crate::{
     dom::{Cast, EntryNode, KeyNode},
-    syntax::{SyntaxKind, SyntaxKind::*, SyntaxNode},
+    syntax::{SyntaxKind, SyntaxKind::*, SyntaxNode, SyntaxToken},
 };
 use rowan::{GreenNode, GreenNodeBuilder, NodeOrToken, SmolStr};
 use std::mem;
@@ -501,6 +501,7 @@ fn format_array(
         let mut was_value = false;
         let mut was_comment = false;
         let mut node_index = 0;
+        let mut prev_token: Option<SyntaxToken> = None;
         for (i, c) in node.children_with_tokens().enumerate() {
             match c {
                 NodeOrToken::Node(n) => {
@@ -553,53 +554,76 @@ fn format_array(
 
                     node_index += 1;
                 }
-                NodeOrToken::Token(t) => match t.kind() {
-                    BRACKET_START => {
-                        builder.token(t.kind().into(), t.text().clone());
+                NodeOrToken::Token(t) => {
+                    match t.kind() {
+                        BRACKET_START => {
+                            builder.token(t.kind().into(), t.text().clone());
 
-                        if multiline {
-                            builder.token(NEWLINE.into(), options.newline());
-                        } else if !options.compact_arrays {
-                            builder.token(WHITESPACE.into(), " ".into());
-                        }
-                    }
-                    BRACKET_END => {
-                        if multiline {
-                            builder.token(NEWLINE.into(), options.newline());
-                            builder.token(
-                                WHITESPACE.into(),
-                                options.indent_string.repeat(context.indent_level).into(),
-                            );
-                        } else if !options.compact_arrays {
-                            builder.token(WHITESPACE.into(), " ".into());
-                        }
-                        builder.token(t.kind().into(), t.text().clone());
-                    }
-                    COMMENT => {
-                        // Comment after the array
-                        if i == all_token_count - 1 || was_value {
-                            builder.token(WHITESPACE.into(), " ".into());
-                            builder.token(t.kind().into(), t.text().clone());
-                        // Comment after a value
-                        } else {
-                            if was_comment || was_value {
+                            if multiline {
                                 builder.token(NEWLINE.into(), options.newline());
+                            } else if !options.compact_arrays {
+                                builder.token(WHITESPACE.into(), " ".into());
                             }
-                            builder.token(
-                                WHITESPACE.into(),
-                                options
-                                    .indent_string
-                                    .repeat(context.indent_level + 1)
-                                    .into(),
-                            );
-                            builder.token(t.kind().into(), t.text().clone());
-                            was_comment = true;
                         }
-                        was_value = false;
+                        BRACKET_END => {
+                            if multiline {
+                                builder.token(NEWLINE.into(), options.newline());
+                                builder.token(
+                                    WHITESPACE.into(),
+                                    options.indent_string.repeat(context.indent_level).into(),
+                                );
+                            } else if !options.compact_arrays {
+                                builder.token(WHITESPACE.into(), " ".into());
+                            }
+                            builder.token(t.kind().into(), t.text().clone());
+                        }
+                        COMMENT => {
+                            // Comment after the array
+                            if i == all_token_count - 1 {
+                                builder.token(WHITESPACE.into(), " ".into());
+                                builder.token(t.kind().into(), t.text().clone());
+                            // Comment after a value
+                            } else {
+                                if was_comment || was_value {
+                                    if prev_token
+                                        .take()
+                                        .map(|t| t.kind() == NEWLINE)
+                                        .unwrap_or(false)
+                                    {
+                                        builder.token(NEWLINE.into(), options.newline());
+                                        builder.token(
+                                            WHITESPACE.into(),
+                                            options
+                                                .indent_string
+                                                .repeat(context.indent_level + 1)
+                                                .into(),
+                                        );
+                                    } else {
+                                        builder.token(WHITESPACE.into(), " ".into());
+                                    }
+                                // First line of the array
+                                } else {
+                                    builder.token(
+                                        WHITESPACE.into(),
+                                        options
+                                            .indent_string
+                                            .repeat(context.indent_level + 1)
+                                            .into(),
+                                    );
+                                }
+
+                                builder.token(t.kind().into(), t.text().clone());
+                                was_comment = true;
+                            }
+                            was_value = false;
+                        }
+                        WHITESPACE | NEWLINE | COMMA => {}
+                        _ => builder.token(t.kind().into(), t.text().clone()),
                     }
-                    WHITESPACE | NEWLINE | COMMA => {}
-                    _ => builder.token(t.kind().into(), t.text().clone()),
-                },
+                    if t.kind() != WHITESPACE {
+                        prev_token = Some(t.clone());
+                    }
+                }
             }
         }
     }

@@ -10,12 +10,7 @@
         }
       },
       "type": "object",
-      "required": [
-        "name",
-        "version",
-        "description",
-        "authors"
-      ],
+      "required": ["name", "version", "description", "authors"],
       "properties": {
         "name": {
           "type": "string",
@@ -63,7 +58,7 @@
           },
           "items": {
             "type": "string",
-            "pattern": ".*\\s+<(?:[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])>"
+            "pattern": "^.*\\s+<[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}>$"
           }
         },
         "maintainers": {
@@ -76,7 +71,7 @@
           },
           "items": {
             "type": "string",
-            "pattern": ".*\\s+<(?:[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])>"
+            "pattern": "^.*\\s+<[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}>$"
           }
         },
         "readme": {
@@ -179,9 +174,7 @@
         "dependencies": {
           "type": "object",
           "description": "The dependencies of the package.\nPoetry is configured to look for dependencies on PyPi by default. Only the name and a version string are required in this case.",
-          "required": [
-            "python"
-          ],
+          "required": ["python"],
           "properties": {
             "python": {
               "type": "string",
@@ -217,10 +210,7 @@
           "items": {
             "type": "object",
             "description": "A dependency source.",
-            "required": [
-              "name",
-              "url"
-            ],
+            "required": ["name", "url"],
             "properties": {
               "name": {
                 "type": "string",
@@ -303,9 +293,7 @@
         }
       },
       "description": "Build-related data.\n",
-      "required": [
-        "requires"
-      ],
+      "required": ["requires"],
       "properties": {
         "requires": {
           "description": "A list of strings representing [PEP 508](https://www.python.org/dev/peps/pep-0508) dependencies required to execute the build system.\n",
@@ -334,9 +322,7 @@
       "title": "Package",
       "type": "object",
       "description": "A package to include with Poetry.\n",
-      "required": [
-        "include"
-      ],
+      "required": ["include"],
       "properties": {
         "include": {
           "description": "A package name or glob pattern to the package.\n",

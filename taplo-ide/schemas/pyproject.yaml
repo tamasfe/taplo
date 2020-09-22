@@ -224,7 +224,6 @@ definitions:
         description: The dependencies of the package.
 
           Poetry is configured to look for dependencies on PyPi by default. Only the name and a version string are required in this case.
-
         required:
           - python
         properties:
@@ -243,11 +242,6 @@ definitions:
         description: The dev-dependencies of the package.
 
           Poetry is configured to look for dependencies on PyPi by default. Only the name and a version string are required in this case.
-        required:
-          - python
-        properties:
-          python:
-            type: string
         additionalProperties:
           type: string
         evenBetterToml:

@@ -10,7 +10,12 @@
         }
       },
       "type": "object",
-      "required": ["name", "version", "description", "authors"],
+      "required": [
+        "name",
+        "version",
+        "description",
+        "authors"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -174,7 +179,9 @@
         "dependencies": {
           "type": "object",
           "description": "The dependencies of the package.\nPoetry is configured to look for dependencies on PyPi by default. Only the name and a version string are required in this case.",
-          "required": ["python"],
+          "required": [
+            "python"
+          ],
           "properties": {
             "python": {
               "type": "string",
@@ -195,12 +202,6 @@
         "dev-dependencies": {
           "type": "object",
           "description": "The dev-dependencies of the package.\nPoetry is configured to look for dependencies on PyPi by default. Only the name and a version string are required in this case.",
-          "required": ["python"],
-          "properties": {
-            "python": {
-              "type": "string"
-            }
-          },
           "additionalProperties": {
             "type": "string"
           },
@@ -216,7 +217,10 @@
           "items": {
             "type": "object",
             "description": "A dependency source.",
-            "required": ["name", "url"],
+            "required": [
+              "name",
+              "url"
+            ],
             "properties": {
               "name": {
                 "type": "string",
@@ -299,7 +303,9 @@
         }
       },
       "description": "Build-related data.\n",
-      "required": ["requires"],
+      "required": [
+        "requires"
+      ],
       "properties": {
         "requires": {
           "description": "A list of strings representing [PEP 508](https://www.python.org/dev/peps/pep-0508) dependencies required to execute the build system.\n",
@@ -328,7 +334,9 @@
       "title": "Package",
       "type": "object",
       "description": "A package to include with Poetry.\n",
-      "required": ["include"],
+      "required": [
+        "include"
+      ],
       "properties": {
         "include": {
           "description": "A package name or glob pattern to the package.\n",

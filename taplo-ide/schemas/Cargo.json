@@ -222,7 +222,6 @@
       "$ref": "#/definitions/Workspace"
     }
   },
-  "additionalProperties": false,
   "definitions": {
     "Build": {
       "title": "Build",
@@ -785,7 +784,6 @@
           }
         }
       },
-      "additionalProperties": false,
       "evenBetterToml": {
         "links": {
           "key": "https://doc.rust-lang.org/cargo/reference/manifest.html#the-package-section"
@@ -870,8 +868,7 @@
             "hidden": true
           }
         }
-      },
-      "additionalProperties": false
+      }
     },
     "Profile": {
       "title": "Profile",
@@ -971,8 +968,7 @@
             }
           }
         }
-      },
-      "additionalProperties": false
+      }
     },
     "Profiles": {
       "title": "Profiles",
@@ -1273,8 +1269,7 @@
             }
           }
         }
-      },
-      "additionalProperties": false
+      }
     },
     "Workspace": {
       "title": "Workspace",
@@ -1346,7 +1341,6 @@
           }
         }
       },
-      "additionalProperties": false,
       "evenBetterToml": {
         "links": {
           "key": "https://doc.rust-lang.org/cargo/reference/workspaces.html"

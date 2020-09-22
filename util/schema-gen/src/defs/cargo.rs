@@ -61,7 +61,7 @@ pub struct DetailedDependency {
 #[derive(Debug, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 #[schemars(title = "Cargo")]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct Manifest {
     cargo_features: Option<Vec<String>>,
     package: Option<Box<Package>>,
@@ -122,7 +122,7 @@ pub struct Panic(String);
 #[derive(Serialize, JsonSchema, Clone, Debug, Default, Eq, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 #[schemars(title = "Profile")]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct Profile {
     pub opt_level: Option<OptLevel>,
     pub lto: Option<Lto>,
@@ -186,7 +186,7 @@ pub enum Build {
 pub struct Edition(String);
 
 #[derive(Serialize, JsonSchema, Clone, Debug)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 #[schemars(title = "Package")]
 pub struct Package {
     edition: Option<Edition>,
@@ -227,7 +227,7 @@ pub struct Package {
 
 #[derive(Debug, Serialize, JsonSchema)]
 #[schemars(title = "Workspace")]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct Workspace {
     members: Option<Vec<String>>,
     #[serde(rename = "default-members")]
@@ -238,7 +238,7 @@ pub struct Workspace {
 
 #[derive(Default, Serialize, JsonSchema, Debug, Clone)]
 #[schemars(title = "Target")]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 struct Target {
     name: Option<String>,
 
@@ -270,7 +270,7 @@ type PathValue = PathBuf;
 // Corresponds to a `target` entry, but `Target` is already used.
 #[derive(Serialize, JsonSchema, Debug)]
 #[schemars(title = "Platform")]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 struct Platform {
     dependencies: Option<BTreeMap<String, Dependency>>,
     #[serde(rename = "build-dependencies")]

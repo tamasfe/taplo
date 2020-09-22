@@ -1,8 +1,14 @@
 # Change Log
 
+## 0.8.5
+
+### Fixes
+- Python schema fix
+
 ## 0.8.4
 
-- Comments inside arrays should be handled a bit better.
+### Fixes
+- Comments inside arrays should be handled a bit better
 
 ## 0.8.3
 

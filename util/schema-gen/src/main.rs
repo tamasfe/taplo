@@ -46,7 +46,7 @@ fn generate_cargo_schema(out_dir: &str) {
 
     let schema = gen.into_root_schema_for::<defs::cargo::Manifest>();
 
-    let mut f = fs::File::create(&Path::new(out_dir).join("cargo.json")).unwrap();
+    let mut f = fs::File::create(&Path::new(out_dir).join("Cargo.json")).unwrap();
 
     serde_json::to_writer_pretty(&mut f, &schema).unwrap();
 }

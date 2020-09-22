@@ -2,7 +2,6 @@
 This is low-effort copy-paste on purpose, I don't expect
 to run this more often than every few months.
 */
-
 use schemars::schema::SchemaObject;
 use serde_json::json;
 
@@ -126,9 +125,6 @@ impl schemars::visit::Visitor for CargoVisitor {
 
                     schema.metadata().description =
                         Some(include_str!("../../descriptions/cargo/profile.md").into())
-                }
-                "Disable" => {
-                    schema.enum_values = Some(vec![json![false]]);
                 }
                 "Lto" => {
                     let mut ext = ExtMeta::default();

@@ -232,7 +232,7 @@
           "type": "string"
         },
         {
-          "$ref": "#/definitions/Disable"
+          "type": "boolean"
         }
       ],
       "evenBetterToml": {
@@ -412,13 +412,6 @@
           "$ref": "#/definitions/SemVerRequirement"
         }
       }
-    },
-    "Disable": {
-      "title": "Disable",
-      "type": "boolean",
-      "enum": [
-        false
-      ]
     },
     "Edition": {
       "title": "Edition",
@@ -1051,7 +1044,7 @@
           }
         },
         {
-          "$ref": "#/definitions/Disable"
+          "type": "boolean"
         }
       ],
       "evenBetterToml": {

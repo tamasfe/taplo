@@ -161,7 +161,7 @@ pub enum Lto {
 #[schemars(title = "Publish")]
 pub enum Publish {
     VecString(Vec<String>),
-    Disable(Disable),
+    Bool(bool),
 }
 
 #[derive(Serialize, JsonSchema, Clone, Debug)]
@@ -177,12 +177,9 @@ pub struct SemVerRequirement(String);
 #[schemars(title = "Build")]
 pub enum Build {
     String(String),
-    Disable(Disable),
+    Bool(bool),
 }
 
-#[derive(Serialize, JsonSchema, Clone, Debug)]
-#[schemars(title = "Disable")]
-pub struct Disable(bool);
 
 #[derive(Serialize, JsonSchema, Clone, Debug)]
 #[schemars(title = "Edition")]

@@ -1,5 +1,11 @@
 # Change Log
 
+# 0.8.6
+
+### Fixes
+- Major Python schema improvements ([PR](https://github.com/tamasfe/taplo/pull/45))
+- Quoted and unquoted keys are properly compared
+
 ## 0.8.5
 
 ### Fixes

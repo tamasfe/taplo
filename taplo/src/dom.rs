@@ -1384,7 +1384,7 @@ impl KeyNode {
             return false;
         }
 
-        for (a, b) in self.keys_str().zip(other.keys_str()) {
+        for (a, b) in self.keys_str_stripped().zip(other.keys_str_stripped()) {
             if a != b {
                 return false;
             }
@@ -1548,7 +1548,7 @@ impl Eq for KeyNode {}
 // Needed because of custom PartialEq
 impl Hash for KeyNode {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        for s in self.keys_str() {
+        for s in self.keys_str_stripped() {
             s.hash(state)
         }
         self.index.hash(state)

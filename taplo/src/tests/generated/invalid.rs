@@ -359,3 +359,9 @@ fn taplo_invalid_padding() {
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
+#[test]
+fn taplo_duplicate_keys() {
+    let src = "# THIS WILL NOT WORK\nspelling = \"favorite\"\n\"spelling\" = \"favourite\"\n";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}

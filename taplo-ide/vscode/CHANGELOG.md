@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.8.7
+
+### Fixes
+- Python schema fixes
+
 # 0.8.6
 
 ### Fixes

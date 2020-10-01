@@ -20,35 +20,30 @@
         "$ref": "#/definitions/poetry-author-pattern"
       }
     },
-    "poetry-dependencies": {
-      "type": "object",
-      "patternProperties": {
-        "^[a-zA-Z-_.0-9]+$": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/poetry-dependency"
-            },
-            {
-              "$ref": "#/definitions/poetry-long-dependency"
-            },
-            {
-              "$ref": "#/definitions/poetry-git-dependency"
-            },
-            {
-              "$ref": "#/definitions/poetry-file-dependency"
-            },
-            {
-              "$ref": "#/definitions/poetry-path-dependency"
-            },
-            {
-              "$ref": "#/definitions/poetry-url-dependency"
-            },
-            {
-              "$ref": "#/definitions/poetry-multiple-constraints-dependency"
-            }
-          ]
+    "poetry-dependency-any": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/poetry-dependency"
+        },
+        {
+          "$ref": "#/definitions/poetry-long-dependency"
+        },
+        {
+          "$ref": "#/definitions/poetry-git-dependency"
+        },
+        {
+          "$ref": "#/definitions/poetry-file-dependency"
+        },
+        {
+          "$ref": "#/definitions/poetry-path-dependency"
+        },
+        {
+          "$ref": "#/definitions/poetry-url-dependency"
+        },
+        {
+          "$ref": "#/definitions/poetry-multiple-constraints-dependency"
         }
-      }
+      ]
     },
     "poetry-pep440-version": {
       "type": "string",
@@ -411,7 +406,8 @@
               "description": "Package name."
             },
             "version": {
-              "$ref": "#/definitions/poetry-pep440-version"
+              "type": "string",
+              "description": "Version of the package. It should follow semantic versioning, but it is not enforced."
             },
             "description": {
               "type": "string",
@@ -506,17 +502,24 @@
               "properties": {
                 "python": {
                   "type": "string",
-                  "description": "The Python versions the package is compatible with."
+                  "description": "The Python versions the package is compatible with.",
+                  "$ref": "#/definitions/poetry-dependency"
                 }
               },
-              "$ref": "#/definitions/poetry-dependencies",
-              "additionalProperties": false
+              "patternProperties": {
+                "^[a-zA-Z-_.0-9]+$": {
+                  "$ref": "#/definitions/poetry-dependency-any"
+                }
+              }
             },
             "dev-dependencies": {
               "type": "object",
               "description": "This is a hash of package name (keys) and version constraints (values) that this package requires for developing it (testing tools and such).",
-              "$ref": "#/definitions/poetry-dependencies",
-              "additionalProperties": false
+              "patternProperties": {
+                "^[a-zA-Z-_.0-9]+$": {
+                  "$ref": "#/definitions/poetry-dependency-any"
+                }
+              }
             },
             "extras": {
               "type": "object",

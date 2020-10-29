@@ -365,3 +365,9 @@ fn taplo_duplicate_keys() {
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
+#[test]
+fn taplo_table_before_array() {
+    let src = "[foo.bar]\n[[foo]]";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}

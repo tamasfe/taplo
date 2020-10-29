@@ -13,7 +13,7 @@ use regex::Regex;
 use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, convert::TryFrom, mem};
-use taplo::{dom::Common, formatter, util::coords::Mapper};
+use taplo::{dom::NodeSyntax, formatter, util::coords::Mapper};
 use verify::Verify;
 use wasm_bindgen_futures::spawn_local;
 

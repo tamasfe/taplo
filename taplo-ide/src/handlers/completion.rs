@@ -14,7 +14,7 @@ use schemars::{
 };
 use std::collections::HashSet;
 use taplo::{
-    dom::{self, Common},
+    dom::{self, NodeSyntax},
     syntax::{SyntaxElement, SyntaxKind},
     util::SyntaxExt,
 };

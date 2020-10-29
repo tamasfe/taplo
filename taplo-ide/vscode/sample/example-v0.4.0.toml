@@ -10,6 +10,8 @@
 # Tables (also known as hash tables or dictionaries) are collections of
 # key/value pairs. They appear in square brackets on a line by themselves.
 
+root_value = 2
+
 [table]
 
 key = "value" # Yeah, you can do this.

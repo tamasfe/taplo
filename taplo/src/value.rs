@@ -1,7 +1,10 @@
 //! This module is used to convert the DOM
 //! nodes into the values they contain.
 
-use crate::{dom, util::unescape};
+use crate::{
+    dom::{self, NodeSyntax},
+    util::unescape,
+};
 use chrono::{DateTime, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime};
 use indexmap::IndexMap;
 use std::convert::{TryFrom, TryInto};
@@ -165,14 +168,7 @@ impl TryFrom<dom::Node> for Value {
             dom::Node::Table(v) => v.try_into(),
             dom::Node::Value(v) => v.try_into(),
             dom::Node::Array(v) => v.try_into(),
-            _ => Err(dom::Error::Spanned {
-                range: node.text_range(),
-                message: format!(
-                    "cannot convert {:?} directly to value without context",
-                    node.kind()
-                ),
-            }
-            .into()),
+            _ => todo!(),
         }
     }
 }
@@ -185,10 +181,9 @@ impl TryFrom<dom::RootNode> for Value {
                 .into_iter()
                 .try_fold::<_, _, Result<IndexMap<String, Value>, Self::Error>>(
                     IndexMap::new(),
-                    |mut m, entry| {
+                    |mut m, (key, entry)| {
                         m.insert(
-                            unescape(&entry.key().full_key_string_stripped())
-                                .map_err(|_| UnescapeError)?,
+                            unescape(&key.full_key_string_stripped()).map_err(|_| UnescapeError)?,
                             entry.into_value().try_into()?,
                         );
                         Ok(m)
@@ -206,10 +201,9 @@ impl TryFrom<dom::TableNode> for Value {
                 .into_iter()
                 .try_fold::<_, _, Result<IndexMap<String, Value>, Self::Error>>(
                     IndexMap::new(),
-                    |mut m, entry| {
+                    |mut m, (key, entry)| {
                         m.insert(
-                            unescape(&entry.key().full_key_string_stripped())
-                                .map_err(|_| UnescapeError)?,
+                            unescape(&key.full_key_string_stripped()).map_err(|_| UnescapeError)?,
                             entry.into_value().try_into()?,
                         );
                         Ok(m)
@@ -251,7 +245,7 @@ impl TryFrom<dom::ValueNode> for Value {
 impl TryFrom<dom::BoolNode> for Value {
     type Error = Error;
     fn try_from(node: dom::BoolNode) -> Result<Self, Self::Error> {
-        Ok(Value::Bool(node.to_string().parse()?))
+        Ok(Value::Bool(node.syntax().to_string().parse()?))
     }
 }
 
@@ -270,7 +264,7 @@ impl TryFrom<dom::StringNode> for Value {
 impl TryFrom<dom::IntegerNode> for Value {
     type Error = Error;
     fn try_from(node: dom::IntegerNode) -> Result<Self, Self::Error> {
-        let node_str = node.to_string().replace("_", "");
+        let node_str = node.syntax().to_string().replace("_", "");
 
         Ok(match node.repr() {
             dom::IntegerRepr::Dec => match i64::from_str_radix(&node_str, 10) {
@@ -313,7 +307,8 @@ impl TryFrom<dom::FloatNode> for Value {
     type Error = Error;
     fn try_from(node: dom::FloatNode) -> Result<Self, Self::Error> {
         Ok(Value::Float(
-            node.to_string()
+            node.syntax()
+                .to_string()
                 .replace("_", "")
                 .replace("nan", "NaN")
                 .parse()?,
@@ -324,7 +319,11 @@ impl TryFrom<dom::FloatNode> for Value {
 impl TryFrom<dom::DateNode> for Value {
     type Error = Error;
     fn try_from(node: dom::DateNode) -> Result<Self, Self::Error> {
-        let date_str = node.to_string().replace(" ", "T").replace("t", "T");
+        let date_str = node
+            .syntax()
+            .to_string()
+            .replace(" ", "T")
+            .replace("t", "T");
 
         if let Ok(d) = DateTime::parse_from_rfc3339(&date_str) {
             return Ok(Value::Date(Date::OffsetDateTime(d)));

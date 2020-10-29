@@ -3,7 +3,7 @@ use lsp_async_stub::{Context, RequestWriter};
 use lsp_types::*;
 use schemars::schema::{InstanceType, Metadata, RootSchema, SingleOrVec};
 use taplo::{
-    dom::{self, Common},
+    dom::{self, NodeSyntax},
     parser::Parse,
     util::coords::Mapper,
     verify::NodeSpan,

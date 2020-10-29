@@ -5,7 +5,7 @@ use lsp_types::{Range, SymbolKind};
 
 use rowan::TextRange;
 use taplo::{
-    dom::{Common, ValueNode},
+    dom::{NodeSyntax, ValueNode},
     util::coords::Mapper,
 };
 

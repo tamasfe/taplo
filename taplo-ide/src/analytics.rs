@@ -3,7 +3,7 @@ use dom::RootNode;
 use lsp_types::Position;
 use rowan::{TextRange, TextSize};
 use taplo::{
-    dom::{self, Common},
+    dom::{self, NodeSyntax},
     syntax::{SyntaxKind, SyntaxNode},
     util::SyntaxExt,
 };

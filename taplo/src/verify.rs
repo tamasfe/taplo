@@ -36,7 +36,7 @@ macro_rules! impl_spanned {
             type Span = NodeSpan;
 
             fn span(&self) -> Option<Self::Span> {
-                Some(self.text_range().into())
+                Some(self.syntax().text_range().into())
             }
         })*
     };
@@ -59,11 +59,7 @@ impl Spanned for TableNode {
     type Span = NodeSpan;
 
     fn span(&self) -> Option<Self::Span> {
-        if self.is_inline() {
-            Some(self.text_range().into())
-        } else {
-            Some(self.syntax().text_range().into())
-        }
+        Some(self.syntax().text_range().into())
     }
 }
 
@@ -73,11 +69,7 @@ impl Spanned for ArrayNode {
     type Span = NodeSpan;
 
     fn span(&self) -> Option<Self::Span> {
-        if self.is_array_of_tables() {
-            Some(self.syntax().text_range().into())
-        } else {
-            Some(self.text_range().into())
-        }
+        Some(self.syntax().text_range().into())
     }
 }
 
@@ -100,8 +92,8 @@ impl Validate for RootNode {
 
         let mut errs: Option<V::Error> = None;
 
-        for entry in self.entries().iter() {
-            if let Err(err) = map.validate_string_entry(entry.key(), entry.value()) {
+        for (key, entry) in self.entries().iter() {
+            if let Err(err) = map.validate_string_entry(key, entry.value()) {
                 match &mut errs {
                     Some(errs) => {
                         *errs += err;
@@ -136,8 +128,8 @@ impl Validate for TableNode {
 
         let mut errs: Option<V::Error> = None;
 
-        for entry in self.entries().iter() {
-            if let Err(err) = map.validate_string_entry(entry.key(), entry.value()) {
+        for (key, entry) in self.entries().iter() {
+            if let Err(err) = map.validate_string_entry(key, entry.value()) {
                 match &mut errs {
                     Some(errs) => {
                         *errs += err;

@@ -474,7 +474,6 @@ impl Entries {
                             second: key,
                         });
                     }
-                    TABLE_ARRAY_HEADER => {}
                     _ => errors.push(Error::ExpectedTable {
                         target: existing_key.clone(),
                         key,
@@ -615,7 +614,7 @@ impl Entries {
                             errors,
                         )
                     }
-                    ValueNode::Table(existing_table) => existing_table.entries.insert_table(
+                    ValueNode::Table(existing_table) => existing_table.entries.insert_table_array(
                         key.without_prefix(existing_key).into(),
                         array_table,
                         errors,

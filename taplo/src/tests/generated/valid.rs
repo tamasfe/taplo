@@ -3083,3 +3083,25 @@ fn taplo_tables() {
             .collect::<String>()
     );
 }
+#[test]
+fn taplo_arrays_subtable() {
+    let src = "[table]\nval = 2\n\n[[table.arr]]\narr_val = 3\n\n[[table.arr]]\narr_val = 3";
+    let p = crate::parser::parse(&src);
+    assert!(
+        p.errors.is_empty(),
+        "Parse errors:\n{}",
+        p.errors
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+    let dom = p.into_dom();
+    assert!(
+        dom.errors().is_empty(),
+        "Semantic errors:\n{}",
+        dom.errors()
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+}

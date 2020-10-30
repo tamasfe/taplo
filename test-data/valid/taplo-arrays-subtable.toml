@@ -1,0 +1,8 @@
+[table]
+val = 2
+
+[[table.arr]]
+arr_val = 3
+
+[[table.arr]]
+arr_val = 3

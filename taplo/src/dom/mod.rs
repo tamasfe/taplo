@@ -474,6 +474,7 @@ impl Entries {
                             second: key,
                         });
                     }
+                    TABLE_ARRAY_HEADER => {}
                     _ => errors.push(Error::ExpectedTable {
                         target: existing_key.clone(),
                         key,
@@ -496,13 +497,17 @@ impl Entries {
                         arr.insert_table(key.without_prefix(existing_key).into(), table, errors)
                     }
                     ValueNode::Table(existing_table) => {
-                        entry.key.additional_keys.push(key.clone().common_prefix(&existing_key));
-                        
+                        entry
+                            .key
+                            .additional_keys
+                            .push(key.clone().common_prefix(&existing_key));
+
                         existing_table.entries.insert_table(
-                        key.without_prefix(existing_key).into(),
-                        table,
-                        errors,
-                    )},
+                            key.without_prefix(existing_key).into(),
+                            table,
+                            errors,
+                        )
+                    }
                     _ => errors.push(Error::ExpectedTable {
                         target: existing_key.clone(),
                         key,
@@ -513,8 +518,8 @@ impl Entries {
             } else if key.is_part_of(existing_key) {
                 match &entry.value {
                     ValueNode::Table(_) => {
-
-                        key.additional_keys.push(existing_key.clone().common_prefix(&key));
+                        key.additional_keys
+                            .push(existing_key.clone().common_prefix(&key));
 
                         let mut new_entry = EntryNode {
                             syntax: table.syntax.clone(),

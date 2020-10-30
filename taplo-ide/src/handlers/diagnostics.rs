@@ -303,7 +303,42 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                     tags: None,
                 });
             }
-            dom::Error::SubTableBeforeTableArray { target, key } => {}
+            dom::Error::SubTableBeforeTableArray { target, key } => {
+                let target_range = mapper.range(target.syntax().text_range()).unwrap();
+                let key_range = mapper.range(key.syntax().text_range()).unwrap();
+
+                diag.push(Diagnostic {
+                    range: key_range,
+                    severity: Some(DiagnosticSeverity::Error),
+                    code: None,
+                    source: Some("Even Better TOML".into()),
+                    message: "array of tables conflicting with subtable above".to_string(),
+                    related_information: Some(vec![DiagnosticRelatedInformation {
+                        location: Location {
+                            range: target_range,
+                            uri: uri.clone(),
+                        },
+                        message: format!(r#"subtable here"#),
+                    }]),
+                    tags: None,
+                });
+
+                diag.push(Diagnostic {
+                    range: target_range,
+                    severity: Some(DiagnosticSeverity::Error),
+                    code: None,
+                    source: Some("Even Better TOML".into()),
+                    message: "subtable declared before array of tables".to_string(),
+                    related_information: Some(vec![DiagnosticRelatedInformation {
+                        location: Location {
+                            range: key_range,
+                            uri: uri.clone(),
+                        },
+                        message: format!(r#"array of tables here"#),
+                    }]),
+                    tags: None,
+                });
+            }
         }
     }
 

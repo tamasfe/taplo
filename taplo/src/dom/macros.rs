@@ -105,7 +105,58 @@ macro_rules! dom_primitives {
 }
 
 macro_rules! dom_sealed {
-    ($($id:ty),*) => {
+    ($($id:ty,)*) => {
         $(impl Sealed for $id {})*
+    };
+}
+
+macro_rules! rewrite_node_from {
+    ($($inner:ty => $name:ident),*) => {
+        $(
+            impl From<$inner> for RewriteNode {
+                fn from(inner: $inner) -> Self {
+                    RewriteNode::New(Node::from(inner))
+                }
+            }
+
+            impl From<$inner> for Node {
+                fn from(inner: $inner) -> Self {
+                    Node::$name(inner.into())
+                }
+            }
+        )*
+    };
+}
+
+macro_rules! rewrite_impl {
+    ($(dom::$id:ident,)*) => {
+        $(
+            impl Rewrite for dom::$id {
+                type Builder = builders::$id;
+
+                fn rewrite() -> Self::Builder {
+                    Self::Builder::new()
+                }
+            }
+        )*
+    };
+}
+
+macro_rules! rewrite_value_node_from {
+    ($($v:ident => $id:ident,)*) => {
+        $(
+            impl From<OldOrNew<dom::$id>> for ValueNode {
+                fn from(v: OldOrNew<dom::$id>) -> Self {
+                    Self::$v(v)
+                }
+            }
+
+            impl From<$id> for ValueNode {
+                fn from(v: $id) -> Self {
+                    ValueNode::$v(OldOrNew::New(v))
+                }
+            }
+        )*
+
     };
 }

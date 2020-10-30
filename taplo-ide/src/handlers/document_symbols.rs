@@ -13,7 +13,7 @@ pub(crate) fn create_symbols(doc: &Document) -> Vec<DocumentSymbol> {
     let mapper = &doc.mapper;
     let mut symbols: Vec<DocumentSymbol> = Vec::new();
 
-    for entry in doc.parse.clone().into_dom().entries().iter() {
+    for (_, entry) in doc.parse.clone().into_dom().entries().iter() {
         symbols_for_value(
             ensure_non_empty_key(entry.key().full_key_string()),
             None,
@@ -33,13 +33,13 @@ fn symbols_for_value(
     mapper: &Mapper,
     symbols: &mut Vec<DocumentSymbol>,
 ) {
-    let own_range = mapper.range(value.text_range()).unwrap_or_else(|| Range {
-        start: mapper.position(value.text_range().start()).unwrap(),
+    let own_range = mapper.range(value.syntax().text_range()).unwrap_or_else(|| Range {
+        start: mapper.position(value.syntax().text_range().start()).unwrap(),
         end: mapper.end(),
     });
 
     let range = if let Some(key_r) = key_range {
-        mapper.range(key_r.cover(value.text_range())).unwrap_or_else(|| Range {
+        mapper.range(key_r.cover(value.syntax().text_range())).unwrap_or_else(|| Range {
             start: mapper.position(key_r.start()).unwrap(),
             end: mapper.end()
         })
@@ -125,10 +125,10 @@ fn symbols_for_value(
                 children: {
                     let mut child_symbols = Vec::with_capacity(t.entries().len());
 
-                    for c in t.entries().iter() {
+                    for (_,c) in t.entries().iter() {
                         symbols_for_value(
                             c.key().full_key_string(),
-                            Some(c.key().text_range()),
+                            Some(c.key().syntax().text_range()),
                             c.value(),
                             mapper,
                             &mut child_symbols,

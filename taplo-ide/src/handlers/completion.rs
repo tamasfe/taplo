@@ -72,7 +72,7 @@ pub(crate) fn get_completions(
             let value_kind = info
                 .node
                 .as_ref()
-                .map(|n| match n.kind() {
+                .map(|n| match n.syntax().kind() {
                     SyntaxKind::STRING
                     | SyntaxKind::MULTI_LINE_STRING
                     | SyntaxKind::STRING_LITERAL
@@ -346,7 +346,7 @@ fn value_completions(
                 | dom::ValueNode::Float(_)
                 | dom::ValueNode::Date(_)
                 | dom::ValueNode::Invalid(_)
-                | dom::ValueNode::Empty => info.doc.mapper.range(v.text_range()),
+                | dom::ValueNode::Empty => info.doc.mapper.range(v.syntax().text_range()),
                 _ => None,
             },
             _ => None,
@@ -609,9 +609,9 @@ fn dotted_key_completions(
                 let prop_entries = entries
                     .and_then(|en| {
                         en.iter()
-                            .find(|e| e.key().keys_str_stripped().next().unwrap() == prop_key)
+                            .find(|(_,e)| e.key().keys_str_stripped().next().unwrap() == prop_key)
                     })
-                    .and_then(|entry| match entry.value() {
+                    .and_then(|(_,entry)| match entry.value() {
                         dom::ValueNode::Table(t) => Some(t.entries()),
                         _ => None,
                     });
@@ -619,7 +619,7 @@ fn dotted_key_completions(
                 if let Some(e) = prop_entries {
                         let exists = e
                             .iter()
-                            .any(|entry| entry.key().keys_str_stripped().next().unwrap() == prop_key);
+                            .any(|(_,entry)| entry.key().keys_str_stripped().next().unwrap() == prop_key);
     
                         if resolved_prop.schema.object.is_none() && exists {
                             continue;

@@ -475,7 +475,7 @@ pub(crate) async fn hover(
     let info = PositionInfo::new(doc, pos);
 
     let range = info.node.as_ref().and_then(|n| match n {
-        taplo::dom::Node::Key(k) => info.doc.mapper.range(k.text_range()),
+        taplo::dom::Node::Key(k) => info.doc.mapper.range(k.syntax().text_range()),
         _ => None,
     });
 
@@ -580,9 +580,6 @@ pub(crate) async fn links(
         }
 
         if let Some(v) = key.value {
-            if !v.is_valid() {
-                continue;
-            }
             if let Some(val) = v.syntax().as_token() {
                 'outer: for obj in objects {
                     if let Some(e) = &obj.schema.enum_values {
@@ -608,7 +605,7 @@ pub(crate) async fn links(
                                         };
 
                                         links.push(DocumentLink {
-                                            range: doc.mapper.range(v.text_range()).unwrap(),
+                                            range: doc.mapper.range(v.syntax().text_range()).unwrap(),
                                             target,
                                             tooltip: None,
                                         });

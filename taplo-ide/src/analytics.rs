@@ -164,8 +164,8 @@ fn get_position_info(node: &dom::Node, info: &mut PositionInfo) {
     match node {
         dom::Node::Root(r) => {
             info.node = Some(r.clone().into());
-            for entry in r.entries().iter() {
-                if entry.text_range().contains(info.offset) {
+            for (_, entry) in r.entries().iter() {
+                if entry.syntax().text_range().contains(info.offset) {
                     info.keys.push(Key::Property(entry.key().full_key_string()));
 
                     get_position_info(&entry.clone().into(), info);
@@ -175,8 +175,8 @@ fn get_position_info(node: &dom::Node, info: &mut PositionInfo) {
         }
         dom::Node::Table(t) => {
             info.node = Some(t.clone().into());
-            for entry in t.entries().iter() {
-                if entry.text_range().contains(info.offset) {
+            for (_, entry) in t.entries().iter() {
+                if entry.syntax().text_range().contains(info.offset) {
                     info.keys.push(Key::Property(entry.key().full_key_string()));
 
                     get_position_info(&entry.clone().into(), info);
@@ -190,28 +190,23 @@ fn get_position_info(node: &dom::Node, info: &mut PositionInfo) {
                 .iter()
                 .any(|e| e.contains(info.offset))
             {
-                if e.token_eq_text_range().is_some() {
-                    info.key_only = true;
-                }
+                // if e.token_eq_text_range().is_some() {
+                //     info.key_only = true;
+                // }
                 get_position_info(&e.key().clone().into(), info);
-            } else if e.value().text_range().contains(info.offset) {
+            } else if e.value().syntax().text_range().contains(info.offset) {
                 get_position_info(&e.value().clone().into(), info);
             } else {
                 // Everything after the eq is considered a value
-                if let Some(eq) = e.token_eq_text_range() {
-                    if info.offset >= eq.start() {
-                        get_position_info(&e.value().clone().into(), info);
-                    } else {
-                        info.key_only = true;
-                        get_position_info(&e.key().clone().into(), info);
-                    }
-                } else if e.value().is_valid() {
-                    // It's a table header or array of tables header.
-                    get_position_info(&e.value().clone().into(), info);
-                } else {
-                    // There's no eq and it's a regular entry, it's all key only.
-                    get_position_info(&e.key().clone().into(), info);
-                }
+                // if let Some(eq) = e.token_eq_text_range() {
+                //     if info.offset >= eq.start() {
+                //         get_position_info(&e.value().clone().into(), info);
+                //     } else {
+                //         info.key_only = true;
+                //         get_position_info(&e.key().clone().into(), info);
+                //     }
+                // } else
+                get_position_info(&e.key().clone().into(), info);
             }
         }
         dom::Node::Key(k) => {
@@ -232,7 +227,7 @@ fn get_position_info(node: &dom::Node, info: &mut PositionInfo) {
             info.node = Some(arr.clone().into());
             let mut value_found = false;
             for (i, value) in arr.items().iter().enumerate() {
-                if value.text_range().contains(info.offset) {
+                if value.syntax().text_range().contains(info.offset) {
                     info.keys.push(Key::Index(i));
                     get_position_info(&value.clone().into(), info);
                     value_found = true;
@@ -256,10 +251,6 @@ fn get_position_info(node: &dom::Node, info: &mut PositionInfo) {
 }
 
 fn ident_range(node: &dom::Node, offset: TextSize) -> Option<TextRange> {
-    if !node.is_valid() {
-        return None;
-    }
-
     let syntax = node.syntax();
 
     let n = match syntax.as_node() {
@@ -290,7 +281,7 @@ pub fn collect_for_schema(node: &dom::Node, parent_keys: Vec<Key>) -> Vec<KeyInf
 
     match node {
         dom::Node::Root(r) => {
-            for entry in r.entries().iter() {
+            for (_, entry) in r.entries().iter() {
                 keys.push(KeyInfo {
                     key: entry.key().clone().into(),
                     parent_keys: parent_keys.clone(),
@@ -303,7 +294,7 @@ pub fn collect_for_schema(node: &dom::Node, parent_keys: Vec<Key>) -> Vec<KeyInf
             }
         }
         dom::Node::Table(t) => {
-            for entry in t.entries().iter() {
+            for (_, entry) in t.entries().iter() {
                 keys.push(KeyInfo {
                     key: entry.key().clone().into(),
                     parent_keys: parent_keys.clone(),

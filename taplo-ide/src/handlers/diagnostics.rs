@@ -114,8 +114,8 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
     for err in dom.errors() {
         match err {
             dom::Error::DuplicateKey { first, second } => {
-                let first_range = mapper.range(first.text_range()).unwrap();
-                let second_range = mapper.range(second.text_range()).unwrap();
+                let first_range = mapper.range(first.syntax().text_range()).unwrap();
+                let second_range = mapper.range(second.syntax().text_range()).unwrap();
 
                 diag.push(Diagnostic {
                     range: first_range,
@@ -150,8 +150,8 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                 });
             }
             dom::Error::ExpectedTable { target, key } => {
-                let target_range = mapper.range(target.text_range()).unwrap();
-                let second_range = mapper.range(key.text_range()).unwrap();
+                let target_range = mapper.range(target.syntax().text_range()).unwrap();
+                let second_range = mapper.range(key.syntax().text_range()).unwrap();
 
                 diag.push(Diagnostic {
                     range: target_range,
@@ -170,8 +170,8 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                 });
             }
             dom::Error::ExpectedTableArray { target, key } => {
-                let target_range = mapper.range(target.text_range()).unwrap();
-                let second_range = mapper.range(key.text_range()).unwrap();
+                let target_range = mapper.range(target.syntax().text_range()).unwrap();
+                let second_range = mapper.range(key.syntax().text_range()).unwrap();
 
                 diag.push(Diagnostic {
                     range: target_range,
@@ -206,8 +206,8 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                 });
             }
             dom::Error::InlineTable { target, key } => {
-                let target_range = mapper.range(target.text_range()).unwrap();
-                let second_range = mapper.range(key.text_range()).unwrap();
+                let target_range = mapper.range(target.syntax().text_range()).unwrap();
+                let second_range = mapper.range(key.syntax().text_range()).unwrap();
 
                 diag.push(Diagnostic {
                     range: target_range,
@@ -241,42 +241,7 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                     tags: None,
                 });
             }
-            dom::Error::TopLevelTableDefined { table, key } => {
-                let table_range = mapper.range(table.text_range()).unwrap();
-                let key_range = mapper.range(key.text_range()).unwrap();
 
-                diag.push(Diagnostic {
-                    range: table_range,
-                    severity: Some(DiagnosticSeverity::Error),
-                    code: None,
-                    source: Some("Even Better TOML".into()),
-                    message: "table conflicts with entry".to_string(),
-                    related_information: Some(vec![DiagnosticRelatedInformation {
-                        location: Location {
-                            range: key_range,
-                            uri: uri.clone(),
-                        },
-                        message: format!(r#"entry here "{}""#, key.full_key_string()),
-                    }]),
-                    tags: None,
-                });
-
-                diag.push(Diagnostic {
-                    range: key_range,
-                    severity: Some(DiagnosticSeverity::Error),
-                    code: None,
-                    source: Some("Even Better TOML".into()),
-                    message: "entry conflicts with table".to_string(),
-                    related_information: Some(vec![DiagnosticRelatedInformation {
-                        location: Location {
-                            range: table_range,
-                            uri: uri.clone(),
-                        },
-                        message: format!(r#"table "{}" here"#, table.full_key_string()),
-                    }]),
-                    tags: None,
-                });
-            }
             dom::Error::Spanned { range, message } => {
                 let r = mapper.range(*range).unwrap();
 
@@ -302,6 +267,43 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                     tags: None,
                 });
             }
+            dom::Error::DottedKeyConflict { first, second } => {
+                let first_range = mapper.range(first.syntax().text_range()).unwrap();
+                let second_range = mapper.range(second.syntax().text_range()).unwrap();
+
+                diag.push(Diagnostic {
+                    range: second_range,
+                    severity: Some(DiagnosticSeverity::Error),
+                    code: None,
+                    source: Some("Even Better TOML".into()),
+                    message: "conflicting dotted keys, entries with overlapping keys must have the same amount of keys".to_string(),
+                    related_information: Some(vec![DiagnosticRelatedInformation {
+                        location: Location {
+                            range: first_range,
+                            uri: uri.clone(),
+                        },
+                        message: format!(r#"conflicting dotted keys here"#),
+                    }]),
+                    tags: None,
+                });
+
+                diag.push(Diagnostic {
+                    range: first_range,
+                    severity: Some(DiagnosticSeverity::Error),
+                    code: None,
+                    source: Some("Even Better TOML".into()),
+                    message: "conflicting dotted keys, entries with overlapping keys must have the same amount of keys".to_string(),
+                    related_information: Some(vec![DiagnosticRelatedInformation {
+                        location: Location {
+                            range: second_range,
+                            uri: uri.clone(),
+                        },
+                        message: format!(r#"conflicting dotted keys here"#),
+                    }]),
+                    tags: None,
+                });
+            }
+            dom::Error::SubTableBeforeTableArray { target, key } => {}
         }
     }
 

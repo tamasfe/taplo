@@ -25,6 +25,8 @@ use std::{hash::Hash, iter::FromIterator, mem, rc::Rc};
 #[macro_use]
 mod macros;
 
+pub mod rewrite;
+
 /// Casting allows constructing DOM nodes from syntax nodes.
 pub trait Cast: Sized + private::Sealed {
     fn cast(element: SyntaxElement) -> Option<Self>;
@@ -50,7 +52,34 @@ mod private {
         StringNode,
         BoolNode,
         FloatNode,
-        DateNode
+        DateNode,
+    );
+
+    dom_sealed!(
+        rewrite::Node,
+        rewrite::EntryNode,
+        rewrite::KeyNode,
+        rewrite::ValueNode,
+        rewrite::ArrayNode,
+        rewrite::TableNode,
+        rewrite::IntegerNode,
+        rewrite::StringNode,
+        rewrite::BoolNode,
+        rewrite::FloatNode,
+        rewrite::DateNode,
+    );
+
+    dom_sealed!(
+        rewrite::builders::TableNode,
+        rewrite::builders::EntryNode,
+        rewrite::builders::KeyNode,
+        rewrite::builders::ValueNode,
+        rewrite::builders::ArrayNode,
+        rewrite::builders::IntegerNode,
+        rewrite::builders::StringNode,
+        rewrite::builders::BoolNode,
+        rewrite::builders::FloatNode,
+        rewrite::builders::DateNode,
     );
 }
 
@@ -153,20 +182,24 @@ impl Cast for RootNode {
             return None;
         }
 
-        let syntax_node = syntax.as_node().unwrap();
+        let root_syntax = syntax.as_node().unwrap();
 
         let mut entries = Entries::new();
         // top-level tables AND arrays of tables.
         let mut tables: Vec<TableNode> = Vec::new();
         let mut errors: Vec<Error> = Vec::new();
 
-        for child in syntax_node.children_with_tokens() {
+        for child in root_syntax.children_with_tokens() {
             match child.kind() {
                 TABLE_HEADER | TABLE_ARRAY_HEADER => {
                     let table = match TableNode::cast(child) {
                         None => continue,
                         Some(table) => table,
                     };
+
+                    if let Some(t) = tables.last_mut() {
+                        t.end_offset = table.syntax.text_range().start().into();
+                    }
 
                     tables.push(table);
                 }
@@ -199,6 +232,10 @@ impl Cast for RootNode {
             }
         }
 
+        if let Some(t) = tables.last_mut() {
+            t.end_offset = root_syntax.text_range().end().into();
+        }
+
         entries.add_tables(tables, &mut errors);
         entries.normalize();
         entries.sync_keys();
@@ -216,7 +253,6 @@ dom_node! {
     /// and also inline tables.
     #[derive(Debug, Clone, PartialEq, Eq, Hash)]
     pub struct TableNode {
-
         /// Whether the table is part of an array
         /// of tables.
         array: bool,
@@ -229,10 +265,10 @@ dom_node! {
         /// source.
         pseudo: bool,
 
-        // Offset of the next entry if any,
+        // Offset of the next entry or EOF,
         // this is needed because tables span
         // longer than their actual syntax in TOML.
-        next_entry: Option<TextSize>,
+        end_offset: TextSize,
 
         entries: Entries,
     }
@@ -266,6 +302,15 @@ impl TableNode {
             .first_child()
             .and_then(|n| Cast::cast(n.into()))
     }
+
+    pub fn text_ranges(&self) -> Vec<TextRange> {
+        let mut ranges = Vec::with_capacity(self.entries.len() + 1);
+
+        ranges.push(self.syntax().text_range().cover_offset(self.end_offset));
+        ranges.extend(self.entries.iter().map(|(_, e)| e.syntax().text_range()));
+
+        ranges
+    }
 }
 
 impl Cast for TableNode {
@@ -282,7 +327,7 @@ impl Cast for TableNode {
 
                 Some(Self {
                     entries: Entries::default(),
-                    next_entry: None,
+                    end_offset: syntax.text_range().end(),
                     pseudo: false,
                     inline: false,
                     array: syntax.kind() == TABLE_ARRAY_HEADER,
@@ -300,7 +345,7 @@ impl Cast for TableNode {
                         .map(|entry| (entry.key().clone(), entry))
                         .collect(),
                 ),
-                next_entry: None,
+                end_offset: syntax.text_range().end(),
                 inline: true,
                 array: false,
                 pseudo: false,
@@ -378,7 +423,7 @@ impl Entries {
                     value: ValueNode::Table(TableNode {
                         syntax: common_prefix.syntax.clone(),
                         inline: false,
-                        next_entry: None,
+                        end_offset: common_prefix.syntax().text_range().end(),
                         pseudo: true,
                         array: false,
                         entries: Entries(indexmap! {
@@ -418,7 +463,7 @@ impl Entries {
         table: TableNode,
         errors: &mut Vec<Error>,
     ) {
-        let key = alternative_key.unwrap_or_else(|| table.key().unwrap());
+        let mut key = alternative_key.unwrap_or_else(|| table.key().unwrap());
 
         for (existing_key, entry) in &mut self.0 {
             if existing_key == &key {
@@ -450,11 +495,14 @@ impl Entries {
 
                         arr.insert_table(key.without_prefix(existing_key).into(), table, errors)
                     }
-                    ValueNode::Table(existing_table) => existing_table.entries.insert_table(
+                    ValueNode::Table(existing_table) => {
+                        entry.key.additional_keys.push(key.clone().common_prefix(&existing_key));
+                        
+                        existing_table.entries.insert_table(
                         key.without_prefix(existing_key).into(),
                         table,
                         errors,
-                    ),
+                    )},
                     _ => errors.push(Error::ExpectedTable {
                         target: existing_key.clone(),
                         key,
@@ -465,6 +513,9 @@ impl Entries {
             } else if key.is_part_of(existing_key) {
                 match &entry.value {
                     ValueNode::Table(_) => {
+
+                        key.additional_keys.push(existing_key.clone().common_prefix(&key));
+
                         let mut new_entry = EntryNode {
                             syntax: table.syntax.clone(),
                             key,
@@ -736,6 +787,22 @@ impl ArrayNode {
             .and_then(|n| Cast::cast(n.into()))
     }
 
+    pub fn text_ranges(&self) -> Vec<TextRange> {
+        if !self.tables {
+            return vec![self.syntax.text_range()];
+        }
+
+        let mut ranges = Vec::with_capacity(self.items.len() + 1);
+
+        ranges.push(self.syntax().text_range());
+
+        for item in &self.items {
+            ranges.extend(item.text_ranges());
+        }
+
+        ranges
+    }
+
     fn insert_table(
         &mut self,
         alternative_key: Option<KeyNode>,
@@ -814,6 +881,22 @@ impl EntryNode {
         self.value
     }
 
+    pub fn text_ranges(&self) -> Vec<TextRange> {
+        match &self.value {
+            ValueNode::Array(arr) => {
+                let mut ranges = vec![self.syntax.text_range()];
+                ranges.extend(arr.text_ranges());
+                ranges
+            }
+            ValueNode::Table(t) => {
+                let mut ranges = vec![self.syntax.text_range()];
+                ranges.extend(t.text_ranges());
+                ranges
+            }
+            _ => vec![self.syntax().text_range()],
+        }
+    }
+
     /// Turns a dotted key into nested pseudo-tables.
     fn normalize(&mut self) {
         while self.key.key_count() > 1 {
@@ -828,13 +911,15 @@ impl EntryNode {
                 value,
             };
 
+            let inner_entry_syntax = inner_entry.syntax.clone();
+
             let mut entries = Entries(IndexMap::with_capacity(1));
             entries.0.insert(inner_key.clone(), inner_entry);
 
             self.value = ValueNode::Table(TableNode {
-                syntax: inner_key.syntax.clone(),
                 inline: false,
-                next_entry: None,
+                end_offset: inner_entry_syntax.text_range().end(),
+                syntax: inner_entry_syntax,
                 pseudo: true,
                 array: false,
                 entries,
@@ -1020,6 +1105,23 @@ impl KeyNode {
         &self.additional_keys
     }
 
+    pub fn text_range(&self) -> TextRange {
+        let range = match self.idents().next().map(|id| id.text_range()) {
+            Some(range) => range,
+            None => return Default::default(),
+        };
+
+        self.idents()
+            .fold(range, |total, id| total.cover(id.text_range()))
+    }
+
+    pub fn text_ranges(&self) -> Vec<TextRange> {
+        let mut ranges = vec![self.text_range()];
+        ranges.extend(self.additional_keys.iter().map(|k| k.syntax().text_range()));
+
+        ranges
+    }
+
     /// Removes other's prefix from self
     fn without_prefix(self, other: &KeyNode) -> Self {
         let count = self.common_prefix_count(other);
@@ -1120,6 +1222,20 @@ impl Default for ValueNode {
 }
 
 impl ValueNode {
+    pub fn text_ranges(&self) -> Vec<TextRange> {
+        match self {
+            ValueNode::Bool(v) => vec![v.syntax().text_range()],
+            ValueNode::String(v) => vec![v.syntax().text_range()],
+            ValueNode::Integer(v) => vec![v.syntax().text_range()],
+            ValueNode::Float(v) => vec![v.syntax().text_range()],
+            ValueNode::Array(v) => v.text_ranges(),
+            ValueNode::Date(v) => vec![v.syntax().text_range()],
+            ValueNode::Table(v) => v.text_ranges(),
+            ValueNode::Invalid(el) => vec![el.text_range()],
+            ValueNode::Empty => unreachable!("empty value"),
+        }
+    }
+
     fn sync_keys(&mut self) {
         match self {
             ValueNode::Array(a) => a.sync_keys(),
@@ -1205,6 +1321,12 @@ dom_node! {
     }
 }
 
+impl From<IntegerNode> for Node {
+    fn from(n: IntegerNode) -> Self {
+        Node::Value(ValueNode::Integer(n))
+    }
+}
+
 impl IntegerNode {
     pub fn repr(&self) -> IntegerRepr {
         self.repr
@@ -1250,6 +1372,12 @@ dom_node! {
 
         /// Unescaped (and trimmed where defined by TOML) value.
         content: String,
+    }
+}
+
+impl From<StringNode> for Node {
+    fn from(n: StringNode) -> Self {
+        Node::Value(ValueNode::String(n))
     }
 }
 
@@ -1338,6 +1466,24 @@ dom_primitives!(
     FLOAT => FloatNode,
     DATE => DateNode
 );
+
+impl From<BoolNode> for Node {
+    fn from(v: BoolNode) -> Self {
+        Node::Value(ValueNode::Bool(v))
+    }
+}
+
+impl From<FloatNode> for Node {
+    fn from(v: FloatNode) -> Self {
+        Node::Value(ValueNode::Float(v))
+    }
+}
+
+impl From<DateNode> for Node {
+    fn from(v: DateNode) -> Self {
+        Node::Value(ValueNode::Date(v))
+    }
+}
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Error {

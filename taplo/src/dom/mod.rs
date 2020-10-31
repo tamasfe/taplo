@@ -115,6 +115,17 @@ pub enum Node {
     Array(ArrayNode),
 }
 
+impl Node {
+    /// Converts the node into a value.
+    /// 
+    /// Panics if the node contains invalid values.
+    /// 
+    /// Use `Value::try_from` for a fallible alternative.
+    pub fn to_value(&self) -> Value {
+        Value::try_from(self.clone()).unwrap()
+    }
+}
+
 impl_is! {Node;
     is_root() -> Root;
     is_table() -> Table;

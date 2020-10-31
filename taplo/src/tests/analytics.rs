@@ -134,5 +134,4 @@ fn query_incomplete_key() {
     assert!(pos.is_completable());
     assert!(pos.before.as_ref().unwrap().syntax.expected_kind.unwrap() == KEY);
     assert!(pos.before.unwrap().syntax.text.unwrap() == key);
-    assert!(pos.after.path.dotted() == "dev-dependencies");
 }

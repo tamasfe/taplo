@@ -17,6 +17,9 @@ pub struct CharacterRange(u64, u64);
 /// 1-based line:row characters.
 #[derive(Debug, Clone)]
 pub struct Mapper {
+    /// Treat LSP types as 0-based in arguments.
+    zero_based: bool,
+
     /// These are characters, not byte offsets.
     lines: Vec<CharacterRange>,
 
@@ -53,13 +56,20 @@ impl Mapper {
 
         if mapping.is_empty() {
             mapping.push(1);
+        } else {
+            mapping.push(*mapping.last().unwrap())
         }
 
         if line_start_char <= chars_count {
             lines.push(CharacterRange(line_start_char + 1, chars_count + 1));
         }
 
-        Self { lines, mapping }
+        Self { zero_based: false, lines, mapping }
+    }
+
+    pub fn zero_based(mut self, zero: bool) -> Self {
+        self.zero_based = zero;
+        self
     }
 
     pub fn lines(&self) -> &[CharacterRange] {
@@ -70,7 +80,12 @@ impl Mapper {
         &self.mapping
     }
 
-    pub fn offset(&self, position: Position) -> Option<TextSize> {
+    pub fn offset(&self, mut position: Position) -> Option<TextSize> {
+        if self.zero_based {
+            position.line += 1;
+            position.character += 1;
+        }
+
         self.lines()
             .get(position.line.checked_sub(1).expect("lines must be 1-based") as usize)
             .and_then(|l| {
@@ -94,7 +109,13 @@ impl Mapper {
             })
     }
 
-    pub fn text_range(&self, range: Range) -> Option<TextRange> {
+    pub fn text_range(&self, mut range: Range) -> Option<TextRange> {
+        if self.zero_based {
+            range.start.line += 1;
+            range.start.character += 1;
+            range.end.line += 1;
+            range.end.character += 1;
+        }
         self.offset(range.start)
             .and_then(|start| self.offset(range.end).map(|end| TextRange::new(start, end)))
     }
@@ -113,11 +134,20 @@ impl Mapper {
     }
 
     pub fn range(&self, range: TextRange) -> Option<Range> {
-        self.position(range.start())
-            .and_then(|start| self.position(range.end()).map(|end| Range { start, end }))
+        self.position(range.start()).and_then(|start| {
+            self.position(range.end())
+                .map(|end| Range { start, end })
+        })
     }
 
-    pub fn split_lines(&self, range: Range) -> Vec<Range> {
+    pub fn split_lines(&self, mut range: Range) -> Vec<Range> {
+        if self.zero_based {
+            range.start.line += 1;
+            range.start.character += 1;
+            range.end.line += 1;
+            range.end.character += 1;
+        }
+
         if range.start.line == range.end.line {
             return vec![range];
         }
@@ -155,6 +185,15 @@ impl Mapper {
             },
             end: range.end,
         });
+
+        if self.zero_based {
+            for line in &mut lines {
+                line.start.line -= 1;
+                line.start.character -= 1;
+                line.end.line -= 1;
+                line.end.character -= 1;
+            }
+        }
 
         lines
     }

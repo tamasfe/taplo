@@ -16,9 +16,10 @@ use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::{collections::HashMap, convert::TryFrom, mem};
 use taplo::{
+    analytics::NodeRef,
     dom::{NodeSyntax, TextRanges},
     formatter,
-    util::coords::Mapper,
+    util::{coords::Mapper, syntax::join_ranges},
 };
 use verify::Verify;
 use wasm_bindgen_futures::spawn_local;
@@ -264,7 +265,7 @@ pub(crate) async fn document_open(
     };
 
     let parse = taplo::parser::parse(&p.text_document.text);
-    let mapper = Mapper::new(&p.text_document.text);
+    let mapper = Mapper::new(&p.text_document.text).zero_based(true);
     let uri = p.text_document.uri.clone();
 
     context
@@ -293,7 +294,7 @@ pub(crate) async fn document_change(
     };
 
     let parse = taplo::parser::parse(&change.text);
-    let mapper = Mapper::new(&change.text);
+    let mapper = Mapper::new(&change.text).zero_based(true);
     let uri = p.text_document.uri.clone();
 
     context
@@ -457,68 +458,145 @@ pub(crate) async fn hover(
     mut context: Context<World>,
     params: Params<HoverParams>,
 ) -> Result<Option<Hover>, Error> {
-    // let p = params.required()?;
+    let p = params.required()?;
 
-    // let uri = p.text_document_position_params.text_document.uri;
-    // let pos = p.text_document_position_params.position;
+    let uri = p.text_document_position_params.text_document.uri;
+    let pos = p.text_document_position_params.position;
 
-    // let w = context.world().lock().await;
+    let w = context.world().lock().await;
 
-    // if !w.configuration.schema.enabled.unwrap_or_default() {
-    //     return Ok(None);
-    // }
+    if !w.configuration.schema.enabled.unwrap_or_default() {
+        return Ok(None);
+    }
 
-    // let doc: Document = match w.documents.get(&uri) {
-    //     Some(d) => d.clone(),
-    //     None => return Err(Error::new("document not found")),
-    // };
+    let doc: Document = match w.documents.get(&uri) {
+        Some(d) => d.clone(),
+        None => return Err(Error::new("document not found")),
+    };
 
-    // let schema: RootSchema = match w.get_schema_by_uri(&uri) {
-    //     Some(s) => s.clone(),
-    //     None => return Ok(None),
-    // };
+    let schema: RootSchema = match w.get_schema_by_uri(&uri) {
+        Some(s) => s.clone(),
+        None => return Ok(None),
+    };
 
-    // let info = PositionInfo::new(doc, pos);
+    let dom = doc.parse.clone().into_dom();
 
-    // let range = info.node.as_ref().and_then(|n| match n {
-    //     taplo::dom::Node::Key(k) => info.doc.mapper.range(k.syntax().text_range()),
-    //     _ => None,
-    // });
+    let query = dom.query_position(doc.mapper.offset(pos).unwrap());
 
-    // let schemas = get_schema_objects(info.keys, &schema);
+    let schemas = get_schema_objects(query.after.path, &schema);
 
-    // Ok(schemas
-    //     .first()
-    //     .and_then(|s| {
-    //         s.ext
-    //             .docs
-    //             .as_ref()
-    //             .and_then(|docs| docs.main.clone())
-    //             .or_else(|| {
-    //                 s.schema
-    //                     .metadata
-    //                     .as_ref()
-    //                     .and_then(|meta| meta.description.clone())
-    //             })
-    //             .map(|desc| (desc, s.ext.links.as_ref().and_then(|l| l.key.as_ref())))
-    //     })
-    //     .and_then(|desc| range.map(|range| (desc, range)))
-    //     .map(|((mut value, link), range)| {
-    //         if !w.configuration.schema.links.unwrap_or_default() {
-    //             if let Some(link) = link {
-    //                 value = format!("[_<sup>more information</sup>_]({})\n\n{}", link, value);
-    //             }
-    //         }
+    Ok(query.after.nodes.last().and_then(|node| match node {
+        NodeRef::Key(k) => {
+            let docs = schemas
+                .into_iter()
+                .filter_map(|s| {
+                    let docs = s.ext.docs.as_ref().and_then(|d| d.main.clone());
+                    let link = s.ext.links.as_ref().and_then(|l| l.key.clone());
 
-    //         Hover {
-    //             contents: HoverContents::Markup(MarkupContent {
-    //                 kind: MarkupKind::Markdown,
-    //                 value,
-    //             }),
-    //             range: Some(range),
-    //         }
-    //     }))
-    Ok(None)
+                    match docs {
+                        Some(d) => Some((d, link)),
+                        None => None,
+                    }
+                })
+                .map(|(mut docs, link)| {
+                    if let Some(link) = link {
+                        docs = format!("[_<sup>more information</sup>_]({})\n\n{}", link, docs);
+                    }
+
+                    docs
+                })
+                .fold(String::new(), |mut all, s| {
+                    if !all.is_empty() {
+                        all += "\n---\n";
+                    }
+                    all += &s;
+                    all
+                });
+
+            if docs.is_empty() {
+                None
+            } else {
+                Some(Hover {
+                    contents: HoverContents::Markup(MarkupContent {
+                        kind: MarkupKind::Markdown,
+                        value: docs,
+                    }),
+                    range: Some(doc.mapper.range(k.text_range()).unwrap()),
+                })
+            }
+        }
+        NodeRef::Value(v) => match serde_json::to_value(node.into_node().to_value()) {
+            Ok(toml_value) => {
+                let docs = schemas
+                    .into_iter()
+                    .filter_map(|s| {
+                        let enum_doc = s.schema.enum_values.as_ref().and_then(|enum_values| {
+                            enum_values
+                                .iter()
+                                .enumerate()
+                                .find_map(|(enum_idx, enum_value)| {
+                                    if *enum_value == toml_value {
+                                        s.ext.docs.as_ref().and_then(|i| {
+                                            i.enum_values.as_ref().and_then(|e| {
+                                                e.get(enum_idx).map(|doc| (enum_idx, doc))
+                                            })
+                                        })
+                                    } else {
+                                        None
+                                    }
+                                })
+                        });
+
+                        if let Some((idx, enum_doc)) = enum_doc {
+                            if let Some(enum_doc) = enum_doc {
+                                let link = s.ext.links.as_ref().and_then(|l| {
+                                    l.enum_values.as_ref().and_then(|e| e.get(idx)).clone()
+                                });
+
+                                let link = match link {
+                                    Some(l) => l.clone(),
+                                    None => None,
+                                };
+
+                                return Some((enum_doc.clone(), link));
+                            }
+                        }
+                        None
+                    })
+                    .map(|(mut docs, link)| {
+                        if let Some(link) = link {
+                            docs = format!("[_<sup>more information</sup>_]({})\n\n{}", link, docs);
+                        }
+
+                        docs
+                    })
+                    .fold(String::new(), |mut all, s| {
+                        if !all.is_empty() {
+                            all += "\n---\n";
+                        }
+                        all += &s;
+                        all
+                    });
+
+                if docs.is_empty() {
+                    None
+                } else {
+                    Some(Hover {
+                        contents: HoverContents::Markup(MarkupContent {
+                            kind: MarkupKind::Markdown,
+                            value: docs,
+                        }),
+                        range: Some(doc.mapper.range(join_ranges(v.text_ranges())).unwrap()),
+                    })
+                }
+            }
+            Err(err) => {
+                log_debug!("invalid JSON value from TOML value: {}", err);
+                None
+            }
+        },
+        _ => None,
+    }))
 }
 
 pub(crate) async fn links(

@@ -15,13 +15,10 @@ macro_rules! impl_is_node_ref {
     }
 }
 
-use crate::{
-    dom::{self, NodeSyntax, TextRanges},
-    syntax::{
+use crate::{dom::{self, Node, NodeSyntax, TextRanges}, syntax::{
         SyntaxElement,
         SyntaxKind::{self, *},
-    },
-};
+    }};
 use rowan::{TextRange, TextSize};
 use smallvec::SmallVec;
 
@@ -118,6 +115,8 @@ impl_is_node_ref! {
 }
 
 impl NodeRef<'_> {
+
+
     pub fn text_ranges(&self) -> TextRanges {
         match self {
             NodeRef::Root(v) => v.text_ranges(),

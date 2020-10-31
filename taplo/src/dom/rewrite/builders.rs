@@ -1,8 +1,11 @@
 use super::{OldOrNew, RewriteBuilder};
 use crate::dom;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TableNode {
+    inline: bool,
+    part_of_array: bool,
+    key: Option<OldOrNew<dom::KeyNode>>,
     entries: Vec<OldOrNew<dom::EntryNode>>,
 }
 
@@ -21,6 +24,18 @@ impl TableNode {
         self.entries.extend(children.into_iter().map(Into::into));
         self
     }
+
+    pub fn inline(mut self) -> Self {
+        self.inline = true;
+        self
+    }
+
+    pub fn top_level(mut self, key: impl Into<OldOrNew<dom::KeyNode>>, array: bool) -> Self {
+        self.key = Some(key.into());
+        self.part_of_array = array;
+        self.inline = false;
+        self
+    }
 }
 
 impl RewriteBuilder for TableNode {
@@ -29,17 +44,23 @@ impl RewriteBuilder for TableNode {
     fn new() -> Self {
         Self {
             entries: Vec::new(),
+            inline: true,
+            part_of_array: false,
+            key: None,
         }
     }
 
     fn build(self) -> Self::NewNode {
         super::TableNode {
             entries: self.entries,
+            inline: self.inline,
+            part_of_array: self.part_of_array,
+            key: self.key,
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EntryNode {
     key: Option<OldOrNew<dom::KeyNode>>,
     value: Option<OldOrNew<dom::ValueNode>>,
@@ -70,11 +91,12 @@ impl RewriteBuilder for EntryNode {
     fn build(self) -> Self::NewNode {
         super::EntryNode {
             key: Box::new(self.key.expect("entry key is required").into()),
+            value: Box::new(self.value.expect("entry value is required").into()),
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct KeyNode {
     keys: Option<String>,
 }
@@ -100,7 +122,7 @@ impl RewriteBuilder for KeyNode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ValueNode {
     value: Option<super::ValueNode>,
 }
@@ -124,7 +146,7 @@ impl RewriteBuilder for ValueNode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IntegerNode {
     val: Option<i64>,
 }
@@ -150,7 +172,7 @@ impl RewriteBuilder for IntegerNode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StringNode {
     val: Option<String>,
 }
@@ -176,7 +198,7 @@ impl RewriteBuilder for StringNode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BoolNode {
     val: Option<bool>,
 }
@@ -202,7 +224,7 @@ impl RewriteBuilder for BoolNode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FloatNode {
     val: Option<f64>,
 }
@@ -228,7 +250,7 @@ impl RewriteBuilder for FloatNode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DateNode {}
 
 impl RewriteBuilder for DateNode {
@@ -243,7 +265,7 @@ impl RewriteBuilder for DateNode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ArrayNode {
     items: Vec<OldOrNew<dom::ValueNode>>,
 }

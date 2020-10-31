@@ -16,16 +16,36 @@
 //! but the ability to partially rewrite it is planned.
 use crate::{
     syntax::{SyntaxElement, SyntaxKind::*, SyntaxToken},
-    util::{unescape, StringExt},
+    util::{unescape, StrExt},
+    value::Value,
 };
 use indexmap::{indexmap, IndexMap};
 use rowan::{TextRange, TextSize};
-use std::{hash::Hash, iter::FromIterator, mem, rc::Rc};
+use smallvec::{smallvec, SmallVec};
+use std::{convert::TryFrom, convert::TryInto, hash::Hash, iter::FromIterator, mem, rc::Rc};
 
 #[macro_use]
 mod macros;
 
+pub type TextRanges = SmallVec<[TextRange; 5]>;
+
+#[cfg(feature = "rewrite")]
 pub mod rewrite;
+
+pub mod nodes {
+    pub use super::ArrayNode;
+    pub use super::BoolNode;
+    pub use super::DateNode;
+    pub use super::EntryNode;
+    pub use super::FloatNode;
+    pub use super::IntegerNode;
+    pub use super::KeyNode;
+    pub use super::Node;
+    pub use super::RootNode;
+    pub use super::StringNode;
+    pub use super::TableNode;
+    pub use super::ValueNode;
+}
 
 /// Casting allows constructing DOM nodes from syntax nodes.
 pub trait Cast: Sized + private::Sealed {
@@ -55,6 +75,7 @@ mod private {
         DateNode,
     );
 
+    #[cfg(feature = "rewrite")]
     dom_sealed!(
         rewrite::Node,
         rewrite::EntryNode,
@@ -69,6 +90,7 @@ mod private {
         rewrite::DateNode,
     );
 
+    #[cfg(feature = "rewrite")]
     dom_sealed!(
         rewrite::builders::TableNode,
         rewrite::builders::EntryNode,
@@ -91,6 +113,15 @@ pub enum Node {
     Key(KeyNode),
     Value(ValueNode),
     Array(ArrayNode),
+}
+
+impl_is! {Node;
+    is_root() -> Root;
+    is_table() -> Table;
+    is_entry() -> Entry;
+    is_key() -> Key;
+    is_value() -> Value;
+    is_array() -> Array;
 }
 
 dom_node_from!(
@@ -163,6 +194,10 @@ dom_node! {
 }
 
 impl RootNode {
+    pub fn text_ranges(&self) -> TextRanges {
+        smallvec![self.syntax.text_range()]
+    }
+
     pub fn entries(&self) -> &Entries {
         &self.entries
     }
@@ -198,7 +233,7 @@ impl Cast for RootNode {
                     };
 
                     if let Some(t) = tables.last_mut() {
-                        t.end_offset = table.syntax.text_range().start().into();
+                        t.end_offset = table.syntax.text_range().start();
                     }
 
                     tables.push(table);
@@ -210,30 +245,24 @@ impl Cast for RootNode {
                     };
 
                     if tables.is_empty() {
-                        if let Err(err) = entries.insert(entry) {
-                            errors.push(err);
-                            continue;
-                        }
+                        entries.insert(entry, &mut errors);
                         continue;
                     }
 
                     let table_count = tables.len();
 
-                    if let Err(err) = tables
+                    tables
                         .get_mut(table_count - 1)
                         .unwrap()
                         .entries
-                        .insert(entry)
-                    {
-                        errors.push(err);
-                    }
+                        .insert(entry, &mut errors);
                 }
                 _ => {}
             }
         }
 
         if let Some(t) = tables.last_mut() {
-            t.end_offset = root_syntax.text_range().end().into();
+            t.end_offset = root_syntax.text_range().end();
         }
 
         entries.add_tables(tables, &mut errors);
@@ -253,6 +282,9 @@ dom_node! {
     /// and also inline tables.
     #[derive(Debug, Clone, PartialEq, Eq, Hash)]
     pub struct TableNode {
+        /// Key for top-level tables.
+        key: Option<KeyNode>,
+
         /// Whether the table is part of an array
         /// of tables.
         array: bool,
@@ -295,16 +327,12 @@ impl TableNode {
         self.array
     }
 
-    pub fn key(&self) -> Option<KeyNode> {
-        self.syntax
-            .as_node()
-            .unwrap()
-            .first_child()
-            .and_then(|n| Cast::cast(n.into()))
+    pub fn key(&self) -> Option<&KeyNode> {
+        self.key.as_ref()
     }
 
-    pub fn text_ranges(&self) -> Vec<TextRange> {
-        let mut ranges = Vec::with_capacity(self.entries.len() + 1);
+    pub fn text_ranges(&self) -> TextRanges {
+        let mut ranges = SmallVec::with_capacity(self.entries.len() + 1);
 
         ranges.push(self.syntax().text_range().cover_offset(self.end_offset));
         ranges.extend(self.entries.iter().map(|(_, e)| e.syntax().text_range()));
@@ -331,6 +359,11 @@ impl Cast for TableNode {
                     pseudo: false,
                     inline: false,
                     array: syntax.kind() == TABLE_ARRAY_HEADER,
+                    key: syntax
+                        .as_node()
+                        .unwrap()
+                        .first_child()
+                        .and_then(|n| Cast::cast(n.into())),
                     syntax,
                 })
             }
@@ -345,6 +378,7 @@ impl Cast for TableNode {
                         .map(|entry| (entry.key().clone(), entry))
                         .collect(),
                 ),
+                key: None,
                 end_offset: syntax.text_range().end(),
                 inline: true,
                 array: false,
@@ -382,34 +416,45 @@ impl Entries {
         self.0.iter()
     }
 
-    fn insert(&mut self, mut entry: EntryNode) -> Result<(), Error> {
-        if let Some(existing_entry) = self.0.get(entry.key()) {
-            return Err(Error::DuplicateKey {
-                first: existing_entry.key().clone(),
-                second: entry.key().clone(),
-            });
-        }
+    fn insert(&mut self, mut entry: EntryNode, errors: &mut Vec<Error>) {
+        for (_, existing_entry) in self.0.iter_mut().rev() {
+            let existing_key = &existing_entry.key;
 
-        for (existing_key, existing_entry) in self.0.iter_mut().rev() {
+            if existing_key == &entry.key {
+                errors.push(Error::DuplicateKey {
+                    first: existing_entry.key().clone(),
+                    second: entry.key().clone(),
+                });
+                return;
+            }
+
             let existing_part_of = existing_key.is_part_of(entry.key());
             let existing_contains = existing_key.contains(entry.key());
+            let common_count = existing_key.common_prefix_count(entry.key());
 
             if existing_part_of || existing_contains {
-                if let ValueNode::Table(_) = &entry.value {
-                    return Err(Error::InlineTable {
-                        target: existing_key.clone(),
-                        key: entry.key.clone(),
-                    });
-                } else if let ValueNode::Table(_) = &existing_entry.value {
-                    return Err(Error::InlineTable {
-                        target: existing_key.clone(),
-                        key: entry.key.clone(),
-                    });
+                if let ValueNode::Table(t) = &entry.value {
+                    if t.is_inline() {
+                        errors.push(Error::InlineTable {
+                            target: existing_key.clone(),
+                            key: entry.key.clone(),
+                        });
+                        return;
+                    }
+                } else if let ValueNode::Table(t) = &existing_entry.value {
+                    if t.is_inline() {
+                        errors.push(Error::InlineTable {
+                            target: existing_key.clone(),
+                            key: entry.key.clone(),
+                        });
+                        return;
+                    }
                 } else if existing_key.key_count() != entry.key().key_count() {
-                    return Err(Error::DottedKeyConflict {
+                    errors.push(Error::DottedKeyConflict {
                         first: existing_key.clone(),
                         second: entry.key.clone(),
                     });
+                    return;
                 }
 
                 let common_prefix = existing_key.clone().common_prefix(entry.key());
@@ -423,9 +468,10 @@ impl Entries {
                     value: ValueNode::Table(TableNode {
                         syntax: common_prefix.syntax.clone(),
                         inline: false,
-                        end_offset: common_prefix.syntax().text_range().end(),
+                        end_offset: Default::default(),
                         pseudo: true,
                         array: false,
+                        key: None,
                         entries: Entries(indexmap! {
                             existing_entry.key.clone().without_prefix(&common_prefix) => mem::replace(existing_entry, EntryNode {
                                 syntax: common_prefix.syntax.clone(),
@@ -438,13 +484,55 @@ impl Entries {
                 };
 
                 *existing_entry = pseudo_table;
-                return Ok(());
+                return;
+            } else if common_count > 0 {
+                let mut common_prefix_key = existing_key.clone().common_prefix(entry.key());
+                common_prefix_key
+                    .additional_keys
+                    .push(entry.key().clone().common_prefix(&existing_key));
+
+                let mut pseudo_entries = Entries(IndexMap::with_capacity(2));
+
+                let existing_value = mem::take(&mut existing_entry.value);
+
+                pseudo_entries.0.insert(
+                    existing_key.clone().without_prefix(&common_prefix_key),
+                    EntryNode {
+                        syntax: existing_entry.syntax.clone(),
+                        key: existing_key.clone().without_prefix(&common_prefix_key),
+                        value: existing_value,
+                    },
+                );
+
+                pseudo_entries.0.insert(
+                    entry.key.clone().without_prefix(&common_prefix_key),
+                    EntryNode {
+                        syntax: entry.syntax,
+                        key: entry.key.without_prefix(&common_prefix_key),
+                        value: entry.value,
+                    },
+                );
+
+                let pseudo_table = EntryNode {
+                    syntax: common_prefix_key.clone().syntax,
+                    key: common_prefix_key.clone(),
+                    value: ValueNode::Table(TableNode {
+                        syntax: common_prefix_key.syntax.clone(),
+                        inline: false,
+                        end_offset: Default::default(),
+                        pseudo: true,
+                        array: false,
+                        key: None,
+                        entries: pseudo_entries,
+                    }),
+                };
+
+                *existing_entry = pseudo_table;
+                return;
             }
         }
 
         self.0.insert(entry.key().clone(), entry);
-
-        Ok(())
     }
 
     fn add_tables(&mut self, tables: Vec<TableNode>, errors: &mut Vec<Error>) {
@@ -463,10 +551,14 @@ impl Entries {
         table: TableNode,
         errors: &mut Vec<Error>,
     ) {
-        let mut key = alternative_key.unwrap_or_else(|| table.key().unwrap());
+        let mut key = alternative_key.unwrap_or_else(|| table.key().unwrap().clone());
 
-        for (existing_key, entry) in &mut self.0 {
-            if existing_key == &key {
+        for (_, entry) in &mut self.0 {
+            // We don't rely on the key values in the map,
+            // as the entry keys are modified anyway.
+            let existing_key = entry.key.clone();
+
+            if existing_key == key {
                 match entry.syntax().kind() {
                     TABLE_HEADER => {
                         errors.push(Error::DuplicateKey {
@@ -493,7 +585,7 @@ impl Entries {
                             return;
                         }
 
-                        arr.insert_table(key.without_prefix(existing_key).into(), table, errors)
+                        arr.insert_table(key.without_prefix(&existing_key).into(), table, errors)
                     }
                     ValueNode::Table(existing_table) => {
                         entry
@@ -502,7 +594,7 @@ impl Entries {
                             .push(key.clone().common_prefix(&existing_key));
 
                         existing_table.entries.insert_table(
-                            key.without_prefix(existing_key).into(),
+                            key.without_prefix(&existing_key).into(),
                             table,
                             errors,
                         )
@@ -514,7 +606,7 @@ impl Entries {
                 }
 
                 return;
-            } else if key.is_part_of(existing_key) {
+            } else if key.is_part_of(&existing_key) {
                 match &entry.value {
                     ValueNode::Table(_) => {
                         key.additional_keys
@@ -554,6 +646,55 @@ impl Entries {
                     }),
                 }
                 return;
+            } else if key.key_count() == existing_key.key_count()
+                && key.common_prefix_count(&existing_key) > 0
+            {
+                match &entry.value {
+                    ValueNode::Table(_) => {
+                        let mut common_prefix_key = key.clone().common_prefix(&existing_key);
+                        common_prefix_key
+                            .additional_keys
+                            .push(existing_key.clone().common_prefix(&key));
+
+                        let existing_value = mem::take(&mut entry.value);
+
+                        let mut pseudo_entries = Entries(IndexMap::with_capacity(2));
+
+                        pseudo_entries.0.insert(
+                            existing_key.clone().without_prefix(&common_prefix_key),
+                            EntryNode {
+                                syntax: entry.syntax.clone(),
+                                key: existing_key.clone().without_prefix(&common_prefix_key),
+                                value: existing_value,
+                            },
+                        );
+
+                        pseudo_entries.0.insert(
+                            key.clone().without_prefix(&common_prefix_key),
+                            EntryNode {
+                                syntax: entry.syntax.clone(),
+                                key: key.without_prefix(&common_prefix_key),
+                                value: ValueNode::Table(table),
+                            },
+                        );
+
+                        entry.key = common_prefix_key;
+                        entry.value = ValueNode::Table(TableNode {
+                            inline: false,
+                            end_offset: entry.syntax.text_range().end(),
+                            syntax: entry.syntax.clone(),
+                            key: None,
+                            pseudo: true,
+                            array: false,
+                            entries: pseudo_entries,
+                        });
+                    }
+                    _ => errors.push(Error::ExpectedTable {
+                        target: existing_key.clone(),
+                        key,
+                    }),
+                }
+                return;
             }
         }
 
@@ -573,9 +714,10 @@ impl Entries {
         array_table: TableNode,
         errors: &mut Vec<Error>,
     ) {
-        let key = alternative_key.unwrap_or_else(|| array_table.key().unwrap());
+        let key = alternative_key.unwrap_or_else(|| array_table.key().unwrap().clone());
 
-        for (existing_key, entry) in self.0.iter_mut().rev() {
+        for (_, entry) in self.0.iter_mut().rev() {
+            let existing_key = &entry.key.clone();
             if existing_key == &key {
                 match &mut entry.value {
                     ValueNode::Array(arr) => {
@@ -586,6 +728,8 @@ impl Entries {
                             });
                             return;
                         }
+
+                        entry.key.additional_keys.push(key);
 
                         arr.items.push(ValueNode::Table(array_table))
                     }
@@ -608,17 +752,29 @@ impl Entries {
                             return;
                         }
 
+                        entry
+                            .key
+                            .additional_keys
+                            .push(key.clone().common_prefix(existing_key));
+
                         arr.insert_table(
                             key.without_prefix(existing_key).into(),
                             array_table,
                             errors,
                         )
                     }
-                    ValueNode::Table(existing_table) => existing_table.entries.insert_table_array(
-                        key.without_prefix(existing_key).into(),
-                        array_table,
-                        errors,
-                    ),
+                    ValueNode::Table(existing_table) => {
+                        entry
+                            .key
+                            .additional_keys
+                            .push(key.clone().common_prefix(existing_key));
+
+                        existing_table.entries.insert_table_array(
+                            key.without_prefix(existing_key).into(),
+                            array_table,
+                            errors,
+                        )
+                    }
                     _ => errors.push(Error::ExpectedTable {
                         target: existing_key.clone(),
                         key,
@@ -791,12 +947,12 @@ impl ArrayNode {
             .and_then(|n| Cast::cast(n.into()))
     }
 
-    pub fn text_ranges(&self) -> Vec<TextRange> {
+    pub fn text_ranges(&self) -> TextRanges {
         if !self.tables {
-            return vec![self.syntax.text_range()];
+            return smallvec![self.syntax.text_range()];
         }
 
-        let mut ranges = Vec::with_capacity(self.items.len() + 1);
+        let mut ranges = SmallVec::with_capacity(self.items.len() + 1);
 
         ranges.push(self.syntax().text_range());
 
@@ -813,7 +969,7 @@ impl ArrayNode {
         table: TableNode,
         errors: &mut Vec<Error>,
     ) {
-        let key = alternative_key.unwrap_or_else(|| table.key().unwrap());
+        let key = alternative_key.unwrap_or_else(|| table.key().unwrap().clone());
 
         match self.items.last_mut().unwrap() {
             ValueNode::Table(last_table) => match table.syntax.kind() {
@@ -885,19 +1041,19 @@ impl EntryNode {
         self.value
     }
 
-    pub fn text_ranges(&self) -> Vec<TextRange> {
+    pub fn text_ranges(&self) -> TextRanges {
         match &self.value {
             ValueNode::Array(arr) => {
-                let mut ranges = vec![self.syntax.text_range()];
+                let mut ranges = smallvec![self.syntax.text_range()];
                 ranges.extend(arr.text_ranges());
                 ranges
             }
             ValueNode::Table(t) => {
-                let mut ranges = vec![self.syntax.text_range()];
+                let mut ranges = smallvec![self.syntax.text_range()];
                 ranges.extend(t.text_ranges());
                 ranges
             }
-            _ => vec![self.syntax().text_range()],
+            _ => smallvec![self.syntax().text_range()],
         }
     }
 
@@ -922,8 +1078,9 @@ impl EntryNode {
 
             self.value = ValueNode::Table(TableNode {
                 inline: false,
-                end_offset: inner_entry_syntax.text_range().end(),
+                end_offset: Default::default(),
                 syntax: inner_entry_syntax,
+                key: None,
                 pseudo: true,
                 array: false,
                 entries,
@@ -979,7 +1136,7 @@ dom_node_no_display! {
 
         // Hash and equality is based on only
         // the string values of the idents.
-        idents: Rc<Vec<SyntaxToken>>,
+        idents: Rc<SmallVec<[SyntaxToken; 10]>>,
 
         /// In case the same key appears multiple times (e.g. in multiple dotted keys)
         /// additional keys will be stored in this.
@@ -1052,9 +1209,9 @@ impl KeyNode {
     }
 
     /// retains n idents from the left,
-    /// e.g.: outer.inner => super
+    /// e.g.: outer.inner => outer
     /// there will be at least one ident remaining
-    pub fn outer(mut self, n: usize) -> Self {
+    pub fn skip_left(mut self, n: usize) -> Self {
         let skip = usize::min(
             self.mask_visible - 1,
             self.mask_visible.checked_sub(n).unwrap_or_default(),
@@ -1063,8 +1220,7 @@ impl KeyNode {
         self.mask_visible -= skip;
 
         for key in &mut self.additional_keys {
-            // FIXME avoid a clone here
-            *key = key.clone().outer(n);
+            *key = key.clone().skip_left(n);
         }
 
         self
@@ -1073,14 +1229,13 @@ impl KeyNode {
     /// skips n idents from the left,
     /// e.g.: outer.inner => inner
     /// there will be at least one ident remaining
-    pub fn inner(mut self, n: usize) -> Self {
+    pub fn retain_left(mut self, n: usize) -> Self {
         let skip = usize::min(self.mask_visible - 1, n);
         self.mask_left += skip;
         self.mask_visible -= skip;
 
         for key in &mut self.additional_keys {
-            // FIXME avoid a clone here
-            *key = key.clone().inner(n);
+            *key = key.clone().retain_left(n);
         }
 
         self
@@ -1119,9 +1274,9 @@ impl KeyNode {
             .fold(range, |total, id| total.cover(id.text_range()))
     }
 
-    pub fn text_ranges(&self) -> Vec<TextRange> {
-        let mut ranges = vec![self.text_range()];
-        ranges.extend(self.additional_keys.iter().map(|k| k.syntax().text_range()));
+    pub fn text_ranges(&self) -> TextRanges {
+        let mut ranges = smallvec![self.text_range()];
+        ranges.extend(self.additional_keys.iter().map(|k| k.text_range()));
 
         ranges
     }
@@ -1131,7 +1286,7 @@ impl KeyNode {
         let count = self.common_prefix_count(other);
 
         if count > 0 {
-            self.inner(count)
+            self.retain_left(count)
         } else {
             self
         }
@@ -1139,17 +1294,17 @@ impl KeyNode {
 
     fn common_prefix(self, other: &KeyNode) -> Self {
         let count = self.common_prefix_count(other);
-        self.outer(count)
+        self.skip_left(count)
     }
 
     fn prefix(self) -> Self {
         let count = self.key_count();
-        self.outer(count - 1)
+        self.skip_left(count - 1)
     }
 
     fn last(self) -> Self {
         let count = self.key_count();
-        self.inner(count)
+        self.retain_left(count)
     }
 }
 
@@ -1176,7 +1331,7 @@ impl Cast for KeyNode {
             None
         } else {
             element.clone().into_node().and_then(|n| {
-                let i: Vec<SyntaxToken> = n
+                let i: SmallVec<[SyntaxToken; 10]> = n
                     .children_with_tokens()
                     .filter_map(|c| {
                         if let rowan::NodeOrToken::Token(t) = c {
@@ -1226,16 +1381,16 @@ impl Default for ValueNode {
 }
 
 impl ValueNode {
-    pub fn text_ranges(&self) -> Vec<TextRange> {
+    pub fn text_ranges(&self) -> TextRanges {
         match self {
-            ValueNode::Bool(v) => vec![v.syntax().text_range()],
-            ValueNode::String(v) => vec![v.syntax().text_range()],
-            ValueNode::Integer(v) => vec![v.syntax().text_range()],
-            ValueNode::Float(v) => vec![v.syntax().text_range()],
+            ValueNode::Bool(v) => smallvec![v.syntax().text_range()],
+            ValueNode::String(v) => smallvec![v.syntax().text_range()],
+            ValueNode::Integer(v) => smallvec![v.syntax().text_range()],
+            ValueNode::Float(v) => smallvec![v.syntax().text_range()],
             ValueNode::Array(v) => v.text_ranges(),
-            ValueNode::Date(v) => vec![v.syntax().text_range()],
+            ValueNode::Date(v) => smallvec![v.syntax().text_range()],
             ValueNode::Table(v) => v.text_ranges(),
-            ValueNode::Invalid(el) => vec![el.text_range()],
+            ValueNode::Invalid(el) => smallvec![el.text_range()],
             ValueNode::Empty => unreachable!("empty value"),
         }
     }
@@ -1334,6 +1489,13 @@ impl From<IntegerNode> for Node {
 impl IntegerNode {
     pub fn repr(&self) -> IntegerRepr {
         self.repr
+    }
+
+    pub fn as_i64(&self) -> i64 {
+        match Value::try_from(self.clone()).unwrap() {
+            Value::Integer(i) => i,
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -1558,3 +1720,158 @@ impl core::fmt::Display for Error {
     }
 }
 impl std::error::Error for Error {}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub enum PathKey {
+    Key(String),
+    Index(usize),
+}
+
+impl ToString for PathKey {
+    fn to_string(&self) -> String {
+        match self {
+            PathKey::Key(v) => v.clone(),
+            PathKey::Index(v) => v.to_string(),
+        }
+    }
+}
+
+impl From<String> for PathKey {
+    fn from(s: String) -> Self {
+        Self::Key(s)
+    }
+}
+
+impl From<&str> for PathKey {
+    fn from(s: &str) -> Self {
+        Self::Key(s.into())
+    }
+}
+
+impl From<usize> for PathKey {
+    fn from(n: usize) -> Self {
+        Self::Index(n)
+    }
+}
+
+impl From<i32> for PathKey {
+    fn from(n: i32) -> Self {
+        Self::Index(n.try_into().unwrap())
+    }
+}
+
+impl From<i64> for PathKey {
+    fn from(n: i64) -> Self {
+        Self::Index(n.try_into().unwrap())
+    }
+}
+
+impl From<u32> for PathKey {
+    fn from(n: u32) -> Self {
+        Self::Index(n.try_into().unwrap())
+    }
+}
+
+impl From<u64> for PathKey {
+    fn from(n: u64) -> Self {
+        Self::Index(n.try_into().unwrap())
+    }
+}
+
+#[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
+pub struct Path {
+    keys: Rc<SmallVec<[PathKey; 10]>>,
+    mask_left: usize,
+    mask_right: usize,
+}
+
+impl<K: Into<PathKey>> FromIterator<K> for Path {
+    fn from_iter<T: IntoIterator<Item = K>>(iter: T) -> Self {
+        Self {
+            keys: Rc::new(iter.into_iter().map(Into::into).collect()),
+            mask_left: 0,
+            mask_right: 0,
+        }
+    }
+}
+
+impl Path {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Creates a new path with a new segment added to the end.
+    ///
+    /// This will clone the underlying storage.
+    pub fn join<K: Into<PathKey>>(&self, key: K) -> Self {
+        let mut new_keys: SmallVec<[PathKey; 10]> = self.keys().cloned().collect();
+        new_keys.push(key.into());
+        Self {
+            keys: Rc::new(new_keys),
+            mask_left: 0,
+            mask_right: 0,
+        }
+    }
+
+    pub fn keys(&self) -> impl Iterator<Item = &PathKey> {
+        self.keys[..self.keys.len() - self.mask_right]
+            .iter()
+            .skip(self.mask_left)
+    }
+
+    pub fn dotted(&self) -> String {
+        self.keys()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .join(".")
+    }
+
+    pub fn len(&self) -> usize {
+        self.keys.len() - self.mask_left - self.mask_right
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Returns a new path retaining n keys from the left,
+    /// e.g.: outer.inner => outer
+    pub fn retain_left(&self, n: usize) -> Self {
+        let mut new = self.clone();
+        let skip = usize::min(self.len(), self.len().checked_sub(n).unwrap_or_default());
+        new.mask_right += skip;
+        new
+    }
+
+    /// Returns a new path skipping n keys from the left,
+    /// e.g.: outer.inner => inner
+    pub fn skip_left(&self, n: usize) -> Self {
+        let mut new = self.clone();
+        let skip = usize::min(self.len(), n);
+        new.mask_left += skip;
+        new
+    }
+
+    /// Returns a new path skipping n keys from the right,
+    /// e.g.: outer.inner => outer
+    pub fn skip_right(&self, n: usize) -> Self {
+        let mut new = self.clone();
+        let skip = usize::min(self.len(), n);
+        new.mask_right += skip;
+        new
+    }
+}
+
+#[macro_export]
+macro_rules! path {
+    ($($idx:expr,)*) => {
+        {
+            let mut p = $crate::dom::Path::new();
+            $(p = p.join($idx);)*
+            p
+        }
+    };
+    ($($idx:expr),*) => {
+        path!($(idx,)*)
+    };
+}

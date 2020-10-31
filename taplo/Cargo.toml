@@ -12,7 +12,8 @@ repository = "https://github.com/tamasfe/taplo"
 version = "1.0.0-alpha.1"
 
 [features]
-default = ["serde", "verify"]
+default = ["serde", "verify", "rewrite"]
+rewrite = []
 
 [dependencies]
 chrono = "0.4.11"
@@ -22,6 +23,7 @@ lsp-types = { version = "0.74.1" }
 rowan = "0.10.0"
 serde = { version = "1.0", optional = true }
 verify = { version = "0.3", features = ["schemars"], optional = true }
+smallvec = "1.4"
 
 # Don't use, only for schema generation
 schemars = { version = "0.8.0-alpha-4", optional = true }

@@ -35,7 +35,10 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                             folding_ranges.push(FoldingRange {
                                 start_line: mapper.position(h.start()).unwrap().line,
                                 start_character: None,
-                                end_line: mapper.position_end(e.end()).unwrap().line,
+                                end_line: mapper
+                                    .position(e.end().checked_sub(1.into()).unwrap_or_default())
+                                    .unwrap()
+                                    .line,
                                 end_character: None,
                                 kind: Some(FoldingRangeKind::Region),
                             });
@@ -70,8 +73,14 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                                     {
                                         let start =
                                             mapper.position(d.text_range().start()).unwrap();
-                                        let end =
-                                            mapper.position_end(d.text_range().end()).unwrap();
+                                        let end = mapper
+                                            .position(
+                                                d.text_range()
+                                                    .end()
+                                                    .checked_sub(1.into())
+                                                    .unwrap_or_default(),
+                                            )
+                                            .unwrap();
 
                                         folding_ranges.push(FoldingRange {
                                             start_line: start.line,
@@ -86,8 +95,14 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                                     if d.as_token().unwrap().text().contains('\n') {
                                         let start =
                                             mapper.position(d.text_range().start()).unwrap();
-                                        let end =
-                                            mapper.position_end(d.text_range().end()).unwrap();
+                                        let end = mapper
+                                            .position(
+                                                d.text_range()
+                                                    .end()
+                                                    .checked_sub(1.into())
+                                                    .unwrap_or_default(),
+                                            )
+                                            .unwrap();
 
                                         folding_ranges.push(FoldingRange {
                                             start_line: start.line,
@@ -145,7 +160,10 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
             folding_ranges.push(FoldingRange {
                 start_line: mapper.position(h.start()).unwrap().line,
                 start_character: None,
-                end_line: mapper.position_end(e.end()).unwrap().line,
+                end_line: mapper
+                    .position(e.end().checked_sub(1.into()).unwrap_or_default())
+                    .unwrap()
+                    .line,
                 end_character: None,
                 kind: Some(FoldingRangeKind::Region),
             });

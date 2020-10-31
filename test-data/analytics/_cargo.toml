@@ -29,8 +29,6 @@ taplo                = { path = "../taplo", features = ["serde", "verify"] }
 verify               = { version = "0.3", features = ["schemars"] }
 wasm-bindgen         = { version = "^0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4.12"
-smallvec = "1.4"
-itertools = "0.9"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -47,3 +45,7 @@ wee_alloc = { version = "0.4.2", optional = true }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.2"
+
+[]
+
+asd.bsd

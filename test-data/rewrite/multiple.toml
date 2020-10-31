@@ -1,0 +1,13 @@
+[remove_this]
+
+[remove_this.subtable]
+value = "should be removed"
+
+[table]
+rewrite_me = 2
+
+[[table.arr]]
+rewrite_my_value = 3
+
+[[table.arr]]
+rewrite_my_value = 3

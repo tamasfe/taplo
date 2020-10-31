@@ -59,12 +59,13 @@ mod serde;
 #[cfg(feature = "verify")]
 pub mod verify;
 
+pub mod util;
 pub mod dom;
 pub mod formatter;
 pub mod parser;
 pub mod syntax;
-pub mod util;
 pub mod value;
+pub mod analytics;
 
 #[cfg(test)]
 mod tests;

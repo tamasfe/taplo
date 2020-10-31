@@ -1,19 +1,25 @@
-use crate::request_ext;
 use crate::request_ext::*;
 use crate::{
-    analytics::{collect_for_schema, Key, PositionInfo},
     read_file,
     schema::{get_schema_objects, BUILTIN_SCHEME},
     Configuration, Document, HashRegex, World,
 };
+use crate::{request_ext, schema::ExtendedSchema};
 use indexmap::IndexMap;
+use itertools::Itertools;
 use lsp_async_stub::{rpc::Error, Context, Params, RequestWriter};
 use lsp_types::*;
 use regex::Regex;
+use rowan::TextRange;
 use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
+use smallvec::SmallVec;
 use std::{collections::HashMap, convert::TryFrom, mem};
-use taplo::{dom::NodeSyntax, formatter, util::coords::Mapper};
+use taplo::{
+    dom::{NodeSyntax, TextRanges},
+    formatter,
+    util::coords::Mapper,
+};
 use verify::Verify;
 use wasm_bindgen_futures::spawn_local;
 
@@ -451,67 +457,68 @@ pub(crate) async fn hover(
     mut context: Context<World>,
     params: Params<HoverParams>,
 ) -> Result<Option<Hover>, Error> {
-    let p = params.required()?;
+    // let p = params.required()?;
 
-    let uri = p.text_document_position_params.text_document.uri;
-    let pos = p.text_document_position_params.position;
+    // let uri = p.text_document_position_params.text_document.uri;
+    // let pos = p.text_document_position_params.position;
 
-    let w = context.world().lock().await;
+    // let w = context.world().lock().await;
 
-    if !w.configuration.schema.enabled.unwrap_or_default() {
-        return Ok(None);
-    }
+    // if !w.configuration.schema.enabled.unwrap_or_default() {
+    //     return Ok(None);
+    // }
 
-    let doc: Document = match w.documents.get(&uri) {
-        Some(d) => d.clone(),
-        None => return Err(Error::new("document not found")),
-    };
+    // let doc: Document = match w.documents.get(&uri) {
+    //     Some(d) => d.clone(),
+    //     None => return Err(Error::new("document not found")),
+    // };
 
-    let schema: RootSchema = match w.get_schema_by_uri(&uri) {
-        Some(s) => s.clone(),
-        None => return Ok(None),
-    };
+    // let schema: RootSchema = match w.get_schema_by_uri(&uri) {
+    //     Some(s) => s.clone(),
+    //     None => return Ok(None),
+    // };
 
-    let info = PositionInfo::new(doc, pos);
+    // let info = PositionInfo::new(doc, pos);
 
-    let range = info.node.as_ref().and_then(|n| match n {
-        taplo::dom::Node::Key(k) => info.doc.mapper.range(k.syntax().text_range()),
-        _ => None,
-    });
+    // let range = info.node.as_ref().and_then(|n| match n {
+    //     taplo::dom::Node::Key(k) => info.doc.mapper.range(k.syntax().text_range()),
+    //     _ => None,
+    // });
 
-    let schemas = get_schema_objects(info.keys, &schema);
+    // let schemas = get_schema_objects(info.keys, &schema);
 
-    Ok(schemas
-        .first()
-        .and_then(|s| {
-            s.ext
-                .docs
-                .as_ref()
-                .and_then(|docs| docs.main.clone())
-                .or_else(|| {
-                    s.schema
-                        .metadata
-                        .as_ref()
-                        .and_then(|meta| meta.description.clone())
-                })
-                .map(|desc| (desc, s.ext.links.as_ref().and_then(|l| l.key.as_ref())))
-        })
-        .and_then(|desc| range.map(|range| (desc, range)))
-        .map(|((mut value, link), range)| {
-            if !w.configuration.schema.links.unwrap_or_default() {
-                if let Some(link) = link {
-                    value = format!("[_<sup>more information</sup>_]({})\n\n{}", link, value);
-                }
-            }
+    // Ok(schemas
+    //     .first()
+    //     .and_then(|s| {
+    //         s.ext
+    //             .docs
+    //             .as_ref()
+    //             .and_then(|docs| docs.main.clone())
+    //             .or_else(|| {
+    //                 s.schema
+    //                     .metadata
+    //                     .as_ref()
+    //                     .and_then(|meta| meta.description.clone())
+    //             })
+    //             .map(|desc| (desc, s.ext.links.as_ref().and_then(|l| l.key.as_ref())))
+    //     })
+    //     .and_then(|desc| range.map(|range| (desc, range)))
+    //     .map(|((mut value, link), range)| {
+    //         if !w.configuration.schema.links.unwrap_or_default() {
+    //             if let Some(link) = link {
+    //                 value = format!("[_<sup>more information</sup>_]({})\n\n{}", link, value);
+    //             }
+    //         }
 
-            Hover {
-                contents: HoverContents::Markup(MarkupContent {
-                    kind: MarkupKind::Markdown,
-                    value,
-                }),
-                range: Some(range),
-            }
-        }))
+    //         Hover {
+    //             contents: HoverContents::Markup(MarkupContent {
+    //                 kind: MarkupKind::Markdown,
+    //                 value,
+    //             }),
+    //             range: Some(range),
+    //         }
+    //     }))
+    Ok(None)
 }
 
 pub(crate) async fn links(
@@ -524,8 +531,8 @@ pub(crate) async fn links(
 
     let w = context.world().lock().await;
 
-    if !w.configuration.schema.enabled.unwrap_or_default()
-        || !w.configuration.schema.links.unwrap_or_default()
+    if !w.configuration.schema.enabled.unwrap_or(false)
+        || !w.configuration.schema.links.unwrap_or(false)
     {
         return Ok(None);
     }
@@ -542,85 +549,56 @@ pub(crate) async fn links(
 
     let dom = doc.parse.clone().into_dom();
 
-    let keys = collect_for_schema(&dom.into(), Vec::new());
+    let mut links: Vec<DocumentLink> = Vec::new();
 
-    let mut links = Vec::with_capacity(keys.len());
+    let key_links = dom
+        .iter()
+        .filter(|(_, n)| n.is_key())
+        .unique_by(|(p, _)| p.clone())
+        .filter_map(|(path, node)| {
+            let schemas = get_schema_objects(path, &schema);
 
-    for key in keys {
-        let current_key = match key.key {
-            Some(k) => k,
-            None => continue,
-        };
-
-        let mut all_keys = key.parent_keys;
-        all_keys.push(Key::Property(current_key.full_key_string_stripped()));
-
-        let objects = get_schema_objects(all_keys, &schema);
-
-        let key_link = objects
-            .first()
-            .and_then(|s| s.ext.links.as_ref().and_then(|links| links.key.clone()));
-
-        if let Some(link) = key_link {
-            let target = match Url::parse(&link) {
-                Ok(u) => u,
-                Err(e) => {
-                    log_error!("invalid link in schema: {}", e);
-                    continue;
-                }
-            };
-
-            for text_range in current_key.text_ranges() {
-                links.push(DocumentLink {
-                    range: doc.mapper.range(text_range).unwrap(),
-                    target: target.clone(),
-                    tooltip: None,
-                })
-            }
-        }
-
-        if let Some(v) = key.value {
-            if let Some(val) = v.syntax().as_token() {
-                'outer: for obj in objects {
-                    if let Some(e) = &obj.schema.enum_values {
-                        let enum_links = match obj.ext.links.and_then(|l| l.enum_values) {
-                            Some(l) => l,
-                            None => {
-                                continue;
-                            }
-                        };
-
-                        for (i, en_val) in e.iter().enumerate() {
-                            if let Some(link_item) = enum_links.get(i) {
-                                if let Some(link) = link_item {
-                                    let en_val_string = serde_json::to_string(en_val).unwrap();
-
-                                    if en_val_string.trim() == val.to_string().trim() {
-                                        let target = match Url::parse(link) {
-                                            Ok(u) => u,
-                                            Err(e) => {
-                                                log_error!("invalid link in schema: {}", e);
-                                                continue;
-                                            }
-                                        };
-
-                                        links.push(DocumentLink {
-                                            range: doc.mapper.range(v.syntax().text_range()).unwrap(),
-                                            target,
-                                            tooltip: None,
-                                        });
-                                        break 'outer;
-                                    }
+            if schemas.is_empty() {
+                None
+            } else {
+                Some(
+                    schemas
+                        .into_iter()
+                        .filter_map(|s| s.ext.links.as_ref().and_then(|links| links.key.clone()))
+                        .unique()
+                        .map(move |link| (link, node.clone()))
+                        .filter_map(|(link, node)| {
+                            let target = match Url::parse(&link) {
+                                Ok(u) => u,
+                                Err(e) => {
+                                    log_error!("invalid link in schema: {}", e);
+                                    return None;
                                 }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+                            };
 
-    Ok(Some(links))
+                            Some(
+                                node.clone()
+                                    .text_ranges()
+                                    .iter()
+                                    .map(|text_range| DocumentLink {
+                                        range: doc.mapper.range(*text_range).unwrap(),
+                                        target: target.clone(),
+                                        tooltip: None,
+                                    })
+                                    .collect::<Vec<DocumentLink>>(),
+                            )
+                        }),
+                )
+            }
+        });
+
+    links.extend(key_links.flatten().flatten());
+
+    if links.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(links))
+    }
 }
 
 pub(crate) async fn toml_to_json(

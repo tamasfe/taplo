@@ -1,5 +1,6 @@
 pub mod coords;
 mod escape;
+pub mod syntax;
 
 use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
 pub use escape::check_escape;
@@ -98,11 +99,11 @@ pub(crate) mod allowed_chars {
     }
 }
 
-pub trait StringExt {
+pub trait StrExt {
     fn remove_prefix<'a>(&'a self, p: &str) -> &'a str;
     fn remove_suffix<'a>(&'a self, p: &str) -> &'a str;
 }
-impl StringExt for &str {
+impl StrExt for &str {
     fn remove_prefix<'a>(&'a self, p: &str) -> &'a str {
         if self.starts_with(p) {
             &self[p.len()..]

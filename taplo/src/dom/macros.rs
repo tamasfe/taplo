@@ -160,3 +160,18 @@ macro_rules! rewrite_value_node_from {
 
     };
 }
+
+macro_rules! impl_is {
+    ($name:ident;$($method_name:ident() -> $variant:ident;)*) => {
+        impl $name {
+            $(
+                pub fn $method_name(&self) -> bool {
+                    match self {
+                        $name::$variant(_) => true,
+                        _ => false
+                    }
+                }
+            )*
+        }
+    }
+}

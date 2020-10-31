@@ -1,0 +1,10 @@
+
+
+[table]
+rewritten = 2
+
+[[table.arr]]
+rewrite_my_value = 0
+
+[[table.arr]]
+rewrite_my_value = 1

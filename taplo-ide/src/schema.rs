@@ -1,9 +1,11 @@
-use crate::{analytics::Key, WorldState};
+use crate::WorldState;
 use schemars::{
     schema::{InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec},
     Map,
 };
 use serde::{Deserialize, Serialize};
+use smallvec::{smallvec, SmallVec};
+use taplo::dom::{self, PathKey};
 
 pub const EXTENSION_KEY: &str = "evenBetterToml";
 pub const BUILTIN_SCHEME: &str = "toml_builtin";
@@ -28,7 +30,9 @@ pub fn register_cargo_schema(world: &mut WorldState) {
     //     .insert(cargo_re.into(), cargo_schema_name.clone());
 
     world.schemas.insert(cargo_schema_name, cargo_schema);
-    world.schemas.insert(pyproject_schema_name, pyproject_schema);
+    world
+        .schemas
+        .insert(pyproject_schema_name, pyproject_schema);
 }
 
 #[derive(Debug, Clone)]
@@ -67,11 +71,14 @@ impl<'s> From<&'s SchemaObject> for ExtendedSchema<'s> {
     }
 }
 
-pub fn get_schema_objects<'s>(keys: Vec<Key>, schema: &'s RootSchema) -> Vec<ExtendedSchema<'s>> {
-    get_schema_objects_impl(keys, &schema.definitions, (&schema.schema).into())
+pub fn get_schema_objects<'s>(
+    path: dom::Path,
+    schema: &'s RootSchema,
+) -> SmallVec<[ExtendedSchema<'s>; 10]> {
+    get_schema_objects_impl(path, &schema.definitions, (&schema.schema).into())
 }
 
-pub(crate) fn get_ext(schema: &SchemaObject) -> ExtMeta {
+pub fn get_ext(schema: &SchemaObject) -> ExtMeta {
     schema
         .extensions
         .get(EXTENSION_KEY)
@@ -86,35 +93,35 @@ pub(crate) fn get_ext(schema: &SchemaObject) -> ExtMeta {
 }
 
 fn get_schema_objects_impl<'s>(
-    mut keys: Vec<Key>,
+    path: dom::Path,
     defs: &'s Map<String, Schema>,
     mut schema: ExtendedSchema<'s>,
-) -> Vec<ExtendedSchema<'s>> {
+) -> SmallVec<[ExtendedSchema<'s>; 10]> {
     if schema.schema.is_ref() {
         schema = match resolve_object_ref(defs, schema) {
             Some(s) => s,
-            None => return Vec::new(),
+            None => return SmallVec::new(),
         }
     }
 
-    if keys.is_empty() {
+    if path.is_empty() {
         let subs = collect_subschemas(defs, schema.clone());
-        let mut schemas = vec![schema];
+        let mut schemas = smallvec![schema];
         schemas.extend(subs);
 
         schemas
     } else {
-        let mut schemas = Vec::new();
+        let mut schemas = SmallVec::new();
         let subs = collect_subschemas(defs, schema.clone());
 
         for sub in subs {
-            schemas.extend(get_schema_objects_impl(keys.clone(), defs, sub));
+            schemas.extend(get_schema_objects_impl(path.clone(), defs, sub));
         }
 
-        let key = keys.remove(0);
+        let key = path.keys().next().unwrap();
 
         match key {
-            Key::Index(idx) => {
+            PathKey::Index(idx) => {
                 if let Some(items) = schema
                     .schema
                     .array
@@ -125,19 +132,19 @@ fn get_schema_objects_impl<'s>(
                         schemars::schema::SingleOrVec::Single(item_schema) => {
                             if let Schema::Object(item_obj) = &**item_schema {
                                 schemas.extend(get_schema_objects_impl(
-                                    keys,
+                                    path.skip_left(1),
                                     defs,
                                     item_obj.into(),
                                 ));
                             }
                         }
                         schemars::schema::SingleOrVec::Vec(item_schemas) => {
-                            if let Some(item_obj) = item_schemas.get(idx).and_then(|s| match s {
+                            if let Some(item_obj) = item_schemas.get(*idx).and_then(|s| match s {
                                 Schema::Bool(_) => None,
                                 Schema::Object(o) => Some(o),
                             }) {
                                 schemas.extend(get_schema_objects_impl(
-                                    keys,
+                                    path.skip_left(1),
                                     defs,
                                     item_obj.into(),
                                 ));
@@ -146,13 +153,13 @@ fn get_schema_objects_impl<'s>(
                     }
                 }
             }
-            Key::Property(prop) => {
+            PathKey::Key(key) => {
                 if let Some(obj) = &schema.schema.object {
-                    for (key, prop_schema) in &obj.properties {
-                        if &prop == key {
+                    for (property, prop_schema) in &obj.properties {
+                        if key == property {
                             if let Schema::Object(prop_obj) = prop_schema {
                                 schemas.extend(get_schema_objects_impl(
-                                    keys,
+                                    path.skip_left(1),
                                     defs,
                                     prop_obj.into(),
                                 ));
@@ -164,10 +171,10 @@ fn get_schema_objects_impl<'s>(
                     for (pattern, prop_schema) in &obj.pattern_properties {
                         let re = regex::Regex::new(pattern).unwrap();
 
-                        if re.is_match(&prop) {
+                        if re.is_match(key) {
                             if let Schema::Object(prop_obj) = prop_schema {
                                 schemas.extend(get_schema_objects_impl(
-                                    keys,
+                                    path.skip_left(1),
                                     defs,
                                     prop_obj.into(),
                                 ));
@@ -178,7 +185,7 @@ fn get_schema_objects_impl<'s>(
 
                     if let Some(additional_schema) = &obj.additional_properties {
                         if let Schema::Object(add_obj) = &**additional_schema {
-                            schemas.extend(get_schema_objects_impl(keys, defs, add_obj.into()));
+                            schemas.extend(get_schema_objects_impl(path, defs, add_obj.into()));
                         }
                     }
                 }
@@ -192,8 +199,8 @@ fn get_schema_objects_impl<'s>(
 fn collect_subschemas<'s>(
     defs: &'s Map<String, Schema>,
     schema: ExtendedSchema<'s>,
-) -> Vec<ExtendedSchema<'s>> {
-    let mut schemas: Vec<ExtendedSchema> = Vec::new();
+) -> SmallVec<[ExtendedSchema<'s>; 10]> {
+    let mut schemas = SmallVec::new();
     let ext = schema.ext;
 
     if let Some(subs) = &schema.schema.subschemas {

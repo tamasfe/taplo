@@ -1,0 +1,12 @@
+rewritten = 2
+
+[table]
+rewritten = 2
+
+[table.subtable.rewritten]
+val = 2
+
+[[arr.rewritten]]
+[[arr.rewritten]]
+rewritten = "rewrite_me"
+[[arr.rewritten]]

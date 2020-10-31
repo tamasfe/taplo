@@ -484,88 +484,50 @@ pub(crate) async fn hover(
     let query = dom.query_position(doc.mapper.offset(pos).unwrap());
 
     let schemas = get_schema_objects(query.after.path, &schema);
+    let syntax_range = query.after.syntax.range.clone();
 
-    Ok(query.after.nodes.last().and_then(|node| match node {
-        NodeRef::Key(k) => {
-            let docs = schemas
-                .into_iter()
-                .filter_map(|s| {
-                    let docs = s.ext.docs.as_ref().and_then(|d| d.main.clone());
-                    let link = s.ext.links.as_ref().and_then(|l| l.key.clone());
-
-                    match docs {
-                        Some(d) => Some((d, link)),
-                        None => None,
-                    }
-                })
-                .map(|(mut docs, link)| {
-                    if let Some(link) = link {
-                        docs = format!("[_<sup>more information</sup>_]({})\n\n{}", link, docs);
-                    }
-
-                    docs
-                })
-                .fold(String::new(), |mut all, s| {
-                    if !all.is_empty() {
-                        all += "\n---\n";
-                    }
-                    all += &s;
-                    all
-                });
-
-            if docs.is_empty() {
-                None
-            } else {
-                Some(Hover {
-                    contents: HoverContents::Markup(MarkupContent {
-                        kind: MarkupKind::Markdown,
-                        value: docs,
-                    }),
-                    range: Some(doc.mapper.range(k.text_range()).unwrap()),
-                })
-            }
-        }
-        NodeRef::Value(v) => match serde_json::to_value(node.into_node().to_value()) {
-            Ok(toml_value) => {
+    Ok(query
+        .after
+        .nodes
+        .into_iter()
+        // We only care about keys and values.
+        .filter(|n| n.is_key() || n.is_value())
+        // We make sure that we work with only the most accurate key.
+        .filter(|n| match n {
+            NodeRef::Key(k) => k.key_count() == 1,
+            _ => true,
+        })
+        .last()
+        .and_then(|node| match node {
+            NodeRef::Key(k) => {
                 let docs = schemas
                     .into_iter()
                     .filter_map(|s| {
-                        let enum_doc = s.schema.enum_values.as_ref().and_then(|enum_values| {
-                            enum_values
-                                .iter()
-                                .enumerate()
-                                .find_map(|(enum_idx, enum_value)| {
-                                    if *enum_value == toml_value {
-                                        s.ext.docs.as_ref().and_then(|i| {
-                                            i.enum_values.as_ref().and_then(|e| {
-                                                e.get(enum_idx).map(|doc| (enum_idx, doc))
-                                            })
-                                        })
-                                    } else {
-                                        None
-                                    }
-                                })
+                        let docs = s.ext.docs.as_ref().and_then(|d| d.main.clone());
+                        let link = s.ext.links.as_ref().and_then(|l| l.key.clone());
+
+                        let docs = docs.or_else(|| {
+                            s.schema
+                                .metadata
+                                .as_ref()
+                                .and_then(|m| m.description.clone())
                         });
 
-                        if let Some((idx, enum_doc)) = enum_doc {
-                            if let Some(enum_doc) = enum_doc {
-                                let link = s.ext.links.as_ref().and_then(|l| {
-                                    l.enum_values.as_ref().and_then(|e| e.get(idx)).clone()
-                                });
-
-                                let link = match link {
-                                    Some(l) => l.clone(),
-                                    None => None,
-                                };
-
-                                return Some((enum_doc.clone(), link));
-                            }
+                        match docs {
+                            Some(d) => Some((d, link)),
+                            None => None,
                         }
-                        None
                     })
                     .map(|(mut docs, link)| {
-                        if let Some(link) = link {
-                            docs = format!("[_<sup>more information</sup>_]({})\n\n{}", link, docs);
+                        if !w.configuration.schema.enabled.unwrap_or(false)
+                            || !w.configuration.schema.links.unwrap_or(false)
+                        {
+                            if let Some(link) = link {
+                                docs = format!(
+                                    "[_<sup>more information</sup>_]({})\n\n{}",
+                                    link, docs
+                                );
+                            }
                         }
 
                         docs
@@ -586,17 +548,110 @@ pub(crate) async fn hover(
                             kind: MarkupKind::Markdown,
                             value: docs,
                         }),
-                        range: Some(doc.mapper.range(join_ranges(v.text_ranges())).unwrap()),
+                        range: Some(
+                            doc.mapper
+                                .range(
+                                    k.text_ranges()
+                                        .into_iter()
+                                        .find(|i| syntax_range.unwrap().contains_range(*i))
+                                        .unwrap(),
+                                )
+                                .unwrap(),
+                        ),
                     })
                 }
             }
-            Err(err) => {
-                log_debug!("invalid JSON value from TOML value: {}", err);
-                None
-            }
-        },
-        _ => None,
-    }))
+            NodeRef::Value(v) => match serde_json::to_value(node.into_node().to_value()) {
+                Ok(toml_value) => {
+                    let docs = schemas
+                        .into_iter()
+                        .filter_map(|s| {
+                            let enum_doc = s.schema.enum_values.as_ref().and_then(|enum_values| {
+                                enum_values
+                                    .iter()
+                                    .enumerate()
+                                    .find_map(|(enum_idx, enum_value)| {
+                                        if *enum_value == toml_value {
+                                            s.ext.docs.as_ref().and_then(|i| {
+                                                i.enum_values.as_ref().and_then(|e| {
+                                                    e.get(enum_idx).map(|doc| (enum_idx, doc))
+                                                })
+                                            })
+                                        } else {
+                                            None
+                                        }
+                                    })
+                            });
+
+                            let default_value_doc = s.schema.metadata.as_ref().and_then(|meta| {
+                                meta.default.as_ref().and_then(|def| {
+                                    if *def == toml_value {
+                                        s.ext.docs.as_ref().and_then(|i| i.default_value.clone())
+                                    } else {
+                                        None
+                                    }
+                                })
+                            });
+
+                            if let Some((idx, enum_doc)) = enum_doc {
+                                if let Some(enum_doc) = enum_doc {
+                                    let link = s.ext.links.as_ref().and_then(|l| {
+                                        l.enum_values.as_ref().and_then(|e| e.get(idx)).clone()
+                                    });
+
+                                    let link = match link {
+                                        Some(l) => l.clone(),
+                                        None => None,
+                                    };
+
+                                    return Some((enum_doc.clone(), link));
+                                }
+                            } else if let Some(d) = default_value_doc {
+                                return Some((d, None));
+                            }
+                            None
+                        })
+                        .map(|(mut docs, link)| {
+                            if !w.configuration.schema.enabled.unwrap_or(false)
+                                || !w.configuration.schema.links.unwrap_or(false)
+                            {
+                                if let Some(link) = link {
+                                    docs = format!(
+                                        "[_<sup>more information</sup>_]({})\n\n{}",
+                                        link, docs
+                                    );
+                                }
+                            }
+
+                            docs
+                        })
+                        .fold(String::new(), |mut all, s| {
+                            if !all.is_empty() {
+                                all += "\n---\n";
+                            }
+                            all += &s;
+                            all
+                        });
+
+                    if docs.is_empty() {
+                        None
+                    } else {
+                        Some(Hover {
+                            contents: HoverContents::Markup(MarkupContent {
+                                kind: MarkupKind::Markdown,
+                                value: docs,
+                            }),
+                            range: Some(doc.mapper.range(join_ranges(v.text_ranges())).unwrap()),
+                        })
+                    }
+                }
+                Err(err) => {
+                    log_debug!("invalid JSON value from TOML value: {}", err);
+                    None
+                }
+            },
+            _ => None,
+        }))
 }
 
 pub(crate) async fn links(
@@ -670,7 +725,76 @@ pub(crate) async fn links(
             }
         });
 
+    let value_links =
+        dom.iter()
+            .filter(|(_, n)| n.is_value())
+            .unique_by(|(p, _)| p.clone())
+            .filter_map(|(path, node)| {
+                let schemas = get_schema_objects(path, &schema);
+
+                if schemas.is_empty() {
+                    None
+                } else {
+                    match serde_json::to_value(node.into_node().to_value()) {
+                        Ok(toml_value) => Some(
+                            schemas
+                                .into_iter()
+                                .filter_map(move |s| {
+                                    s.schema
+                                        .enum_values
+                                        .as_ref()
+                                        .and_then(|enum_values| {
+                                            enum_values
+                                                .iter()
+                                                .enumerate()
+                                                .find(|(_, e)| *e == &toml_value)
+                                        })
+                                        .and_then(|(idx, _)| {
+                                            s.ext.links.as_ref().and_then(|links| {
+                                                links.enum_values.as_ref().and_then(|enum_docs| {
+                                                    enum_docs.get(idx).cloned()
+                                                })
+                                            })
+                                        })
+                                })
+                                .filter_map(|doc| match doc {
+                                    Some(doc) => Some(doc.clone()),
+                                    None => None,
+                                })
+                                .unique()
+                                .map(move |link| (link, node.clone()))
+                                .filter_map(|(link, node)| {
+                                    let target = match Url::parse(&link) {
+                                        Ok(u) => u,
+                                        Err(e) => {
+                                            log_error!("invalid link in schema: {}", e);
+                                            return None;
+                                        }
+                                    };
+
+                                    Some(
+                                        node.clone()
+                                            .text_ranges()
+                                            .iter()
+                                            .map(|text_range| DocumentLink {
+                                                range: doc.mapper.range(*text_range).unwrap(),
+                                                target: target.clone(),
+                                                tooltip: None,
+                                            })
+                                            .collect::<Vec<DocumentLink>>(),
+                                    )
+                                }),
+                        ),
+                        Err(err) => {
+                            log_debug!("invalid JSON value from TOML value: {}", err);
+                            None
+                        }
+                    }
+                }
+            });
+
     links.extend(key_links.flatten().flatten());
+    links.extend(value_links.flatten().flatten());
 
     if links.is_empty() {
         Ok(None)

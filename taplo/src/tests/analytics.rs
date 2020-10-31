@@ -1,9 +1,13 @@
-use crate::{analytics::NodeRef, syntax::SyntaxKind::*, util::coords::Mapper};
+use crate::{analytics::NodeRef, dom::NodeSyntax, syntax::SyntaxKind::*, util::coords::Mapper};
 use lsp_types::Position;
 use std::fs;
 
 fn cargo_toml() -> String {
     fs::read_to_string("../test-data/analytics/_cargo.toml").unwrap()
+}
+
+fn cargo_toml2() -> String {
+    fs::read_to_string("../test-data/analytics/_cargo2.toml").unwrap()
 }
 
 #[test]
@@ -110,8 +114,6 @@ fn query_table_header() {
     let pos = mapper.offset(Position::new(49, 2)).unwrap();
     let pos = dom.query_position(pos);
     assert!(pos.is_completable());
-
-    assert!(pos.after.syntax.expected_kind.unwrap() == KEY);
 }
 
 #[test]
@@ -124,7 +126,6 @@ fn query_incomplete_key() {
     let pos = mapper.offset(Position::new(51, 1)).unwrap();
     let pos = dom.query_position(pos);
     assert!(pos.is_completable());
-    assert!(pos.after.syntax.expected_kind.unwrap() == KEY);
 
     let key = pos.after.syntax.text.unwrap();
     assert!(key == "asd.bsd");
@@ -132,6 +133,28 @@ fn query_incomplete_key() {
     let pos = mapper.offset(Position::new(51, 8)).unwrap();
     let pos = dom.query_position(pos);
     assert!(pos.is_completable());
-    assert!(pos.before.as_ref().unwrap().syntax.expected_kind.unwrap() == KEY);
+
     assert!(pos.before.unwrap().syntax.text.unwrap() == key);
+}
+
+#[test]
+fn query_subtable() {
+    let src = cargo_toml2();
+    let mapper = Mapper::new(&src);
+
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(5, 14)).unwrap();
+    let pos = dom.query_position(pos);
+
+    assert!(pos.is_completable());
+
+    assert!(pos.after.path.dotted() == "profile.release");
+
+    let pos = mapper.offset(Position::new(5, 4)).unwrap();
+    let pos = dom.query_position(pos);
+
+    assert!(pos.is_completable());
+
+    assert!(pos.after.path.dotted() == "profile");
 }

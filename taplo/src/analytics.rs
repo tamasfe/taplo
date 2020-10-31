@@ -1,5 +1,15 @@
 //! This module contains various methods and utilities for analyzing the DOM and/or the syntax tree.
 
+use crate::{
+    dom::{self, NodeSyntax, TextRanges},
+    syntax::{
+        SyntaxElement,
+        SyntaxKind::{self, *},
+    },
+};
+use rowan::{TextRange, TextSize};
+use smallvec::SmallVec;
+
 macro_rules! impl_is_node_ref {
     ($($method_name:ident() -> $variant:ident;)*) => {
         impl NodeRef<'_> {
@@ -14,13 +24,6 @@ macro_rules! impl_is_node_ref {
         }
     }
 }
-
-use crate::{dom::{self, Node, NodeSyntax, TextRanges}, syntax::{
-        SyntaxElement,
-        SyntaxKind::{self, *},
-    }};
-use rowan::{TextRange, TextSize};
-use smallvec::SmallVec;
 
 impl dom::RootNode {
     pub fn query_position(&self, position: TextSize) -> PositionQueryResult {
@@ -51,34 +54,45 @@ impl dom::RootNode {
                 NodeRef::Root(n) => {
                     if n.syntax().text_range().contains(position) {
                         nodes.push(node);
-                        path = p;
                     }
                 }
                 NodeRef::Table(n) => {
                     if n.text_ranges().iter().any(|r| r.contains(position)) {
                         nodes.push(node);
-                        path = p;
                     }
                 }
                 NodeRef::Entry(n) => {
                     if n.text_ranges().iter().any(|r| r.contains(position)) {
                         nodes.push(node);
-                        path = p;
                     }
                 }
-                NodeRef::Key(n) => {
+                NodeRef::Array(n) => {
                     if n.text_ranges().iter().any(|r| r.contains(position)) {
                         nodes.push(node);
-                        path = p;
                     }
                 }
                 NodeRef::Value(n) => {
                     if n.text_ranges().iter().any(|r| r.contains(position)) {
                         nodes.push(node);
-                        path = p;
+
+                        match n {
+                            dom::ValueNode::Array(a) => {
+                                if !a.is_array_of_tables() {
+                                    path = p;
+                                }
+                            }
+                            dom::ValueNode::Table(t) => {
+                                if t.is_inline() {
+                                    path = p;
+                                }
+                            }
+                            _ => {
+                                path = p;
+                            }
+                        }
                     }
                 }
-                NodeRef::Array(n) => {
+                NodeRef::Key(n) => {
                     if n.text_ranges().iter().any(|r| r.contains(position)) {
                         nodes.push(node);
                         path = p;
@@ -115,8 +129,6 @@ impl_is_node_ref! {
 }
 
 impl NodeRef<'_> {
-
-
     pub fn text_ranges(&self) -> TextRanges {
         match self {
             NodeRef::Root(v) => v.text_ranges(),
@@ -140,6 +152,7 @@ impl NodeRef<'_> {
     }
 }
 
+#[derive(Debug)]
 pub struct PositionInfo<'q> {
     /// The path to the deepest node at the position.
     pub path: dom::Path,
@@ -151,6 +164,7 @@ pub struct PositionInfo<'q> {
 }
 
 /// Value returned from a DOM query.
+#[derive(Debug)]
 pub struct PositionQueryResult<'q> {
     /// Information before the position cursor.
     /// [`None`] if the position is the start of the file.
@@ -205,6 +219,7 @@ impl PositionQueryResult<'_> {
 ///
 /// The information might also contain incomplete and invalid nodes,
 /// even if its syntax kind is valid.
+#[derive(Debug)]
 pub struct SyntaxInfo {
     /// The range of the relevant area.
     pub range: Option<TextRange>,
@@ -215,8 +230,6 @@ pub struct SyntaxInfo {
     /// The syntax kids relevant to the position
     /// (e.g. [`SyntaxKind::KEY`] and [`SyntaxKind::TABLE_HEADER`] for inside table headers).
     pub syntax_kinds: Vec<SyntaxKind>,
-    /// The expected syntax kind at the position.
-    pub expected_kind: Option<SyntaxKind>,
 }
 
 impl SyntaxInfo {
@@ -282,7 +295,6 @@ impl SyntaxInfo {
             text,
             element,
             syntax_kinds,
-            expected_kind,
         }
     }
 }
@@ -300,8 +312,8 @@ mod collect {
             dom::Node::Root(n) => collect_root(path, n, nodes),
             dom::Node::Table(n) => collect_table(path, n, nodes),
             dom::Node::Entry(n) => collect_entry(path, n, nodes),
-            dom::Node::Key(n) => collect_key(path, n, nodes),
             dom::Node::Value(n) => collect_value(path, n, nodes),
+            dom::Node::Key(n) => collect_key(path, n, nodes),
             dom::Node::Array(n) => collect_array(path, n, nodes),
         }
     }
@@ -313,8 +325,8 @@ mod collect {
     ) {
         nodes.push((path.clone(), NodeRef::Entry(node)));
 
-        collect_key(path.clone(), node.key(), nodes);
-        collect_value(path, node.value(), nodes);
+        collect_value(path.clone(), node.value(), nodes);
+        collect_key(path, node.key(), nodes);
     }
 
     pub fn collect_key<'a>(
@@ -360,10 +372,6 @@ mod collect {
         nodes: &mut SmallVec<[(dom::Path, NodeRef<'a>); 20]>,
     ) {
         nodes.push((path.clone(), NodeRef::Table(node)));
-
-        if let Some(k) = node.key() {
-            collect_key(path.clone(), &k, nodes)
-        }
 
         for (k, entry) in node.entries().iter() {
             collect_entry(

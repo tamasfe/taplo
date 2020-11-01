@@ -1,26 +1,16 @@
 use crate::{
-    schema::{
-        contains_type, get_schema_objects, object_contains_type, resolve_object_ref, resolve_ref,
-        ExtMeta, ExtendedSchema, EXTENSION_KEY,
-    },
+    schema::{get_schema_objects, ExtendedSchema},
     Document,
 };
-use dom::{Cast, Entries};
 use itertools::Itertools;
 use lsp_types::*;
 use rowan::{TextRange, TextSize};
 use schemars::{
-    schema::{InstanceType, ObjectValidation, RootSchema, Schema, SchemaObject, SingleOrVec},
+    schema::{InstanceType, RootSchema, Schema, SingleOrVec},
     Map,
 };
 use serde_json::Value;
-use std::collections::HashSet;
-use taplo::{
-    analytics::NodeRef,
-    dom::{self, NodeSyntax},
-    syntax::{SyntaxElement, SyntaxKind},
-    util::SyntaxExt,
-};
+use taplo::{analytics::NodeRef, dom, syntax::SyntaxKind};
 
 pub(crate) fn get_completions(
     doc: Document,
@@ -110,8 +100,6 @@ pub(crate) fn get_completions(
 
                 match node {
                     node @ NodeRef::Table(_) | node @ NodeRef::Root(_) => {
-                        let mut additional_edits = Vec::new();
-
                         let mut query_path = before.path.clone();
 
                         if node.is_root() {
@@ -132,6 +120,7 @@ pub(crate) fn get_completions(
                             });
 
                         let mut comma_before = false;
+                        let mut additional_edits = Vec::new();
 
                         if inline_table {
                             if let Some((tok_range, tok)) = before.syntax.first_token_before() {
@@ -139,7 +128,7 @@ pub(crate) fn get_completions(
                                     && tok.kind() != SyntaxKind::BRACE_START
                                 {
                                     let range_after = TextRange::new(
-                                        tok_range.start() + TextSize::from(1),
+                                        tok_range.end(),
                                         tok_range.end() + TextSize::from(1),
                                     );
 
@@ -204,13 +193,6 @@ pub(crate) fn get_completions(
                                     .map(|range| doc.mapper.range(range).unwrap())
                             });
 
-                        log_debug!(
-                            "{:?}",
-                            get_schema_objects(query_path.clone(), &root_schema, true)
-                        );
-
-                        log_debug!("{}", query_path.dotted());
-
                         return get_schema_objects(query_path.clone(), &root_schema, true)
                             .into_iter()
                             .map(|schema| {
@@ -221,6 +203,116 @@ pub(crate) fn get_completions(
                                     None,
                                     false,
                                     true,
+                                )
+                            })
+                            .flatten()
+                            .unique_by(|comp| comp.insert_text.clone())
+                            .collect();
+                    }
+                    NodeRef::Array(_) => {
+                        // Value completion inside an array.
+                        let query_path = before.path.clone();
+
+                        let mut comma_before = false;
+                        let mut additional_edits = Vec::new();
+
+                        if let Some((tok_range, tok)) = before.syntax.first_token_before() {
+                            if tok.kind() != SyntaxKind::COMMA
+                                && tok.kind() != SyntaxKind::BRACKET_START
+                            {
+                                let range_after = TextRange::new(
+                                    tok_range.end(),
+                                    tok_range.end() + TextSize::from(1),
+                                );
+
+                                additional_edits.push(TextEdit {
+                                    range: doc.mapper.range(range_after).unwrap(),
+                                    new_text: ",".into(),
+                                })
+                            }
+                        }
+
+                        let current_token =
+                            before.syntax.element.as_ref().unwrap().as_token().unwrap();
+
+                        if current_token.kind() != SyntaxKind::WHITESPACE
+                            && current_token.kind() != SyntaxKind::COMMA
+                        {
+                            comma_before = true;
+                        }
+
+                        return get_schema_objects(query_path.clone(), &root_schema, true)
+                            .into_iter()
+                            .filter_map(|s| match query_path.last() {
+                                Some(k) => {
+                                    if k.is_key() {
+                                        s.schema.array.as_ref().and_then(|arr| match &arr.items {
+                                            Some(items) => match items {
+                                                SingleOrVec::Single(item) => {
+                                                    Some(ExtendedSchema::resolved(
+                                                        &root_schema.definitions,
+                                                        &*item,
+                                                    ))
+                                                }
+                                                SingleOrVec::Vec(_) => None, // FIXME: handle this (hard).
+                                            },
+                                            None => None,
+                                        })
+                                    } else {
+                                        None
+                                    }
+                                }
+                                None => s.schema.array.as_ref().and_then(|arr| match &arr.items {
+                                    Some(items) => match items {
+                                        SingleOrVec::Single(item) => {
+                                            Some(ExtendedSchema::resolved(
+                                                &root_schema.definitions,
+                                                &*item,
+                                            ))
+                                        }
+                                        SingleOrVec::Vec(_) => None, // FIXME: handle this (hard).
+                                    },
+                                    None => None,
+                                }),
+                            })
+                            .filter_map(|s| s)
+                            .map(|schema| {
+                                value_completions(
+                                    &root_schema.definitions,
+                                    schema,
+                                    None,
+                                    if additional_edits.is_empty() {
+                                        None
+                                    } else {
+                                        Some(additional_edits.clone())
+                                    },
+                                    comma_before,
+                                    false,
+                                )
+                            })
+                            .flatten()
+                            .unique_by(|comp| comp.insert_text.clone())
+                            .collect();
+                    }
+                    NodeRef::Value(_) => {
+                        let query_path = before.path.clone();
+
+                        let range = before
+                            .syntax
+                            .element
+                            .as_ref()
+                            .map(|el| doc.mapper.range(el.text_range()).unwrap());
+
+                        return get_schema_objects(query_path.clone(), &root_schema, true)
+                            .into_iter()
+                            .map(|schema| {
+                                value_completions(
+                                    &root_schema.definitions,
+                                    schema,
+                                    range,
+                                    None,
+                                    false,
+                                    false,
                                 )
                             })
                             .flatten()
@@ -316,9 +408,7 @@ pub(crate) fn get_completions(
                         })
                         .collect();
                 }
-                _ => {
-                    // TODO handle more stuff
-                }
+                _ => {}
             }
         }
     }
@@ -424,9 +514,41 @@ fn key_completion(
     }
 }
 
-fn value_documentation(schema: ExtendedSchema) -> Option<Documentation> {
-    // todo!()
-    None
+fn const_value_documentation(schema: ExtendedSchema) -> Option<Documentation> {
+    schema.ext.docs.as_ref().and_then(|d| {
+        d.const_value.as_ref().map(|doc| {
+            Documentation::MarkupContent(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: doc.clone(),
+            })
+        })
+    })
+}
+
+fn default_value_documentation(schema: ExtendedSchema) -> Option<Documentation> {
+    schema.ext.docs.as_ref().and_then(|d| {
+        d.default_value.as_ref().map(|doc| {
+            Documentation::MarkupContent(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: doc.clone(),
+            })
+        })
+    })
+}
+
+fn enum_documentation(schema: ExtendedSchema, idx: usize) -> Option<Documentation> {
+    schema.ext.docs.as_ref().and_then(|d| {
+        d.enum_values.as_ref().and_then(|doc| {
+            doc.get(idx).and_then(|d| {
+                d.as_ref().map(|doc| {
+                    Documentation::MarkupContent(MarkupContent {
+                        kind: MarkupKind::Markdown,
+                        value: doc.clone(),
+                    })
+                })
+            })
+        })
+    })
 }
 
 fn value_completions(
@@ -444,7 +566,7 @@ fn value_completions(
                 vec![CompletionItem {
                     additional_text_edits,
                     detail: detail_text(Some(schema.clone()), None),
-                    documentation: value_documentation(schema.clone()),
+                    documentation: const_value_documentation(schema.clone()),
                     preselect: Some(true),
                     ..value_completion
                 }]
@@ -456,12 +578,13 @@ fn value_completions(
     if let Some(e) = &schema.schema.enum_values {
         return e
             .iter()
-            .map(|e| {
+            .enumerate()
+            .map(|(i, e)| {
                 value_insert(e, range, comma_before, space_before).map(|value_completion| {
                     CompletionItem {
                         additional_text_edits: additional_text_edits.clone(),
                         detail: detail_text(Some(schema.clone()), None),
-                        documentation: value_documentation(schema.clone()),
+                        documentation: enum_documentation(schema.clone(), i),
                         preselect: Some(true),
                         ..value_completion
                     }
@@ -481,7 +604,7 @@ fn value_completions(
             return vec![CompletionItem {
                 additional_text_edits: additional_text_edits.clone(),
                 detail: detail_text(Some(schema.clone()), None),
-                documentation: value_documentation(schema.clone()),
+                documentation: default_value_documentation(schema.clone()),
                 preselect: Some(true),
                 sort_text: Some(format!("{}", 1 as char)),
                 ..value_completion
@@ -507,7 +630,6 @@ fn value_completions(
                         completions.push(CompletionItem {
                             additional_text_edits: additional_text_edits.clone(),
                             detail: detail_text(Some(schema.clone()), None),
-                            documentation: value_documentation(schema.clone()),
                             preselect: Some(true),
                             ..value_completion
                         });
@@ -528,7 +650,6 @@ fn value_completions(
                             completions.push(CompletionItem {
                                 additional_text_edits: additional_text_edits.clone(),
                                 detail: detail_text(Some(schema.clone()), None),
-                                documentation: value_documentation(schema.clone()),
                                 preselect: Some(true),
                                 ..value_completion
                             });
@@ -539,30 +660,6 @@ fn value_completions(
         },
         None => {}
     }
-
-    // CompletionItem {
-    //     label: "value".into(),
-    //     additional_text_edits,
-    //     sort_text: None,
-    //     text_edit: range.map(|range| {
-    //         CompletionTextEdit::Edit(TextEdit {
-    //             range,
-    //             new_text: insert_text.clone(),
-    //         })
-    //     }),
-    //     insert_text: Some(insert_text),
-    //     kind: if schema.is(InstanceType::Object) {
-    //         Some(CompletionItemKind::Struct)
-    //     } else if schema.is_array_of_objects(defs) {
-    //         Some(CompletionItemKind::Struct)
-    //     } else {
-    //         Some(CompletionItemKind::Value)
-    //     },
-    //     detail: detail_text(Some(schema.clone()), None),
-    //     documentation: documentation(schema.clone()),
-    //     preselect: Some(true),
-    //     ..Default::default()
-    // }
 
     completions
 }
@@ -730,7 +827,7 @@ fn empty_value_inserts(
                     CompletionTextEdit::Edit(TextEdit {
                         range,
                         new_text: with_leading_space(
-                            with_comma("${0:true}".into(), comma_before),
+                            with_comma("true".into(), comma_before),
                             space_before,
                         ),
                     })
@@ -816,6 +913,7 @@ fn empty_value_inserts(
                     space_before,
                 )),
                 insert_text_format: Some(InsertTextFormat::Snippet),
+                sort_text: Some(required_text("1string")),
                 label: "string".into(),
                 ..Default::default()
             },
@@ -835,6 +933,7 @@ fn empty_value_inserts(
                     space_before,
                 )),
                 insert_text_format: Some(InsertTextFormat::Snippet),
+                sort_text: Some(required_text("2multiline string")),
                 label: "multiline string".into(),
                 ..Default::default()
             },
@@ -854,6 +953,7 @@ fn empty_value_inserts(
                     space_before,
                 )),
                 insert_text_format: Some(InsertTextFormat::Snippet),
+                sort_text: Some("3literal string".into()),
                 label: "literal string".into(),
                 ..Default::default()
             },
@@ -873,6 +973,7 @@ fn empty_value_inserts(
                     space_before,
                 )),
                 insert_text_format: Some(InsertTextFormat::Snippet),
+                sort_text: Some("4multiline literal string".into()),
                 label: "multiline literal string".into(),
                 ..Default::default()
             },
@@ -896,96 +997,96 @@ fn empty_value_inserts(
             label: "integer".into(),
             ..Default::default()
         }]),
-        InstanceType::Object => {
-            //
-            match &schema.schema.object {
-                Some(o) => {
-                    if o.properties.is_empty() {
-                        Some(vec![CompletionItem {
-                            text_edit: range.map(|range| {
-                                CompletionTextEdit::Edit(TextEdit {
-                                    range,
-                                    new_text: with_leading_space(
-                                        with_comma(r#"{ $0 }"#.into(), comma_before),
-                                        space_before,
-                                    ),
-                                })
-                            }),
-                            kind: Some(CompletionItemKind::Value),
-                            insert_text: Some(with_leading_space(
-                                with_comma(r#"{ $0 }"#.into(), comma_before),
-                                space_before,
-                            )),
-                            insert_text_format: Some(InsertTextFormat::Snippet),
-                            label: "table".into(),
-                            ..Default::default()
-                        }])
-                    } else {
-                        let mut snippet = "{ ".to_string();
+        InstanceType::Object => match &schema.schema.object {
+            Some(o) => {
+                if o.properties.is_empty() {
+                    Some(vec![CompletionItem {
+                        text_edit: range.map(|range| {
+                            CompletionTextEdit::Edit(TextEdit {
+                                range,
+                                new_text: with_leading_space(
+                                    with_comma(r#"{ $0 }"#.into(), comma_before),
+                                    space_before,
+                                ),
+                            })
+                        }),
+                        kind: Some(CompletionItemKind::Value),
+                        insert_text: Some(with_leading_space(
+                            with_comma(r#"{ $0 }"#.into(), comma_before),
+                            space_before,
+                        )),
+                        insert_text_format: Some(InsertTextFormat::Snippet),
+                        label: "table".into(),
+                        ..Default::default()
+                    }])
+                } else {
+                    let mut snippet = "{ ".to_string();
 
-                        let mut idx: usize = 1;
-                        for (key, schema) in &o.properties {
-                            if let Some(schema) = ExtendedSchema::resolved(defs, schema) {
-                                if o.required.contains(key) {
-                                    if idx != 1 {
-                                        snippet += ", "
-                                    }
+                    let mut idx: usize = 1;
 
-                                    snippet += &format!(
-                                        "{} = {}",
-                                        key,
-                                        default_value_snippet(defs, schema, idx)
-                                    );
+                    for key in o.properties.keys().sorted() {
+                        let schema = o.properties.get(key).unwrap();
 
-                                    idx += 1;
+                        if let Some(schema) = ExtendedSchema::resolved(defs, schema) {
+                            if o.required.contains(key) {
+                                if idx != 1 {
+                                    snippet += ", "
                                 }
+
+                                snippet += &format!(
+                                    "{} = {}",
+                                    key,
+                                    default_value_snippet(defs, schema, idx)
+                                );
+
+                                idx += 1;
                             }
                         }
-
-                        snippet += " }";
-
-                        Some(vec![CompletionItem {
-                            text_edit: range.map(|range| {
-                                CompletionTextEdit::Edit(TextEdit {
-                                    range,
-                                    new_text: with_leading_space(
-                                        with_comma(snippet.clone(), comma_before),
-                                        space_before,
-                                    ),
-                                })
-                            }),
-                            kind: Some(CompletionItemKind::Value),
-                            insert_text: Some(with_leading_space(
-                                with_comma(snippet, comma_before),
-                                space_before,
-                            )),
-                            insert_text_format: Some(InsertTextFormat::Snippet),
-                            label: "table".into(),
-                            ..Default::default()
-                        }])
                     }
+
+                    snippet += "$0 }";
+
+                    Some(vec![CompletionItem {
+                        text_edit: range.map(|range| {
+                            CompletionTextEdit::Edit(TextEdit {
+                                range,
+                                new_text: with_leading_space(
+                                    with_comma(snippet.clone(), comma_before),
+                                    space_before,
+                                ),
+                            })
+                        }),
+                        kind: Some(CompletionItemKind::Value),
+                        insert_text: Some(with_leading_space(
+                            with_comma(snippet, comma_before),
+                            space_before,
+                        )),
+                        insert_text_format: Some(InsertTextFormat::Snippet),
+                        label: "table".into(),
+                        ..Default::default()
+                    }])
                 }
-                None => Some(vec![CompletionItem {
-                    text_edit: range.map(|range| {
-                        CompletionTextEdit::Edit(TextEdit {
-                            range,
-                            new_text: with_leading_space(
-                                with_comma(r#"{ $0 }"#.into(), comma_before),
-                                space_before,
-                            ),
-                        })
-                    }),
-                    kind: Some(CompletionItemKind::Value),
-                    insert_text: Some(with_leading_space(
-                        with_comma(r#"{ $0 }"#.into(), comma_before),
-                        space_before,
-                    )),
-                    insert_text_format: Some(InsertTextFormat::Snippet),
-                    label: "table".into(),
-                    ..Default::default()
-                }]),
             }
-        }
+            None => Some(vec![CompletionItem {
+                text_edit: range.map(|range| {
+                    CompletionTextEdit::Edit(TextEdit {
+                        range,
+                        new_text: with_leading_space(
+                            with_comma(r#"{ $0 }"#.into(), comma_before),
+                            space_before,
+                        ),
+                    })
+                }),
+                kind: Some(CompletionItemKind::Value),
+                insert_text: Some(with_leading_space(
+                    with_comma(r#"{ $0 }"#.into(), comma_before),
+                    space_before,
+                )),
+                insert_text_format: Some(InsertTextFormat::Snippet),
+                label: "table".into(),
+                ..Default::default()
+            }]),
+        },
         InstanceType::Null => None,
     }
 }

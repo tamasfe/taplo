@@ -37,11 +37,11 @@ pub enum Readme {
     Bool(bool),
 }
 
-#[derive(Serialize, JsonSchema, Clone, Debug, Default)]
+#[derive(Serialize, JsonSchema, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 #[schemars(title = "Detailed Dependency")]
 pub struct DetailedDependency {
-    version: Option<SemVerRequirement>,
+    version: SemVerRequirement,
     registry: Option<String>,
     registry_index: Option<String>,
     path: Option<String>,

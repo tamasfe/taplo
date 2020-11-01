@@ -128,11 +128,7 @@ impl dom::RootNode {
                 if path_fragment != path {
                     path = path.extend(path_fragment);
                 }
-            } else if let Some(mut entry) = el.parent() {
-                if entry.kind() == VALUE {
-                    entry = entry.parent().unwrap();
-                }
-
+            } else if let Some(entry) = el.parent() {
                 if entry.kind() == ENTRY {
                     let key = entry.children().next().unwrap();
 
@@ -452,7 +448,7 @@ impl SyntaxInfo {
                                     entry
                                         .children_with_tokens()
                                         .last()
-                                        .map(|t| t.text_range().end())
+                                        .map(|t| t.text_range().end() )
                                         .unwrap_or(eq.text_range().end()),
                                 ));
                             }

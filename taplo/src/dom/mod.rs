@@ -1733,6 +1733,19 @@ pub enum PathKey {
     Index(usize),
 }
 
+impl PathKey {
+    pub fn is_key(&self) -> bool {
+        match self {
+            PathKey::Key(_) => true,
+            PathKey::Index(_) => false,
+        }
+    }
+
+    pub fn is_index(&self) -> bool {
+        !self.is_key()
+    }
+}
+
 impl ToString for PathKey {
     fn to_string(&self) -> String {
         match self {
@@ -1890,6 +1903,11 @@ impl Path {
         let skip = usize::min(self.len(), n);
         new.mask_right += skip;
         new
+    }
+
+    /// The last key of the path
+    pub fn last(&self) -> Option<&PathKey> {
+        self.keys.last()
     }
 }
 

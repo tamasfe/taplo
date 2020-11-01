@@ -243,13 +243,7 @@
     "DebugLevel": {
       "title": "Debug Level",
       "description": "The `debug` setting controls the [`-C debuginfo` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#debuginfo) which controls the\namount of debug information included in the compiled binary.",
-      "enum": [
-        0,
-        1,
-        2,
-        true,
-        false
-      ],
+      "enum": [0, 1, 2, true, false],
       "anyOf": [
         {
           "type": "integer",
@@ -289,6 +283,7 @@
     "DetailedDependency": {
       "title": "Detailed Dependency",
       "type": "object",
+      "required": ["version"],
       "properties": {
         "branch": {
           "description": "Specify the Git branch to use in case of a [Git dependency](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories).",
@@ -416,10 +411,7 @@
       "title": "Edition",
       "description": "The `edition` key affects which edition your package is compiled with. Cargo\nwill always generate packages via [`cargo new`](https://doc.rust-lang.org/cargo/commands/cargo-new.html) with the `edition` key set to the\nlatest edition. Setting the `edition` key in `[package]` will affect all\ntargets/crates in the package, including test suites, benchmarks, binaries,\nexamples, etc.",
       "type": "string",
-      "enum": [
-        "2015",
-        "2018"
-      ],
+      "enum": ["2015", "2018"],
       "evenBetterToml": {
         "links": {
           "key": "https://doc.rust-lang.org/stable/edition-guide/introduction.html"
@@ -429,13 +421,7 @@
     "Lto": {
       "title": "Lto",
       "description": "The `lto` setting controls the [`-C lto` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#lto) which controls LLVM's [link time optimizations](https://llvm.org/docs/LinkTimeOptimization.html). LTO can produce better optimized code, using\nwhole-program analysis, at the cost of longer linking time.\n                    \nSee also the [`-C linker-plugin-lto`](https://doc.rust-lang.org/rustc/codegen-options/index.html#linker-plugin-lto) `rustc` flag for cross-language LTO.",
-      "enum": [
-        "fat",
-        "thin",
-        "off",
-        true,
-        false
-      ],
+      "enum": ["fat", "thin", "off", true, false],
       "anyOf": [
         {
           "type": "string"
@@ -469,14 +455,7 @@
     "OptLevel": {
       "title": "Optimization Level",
       "description": "The `opt-level` setting controls the [`-C opt-level` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#opt-level) which controls the level\nof optimization. Higher optimization levels may produce faster runtime code at\nthe expense of longer compiler times. Higher levels may also change and\nrearrange the compiled code which may make it harder to use with a debugger.\n\nIt is recommended to experiment with different levels to find the right\nbalance for your project. There may be surprising results, such as level `3`\nbeing slower than `2`, or the `\"s\"` and `\"z\"` levels not being necessarily\nsmaller. You may also want to reevaluate your settings over time as newer\nversions of `rustc` changes optimization behavior.\n\nSee also [Profile Guided Optimization](https://doc.rust-lang.org/rustc/profile-guided-optimization.html) for more advanced optimization\ntechniques.",
-      "enum": [
-        0,
-        1,
-        2,
-        3,
-        "s",
-        "z"
-      ],
+      "enum": [0, 1, 2, 3, "s", "z"],
       "anyOf": [
         {
           "type": "integer",
@@ -506,10 +485,7 @@
       "title": "Package",
       "description": "The only fields required by Cargo are [`name`](https://doc.rust-lang.org/cargo/reference/manifest.html#the-name-field) and\n[`version`](https://doc.rust-lang.org/cargo/reference/manifest.html#the-version-field). If publishing to a registry, the registry may\nrequire additional fields. See the notes below and [the publishing chapter](https://doc.rust-lang.org/cargo/reference/publishing.html) for requirements for publishing to [crates.io](https://crates.io/).",
       "type": "object",
-      "required": [
-        "name",
-        "version"
-      ],
+      "required": ["name", "version"],
       "properties": {
         "authors": {
           "description": "The `authors` field lists people or organizations that are considered the\n\"authors\" of the package. The exact meaning is open to interpretation — it may\nlist the original or primary authors, current maintainers, or owners of the\npackage. These names will be listed on the crate's page on\n[crates.io](https://crates.io). An optional email address may be included within angled\nbrackets at the end of each author.\n\n> **Note**: [crates.io](https://crates.io) requires at least one author to be listed.",
@@ -794,10 +770,7 @@
       "title": "Panic",
       "description": "The `panic` setting controls the [`-C panic` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#panic) which controls which panic\nstrategy to use.\n\nWhen set to `\"unwind\"`, the actual value depends on the default of the target\nplatform. For example, the NVPTX platform does not support unwinding, so it\nalways uses `\"abort\"`.\n\nTests, benchmarks, build scripts, and proc macros ignore the `panic` setting.\nThe `rustc` test harness currently requires `unwind` behavior. See the\n[`panic-abort-tests`](https://doc.rust-lang.org/cargo/reference/unstable.html#panic-abort-tests) unstable flag which enables `abort` behavior.\n\nAdditionally, when using the `abort` strategy and building a test, all of the\ndependencies will also be forced to built with the `unwind` strategy.",
       "type": "string",
-      "enum": [
-        "unwind",
-        "abort"
-      ],
+      "enum": ["unwind", "abort"],
       "evenBetterToml": {
         "docs": {
           "enumValues": [
@@ -1106,15 +1079,6 @@
         "crate-type": {
           "description": "The `crate-type` field defines the [crate types](https://doc.rust-lang.org/reference/linkage.html) that will be generated by the\ntarget. It is an array of strings, allowing you to specify multiple crate\ntypes for a single target. This can only be specified for libraries and\nexamples. Binaries, tests, and benchmarks are always the \"bin\" crate type.\n\nThe available options are `bin`, `lib`, `rlib`, `dylib`, `cdylib`,\n`staticlib`, and `proc-macro`. You can read more about the different crate\ntypes in the [Rust Reference Manual](https://doc.rust-lang.org/reference/linkage.html).",
           "type": "array",
-          "enum": [
-            "bin",
-            "lib",
-            "rlib",
-            "dylib",
-            "cdylib",
-            "staticlib",
-            "proc-macro"
-          ],
           "items": {
             "description": "The `crate-type` field defines the [crate types](https://doc.rust-lang.org/reference/linkage.html) that will be generated by the\ntarget. It is an array of strings, allowing you to specify multiple crate\ntypes for a single target. This can only be specified for libraries and\nexamples. Binaries, tests, and benchmarks are always the \"bin\" crate type.\n\nThe available options are `bin`, `lib`, `rlib`, `dylib`, `cdylib`,\n`staticlib`, and `proc-macro`. You can read more about the different crate\ntypes in the [Rust Reference Manual](https://doc.rust-lang.org/reference/linkage.html).",
             "type": "string",

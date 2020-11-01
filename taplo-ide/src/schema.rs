@@ -280,7 +280,7 @@ fn get_schema_objects_impl<'s>(
                     if let Some(additional_schema) = &obj.additional_properties {
                         if let Schema::Object(add_obj) = &**additional_schema {
                             schemas.extend(get_schema_objects_impl(
-                                path,
+                                path.skip_left(1),
                                 defs,
                                 add_obj.into(),
                                 subschemas,
@@ -430,6 +430,8 @@ pub fn object_contains_type(ty: InstanceType, obj: &SchemaObject) -> bool {
 pub struct ExtDocs {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub main: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub const_value: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_value: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

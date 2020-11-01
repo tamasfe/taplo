@@ -1426,16 +1426,6 @@ impl schemars::visit::Visitor for CargoVisitor {
                         .extensions
                         .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
 
-                    schema.enum_values = Some(vec![
-                        json!("bin"),
-                        json!("lib"),
-                        json!("rlib"),
-                        json!("dylib"),
-                        json!("cdylib"),
-                        json!("staticlib"),
-                        json!("proc-macro"),
-                    ]);
-
                     schema.metadata().description = Some(
                         include_str!("../../descriptions/cargo/cargo_target/crate-type.md").into(),
                     )

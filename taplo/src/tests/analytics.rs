@@ -334,3 +334,31 @@ fn query_value2() {
     assert!(pos.is_completable());
     assert!(pos.before.as_ref().unwrap().path.dotted() == "lib.bench");
 }
+
+#[test]
+fn query_value_in_array() {
+    let src = cargo_toml(10);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(2, 10)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "features.asad");
+
+    for node in &pos.before.as_ref().unwrap().nodes {
+        dbg!(node.name());
+    }
+}
+
+#[test]
+fn query_complete_value() {
+    let src = cargo_toml(10);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(6, 9)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "lib.asd");
+}

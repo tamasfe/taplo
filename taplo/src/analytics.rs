@@ -128,6 +128,26 @@ impl dom::RootNode {
                 if path_fragment != path {
                     path = path.extend(path_fragment);
                 }
+            } else if let Some(mut entry) = el.parent() {
+                if entry.kind() == VALUE {
+                    entry = entry.parent().unwrap();
+                }
+
+                if entry.kind() == ENTRY {
+                    let key = entry.children().next().unwrap();
+
+                    let path_fragment = dom::Path::from_iter(
+                        key.children_with_tokens()
+                            .filter(|t| t.kind() == IDENT)
+                            .map(|t| t.as_token().unwrap().text().to_string())
+                            .map(|s| s.as_str().strip_quotes().to_string()),
+                    );
+
+                    // FIXME: this might not be 100% correct
+                    if path_fragment != path {
+                        path = path.extend(path_fragment);
+                    }
+                }
             }
         }
 
@@ -392,33 +412,55 @@ impl SyntaxInfo {
                 text = Some(key.text().to_string());
             }
 
-            if (last.kind() == PERIOD || last.kind() == IDENT)
-                && syntax_kinds.iter().any(|k| *k == ENTRY)
-            {
-                let key = last.parent().unwrap();
+            if syntax_kinds.iter().any(|k| *k == ENTRY) {
+                if last.kind() == PERIOD || last.kind() == IDENT {
+                    let key = last.parent().unwrap();
 
-                // Keys without leading and trailing whitespace.
-                let mut keys_range: Option<TextRange> = None;
+                    // Keys without leading and trailing whitespace.
+                    let mut keys_range: Option<TextRange> = None;
 
-                key_path = Some(dom::Path::from_iter(
-                    key.children_with_tokens()
-                        .filter(|t| t.kind() == IDENT || t.kind() == PERIOD)
-                        .map(|ident| {
-                            let token = ident.into_token().unwrap();
+                    key_path = Some(dom::Path::from_iter(
+                        key.children_with_tokens()
+                            .filter(|t| t.kind() == IDENT || t.kind() == PERIOD)
+                            .map(|ident| {
+                                let token = ident.into_token().unwrap();
 
-                            keys_range = match keys_range {
-                                Some(r) => Some(r.cover(token.text_range())),
-                                None => Some(token.text_range()),
-                            };
+                                keys_range = match keys_range {
+                                    Some(r) => Some(r.cover(token.text_range())),
+                                    None => Some(token.text_range()),
+                                };
 
-                            token
-                        })
-                        .filter(|t| t.kind() == IDENT)
-                        .map(|t| t.text().to_string())
-                        .map(|s| s.as_str().strip_quotes().to_string()),
-                ));
-                range = keys_range;
-                text = Some(key.text().to_string());
+                                token
+                            })
+                            .filter(|t| t.kind() == IDENT)
+                            .map(|t| t.text().to_string())
+                            .map(|s| s.as_str().strip_quotes().to_string()),
+                    ));
+                    range = keys_range;
+                    text = Some(key.text().to_string());
+                } else {
+                    if let Some(mut entry) = last.parent() {
+                        if entry.kind() == VALUE {
+                            entry = entry.parent().unwrap();
+                        }
+
+                        if entry.kind() == ENTRY {
+                            if let Some(eq) = entry.children_with_tokens().find(|t| t.kind() == EQ)
+                            {
+                                range = Some(TextRange::new(
+                                    eq.text_range().end(),
+                                    entry
+                                        .children_with_tokens()
+                                        .last()
+                                        .map(|t| t.text_range().end())
+                                        .unwrap_or(eq.text_range().end()),
+                                ));
+                            }
+                        }
+                    }
+
+                    // FIXME: text could be useful here as well
+                }
             }
 
             element = Some(last);

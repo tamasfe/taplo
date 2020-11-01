@@ -4,7 +4,6 @@ use std::fs;
 
 fn cargo_toml(idx: usize) -> String {
     fs::read_to_string(&format!("../test-data/analytics/_cargo{}.toml", idx)).unwrap()
-
 }
 
 #[test]
@@ -281,10 +280,57 @@ fn check_token_before() {
     let pos = mapper.offset(Position::new(4, 11)).unwrap();
     let pos = dom.query_position(pos);
     assert!(pos.is_completable());
-    assert!(pos.before.unwrap().syntax.first_token_before().unwrap().1.kind() == BRACE_START);
+    assert!(
+        pos.before
+            .unwrap()
+            .syntax
+            .first_token_before()
+            .unwrap()
+            .1
+            .kind()
+            == BRACE_START
+    );
 
     let pos = mapper.offset(Position::new(4, 13)).unwrap();
     let pos = dom.query_position(pos);
     assert!(pos.is_completable());
-    assert!(pos.before.unwrap().syntax.first_token_before().unwrap().1.kind() == COMMA);
+    assert!(
+        pos.before
+            .unwrap()
+            .syntax
+            .first_token_before()
+            .unwrap()
+            .1
+            .kind()
+            == COMMA
+    );
+}
+
+#[test]
+fn query_value() {
+    let src = cargo_toml(8);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(1, 7)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "lib");
+
+    let pos = mapper.offset(Position::new(3, 6)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "b");
+}
+
+#[test]
+fn query_value2() {
+    let src = cargo_toml(9);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(2, 8)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "lib.bench");
 }

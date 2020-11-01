@@ -42,13 +42,13 @@ pub struct ExtendedSchema<'s> {
 }
 
 impl<'s> ExtendedSchema<'s> {
-    pub fn is_object(&self) -> bool {
+    pub fn is(&self, ty :InstanceType) -> bool {
         match &self.schema.instance_type {
             Some(t) => match t {
-                SingleOrVec::Single(s) => **s == InstanceType::Object,
-                SingleOrVec::Vec(s) => s.iter().any(|s| *s == InstanceType::Object),
+                SingleOrVec::Single(s) => **s == ty,
+                SingleOrVec::Vec(s) => s.iter().any(|s| *s == ty),
             },
-            None => true,
+            None => ty == InstanceType::Object,
         }
     }
 
@@ -63,7 +63,7 @@ impl<'s> ExtendedSchema<'s> {
             .and_then(|arr| {
                 arr.items.as_ref().and_then(|items| match items {
                     SingleOrVec::Single(s) => {
-                        ExtendedSchema::resolved(defs, &*s).map(|s| s.is_object())
+                        ExtendedSchema::resolved(defs, &*s).map(|s| s.is(InstanceType::Object))
                     }
                     SingleOrVec::Vec(_) => Some(false),
                 })

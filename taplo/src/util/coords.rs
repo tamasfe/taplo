@@ -64,7 +64,11 @@ impl Mapper {
             lines.push(CharacterRange(line_start_char + 1, chars_count + 1));
         }
 
-        Self { zero_based: false, lines, mapping }
+        Self {
+            zero_based: false,
+            lines,
+            mapping,
+        }
     }
 
     pub fn zero_based(mut self, zero: bool) -> Self {
@@ -134,9 +138,17 @@ impl Mapper {
     }
 
     pub fn range(&self, range: TextRange) -> Option<Range> {
+        self.position(range.start())
+            .and_then(|start| self.position(range.end()).map(|end| Range { start, end }))
+    }
+
+    // FIXME: this is a hack
+    pub fn range_inclusive(&self, range: TextRange) -> Option<Range> {
         self.position(range.start()).and_then(|start| {
-            self.position(range.end())
-                .map(|end| Range { start, end })
+            self.position(range.end()).map(|mut end| {
+                end.character += 1;
+                Range { start, end }
+            })
         })
     }
 

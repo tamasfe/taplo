@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     schema::{get_schema_objects, ExtendedSchema},
     Document,
@@ -10,7 +12,11 @@ use schemars::{
     Map,
 };
 use serde_json::Value;
-use taplo::{analytics::NodeRef, dom, syntax::SyntaxKind};
+use taplo::{
+    analytics::NodeRef,
+    dom::{self, RootNode},
+    syntax::SyntaxKind,
+};
 
 pub(crate) fn get_completions(
     doc: Document,
@@ -18,6 +24,7 @@ pub(crate) fn get_completions(
     root_schema: RootSchema,
 ) -> Vec<CompletionItem> {
     let dom = doc.parse.clone().into_dom();
+    let paths: HashSet<dom::Path> = dom.iter().map(|(p, _)| p).collect();
 
     let offset = doc.mapper.offset(position).unwrap();
 
@@ -43,13 +50,13 @@ pub(crate) fn get_completions(
                 let range = before
                     .syntax
                     .range
-                    .map(|range| doc.mapper.range(range).unwrap())
+                    .map(|range| doc.mapper.range_inclusive(range).unwrap())
                     .or_else(|| {
                         query
                             .after
                             .syntax
                             .range
-                            .map(|range| doc.mapper.range(range).unwrap())
+                            .map(|range| doc.mapper.range_inclusive(range).unwrap())
                     });
 
                 return get_schema_objects(query_path.clone(), &root_schema, true)
@@ -57,6 +64,17 @@ pub(crate) fn get_completions(
                     .map(|s| s.descendants(&root_schema.definitions, 10))
                     .flatten()
                     .filter(|(_, s, _)| !s.is_hidden())
+                    .filter(|(p, ..)| {
+                        if let Some(same_path) = before.syntax.key_path.as_ref() {
+                            if p == same_path {
+                                true
+                            } else {
+                                valid_key(&query_path.extend(p.clone()), &paths, &dom)
+                            }
+                        } else {
+                            valid_key(&query_path.extend(p.clone()), &paths, &dom)
+                        }
+                    })
                     .filter(|(_, s, _)| {
                         if query
                             .after
@@ -110,13 +128,13 @@ pub(crate) fn get_completions(
                         let range = before
                             .syntax
                             .range
-                            .map(|range| doc.mapper.range(range).unwrap())
+                            .map(|range| doc.mapper.range_inclusive(range).unwrap())
                             .or_else(|| {
                                 query
                                     .after
                                     .syntax
                                     .range
-                                    .map(|range| doc.mapper.range(range).unwrap())
+                                    .map(|range| doc.mapper.range_inclusive(range).unwrap())
                             });
 
                         let mut comma_before = false;
@@ -154,6 +172,33 @@ pub(crate) fn get_completions(
                             .map(|s| s.descendants(&root_schema.definitions, 10))
                             .flatten()
                             .filter(|(_, s, _)| !s.is_hidden())
+                            .filter(|(p, ..)| {
+                                if let Some(same_path) = before.syntax.key_path.as_ref() {
+                                    if p == same_path {
+                                        true
+                                    } else {
+                                        valid_key(
+                                            &query_path.extend(if node.is_root() {
+                                                query_path.extend(p.clone())
+                                            } else {
+                                                p.clone()
+                                            }),
+                                            &paths,
+                                            &dom,
+                                        )
+                                    }
+                                } else {
+                                    valid_key(
+                                        &query_path.extend(if node.is_root() {
+                                            query_path.extend(p.clone())
+                                        } else {
+                                            p.clone()
+                                        }),
+                                        &paths,
+                                        &dom,
+                                    )
+                                }
+                            })
                             .unique_by(|(p, ..)| p.clone())
                             .map(|(path, schema, required)| {
                                 key_completion(
@@ -184,13 +229,13 @@ pub(crate) fn get_completions(
                         let range = before
                             .syntax
                             .range
-                            .map(|range| doc.mapper.range(range).unwrap())
+                            .map(|range| doc.mapper.range_inclusive(range).unwrap())
                             .or_else(|| {
                                 query
                                     .after
                                     .syntax
                                     .range
-                                    .map(|range| doc.mapper.range(range).unwrap())
+                                    .map(|range| doc.mapper.range_inclusive(range).unwrap())
                             });
 
                         return get_schema_objects(query_path.clone(), &root_schema, true)
@@ -301,7 +346,7 @@ pub(crate) fn get_completions(
                             .syntax
                             .element
                             .as_ref()
-                            .map(|el| doc.mapper.range(el.text_range()).unwrap());
+                            .map(|el| doc.mapper.range_inclusive(el.text_range()).unwrap());
 
                         return get_schema_objects(query_path.clone(), &root_schema, true)
                             .into_iter()
@@ -834,7 +879,7 @@ fn empty_value_inserts(
                 }),
                 kind: Some(CompletionItemKind::Value),
                 insert_text: Some(with_leading_space(
-                    with_comma("${0:true}".into(), comma_before),
+                    with_comma("true".into(), comma_before),
                     space_before,
                 )),
                 insert_text_format: Some(InsertTextFormat::Snippet),
@@ -846,7 +891,7 @@ fn empty_value_inserts(
                     CompletionTextEdit::Edit(TextEdit {
                         range,
                         new_text: with_leading_space(
-                            with_comma("${0:false}".into(), comma_before),
+                            with_comma("false".into(), comma_before),
                             space_before,
                         ),
                     })
@@ -1183,4 +1228,10 @@ fn default_value_snippet(
     }
 
     format!("${}", idx)
+}
+
+// Whether the key should be completed according to the contents of the tree,
+// e.g. we shouldn't offer completions for value paths that already exist.
+fn valid_key(path: &dom::Path, dom_paths: &HashSet<dom::Path>, dom: &RootNode) -> bool {
+    !dom_paths.contains(path)
 }

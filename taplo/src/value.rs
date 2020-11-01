@@ -19,7 +19,7 @@ impl core::fmt::Display for UnescapeError {
         write!(f, "the key contains invalid escape sequence")
     }
 }
-
+ 
 impl std::error::Error for UnescapeError {}
 
 pub type Map = IndexMap<String, Value>;
@@ -168,7 +168,7 @@ impl TryFrom<dom::Node> for Value {
             dom::Node::Table(v) => v.try_into(),
             dom::Node::Value(v) => v.try_into(),
             dom::Node::Array(v) => v.try_into(),
-            _ => todo!(),
+            _ => unreachable!(),
         }
     }
 }

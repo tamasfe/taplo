@@ -16,17 +16,19 @@ default = ["serde", "verify", "rewrite"]
 rewrite = []
 
 [dependencies]
-chrono = "0.4.11"
 indexmap = "1.6.0"
 logos = "0.11.4"
 lsp-types = { version = "0.74.1" }
 rowan = "0.10.0"
-serde = { version = "1.0", optional = true }
-verify = { version = "0.3", features = ["schemars"], optional = true }
 smallvec = "1.4"
 regex = "1.4"
 
-# Don't use, only for schema generation
+chrono = { version = "0.4" }
+# time = { version = "0.2", optional = true } TODO(time)
+serde = { version = "1.0", optional = true }
+verify = { version = "0.3", features = ["schemars"], optional = true }
+
+# Do not use, this is only here for schema generation
 schemars = { version = "0.8.0-alpha-4", optional = true }
 
 [dev-dependencies]

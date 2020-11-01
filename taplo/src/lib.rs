@@ -54,6 +54,13 @@ assert_eq!(root_node.errors().len(), 1);
 ```
 */
 
+// TODO: time impls for value
+// #[cfg(all(feature = "time", feature = "chrono"))]
+// compile_error!("time and chrono features are mutually exclusive");
+
+// #[cfg(not(any(feature = "time", feature = "chrono")))]
+// compile_error!("either time or chrono feature is required");
+
 #[cfg(feature = "serde")]
 mod serde;
 

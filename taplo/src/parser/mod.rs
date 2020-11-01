@@ -642,7 +642,10 @@ impl<'p> Parser<'p> {
         let mut comma_last = false;
         let mut was_newline = false;
         loop {
-            let t = self.get_token()?;
+            let t = match self.get_token() {
+                Ok(t) => {t}
+                Err(_) => {return self.report_error(r#"expected "}""#)}
+            };
 
             match t {
                 BRACE_END => {

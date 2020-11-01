@@ -3,7 +3,7 @@
 use rowan::{TextRange, TextSize};
 
 pub use lsp_types::{Position, Range};
-use std::iter;
+use std::{collections::BTreeMap};
 
 /// Offset in characters instead of bytes.
 /// It is u64 because lsp_types uses u64.
@@ -17,124 +17,78 @@ pub struct CharacterRange(u64, u64);
 /// 1-based line:row characters.
 #[derive(Debug, Clone)]
 pub struct Mapper {
-    /// Treat LSP types as 0-based in arguments.
-    zero_based: bool,
+    /// Mapping offsets to positions.
+    offset_to_position: BTreeMap<TextSize, Position>,
 
-    /// These are characters, not byte offsets.
-    lines: Vec<CharacterRange>,
+    /// Mapping positions to offsets.
+    position_to_offset: BTreeMap<Position, TextSize>,
 
-    /// A character position mapped to each byte offset.
-    /// If there was a single character that is 3 bytes long,
-    /// then this will contain 3 elements that are zero each.
-    mapping: Vec<CharacterOffset>,
+    /// Line count.
+    lines: usize,
 }
 
 impl Mapper {
     /// Creates a new Mapper that remembers where
     /// each line starts and ends.
     pub fn new(source: &str) -> Self {
-        let mut line_start_char = 0;
+        let mut offset_to_position = BTreeMap::new();
+        let mut position_to_offset = BTreeMap::new();
 
-        let mut chars_count = 0;
+        let mut line: u64 = 0;
+        let mut character: u64 = 0;
+        let mut last_offset = 0;
 
-        let mut lines = Vec::with_capacity(512); // a guess
-        let mut mapping = Vec::with_capacity(source.len() * 4); // We assume the worst case
+        for c in source.chars() {
+            let new_offset = last_offset + c.len_utf16();
 
-        for (i, c) in source.chars().enumerate() {
-            // 1-based char offset.
-            let char_offset = (i + 1) as u64;
-            mapping.extend(iter::repeat(char_offset).take(c.len_utf8()));
+            offset_to_position.extend(
+                (last_offset..new_offset)
+                    .map(|b| (TextSize::from(b as u32), Position { line, character })),
+            );
 
+            position_to_offset.extend(
+                (last_offset..new_offset)
+                    .map(|b| (Position { line, character }, TextSize::from(b as u32))),
+            );
+
+            last_offset = new_offset;
+
+            character += 1;
             if c == '\n' {
                 // LF is at the start of each line.
-                lines.push(CharacterRange(line_start_char + 1, char_offset));
-                line_start_char = char_offset;
+                line += 1;
+                character = 0;
             }
-
-            chars_count = i as u64 + 1;
         }
 
-        if mapping.is_empty() {
-            mapping.push(1);
-        } else {
-            mapping.push(*mapping.last().unwrap())
-        }
-
-        if line_start_char <= chars_count {
-            lines.push(CharacterRange(line_start_char + 1, chars_count + 1));
-        }
+        // Last imaginary character.
+        offset_to_position.insert(
+            TextSize::from(last_offset as u32),
+            Position { line, character },
+        );
+        position_to_offset.insert(
+            Position { line, character },
+            TextSize::from(last_offset as u32),
+        );
 
         Self {
-            zero_based: false,
-            lines,
-            mapping,
+            offset_to_position,
+            position_to_offset,
+            lines: line as usize,
         }
     }
 
-    pub fn zero_based(mut self, zero: bool) -> Self {
-        self.zero_based = zero;
-        self
+    pub fn offset(&self, position: Position) -> Option<TextSize> {
+        self.position_to_offset.get(&position).copied()
     }
 
-    pub fn lines(&self) -> &[CharacterRange] {
-        &self.lines
-    }
-
-    pub fn mapping(&self) -> &[CharacterOffset] {
-        &self.mapping
-    }
-
-    pub fn offset(&self, mut position: Position) -> Option<TextSize> {
-        if self.zero_based {
-            position.line += 1;
-            position.character += 1;
-        }
-
-        self.lines()
-            .get(position.line.checked_sub(1).expect("lines must be 1-based") as usize)
-            .and_then(|l| {
-                let idx = l.0
-                    + position
-                        .character
-                        .checked_sub(1)
-                        .expect("characters must be 1-based");
-
-                self.mapping
-                    .iter()
-                    .enumerate()
-                    .find_map(|(i, p)| {
-                        if *p == idx {
-                            Some(TextSize::from(i as u32))
-                        } else {
-                            None
-                        }
-                    })
-                    .or_else(|| Some(((self.mapping.len() - 1) as u32).into()))
-            })
-    }
-
-    pub fn text_range(&self, mut range: Range) -> Option<TextRange> {
-        if self.zero_based {
-            range.start.line += 1;
-            range.start.character += 1;
-            range.end.line += 1;
-            range.end.character += 1;
-        }
+    pub fn text_range(&self, range: Range) -> Option<TextRange> {
         self.offset(range.start)
             .and_then(|start| self.offset(range.end).map(|end| TextRange::new(start, end)))
     }
 
     pub fn position(&self, offset: TextSize) -> Option<Position> {
-        self.mapping.get(u32::from(offset) as usize).and_then(|c| {
-            self.lines
-                .iter()
-                .enumerate()
-                .find(|(_, line)| line.0 <= *c && line.1 >= *c)
-                .map(|(line_idx, line)| Position {
-                    line: line_idx as u64,
-                    character: *c - line.0,
-                })
-        })
+        self.offset_to_position.get(&offset).copied()
     }
 
     pub fn range(&self, range: TextRange) -> Option<Range> {
@@ -142,95 +96,12 @@ impl Mapper {
             .and_then(|start| self.position(range.end()).map(|end| Range { start, end }))
     }
 
-    // FIXME: this is a hack, end ranges are too short
-    //        if there is no newline at the end of the file.
-    pub fn range_inclusive(&self, range: TextRange) -> Option<Range> {
-        self.position(range.start()).and_then(|start| {
-            self.position(range.end()).map(|mut end| {
-                if let Some(l) = self.lines.last() {
-                    if end.line as usize == self.lines.len() - 1 && end.character == l.1-l.0-1{
-                        end.character += 1;
-                    }
-                }
-
-                Range { start, end }
-            })
-        })
+    pub fn mappings(&self) -> (&BTreeMap<TextSize, Position>, &BTreeMap<Position, TextSize>) {
+        (&self.offset_to_position, &self.position_to_offset)
     }
 
-    pub fn split_lines(&self, mut range: Range) -> Vec<Range> {
-        if self.zero_based {
-            range.start.line += 1;
-            range.start.character += 1;
-            range.end.line += 1;
-            range.end.character += 1;
-        }
-
-        if range.start.line == range.end.line {
-            return vec![range];
-        }
-
-        let mut lines = Vec::with_capacity((range.end.line - range.start.line) as usize);
-
-        let start_line = self.lines[range.start.line as usize];
-
-        lines.push(Range {
-            start: range.start,
-            end: Position {
-                line: range.start.line,
-                character: start_line.1 - start_line.0,
-            },
-        });
-
-        for i in (range.start.line + 1)..range.end.line {
-            let l = self.lines[i as usize];
-            lines.push(Range {
-                start: Position {
-                    line: i,
-                    character: 0,
-                },
-                end: Position {
-                    line: i,
-                    character: l.1 - l.0,
-                },
-            })
-        }
-
-        lines.push(Range {
-            start: Position {
-                line: range.end.line,
-                character: 0,
-            },
-            end: range.end,
-        });
-
-        if self.zero_based {
-            for line in &mut lines {
-                line.start.line -= 1;
-                line.start.character -= 1;
-                line.end.line -= 1;
-                line.end.character -= 1;
-            }
-        }
-
-        lines
-    }
-
-    pub fn all_range(&self) -> Range {
-        Range {
-            start: Position {
-                line: 0,
-                character: 0,
-            },
-            end: self.end(),
-        }
-    }
-
-    pub fn end(&self) -> Position {
-        Position {
-            line: (self.lines.len() as u64).checked_sub(1).unwrap_or_default(),
-            character: self.lines.last().map(|l| l.1 - l.0).unwrap_or_default(),
-        }
+    pub fn line_count(&self) -> usize {
+        self.lines
     }
 }
 
@@ -245,7 +116,7 @@ pub trait SplitLines {
 }
 impl SplitLines for Range {
     fn split_lines(self, mapper: &Mapper) -> Vec<Range> {
-        mapper.split_lines(self)
+        unimplemented!()
     }
 
     fn is_single_line(&self) -> bool {
@@ -285,4 +156,34 @@ pub fn relative_range(range: Range, to: Range) -> Range {
     };
 
     Range { start, end }
+}
+
+#[cfg(test)]
+#[test]
+fn test_mapper() {
+    let s1 = r#"
+line-2
+line-3"#;
+
+    let mapper = Mapper::new(s1);
+
+    assert!(s1.len() == mapper.mappings().0.len() - 1);
+
+    assert!(
+        mapper.position(0.into()).unwrap()
+            == Position {
+                line: 0,
+                character: 0
+            }
+    );
+
+    assert!(
+        mapper
+            .position(TextSize::from(s1.len() as u32 - 1 as u32))
+            .unwrap()
+            == Position {
+                line: 2,
+                character: 5
+            }
+    )
 }

@@ -166,10 +166,7 @@ macro_rules! impl_is {
         impl $name {
             $(
                 pub fn $method_name(&self) -> bool {
-                    match self {
-                        $name::$variant(_) => true,
-                        _ => false
-                    }
+                    matches!(self, $name::$variant(_))
                 }
             )*
         }

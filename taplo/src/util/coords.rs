@@ -142,11 +142,17 @@ impl Mapper {
             .and_then(|start| self.position(range.end()).map(|end| Range { start, end }))
     }
 
-    // FIXME: this is a hack
+    // FIXME: this is a hack, end ranges are too short
+    //        if there is no newline at the end of the file.
     pub fn range_inclusive(&self, range: TextRange) -> Option<Range> {
         self.position(range.start()).and_then(|start| {
             self.position(range.end()).map(|mut end| {
-                end.character += 1;
+                if let Some(l) = self.lines.last() {
+                    if end.line as usize == self.lines.len() - 1 && end.character == l.1-l.0-1{
+                        end.character += 1;
+                    }
+                }
+
                 Range { start, end }
             })
         })

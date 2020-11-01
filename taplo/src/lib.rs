@@ -1,3 +1,4 @@
+#![allow(clippy::single_match)]
 /*!
 
 # About

@@ -125,7 +125,7 @@ pub(crate) fn get_completions(
                             query_path = dom::Path::new();
                         }
 
-                        let range = before
+                        let mut range = before
                             .syntax
                             .range
                             .map(|range| doc.mapper.range_inclusive(range).unwrap())
@@ -165,6 +165,8 @@ pub(crate) fn get_completions(
                             {
                                 comma_before = true;
                             }
+
+                            range = None;
                         }
 
                         return get_schema_objects(query_path.clone(), &root_schema, true)
@@ -1232,6 +1234,6 @@ fn default_value_snippet(
 
 // Whether the key should be completed according to the contents of the tree,
 // e.g. we shouldn't offer completions for value paths that already exist.
-fn valid_key(path: &dom::Path, dom_paths: &HashSet<dom::Path>, dom: &RootNode) -> bool {
+fn valid_key(path: &dom::Path, dom_paths: &HashSet<dom::Path>, _dom: &RootNode) -> bool {
     !dom_paths.contains(path)
 }

@@ -529,7 +529,7 @@ impl Entries {
                     syntax: common_prefix_key.clone().syntax,
                     key: common_prefix_key.clone(),
                     value: ValueNode::Table(TableNode {
-                        syntax: common_prefix_key.syntax.clone(),
+                        syntax: common_prefix_key.syntax,
                         inline: false,
                         end_offset: Default::default(),
                         pseudo: true,
@@ -574,12 +574,12 @@ impl Entries {
                 match entry.syntax().kind() {
                     TABLE_HEADER => {
                         errors.push(Error::DuplicateKey {
-                            first: existing_key.clone(),
+                            first: existing_key,
                             second: key,
                         });
                     }
                     _ => errors.push(Error::ExpectedTable {
-                        target: existing_key.clone(),
+                        target: existing_key,
                         key,
                     }),
                 }
@@ -591,7 +591,7 @@ impl Entries {
                     ValueNode::Array(arr) => {
                         if !arr.tables {
                             errors.push(Error::ExpectedTable {
-                                target: existing_key.clone(),
+                                target: existing_key,
                                 key,
                             });
                             return;
@@ -612,7 +612,7 @@ impl Entries {
                         )
                     }
                     _ => errors.push(Error::ExpectedTable {
-                        target: existing_key.clone(),
+                        target: existing_key,
                         key,
                     }),
                 }
@@ -636,7 +636,7 @@ impl Entries {
                             ValueNode::Table(new_table) => {
                                 match new_entry.value {
                                     ValueNode::Table(old_table) => new_table.entries.insert_table(
-                                        existing_key.clone().without_prefix(&new_entry.key).into(),
+                                        existing_key.without_prefix(&new_entry.key).into(),
                                         old_table,
                                         errors,
                                     ),
@@ -653,7 +653,7 @@ impl Entries {
                         }
                     }
                     _ => errors.push(Error::ExpectedTable {
-                        target: existing_key.clone(),
+                        target: existing_key,
                         key,
                     }),
                 }
@@ -676,7 +676,7 @@ impl Entries {
                             existing_key.clone().without_prefix(&common_prefix_key),
                             EntryNode {
                                 syntax: entry.syntax.clone(),
-                                key: existing_key.clone().without_prefix(&common_prefix_key),
+                                key: existing_key.without_prefix(&common_prefix_key),
                                 value: existing_value,
                             },
                         );
@@ -702,7 +702,7 @@ impl Entries {
                         });
                     }
                     _ => errors.push(Error::ExpectedTable {
-                        target: existing_key.clone(),
+                        target: existing_key,
                         key,
                     }),
                 }

@@ -236,7 +236,7 @@ impl TryFrom<dom::ValueNode> for Value {
             dom::ValueNode::Array(v) => v.try_into()?,
             dom::ValueNode::Date(v) => v.try_into()?,
             dom::ValueNode::Table(v) => v.try_into()?,
-            dom::ValueNode::Invalid(_) => Err(Error::InvalidValue)?,
+            dom::ValueNode::Invalid(_) => return Err(Error::InvalidValue),
             _ => panic!("empty node"),
         })
     }

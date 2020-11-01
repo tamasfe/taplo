@@ -19,10 +19,7 @@ macro_rules! impl_is_node_ref {
         impl NodeRef<'_> {
             $(
                 pub fn $method_name(&self) -> bool {
-                    match self {
-                        NodeRef::$variant(_) => true,
-                        _ => false
-                    }
+                    matches!(self, NodeRef::$variant(_))
                 }
             )*
         }
@@ -434,24 +431,21 @@ impl SyntaxInfo {
                     ));
                     range = keys_range;
                     text = Some(key.text().to_string());
-                } else {
-                    if let Some(mut entry) = last.parent() {
-                        if entry.kind() == VALUE {
-                            entry = entry.parent().unwrap();
-                        }
+                } else if let Some(mut entry) = last.parent() {
+                    if entry.kind() == VALUE {
+                        entry = entry.parent().unwrap();
+                    }
 
-                        if entry.kind() == ENTRY {
-                            if let Some(eq) = entry.children_with_tokens().find(|t| t.kind() == EQ)
-                            {
-                                range = Some(TextRange::new(
-                                    eq.text_range().end(),
-                                    entry
-                                        .children_with_tokens()
-                                        .last()
-                                        .map(|t| t.text_range().end() )
-                                        .unwrap_or(eq.text_range().end()),
-                                ));
-                            }
+                    if entry.kind() == ENTRY {
+                        if let Some(eq) = entry.children_with_tokens().find(|t| t.kind() == EQ) {
+                            range = Some(TextRange::new(
+                                eq.text_range().end(),
+                                entry
+                                    .children_with_tokens()
+                                    .last()
+                                    .map(|t| t.text_range().end())
+                                    .unwrap_or_else(|| eq.text_range().end()),
+                            ));
                         }
                     }
 

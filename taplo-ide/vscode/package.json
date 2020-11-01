@@ -292,7 +292,7 @@
 		"test-compile": "tsc -p ./"
 	},
 	"dependencies": {
-		"node-fetch": "^2.6.0",
+		"node-fetch": "^2.6.1",
 		"taplo": "../pkg",
 		"vscode-languageclient": "^6.1.3"
 	},

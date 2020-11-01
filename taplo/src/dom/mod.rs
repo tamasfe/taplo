@@ -20,6 +20,7 @@ use crate::{
     value::Value,
 };
 use indexmap::{indexmap, IndexMap};
+use regex::Regex;
 use rowan::{TextRange, TextSize};
 use smallvec::{smallvec, SmallVec};
 use std::{convert::TryFrom, convert::TryInto, hash::Hash, iter::FromIterator, mem, rc::Rc};
@@ -117,9 +118,9 @@ pub enum Node {
 
 impl Node {
     /// Converts the node into a value.
-    /// 
+    ///
     /// Panics if the node contains invalid values.
-    /// 
+    ///
     /// Use `Value::try_from` for a fallible alternative.
     pub fn to_value(&self) -> Value {
         Value::try_from(self.clone()).unwrap()
@@ -1178,13 +1179,7 @@ impl KeyNode {
 
     /// Quotes are removed from the keys.
     pub fn keys_str_stripped(&self) -> impl Iterator<Item = &str> {
-        self.keys_str().map(|s| {
-            if s.starts_with('\"') || s.starts_with('\'') {
-                &s[1..s.len() - 1]
-            } else {
-                s
-            }
-        })
+        self.keys_str().map(|s| s.strip_quotes())
     }
 
     pub fn full_key_string_stripped(&self) -> String {
@@ -1753,6 +1748,12 @@ impl From<String> for PathKey {
     }
 }
 
+impl From<&String> for PathKey {
+    fn from(s: &String) -> Self {
+        Self::Key(s.to_owned())
+    }
+}
+
 impl From<&str> for PathKey {
     fn from(s: &str) -> Self {
         Self::Key(s.into())
@@ -1824,6 +1825,16 @@ impl Path {
         }
     }
 
+    pub fn extend(&self, iter: impl IntoIterator<Item = impl Into<PathKey>>) -> Self {
+        let mut new_keys: SmallVec<[PathKey; 10]> = self.keys().cloned().collect();
+        new_keys.extend(iter.into_iter().map(Into::into));
+        Self {
+            keys: Rc::new(new_keys),
+            mask_left: 0,
+            mask_right: 0,
+        }
+    }
+
     pub fn keys(&self) -> impl Iterator<Item = &PathKey> {
         self.keys[..self.keys.len() - self.mask_right]
             .iter()
@@ -1831,8 +1842,17 @@ impl Path {
     }
 
     pub fn dotted(&self) -> String {
+        let simple = Regex::new("[A-Za-z0-9]+").unwrap();
+
         self.keys()
             .map(|s| s.to_string())
+            .map(|s| {
+                if simple.is_match(&s) {
+                    s
+                } else {
+                    format!(r#"'{}'"#, s)
+                }
+            })
             .collect::<Vec<String>>()
             .join(".")
     }
@@ -1870,6 +1890,16 @@ impl Path {
         let skip = usize::min(self.len(), n);
         new.mask_right += skip;
         new
+    }
+}
+
+impl IntoIterator for Path {
+    type Item = PathKey;
+
+    type IntoIter = smallvec::IntoIter<[PathKey; 10]>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&*self.keys).clone().into_iter()
     }
 }
 

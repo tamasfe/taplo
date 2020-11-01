@@ -2,17 +2,14 @@ use crate::{analytics::NodeRef, dom::NodeSyntax, syntax::SyntaxKind::*, util::co
 use lsp_types::Position;
 use std::fs;
 
-fn cargo_toml() -> String {
-    fs::read_to_string("../test-data/analytics/_cargo.toml").unwrap()
-}
+fn cargo_toml(idx: usize) -> String {
+    fs::read_to_string(&format!("../test-data/analytics/_cargo{}.toml", idx)).unwrap()
 
-fn cargo_toml2() -> String {
-    fs::read_to_string("../test-data/analytics/_cargo2.toml").unwrap()
 }
 
 #[test]
 fn query_author() {
-    let src = cargo_toml();
+    let src = cargo_toml(1);
     let mapper = Mapper::new(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
@@ -37,7 +34,7 @@ fn query_author() {
 
 #[test]
 fn query_package_field() {
-    let src = cargo_toml();
+    let src = cargo_toml(1);
     let mapper = Mapper::new(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
@@ -68,7 +65,7 @@ fn query_package_field() {
 
 #[test]
 fn query_lib_table() {
-    let src = cargo_toml();
+    let src = cargo_toml(1);
     let mapper = Mapper::new(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
@@ -98,7 +95,7 @@ fn query_lib_table() {
 
 #[test]
 fn query_table_header() {
-    let src = cargo_toml();
+    let src = cargo_toml(1);
     let mapper = Mapper::new(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
@@ -114,11 +111,13 @@ fn query_table_header() {
     let pos = mapper.offset(Position::new(49, 2)).unwrap();
     let pos = dom.query_position(pos);
     assert!(pos.is_completable());
+    assert!(pos.is_inside_header());
+    assert!(pos.is_empty_header());
 }
 
 #[test]
 fn query_incomplete_key() {
-    let src = cargo_toml();
+    let src = cargo_toml(1);
     let mapper = Mapper::new(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
@@ -139,7 +138,7 @@ fn query_incomplete_key() {
 
 #[test]
 fn query_subtable() {
-    let src = cargo_toml2();
+    let src = cargo_toml(2);
     let mapper = Mapper::new(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
@@ -157,4 +156,135 @@ fn query_subtable() {
     assert!(pos.is_completable());
 
     assert!(pos.after.path.dotted() == "profile");
+}
+
+#[test]
+fn query_table_key() {
+    let src = cargo_toml(1);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(6, 1)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.after.path.dotted() == "some.package");
+}
+
+#[test]
+fn query_key_period() {
+    let src = cargo_toml(1);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(53, 6)).unwrap();
+    let pos = dom.query_position(pos);
+
+    assert!(pos.before.unwrap().path.dotted() == "lib");
+
+    let pos = mapper.offset(Position::new(54, 11)).unwrap();
+    let pos = dom.query_position(pos);
+
+    assert!(pos.before.unwrap().path.dotted() == "some.lib");
+
+    let pos = mapper.offset(Position::new(48, 7)).unwrap();
+    let pos = dom.query_position(pos);
+
+    assert!(pos.before.unwrap().path.dotted() == "dev-dependencies.stuff");
+
+    let pos = mapper.offset(Position::new(60, 7)).unwrap();
+    let pos = dom.query_position(pos);
+
+    assert!(pos.before.unwrap().path.dotted() == "test.1.thing");
+}
+
+#[test]
+fn query_start() {
+    let src = cargo_toml(3);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(1, 1)).unwrap();
+    let pos = dom.query_position(pos);
+
+    assert!(pos.after.nodes.last().unwrap().is_root());
+}
+
+#[test]
+fn query_comment() {
+    let src = cargo_toml(3);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(18, 11)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(!pos.is_completable());
+
+    let pos = mapper.offset(Position::new(18, 1)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+}
+
+#[test]
+fn query_key() {
+    let src = cargo_toml(4);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(1, 4)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "lib");
+
+    let pos = mapper.offset(Position::new(5, 4)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "package.asd");
+
+    let src = cargo_toml(5);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+    let pos = mapper.offset(Position::new(1, 10)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "lib.bench");
+
+    let src = cargo_toml(5);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+    let pos = mapper.offset(Position::new(1, 9)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "lib.bench");
+
+    let src = cargo_toml(6);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+    let pos = mapper.offset(Position::new(1, 5)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "lib");
+
+    let src = cargo_toml(7);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+    let pos = mapper.offset(Position::new(2, 6)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.as_ref().unwrap().path.dotted() == "lib.bench");
+}
+
+#[test]
+fn check_token_before() {
+    let src = cargo_toml(7);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(4, 11)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.unwrap().syntax.first_token_before().unwrap().1.kind() == BRACE_START);
+
+    let pos = mapper.offset(Position::new(4, 13)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    assert!(pos.before.unwrap().syntax.first_token_before().unwrap().1.kind() == COMMA);
 }

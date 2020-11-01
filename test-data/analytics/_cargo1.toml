@@ -1,4 +1,4 @@
-[package]
+[some.package]
 authors = ["tamasf97 <tamasf97@outlook.com>"]
 edition = "2018"
 name    = "taplo-ide"
@@ -45,7 +45,16 @@ wee_alloc = { version = "0.4.2", optional = true }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.2"
-
+stuff.
 []
 
 asd.bsd
+
+[lib.]
+[some.lib.]
+
+[[test]]
+
+[[test]]
+
+thing.

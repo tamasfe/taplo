@@ -236,7 +236,7 @@ impl TryFrom<dom::ValueNode> for Value {
             dom::ValueNode::Array(v) => v.try_into()?,
             dom::ValueNode::Date(v) => v.try_into()?,
             dom::ValueNode::Table(v) => v.try_into()?,
-            dom::ValueNode::Invalid(_) => unimplemented!(),
+            dom::ValueNode::Invalid(_) => Err(Error::InvalidValue)?,
             _ => panic!("empty node"),
         })
     }
@@ -356,16 +356,22 @@ impl core::fmt::Display for InvalidDateError {
 impl std::error::Error for InvalidDateError {}
 
 #[derive(Debug)]
-pub struct Error(Box<dyn std::error::Error>);
+pub enum Error {
+    InvalidValue,
+    Other(Box<dyn std::error::Error>),
+}
 
 impl core::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
+        match self {
+            Error::InvalidValue => write!(f, "invalid value"),
+            Error::Other(o) => o.fmt(f),
+        }
     }
 }
 
 impl<E: std::error::Error + 'static> From<E> for Error {
     fn from(e: E) -> Self {
-        Self(Box::new(e))
+        Self::Other(Box::new(e))
     }
 }

@@ -1,25 +1,23 @@
+use crate::request_ext;
 use crate::request_ext::*;
 use crate::{
     read_file,
     schema::{get_schema_objects, BUILTIN_SCHEME},
     Configuration, Document, HashRegex, World,
 };
-use crate::{request_ext, schema::ExtendedSchema};
 use indexmap::IndexMap;
 use itertools::Itertools;
 use lsp_async_stub::{rpc::Error, Context, Params, RequestWriter};
 use lsp_types::*;
 use regex::Regex;
-use rowan::TextRange;
 use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
-use smallvec::SmallVec;
 use std::{collections::HashMap, convert::TryFrom, mem};
 use taplo::{
     analytics::NodeRef,
-    dom::{NodeSyntax, TextRanges},
     formatter,
     util::{coords::Mapper, syntax::join_ranges},
+    value::Value,
 };
 use verify::Verify;
 use wasm_bindgen_futures::spawn_local;
@@ -483,7 +481,7 @@ pub(crate) async fn hover(
 
     let query = dom.query_position(doc.mapper.offset(pos).unwrap());
 
-    let schemas = get_schema_objects(query.after.path, &schema);
+    let schemas = get_schema_objects(query.after.path, &schema, true);
     let syntax_range = query.after.syntax.range.clone();
 
     Ok(query
@@ -561,95 +559,111 @@ pub(crate) async fn hover(
                     })
                 }
             }
-            NodeRef::Value(v) => match serde_json::to_value(node.into_node().to_value()) {
-                Ok(toml_value) => {
-                    let docs = schemas
-                        .into_iter()
-                        .filter_map(|s| {
-                            let enum_doc = s.schema.enum_values.as_ref().and_then(|enum_values| {
-                                enum_values
-                                    .iter()
-                                    .enumerate()
-                                    .find_map(|(enum_idx, enum_value)| {
-                                        if *enum_value == toml_value {
-                                            s.ext.docs.as_ref().and_then(|i| {
-                                                i.enum_values.as_ref().and_then(|e| {
-                                                    e.get(enum_idx).map(|doc| (enum_idx, doc))
-                                                })
-                                            })
-                                        } else {
-                                            None
-                                        }
-                                    })
-                            });
+            NodeRef::Value(v) => {
+                let val = match Value::try_from(node.into_node()) {
+                    Ok(val) => val,
+                    Err(_) => {
+                        return None;
+                    }
+                };
 
-                            let default_value_doc = s.schema.metadata.as_ref().and_then(|meta| {
-                                meta.default.as_ref().and_then(|def| {
-                                    if *def == toml_value {
-                                        s.ext.docs.as_ref().and_then(|i| i.default_value.clone())
-                                    } else {
-                                        None
-                                    }
-                                })
-                            });
-
-                            if let Some((idx, enum_doc)) = enum_doc {
-                                if let Some(enum_doc) = enum_doc {
-                                    let link = s.ext.links.as_ref().and_then(|l| {
-                                        l.enum_values.as_ref().and_then(|e| e.get(idx)).clone()
+                match serde_json::to_value(val) {
+                    Ok(toml_value) => {
+                        let docs = schemas
+                            .into_iter()
+                            .filter_map(|s| {
+                                let enum_doc =
+                                    s.schema.enum_values.as_ref().and_then(|enum_values| {
+                                        enum_values.iter().enumerate().find_map(
+                                            |(enum_idx, enum_value)| {
+                                                if *enum_value == toml_value {
+                                                    s.ext.docs.as_ref().and_then(|i| {
+                                                        i.enum_values.as_ref().and_then(|e| {
+                                                            e.get(enum_idx)
+                                                                .map(|doc| (enum_idx, doc))
+                                                        })
+                                                    })
+                                                } else {
+                                                    None
+                                                }
+                                            },
+                                        )
                                     });
 
-                                    let link = match link {
-                                        Some(l) => l.clone(),
-                                        None => None,
-                                    };
+                                let default_value_doc =
+                                    s.schema.metadata.as_ref().and_then(|meta| {
+                                        meta.default.as_ref().and_then(|def| {
+                                            if *def == toml_value {
+                                                s.ext
+                                                    .docs
+                                                    .as_ref()
+                                                    .and_then(|i| i.default_value.clone())
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                    });
 
-                                    return Some((enum_doc.clone(), link));
+                                if let Some((idx, enum_doc)) = enum_doc {
+                                    if let Some(enum_doc) = enum_doc {
+                                        let link = s.ext.links.as_ref().and_then(|l| {
+                                            l.enum_values.as_ref().and_then(|e| e.get(idx)).clone()
+                                        });
+
+                                        let link = match link {
+                                            Some(l) => l.clone(),
+                                            None => None,
+                                        };
+
+                                        return Some((enum_doc.clone(), link));
+                                    }
+                                } else if let Some(d) = default_value_doc {
+                                    return Some((d, None));
                                 }
-                            } else if let Some(d) = default_value_doc {
-                                return Some((d, None));
-                            }
+                                None
+                            })
+                            .map(|(mut docs, link)| {
+                                if !w.configuration.schema.enabled.unwrap_or(false)
+                                    || !w.configuration.schema.links.unwrap_or(false)
+                                {
+                                    if let Some(link) = link {
+                                        docs = format!(
+                                            "[_<sup>more information</sup>_]({})\n\n{}",
+                                            link, docs
+                                        );
+                                    }
+                                }
+
+                                docs
+                            })
+                            .fold(String::new(), |mut all, s| {
+                                if !all.is_empty() {
+                                    all += "\n---\n";
+                                }
+                                all += &s;
+                                all
+                            });
+
+                        if docs.is_empty() {
                             None
-                        })
-                        .map(|(mut docs, link)| {
-                            if !w.configuration.schema.enabled.unwrap_or(false)
-                                || !w.configuration.schema.links.unwrap_or(false)
-                            {
-                                if let Some(link) = link {
-                                    docs = format!(
-                                        "[_<sup>more information</sup>_]({})\n\n{}",
-                                        link, docs
-                                    );
-                                }
-                            }
-
-                            docs
-                        })
-                        .fold(String::new(), |mut all, s| {
-                            if !all.is_empty() {
-                                all += "\n---\n";
-                            }
-                            all += &s;
-                            all
-                        });
-
-                    if docs.is_empty() {
+                        } else {
+                            Some(Hover {
+                                contents: HoverContents::Markup(MarkupContent {
+                                    kind: MarkupKind::Markdown,
+                                    value: docs,
+                                }),
+                                range: Some(
+                                    doc.mapper.range(join_ranges(v.text_ranges())).unwrap(),
+                                ),
+                            })
+                        }
+                    }
+                    Err(err) => {
+                        log_debug!("invalid JSON value from TOML value: {}", err);
                         None
-                    } else {
-                        Some(Hover {
-                            contents: HoverContents::Markup(MarkupContent {
-                                kind: MarkupKind::Markdown,
-                                value: docs,
-                            }),
-                            range: Some(doc.mapper.range(join_ranges(v.text_ranges())).unwrap()),
-                        })
                     }
                 }
-                Err(err) => {
-                    log_debug!("invalid JSON value from TOML value: {}", err);
-                    None
-                }
-            },
+            }
             _ => None,
         }))
 }
@@ -689,7 +703,7 @@ pub(crate) async fn links(
         .filter(|(_, n)| n.is_key())
         .unique_by(|(p, _)| p.clone())
         .filter_map(|(path, node)| {
-            let schemas = get_schema_objects(path, &schema);
+            let schemas = get_schema_objects(path, &schema, true);
 
             if schemas.is_empty() {
                 None
@@ -730,12 +744,19 @@ pub(crate) async fn links(
             .filter(|(_, n)| n.is_value())
             .unique_by(|(p, _)| p.clone())
             .filter_map(|(path, node)| {
-                let schemas = get_schema_objects(path, &schema);
+                let schemas = get_schema_objects(path, &schema, true);
+
+                let val = match Value::try_from(node.into_node()) {
+                    Ok(val) => val,
+                    Err(_) => {
+                        return None;
+                    }
+                };
 
                 if schemas.is_empty() {
                     None
                 } else {
-                    match serde_json::to_value(node.into_node().to_value()) {
+                    match serde_json::to_value(val) {
                         Ok(toml_value) => Some(
                             schemas
                                 .into_iter()

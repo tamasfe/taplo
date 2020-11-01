@@ -48,7 +48,6 @@ macro_rules! log_debug {
     };
 }
 
-pub mod analytics;
 mod handlers;
 mod request_ext;
 pub mod schema;

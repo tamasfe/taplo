@@ -1,11 +1,15 @@
 //! This module contains various methods and utilities for analyzing the DOM and/or the syntax tree.
 
+use std::iter::FromIterator;
+
 use crate::{
     dom::{self, NodeSyntax, TextRanges},
+    syntax::SyntaxToken,
     syntax::{
         SyntaxElement,
         SyntaxKind::{self, *},
     },
+    util::StrExt,
 };
 use rowan::{TextRange, TextSize};
 use smallvec::SmallVec;
@@ -59,6 +63,7 @@ impl dom::RootNode {
                 NodeRef::Table(n) => {
                     if n.text_ranges().iter().any(|r| r.contains(position)) {
                         nodes.push(node);
+                        path = p;
                     }
                 }
                 NodeRef::Entry(n) => {
@@ -101,10 +106,35 @@ impl dom::RootNode {
             }
         }
 
+        if nodes.is_empty() {
+            // Always has root.
+            nodes.push(NodeRef::Root(self));
+        }
+
+        let syntax = SyntaxInfo::query(position, &root_syntax);
+
+        if let Some(el) = &syntax.element {
+            if el.kind() == PERIOD {
+                let path_fragment = dom::Path::from_iter(
+                    el.parent()
+                        .unwrap()
+                        .children_with_tokens()
+                        .filter(|t| t.kind() == IDENT)
+                        .map(|t| t.as_token().unwrap().text().to_string())
+                        .map(|s| s.as_str().strip_quotes().to_string()),
+                );
+
+                // FIXME: this might not be 100% correct
+                if path_fragment != path {
+                    path = path.extend(path_fragment);
+                }
+            }
+        }
+
         PositionInfo {
             path,
             nodes,
-            syntax: SyntaxInfo::query(position, &root_syntax),
+            syntax,
         }
     }
 }
@@ -150,6 +180,18 @@ impl NodeRef<'_> {
             NodeRef::Array(v) => dom::Node::from(v.clone()),
         }
     }
+
+    #[allow(dead_code)]
+    pub(crate) fn name(&self) -> &str {
+        match self {
+            NodeRef::Root(_) => "root",
+            NodeRef::Table(_) => "table",
+            NodeRef::Entry(_) => "entry",
+            NodeRef::Key(_) => "key",
+            NodeRef::Value(_) => "value",
+            NodeRef::Array(_) => "array",
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -179,7 +221,43 @@ impl PositionQueryResult<'_> {
             return false;
         }
 
+        if self
+            .before
+            .as_ref()
+            .map(|p| p.syntax.syntax_kinds.iter().any(|k| *k == COMMENT))
+            .unwrap_or(false)
+        {
+            return false;
+        }
+
         true
+    }
+
+    pub fn is_inside_header(&self) -> bool {
+        self.is_completable()
+            && self
+                .after
+                .syntax
+                .syntax_kinds
+                .iter()
+                .any(|kind| *kind == TABLE_ARRAY_HEADER || *kind == TABLE_HEADER)
+    }
+
+    pub fn is_empty_header(&self) -> bool {
+        self.is_completable()
+            && self.is_inside_header()
+            && self
+                .after
+                .syntax
+                .text
+                .as_ref()
+                .map(|t| t == "]")
+                .unwrap_or(false)
+            && self
+                .before
+                .as_ref()
+                .and_then(|b| b.syntax.text.as_ref().map(|t| t == "["))
+                .unwrap_or(false)
     }
 
     fn is_before_header(&self) -> bool {
@@ -222,6 +300,9 @@ impl PositionQueryResult<'_> {
 #[derive(Debug)]
 pub struct SyntaxInfo {
     /// The range of the relevant area.
+    ///
+    /// Note that this is not the range of the syntax token,
+    /// but rather a helper for keys and values.
     pub range: Option<TextRange>,
     /// The text inside of relevant area.
     pub text: Option<String>,
@@ -230,6 +311,8 @@ pub struct SyntaxInfo {
     /// The syntax kids relevant to the position
     /// (e.g. [`SyntaxKind::KEY`] and [`SyntaxKind::TABLE_HEADER`] for inside table headers).
     pub syntax_kinds: Vec<SyntaxKind>,
+    /// The path of a single dotted key.
+    pub key_path: Option<dom::Path>,
 }
 
 impl SyntaxInfo {
@@ -240,12 +323,31 @@ impl SyntaxInfo {
             .unwrap_or(false)
     }
 
+    /// First non-whitespace (or newline) syntax token before the element.
+    pub fn first_token_before(&self) -> Option<(TextRange, SyntaxToken)> {
+        self.element.as_ref().and_then(|el| {
+            el.as_token().and_then(|token| {
+                let mut token_before = token.prev_token();
+
+                while let Some(tok) = token_before {
+                    if tok.kind() != WHITESPACE || tok.kind() != NEWLINE {
+                        return Some((tok.text_range(), tok));
+                    }
+
+                    token_before = tok.prev_token();
+                }
+
+                None
+            })
+        })
+    }
+
     fn query(position: TextSize, root: &SyntaxElement) -> Self {
         let mut range: Option<TextRange> = Default::default();
         let mut text: Option<String> = Default::default();
         let mut element: Option<SyntaxElement> = Default::default();
         let mut syntax_kinds: Vec<SyntaxKind> = Default::default();
-        let mut expected_kind: Option<SyntaxKind> = Default::default();
+        let mut key_path: Option<dom::Path> = Default::default();
 
         let mut last: Option<SyntaxElement> = None;
         for n in root.as_node().unwrap().descendants_with_tokens() {
@@ -256,15 +358,7 @@ impl SyntaxInfo {
         }
 
         if let Some(last) = last {
-            range = Some(last.text_range());
             text = Some(last.to_string());
-
-            if syntax_kinds
-                .iter()
-                .any(|k| *k == TABLE_HEADER || *k == TABLE_ARRAY_HEADER)
-            {
-                expected_kind = Some(KEY);
-            }
 
             // Header key of the table
             if (last.kind() == PERIOD || last.kind() == IDENT)
@@ -273,18 +367,58 @@ impl SyntaxInfo {
                     .any(|k| *k == TABLE_HEADER || *k == TABLE_ARRAY_HEADER)
             {
                 let key = last.parent().unwrap();
-                range = Some(key.text_range());
+
+                // Keys without leading and trailing whitespace.
+                let mut keys_range: Option<TextRange> = None;
+
+                key_path = Some(dom::Path::from_iter(
+                    key.children_with_tokens()
+                        .filter(|t| t.kind() == IDENT || t.kind() == PERIOD)
+                        .map(|ident| {
+                            let token = ident.into_token().unwrap();
+
+                            keys_range = match keys_range {
+                                Some(r) => Some(r.cover(token.text_range())),
+                                None => Some(token.text_range()),
+                            };
+
+                            token
+                        })
+                        .filter(|t| t.kind() == IDENT)
+                        .map(|t| t.text().to_string())
+                        .map(|s| s.as_str().strip_quotes().to_string()),
+                ));
+                range = keys_range;
                 text = Some(key.text().to_string());
-                expected_kind = Some(KEY);
             }
 
             if (last.kind() == PERIOD || last.kind() == IDENT)
                 && syntax_kinds.iter().any(|k| *k == ENTRY)
             {
                 let key = last.parent().unwrap();
-                range = Some(key.text_range());
+
+                // Keys without leading and trailing whitespace.
+                let mut keys_range: Option<TextRange> = None;
+
+                key_path = Some(dom::Path::from_iter(
+                    key.children_with_tokens()
+                        .filter(|t| t.kind() == IDENT || t.kind() == PERIOD)
+                        .map(|ident| {
+                            let token = ident.into_token().unwrap();
+
+                            keys_range = match keys_range {
+                                Some(r) => Some(r.cover(token.text_range())),
+                                None => Some(token.text_range()),
+                            };
+
+                            token
+                        })
+                        .filter(|t| t.kind() == IDENT)
+                        .map(|t| t.text().to_string())
+                        .map(|s| s.as_str().strip_quotes().to_string()),
+                ));
+                range = keys_range;
                 text = Some(key.text().to_string());
-                expected_kind = Some(KEY);
             }
 
             element = Some(last);
@@ -295,6 +429,7 @@ impl SyntaxInfo {
             text,
             element,
             syntax_kinds,
+            key_path,
         }
     }
 }

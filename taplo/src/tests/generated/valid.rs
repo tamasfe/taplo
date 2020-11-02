@@ -3040,6 +3040,28 @@ fn taplo_same_table_name() {
     );
 }
 #[test]
+fn taplo_arrays_subtable() {
+    let src = "[table]\nval = 2\n\n[[table.arr]]\narr_val = 3\n\n[[table.arr]]\narr_val = 3";
+    let p = crate::parser::parse(&src);
+    assert!(
+        p.errors.is_empty(),
+        "Parse errors:\n{}",
+        p.errors
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+    let dom = p.into_dom();
+    assert!(
+        dom.errors().is_empty(),
+        "Semantic errors:\n{}",
+        dom.errors()
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+}
+#[test]
 fn taplo_table_in_array_of_tables() {
     let src = "[[thing]]\n[thing.test]\ntest = 'other data'\n\n\n[[thing]]\n[thing.test]\ntest = 'data'\n" ;
     let p = crate::parser::parse(&src);
@@ -3064,28 +3086,6 @@ fn taplo_table_in_array_of_tables() {
 #[test]
 fn taplo_tables() {
     let src = "[foo]\nbar = 1\n\n[baz]\nfoo.bar = 2 # Not Ok per the extension, conflicts with table \"foo\"\n\n[bar.foo] # Ok\nbaz = 3" ;
-    let p = crate::parser::parse(&src);
-    assert!(
-        p.errors.is_empty(),
-        "Parse errors:\n{}",
-        p.errors
-            .iter()
-            .map(|e| { format!("{}\n", e) })
-            .collect::<String>()
-    );
-    let dom = p.into_dom();
-    assert!(
-        dom.errors().is_empty(),
-        "Semantic errors:\n{}",
-        dom.errors()
-            .iter()
-            .map(|e| { format!("{}\n", e) })
-            .collect::<String>()
-    );
-}
-#[test]
-fn taplo_arrays_subtable() {
-    let src = "[table]\nval = 2\n\n[[table.arr]]\narr_val = 3\n\n[[table.arr]]\narr_val = 3";
     let p = crate::parser::parse(&src);
     assert!(
         p.errors.is_empty(),

@@ -75,5 +75,7 @@ pub mod syntax;
 pub mod value;
 pub mod analytics;
 
+pub use rowan;
+
 #[cfg(test)]
 mod tests;

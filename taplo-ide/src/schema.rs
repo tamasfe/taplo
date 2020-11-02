@@ -300,56 +300,28 @@ pub fn collect_subschemas<'s>(
     schema: ExtendedSchema<'s>,
 ) -> SmallVec<[ExtendedSchema<'s>; 10]> {
     let mut schemas = SmallVec::new();
-    let ext = schema.ext;
 
     if let Some(subs) = &schema.schema.subschemas {
         if let Some(one_ofs) = &subs.one_of {
             for one_of in one_ofs {
-                match one_of {
-                    Schema::Bool(_) => {}
-                    Schema::Object(o) => {
-                        if let Some(s) = resolve_object_ref(defs, o.into()) {
-                            let mut s_ext: ExtendedSchema = s;
-                            if ext != ExtMeta::default() {
-                                s_ext.ext = ext.clone();
-                            }
-                            schemas.push(s_ext)
-                        }
-                    }
+                if let Some(s) = ExtendedSchema::resolved(defs, one_of) {
+                    schemas.push(s);
                 }
             }
         }
 
         if let Some(any_ofs) = &subs.any_of {
             for any_of in any_ofs {
-                match any_of {
-                    Schema::Bool(_) => {}
-                    Schema::Object(o) => {
-                        if let Some(s) = resolve_object_ref(defs, o.into()) {
-                            let mut s_ext: ExtendedSchema = s;
-                            if ext != ExtMeta::default() {
-                                s_ext.ext = ext.clone();
-                            }
-                            schemas.push(s_ext)
-                        }
-                    }
+                if let Some(s) = ExtendedSchema::resolved(defs, any_of) {
+                    schemas.push(s);
                 }
             }
         }
 
         if let Some(all_ofs) = &subs.all_of {
             for all_of in all_ofs {
-                match all_of {
-                    Schema::Bool(_) => {}
-                    Schema::Object(o) => {
-                        if let Some(s) = resolve_object_ref(defs, o.into()) {
-                            let mut s_ext: ExtendedSchema = s;
-                            if ext != ExtMeta::default() {
-                                s_ext.ext = ext.clone();
-                            }
-                            schemas.push(s_ext)
-                        }
-                    }
+                if let Some(s) = ExtendedSchema::resolved(defs, all_of) {
+                    schemas.push(s);
                 }
             }
         }

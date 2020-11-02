@@ -6,7 +6,6 @@ use crate::{
 };
 use itertools::Itertools;
 use lsp_types::*;
-use rowan::{TextRange, TextSize};
 use schemars::{
     schema::{InstanceType, RootSchema, Schema, SingleOrVec},
     Map,
@@ -50,13 +49,13 @@ pub(crate) fn get_completions(
                 let range = before
                     .syntax
                     .range
-                    .map(|range| doc.mapper.range_inclusive(range).unwrap())
+                    .map(|range| doc.mapper.range(range).unwrap())
                     .or_else(|| {
                         query
                             .after
                             .syntax
                             .range
-                            .map(|range| doc.mapper.range_inclusive(range).unwrap())
+                            .map(|range| doc.mapper.range(range).unwrap())
                     });
 
                 return get_schema_objects(query_path.clone(), &root_schema, true)
@@ -85,7 +84,7 @@ pub(crate) fn get_completions(
                         {
                             s.is_array_of_objects(&root_schema.definitions)
                         } else {
-                            s.schema.object.is_some()
+                            s.is(InstanceType::Object)
                         }
                     })
                     .unique_by(|(p, ..)| p.clone())
@@ -109,12 +108,12 @@ pub(crate) fn get_completions(
                     .cloned()
                     .unwrap_or_else(|| query.after.nodes.last().cloned().unwrap());
 
-                let inline_table = query
-                    .after
-                    .syntax
-                    .syntax_kinds
-                    .iter()
-                    .any(|k| *k == SyntaxKind::INLINE_TABLE);
+                // let inline_table = query
+                //     .after
+                //     .syntax
+                //     .syntax_kinds
+                //     .iter()
+                //     .any(|k| *k == SyntaxKind::INLINE_TABLE);
 
                 match node {
                     node @ NodeRef::Table(_) | node @ NodeRef::Root(_) => {
@@ -125,49 +124,50 @@ pub(crate) fn get_completions(
                             query_path = dom::Path::new();
                         }
 
-                        let mut range = before
+                        let range = before
                             .syntax
                             .range
-                            .map(|range| doc.mapper.range_inclusive(range).unwrap())
+                            .map(|range| doc.mapper.range(range).unwrap())
                             .or_else(|| {
                                 query
                                     .after
                                     .syntax
                                     .range
-                                    .map(|range| doc.mapper.range_inclusive(range).unwrap())
+                                    .map(|range| doc.mapper.range(range).unwrap())
                             });
 
-                        let mut comma_before = false;
-                        let mut additional_edits = Vec::new();
+                        let comma_before = false;
+                        let additional_edits = Vec::new();
 
-                        if inline_table {
-                            if let Some((tok_range, tok)) = before.syntax.first_token_before() {
-                                if tok.kind() != SyntaxKind::COMMA
-                                    && tok.kind() != SyntaxKind::BRACE_START
-                                {
-                                    let range_after = TextRange::new(
-                                        tok_range.end(),
-                                        tok_range.end() + TextSize::from(1),
-                                    );
+                        // FIXME: comma insertion before entry
+                        // if inline_table {
+                        //     if let Some((tok_range, tok)) = before.syntax.first_token_before() {
+                        //         if tok.kind() != SyntaxKind::COMMA
+                        //             && tok.kind() != SyntaxKind::BRACE_START
+                        //         {
+                        //             let range_after = TextRange::new(
+                        //                 tok_range.end(),
+                        //                 tok_range.end() + TextSize::from(1),
+                        //             );
 
-                                    additional_edits.push(TextEdit {
-                                        range: doc.mapper.range(range_after).unwrap(),
-                                        new_text: ",".into(),
-                                    })
-                                }
-                            }
+                        //             additional_edits.push(TextEdit {
+                        //                 range: doc.mapper.range(range_after).unwrap(),
+                        //                 new_text: ",".into(),
+                        //             })
+                        //         }
+                        //     }
 
-                            let current_token =
-                                before.syntax.element.as_ref().unwrap().as_token().unwrap();
+                        //     let current_token =
+                        //         before.syntax.element.as_ref().unwrap().as_token().unwrap();
 
-                            if current_token.kind() != SyntaxKind::WHITESPACE
-                                && current_token.kind() != SyntaxKind::COMMA
-                            {
-                                comma_before = true;
-                            }
+                        //     if current_token.kind() != SyntaxKind::WHITESPACE
+                        //         && current_token.kind() != SyntaxKind::COMMA
+                        //     {
+                        //         comma_before = true;
+                        //     }
 
-                            range = None;
-                        }
+                        //     range = None;
+                        // }
 
                         return get_schema_objects(query_path.clone(), &root_schema, true)
                             .into_iter()
@@ -231,14 +231,16 @@ pub(crate) fn get_completions(
                         let range = before
                             .syntax
                             .range
-                            .map(|range| doc.mapper.range_inclusive(range).unwrap())
+                            .map(|range| doc.mapper.range(range).unwrap())
                             .or_else(|| {
                                 query
                                     .after
                                     .syntax
                                     .range
-                                    .map(|range| doc.mapper.range_inclusive(range).unwrap())
+                                    .map(|range| doc.mapper.range(range).unwrap())
                             });
+
+                        log_debug!("{:?}", &range);
 
                         return get_schema_objects(query_path.clone(), &root_schema, true)
                             .into_iter()
@@ -260,33 +262,34 @@ pub(crate) fn get_completions(
                         // Value completion inside an array.
                         let query_path = before.path.clone();
 
-                        let mut comma_before = false;
-                        let mut additional_edits = Vec::new();
+                        let comma_before = false;
+                        let additional_edits = Vec::new();
 
-                        if let Some((tok_range, tok)) = before.syntax.first_token_before() {
-                            if tok.kind() != SyntaxKind::COMMA
-                                && tok.kind() != SyntaxKind::BRACKET_START
-                            {
-                                let range_after = TextRange::new(
-                                    tok_range.end(),
-                                    tok_range.end() + TextSize::from(1),
-                                );
+                        // FIXME: comma insertion before entry
+                        // if let Some((tok_range, tok)) = before.syntax.first_token_before() {
+                        //     if tok.kind() != SyntaxKind::COMMA
+                        //         && tok.kind() != SyntaxKind::BRACKET_START
+                        //     {
+                        //         let range_after = TextRange::new(
+                        //             tok_range.end(),
+                        //             tok_range.end() + TextSize::from(1),
+                        //         );
 
-                                additional_edits.push(TextEdit {
-                                    range: doc.mapper.range(range_after).unwrap(),
-                                    new_text: ",".into(),
-                                })
-                            }
-                        }
+                        //         additional_edits.push(TextEdit {
+                        //             range: doc.mapper.range(range_after).unwrap(),
+                        //             new_text: ",".into(),
+                        //         })
+                        //     }
+                        // }
 
-                        let current_token =
-                            before.syntax.element.as_ref().unwrap().as_token().unwrap();
+                        // let current_token =
+                        //     before.syntax.element.as_ref().unwrap().as_token().unwrap();
 
-                        if current_token.kind() != SyntaxKind::WHITESPACE
-                            && current_token.kind() != SyntaxKind::COMMA
-                        {
-                            comma_before = true;
-                        }
+                        // if current_token.kind() != SyntaxKind::WHITESPACE
+                        //     && current_token.kind() != SyntaxKind::COMMA
+                        // {
+                        //     comma_before = true;
+                        // }
 
                         return get_schema_objects(query_path.clone(), &root_schema, true)
                             .into_iter()
@@ -348,7 +351,9 @@ pub(crate) fn get_completions(
                             .syntax
                             .element
                             .as_ref()
-                            .map(|el| doc.mapper.range_inclusive(el.text_range()).unwrap());
+                            .map(|el| doc.mapper.range(el.text_range()).unwrap());
+
+                        log_debug!("{:?}", &range);
 
                         return get_schema_objects(query_path.clone(), &root_schema, true)
                             .into_iter()

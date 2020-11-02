@@ -52,49 +52,6 @@ impl Request for SyntaxTreeRequest {
     const METHOD: &'static str = "taplo/syntaxTree";
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct DomTreeParams {
-    /// URI of the document
-    pub uri: Url,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct DomTreeResponse {
-    pub text: String,
-}
-
-pub(crate) enum DomTreeRequest {}
-
-impl Request for DomTreeRequest {
-    type Params = DomTreeParams;
-    type Result = DomTreeResponse;
-    const METHOD: &'static str = "taplo/domTree";
-}
-
-/// Show Line mappings
-pub(crate) enum LineMappingsRequest {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct LineMappingsParams {
-    /// URI of the document
-    pub uri: Url,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct LineMappingsResponse {
-    pub lines: Vec<String>,
-}
-
-impl Request for LineMappingsRequest {
-    type Params = LineMappingsParams;
-    type Result = LineMappingsResponse;
-    const METHOD: &'static str = "taplo/lineMappings";
-}
-
 pub(crate) enum MessageWithOutput {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

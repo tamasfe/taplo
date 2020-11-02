@@ -1,11 +1,11 @@
 [workspace]
 exclude = ["util/schema-gen", "util/test-gen"]
-members = ["taplo-ide", "taplo", "lsp-async-stub"]
+members = ["taplo-ide", "taplo-cli", "taplo", "lsp-async-stub"]
 
 [profile.release]
 codegen-units = 1
-lto           = true
-opt-level     = 3
+lto = true
+opt-level = 3
 
 [profile.bench]
 lto = true

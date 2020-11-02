@@ -215,14 +215,8 @@ static SERVER: Lazy<Server<World>> = Lazy::new(|| {
         .handler(RequestHandler::<request_ext::TomlToJsonRequest, _, _>::new(
             handlers::toml_to_json,
         ))
-        .handler(
-            RequestHandler::<request_ext::LineMappingsRequest, _, _>::new(handlers::line_mappings),
-        )
         .handler(RequestHandler::<request_ext::SyntaxTreeRequest, _, _>::new(
             handlers::syntax_tree,
-        ))
-        .handler(RequestHandler::<request_ext::DomTreeRequest, _, _>::new(
-            handlers::dom_tree,
         ))
         .handler(RequestHandler::<request::Completion, _, _>::new(
             handlers::completion,

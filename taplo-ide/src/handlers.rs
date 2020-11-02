@@ -263,7 +263,7 @@ pub(crate) async fn document_open(
     };
 
     let parse = taplo::parser::parse(&p.text_document.text);
-    let mapper = Mapper::new(&p.text_document.text).zero_based(true);
+    let mapper = Mapper::new(&p.text_document.text);
     let uri = p.text_document.uri.clone();
 
     context
@@ -292,7 +292,7 @@ pub(crate) async fn document_change(
     };
 
     let parse = taplo::parser::parse(&change.text);
-    let mapper = Mapper::new(&change.text).zero_based(true);
+    let mapper = Mapper::new(&change.text);
     let uri = p.text_document.uri.clone();
 
     context
@@ -410,13 +410,14 @@ pub(crate) async fn format(
         }
     }
 
-    let mut range = doc.mapper.all_range();
-    range.end.line += 1; // Make sure to cover everything
+    todo!()
+    // let mut range = doc.mapper.all_range();
+    // range.end.line += 1; // Make sure to cover everything
 
-    Ok(Some(vec![TextEdit {
-        range,
-        new_text: taplo::formatter::format_syntax(doc.parse.clone().into_syntax(), format_opts),
-    }]))
+    // Ok(Some(vec![TextEdit {
+    //     range,
+    //     new_text: taplo::formatter::format_syntax(doc.parse.clone().into_syntax(), format_opts),
+    // }]))
 }
 
 pub(crate) async fn completion(
@@ -856,26 +857,6 @@ pub(crate) async fn toml_to_json(
     })
 }
 
-pub(crate) async fn line_mappings(
-    mut context: Context<World>,
-    params: Params<LineMappingsParams>,
-) -> Result<LineMappingsResponse, Error> {
-    let p = params.required()?;
-
-    let w = context.world().lock().await;
-
-    let doc = w.documents.get(&p.uri).ok_or_else(Error::invalid_params)?;
-
-    Ok(LineMappingsResponse {
-        lines: doc
-            .mapper
-            .lines()
-            .iter()
-            .map(|r| format!("{:?}", r))
-            .collect(),
-    })
-}
-
 pub(crate) async fn syntax_tree(
     mut context: Context<World>,
     params: Params<SyntaxTreeParams>,
@@ -888,20 +869,5 @@ pub(crate) async fn syntax_tree(
 
     Ok(SyntaxTreeResponse {
         text: format!("{:#?}", doc.parse.clone().into_syntax()),
-    })
-}
-
-pub(crate) async fn dom_tree(
-    mut context: Context<World>,
-    params: Params<DomTreeParams>,
-) -> Result<DomTreeResponse, Error> {
-    let p = params.required()?;
-
-    let w = context.world().lock().await;
-
-    let doc = w.documents.get(&p.uri).ok_or_else(Error::invalid_params)?;
-
-    Ok(DomTreeResponse {
-        text: format!("{:#?}", doc.parse.clone().into_dom()),
     })
 }

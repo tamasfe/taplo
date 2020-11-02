@@ -1,5 +1,6 @@
-use crate::{analytics::NodeRef, syntax::SyntaxKind::*, util::coords::Mapper};
+use crate::{analytics::NodeRef, dom::NodeSyntax, syntax::SyntaxKind::*, util::coords::Mapper};
 use lsp_types::Position;
+use rowan::TextSize;
 use std::fs;
 
 fn cargo_toml(idx: usize) -> String {
@@ -361,4 +362,20 @@ fn query_complete_value() {
     let pos = dom.query_position(pos);
     assert!(pos.is_completable());
     assert!(pos.before.as_ref().unwrap().path.dotted() == "lib.asd");
+}
+
+#[test]
+fn query_inline_table() {
+    let src = cargo_toml(11);
+    let mapper = Mapper::new(&src);
+    let dom = crate::parser::parse(&src).into_dom();
+
+    let pos = mapper.offset(Position::new(1, 24)).unwrap();
+    let pos = dom.query_position(pos);
+    assert!(pos.is_completable());
+    // assert!(pos.before.as_ref().unwrap().path.dotted() == "table.incomplete");
+    dbg!("{:#?}", dom.syntax());
+
+    dbg!(mapper.position(TextSize::from(27)));
+    // dbg!(mapper.lines());
 }

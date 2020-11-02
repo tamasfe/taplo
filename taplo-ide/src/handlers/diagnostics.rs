@@ -615,7 +615,7 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
             diags.push(Diagnostic {
                 range: error
                     .span
-                    .map(|span| mapper.range(span.0).unwrap())
+                    .and_then(|span| mapper.range(span.0))
                     .unwrap_or_default(),
                 severity: Some(DiagnosticSeverity::Error),
                 code: None,

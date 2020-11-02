@@ -20,7 +20,8 @@ mod macros;
 
 create_options!(
     /// All the formatting options.
-    #[derive(Debug, Clone, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub struct Options {
         /// Align entries vertically.
         ///

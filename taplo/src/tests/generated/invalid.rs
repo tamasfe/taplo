@@ -371,3 +371,9 @@ fn taplo_table_before_array() {
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
+#[test]
+fn taplo_incomplete_inline_table() {
+    let src = "schema = { enabled = false";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}

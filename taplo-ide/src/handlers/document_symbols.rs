@@ -1,13 +1,7 @@
 use crate::Document;
-use lsp_types::DocumentSymbol;
-
-use lsp_types::{Range, SymbolKind};
-
+use lsp_types::{DocumentSymbol, SymbolKind};
 use rowan::TextRange;
-use taplo::{
-    dom::{NodeSyntax, ValueNode},
-    util::coords::Mapper,
-};
+use taplo::{dom::{NodeSyntax, ValueNode}, util::{coords::Mapper, syntax::join_ranges}};
 
 pub(crate) fn create_symbols(doc: &Document) -> Vec<DocumentSymbol> {
     let mapper = &doc.mapper;
@@ -33,16 +27,12 @@ fn symbols_for_value(
     mapper: &Mapper,
     symbols: &mut Vec<DocumentSymbol>,
 ) {
-    let own_range = mapper.range(value.syntax().text_range()).unwrap_or_else(|| Range {
-        start: mapper.position(value.syntax().text_range().start()).unwrap(),
-        end: mapper.end(),
-    });
+    let own_range = mapper.range(join_ranges(value.text_ranges())).unwrap();
 
     let range = if let Some(key_r) = key_range {
-        mapper.range(key_r.cover(value.syntax().text_range())).unwrap_or_else(|| Range {
-            start: mapper.position(key_r.start()).unwrap(),
-            end: mapper.end()
-        })
+        mapper
+            .range(key_r.cover(join_ranges(value.text_ranges())))
+            .unwrap()
     } else {
         own_range
     };
@@ -125,7 +115,7 @@ fn symbols_for_value(
                 children: {
                     let mut child_symbols = Vec::with_capacity(t.entries().len());
 
-                    for (_,c) in t.entries().iter() {
+                    for (_, c) in t.entries().iter() {
                         symbols_for_value(
                             c.key().full_key_string(),
                             Some(c.key().syntax().text_range()),

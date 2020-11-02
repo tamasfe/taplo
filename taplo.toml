@@ -1,2 +1,11 @@
-include = ["**/*.toml"]
-exclude = ["*.toml"]
+include = ["Cargo.toml"]
+
+[formatting]
+align_entries = false
+
+[[rule]]
+paths = ["Cargo.toml"]
+keys = ["profile.release"]
+
+[rule.formatting]
+align_entries = true

@@ -216,7 +216,7 @@ pub fn format_with_path_scopes<I: IntoIterator<Item = (Path, OptionsIncomplete)>
     let mut s = format_impl(
         dom.syntax().into_node().unwrap(),
         options.clone(),
-        Context::default(),
+        c,
     )
     .to_string();
 

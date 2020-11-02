@@ -91,7 +91,7 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
         .errors
         .iter()
         .map(|e| {
-            let range = mapper.range(e.range).unwrap();
+            let range = mapper.range(e.range).unwrap_or_default();
             Diagnostic {
                 range,
                 severity: Some(DiagnosticSeverity::Error),

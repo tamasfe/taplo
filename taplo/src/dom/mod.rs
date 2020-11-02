@@ -1825,6 +1825,16 @@ impl Path {
         Self::default()
     }
 
+    /// Removes all indices from the path,
+    /// leaving only keys.
+    pub fn without_index(&self) -> Path {
+        Self {
+            keys: Rc::new(self.keys().filter(|k| k.is_key()).cloned().collect()),
+            mask_left: 0,
+            mask_right: 0,
+        }
+    }
+
     /// Creates a new path with a new segment added to the end.
     ///
     /// This will clone the underlying storage.

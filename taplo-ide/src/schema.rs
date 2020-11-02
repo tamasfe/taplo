@@ -429,4 +429,6 @@ pub struct ExtMeta {
     pub links: Option<ExtLinks>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub docs: Option<ExtDocs>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub init_fields: Option<Vec<String>>
 }

@@ -1,5 +1,5 @@
 use clap::{App, AppSettings, Arg, ArgMatches};
-use external::{is_windows, load_config, print_message, print_stdout};
+use external::{is_error, is_windows, load_config, print_message, print_stdout};
 use pretty_lint::Severity;
 use std::ffi::OsString;
 
@@ -16,7 +16,7 @@ fn glob_match_options() -> glob::MatchOptions {
     }
 }
 
-pub fn run<I, T>(itr: I)
+pub fn run<I, T>(itr: I) -> bool
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
@@ -88,7 +88,7 @@ where
     )
     .setting(AppSettings::ArgRequiredElseHelp);
 
-    execute(app.get_matches_from(itr));
+    execute(app.get_matches_from(itr))
 }
 
 fn execute(matches: ArgMatches) -> bool {
@@ -128,7 +128,7 @@ fn execute(matches: ArgMatches) -> bool {
                 let schema = schemars::schema_for!(config::Config);
 
                 print_stdout(&serde_json::to_string_pretty(&schema).unwrap());
-                true
+                !is_error()
             }
             _ => unreachable!(),
         },
@@ -182,7 +182,7 @@ fn execute(matches: ArgMatches) -> bool {
                         }
                     ),
                 );
-                true
+                !is_error()
             }
         }
         Some(("lint", lint_matches)) => {
@@ -233,7 +233,7 @@ fn execute(matches: ArgMatches) -> bool {
                         }
                     ),
                 );
-                true
+                !is_error()
             }
         }
         _ => unreachable!(),

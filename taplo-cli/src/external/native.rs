@@ -2,7 +2,10 @@
 //!
 //! The sole purpose of this is to make the tool work in a NodeJS WASM context.
 
-use crate::{config::Config, glob_match_options};
+use crate::{
+    config::{Config, CONFIG_FILE_NAMES},
+    glob_match_options,
+};
 use glob::glob_with;
 use io::{stdin, Read};
 use pretty_lint::{colored::Colorize, Severity};
@@ -11,8 +14,9 @@ use std::{
     fs, io,
     path::{Path, PathBuf},
 };
+use once_cell::sync::Lazy;
 
-const CONFIG_FILE_NAMES: &[&str] = &[".taplo", ".taplo.toml", "taplo.toml"];
+static ERROR_STATUS: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 
 pub(crate) fn is_windows() -> bool {
     cfg!(target_os = "windows")
@@ -62,13 +66,12 @@ pub(crate) fn print_stdout(message: &str) {
     print!("{}", message);
 }
 
-pub(crate) fn print_line_stdout(message: &str) {
-    println!("{}", message);
-}
-
 pub(crate) fn print_message(severity: Severity, name: &str, message: &str) {
     match severity {
-        Severity::Error => eprintln!("{}: {}", name.red().bold(), message.bold()),
+        Severity::Error => {
+            eprintln!("{}: {}", name.red().bold(), message.bold());
+            set_error(true);
+        }
         Severity::Warning => eprintln!("{}: {}", name.yellow().bold(), message.bold()),
         Severity::Info => eprintln!("{}: {}", name.cyan().bold(), message.bold()),
         Severity::Success => eprintln!("{}: {}", name.green().bold(), message.bold()),
@@ -93,4 +96,14 @@ pub(crate) fn load_config(path: Option<&str>) -> Result<Config, io::Error> {
     }
 
     Ok(Config::default())
+}
+
+/// For exit conditions.
+pub(crate) fn is_error() -> bool {
+    ERROR_STATUS.load(Ordering::SeqCst)
+}
+
+/// For exit conditions.
+pub(crate) fn set_error(err: bool) {
+    ERROR_STATUS.store(err, Ordering::SeqCst);
 }

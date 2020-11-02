@@ -91,7 +91,7 @@ pub(crate) fn get_completions(
                     .map(|(path, schema, required)| {
                         key_completion(
                             &root_schema.definitions,
-                            query_path.extend(path),
+                            query_path.without_index().extend(path),
                             schema,
                             required,
                             range,
@@ -107,13 +107,6 @@ pub(crate) fn get_completions(
                     .last()
                     .cloned()
                     .unwrap_or_else(|| query.after.nodes.last().cloned().unwrap());
-
-                // let inline_table = query
-                //     .after
-                //     .syntax
-                //     .syntax_kinds
-                //     .iter()
-                //     .any(|k| *k == SyntaxKind::INLINE_TABLE);
 
                 match node {
                     node @ NodeRef::Table(_) | node @ NodeRef::Root(_) => {
@@ -1077,10 +1070,17 @@ fn empty_value_inserts(
                     let mut idx: usize = 1;
 
                     for key in o.properties.keys().sorted() {
-                        let schema = o.properties.get(key).unwrap();
+                        let prop_schema = o.properties.get(key).unwrap();
 
-                        if let Some(schema) = ExtendedSchema::resolved(defs, schema) {
-                            if o.required.contains(key) {
+                        if let Some(prop_schema) = ExtendedSchema::resolved(defs, prop_schema) {
+                            if o.required.contains(key)
+                                || schema
+                                    .ext
+                                    .init_fields
+                                    .as_ref()
+                                    .map(|i| i.iter().any(|i| i == key))
+                                    .unwrap_or(false)
+                            {
                                 if idx != 1 {
                                     snippet += ", "
                                 }
@@ -1088,7 +1088,7 @@ fn empty_value_inserts(
                                 snippet += &format!(
                                     "{} = {}",
                                     key,
-                                    default_value_snippet(defs, schema, idx)
+                                    default_value_snippet(defs, prop_schema, idx)
                                 );
 
                                 idx += 1;

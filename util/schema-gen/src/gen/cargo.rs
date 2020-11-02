@@ -1450,6 +1450,17 @@ impl schemars::visit::Visitor for CargoVisitor {
                             .into(),
                     )
                 }
+                "Detailed Dependency" => {
+                    let mut ext = ExtMeta::default();
+
+                    ext.init_fields = Some(
+                        vec!["version".into()]
+                    );
+
+                    schema
+                        .extensions
+                        .insert(EXTENSION_KEY.into(), serde_json::to_value(ext).unwrap());
+                }
                 "Detailed Dependency.branch" => {
                     let mut ext = ExtMeta::default();
 

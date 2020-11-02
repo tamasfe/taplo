@@ -1,0 +1,15 @@
+{
+  "name": "taplo",
+  "version": "1.0.0",
+  "description": "A TOML utility tool and library.",
+  "main": "dist/index.js",
+  "bin": {
+    "taplo": "dist/cli.js"
+  },
+  "repository": "https://github.com/tamasfe/taplo",
+  "author": "tamasfe",
+  "license": "MIT",
+  "dependencies": {
+    "typescript": "^4.0.5"
+  }
+}

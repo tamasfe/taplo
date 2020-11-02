@@ -41,7 +41,7 @@ pub enum Readme {
 #[serde(rename_all = "kebab-case")]
 #[schemars(title = "Detailed Dependency")]
 pub struct DetailedDependency {
-    version: SemVerRequirement,
+    version: Option<SemVerRequirement>,
     registry: Option<String>,
     registry_index: Option<String>,
     path: Option<String>,

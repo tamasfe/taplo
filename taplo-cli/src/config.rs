@@ -5,6 +5,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use taplo::{dom::Path, formatter};
 
+pub const CONFIG_FILE_NAMES: &[&str] = &[".taplo.toml", "taplo.toml"];
+
 #[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Config {
     /// Files to include.

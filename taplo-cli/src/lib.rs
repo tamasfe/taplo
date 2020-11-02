@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches};
+use clap::{App, AppSettings, Arg, ArgMatches};
 use external::{is_windows, load_config, print_message, print_stdout};
 use pretty_lint::Severity;
 use std::ffi::OsString;
@@ -85,7 +85,8 @@ where
                 App::new("schema")
                     .about("Print the configuration JSON schema")
             )
-    );
+    )
+    .setting(AppSettings::ArgRequiredElseHelp);
 
     execute(app.get_matches_from(itr));
 }
@@ -139,8 +140,9 @@ fn execute(matches: ArgMatches) -> bool {
                     Severity::Error,
                     "failure",
                     &format!(
-                        "found {} {docs} with {} {errors}.{excluded}",
-                        format_result.matched_document_count,
+                        "processed {} {docs} with {} {errors}.{excluded}",
+                        format_result.matched_document_count
+                            - format_result.excluded_document_count,
                         format_result.error_count,
                         docs = if format_result.matched_document_count != 1 {
                             "documents"
@@ -165,8 +167,9 @@ fn execute(matches: ArgMatches) -> bool {
                     Severity::Success,
                     "success",
                     &format!(
-                        "found {} {docs} with no errors.{excluded}",
-                        format_result.matched_document_count,
+                        "processed {} {docs} with no errors.{excluded}",
+                        format_result.matched_document_count
+                            - format_result.excluded_document_count,
                         docs = if format_result.matched_document_count != 1 {
                             "documents"
                         } else {
@@ -190,8 +193,8 @@ fn execute(matches: ArgMatches) -> bool {
                     Severity::Error,
                     "failure",
                     &format!(
-                        "found {} {docs} with {} {errors}.{excluded}",
-                        lint_result.matched_document_count,
+                        "processed {} {docs} with {} {errors}.{excluded}",
+                        lint_result.matched_document_count - lint_result.excluded_document_count,
                         lint_result.error_count,
                         docs = if lint_result.matched_document_count != 1 {
                             "documents"
@@ -216,8 +219,8 @@ fn execute(matches: ArgMatches) -> bool {
                     Severity::Success,
                     "success",
                     &format!(
-                        "found {} {docs} with no errors.{excluded}",
-                        lint_result.matched_document_count,
+                        "processed {} {docs} with no errors.{excluded}",
+                        lint_result.matched_document_count - lint_result.excluded_document_count,
                         docs = if lint_result.matched_document_count != 1 {
                             "documents"
                         } else {

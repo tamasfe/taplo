@@ -1,0 +1,2 @@
+include = ["**/*.toml"]
+exclude = ["*.toml"]

@@ -6,7 +6,10 @@ use crate::{
 };
 use clap::ArgMatches;
 use pretty_lint::Severity;
-use taplo::formatter::Options;
+use taplo::{
+    dom,
+    formatter::{self, Options},
+};
 
 pub(crate) struct FormatResult {
     pub matched_document_count: usize,
@@ -144,7 +147,7 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
 fn format_source(
     src: &str,
     opts: CliOptions,
-    formatter_options: Options,
+    formatter_options: (Options, Vec<(dom::Path, formatter::OptionsIncomplete)>),
     res: &mut FormatResult,
 ) -> Result<String, ()> {
     let parse = taplo::parser::parse(src);
@@ -159,8 +162,11 @@ fn format_source(
         }
     }
 
-    Ok(taplo::formatter::format_green(
-        parse.green_node,
-        formatter_options,
+    let dom = parse.into_dom();
+
+    Ok(taplo::formatter::format_with_path_scopes(
+        dom,
+        formatter_options.0,
+        formatter_options.1,
     ))
 }

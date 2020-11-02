@@ -6,17 +6,27 @@
 // of more features are added either to the formatter or the toml spec.
 
 use crate::{
-    dom::{Cast, EntryNode, KeyNode},
+    dom::{Cast, EntryNode, KeyNode, NodeSyntax, Path, RootNode},
     syntax::{SyntaxKind, SyntaxKind::*, SyntaxNode, SyntaxToken},
 };
-use rowan::{GreenNode, GreenNodeBuilder, NodeOrToken, SmolStr};
-use std::mem;
+use rowan::{GreenNode, GreenNodeBuilder, NodeOrToken, SmolStr, TextRange};
+use std::{iter::FromIterator, mem, rc::Rc};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 #[macro_use]
 mod macros;
+
+#[derive(Debug, Clone, Default)]
+/// Scoped formatter options based on text ranges scopes.
+pub struct ScopedOptions(Vec<(TextRange, OptionsIncomplete)>);
+
+impl FromIterator<(TextRange, OptionsIncomplete)> for ScopedOptions {
+    fn from_iter<T: IntoIterator<Item = (TextRange, OptionsIncomplete)>>(iter: T) -> Self {
+        Self(Vec::from_iter(iter))
+    }
+}
 
 create_options!(
     /// All the formatting options.
@@ -118,10 +128,21 @@ impl Options {
     }
 }
 
-#[derive(Debug, Copy, Clone, Default)]
+#[derive(Debug, Clone, Default)]
 struct Context {
     indent_level: usize,
     line_char_count: usize,
+    scopes: Rc<ScopedOptions>,
+}
+
+impl Context {
+    fn update_options(&self, opts: &mut Options, range: TextRange) {
+        for (r, s) in &self.scopes.0 {
+            if r.contains_range(range) {
+                opts.update(s.clone());
+            }
+        }
+    }
 }
 
 /// Formats a parsed TOML green tree.
@@ -136,7 +157,68 @@ pub fn format(src: &str, options: Options) -> String {
 
 /// Formats a parsed TOML syntax tree.
 pub fn format_syntax(node: SyntaxNode, options: Options) -> String {
-    let mut s = format_impl(node, options.clone()).to_string();
+    let mut s = format_impl(node, options.clone(), Context::default()).to_string();
+
+    s = s.trim_end().into();
+
+    if options.trailing_newline {
+        s += options.newline().as_str();
+    }
+
+    s
+}
+
+/// Formats a DOM root node with given scopes.
+///
+/// **This doesn't check errors of the DOM.**
+pub fn format_with_scopes(dom: RootNode, options: Options, scopes: ScopedOptions) -> String {
+    let mut c = Context::default();
+    c.scopes = Rc::new(scopes);
+
+    let mut s = format_impl(
+        dom.syntax().into_node().unwrap(),
+        options.clone(),
+        Context::default(),
+    )
+    .to_string();
+
+    s = s.trim_end().into();
+
+    if options.trailing_newline {
+        s += options.newline().as_str();
+    }
+
+    s
+}
+
+/// Formats a DOM root node with given scopes.
+///
+/// **This doesn't check errors of the DOM.**
+pub fn format_with_path_scopes<I: IntoIterator<Item = (Path, OptionsIncomplete)>>(
+    dom: RootNode,
+    options: Options,
+    scopes: I,
+) -> String {
+    let mut c = Context::default();
+
+    let mut s = Vec::new();
+
+    for (p1, opts) in scopes {
+        for (p2, node) in dom.iter() {
+            if p1 == p2 {
+                s.extend(node.text_ranges().into_iter().map(|r| (r, opts.clone())))
+            }
+        }
+    }
+
+    c.scopes = Rc::new(ScopedOptions::from_iter(s));
+
+    let mut s = format_impl(
+        dom.syntax().into_node().unwrap(),
+        options.clone(),
+        Context::default(),
+    )
+    .to_string();
 
     s = s.trim_end().into();
 
@@ -149,21 +231,21 @@ pub fn format_syntax(node: SyntaxNode, options: Options) -> String {
 
 // This is private because the layout of the formatted tree will
 // not be compatible with the tree given as input.
-fn format_impl(node: SyntaxNode, options: Options) -> SyntaxNode {
+fn format_impl(node: SyntaxNode, options: Options, mut context: Context) -> SyntaxNode {
     let kind: SyntaxKind = node.kind();
 
     let mut builder = GreenNodeBuilder::new();
 
     match kind {
-        KEY => format_key(node, &mut builder, &options, &mut Context::default()),
-        VALUE => format_value(node, &mut builder, &options, Context::default()),
+        KEY => format_key(node, &mut builder, options, &mut context),
+        VALUE => format_value(node, &mut builder, options, &mut context),
         TABLE_HEADER | TABLE_ARRAY_HEADER => {
-            format_table_header(node, &mut builder, &options, Context::default())
+            format_table_header(node, &mut builder, options, &mut context)
         }
-        ENTRY => format_entry(node, &mut builder, &options, Context::default()),
-        ARRAY => format_array(node, &mut builder, &options, Context::default()),
-        INLINE_TABLE => format_inline_table(node, &mut builder, &options, Context::default()),
-        ROOT => format_root(node, &mut builder, &options),
+        ENTRY => format_entry(node, &mut builder, options, &mut context),
+        ARRAY => format_array(node, &mut builder, options, &mut context),
+        INLINE_TABLE => format_inline_table(node, &mut builder, options, &mut context),
+        ROOT => format_root(node, &mut builder, options, &mut context),
         _ => return node,
     };
 
@@ -172,7 +254,12 @@ fn format_impl(node: SyntaxNode, options: Options) -> SyntaxNode {
 
 // TODO(refactor)
 #[allow(clippy::cognitive_complexity)]
-fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Options) {
+fn format_root(
+    node: SyntaxNode,
+    builder: &mut GreenNodeBuilder,
+    options: Options,
+    context: &mut Context,
+) {
     builder.start_node(ROOT.into());
 
     // Entries without a blank line between them
@@ -189,6 +276,9 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
     let mut skip_newline = 0;
 
     for c in node.children_with_tokens() {
+        let mut options = options.clone();
+        context.update_options(&mut options, c.text_range());
+
         match c.clone() {
             NodeOrToken::Node(n) => {
                 if n.descendants_with_tokens().any(|e| e.kind() == ERROR) {
@@ -258,15 +348,15 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
                                 options.indent_string.repeat(indent_level).into(),
                             );
                         }
-                        format_table_header(n, builder, options, Context::default())
+                        format_table_header(n, builder, options.clone(), context)
                     }
                     ENTRY => {
                         let mut entry_b = GreenNodeBuilder::new();
                         format_entry(
                             n,
                             &mut entry_b,
-                            options,
-                            Context {
+                            options.clone(),
+                            &mut Context {
                                 indent_level,
                                 ..Default::default()
                             },
@@ -404,8 +494,8 @@ fn format_root(node: SyntaxNode, builder: &mut GreenNodeBuilder, options: &Optio
 fn format_inline_table(
     node: SyntaxNode,
     builder: &mut GreenNodeBuilder,
-    options: &Options,
-    context: Context,
+    options: Options,
+    context: &mut Context,
 ) {
     builder.start_node(INLINE_TABLE.into());
 
@@ -421,7 +511,7 @@ fn format_inline_table(
                         builder.token(COMMA.into(), ",".into());
                         builder.token(WHITESPACE.into(), " ".into());
                     }
-                    format_entry(n, builder, options, context);
+                    format_entry(n, builder, options.clone(), context);
                     has_previous = true;
                 }
                 NodeOrToken::Token(t) => match t.kind() {
@@ -450,8 +540,8 @@ fn format_inline_table(
 fn format_array(
     node: SyntaxNode,
     builder: &mut GreenNodeBuilder,
-    options: &Options,
-    context: Context,
+    options: Options,
+    context: &mut Context,
 ) {
     builder.start_node(ARRAY.into());
 
@@ -529,10 +619,10 @@ fn format_array(
                     format_value(
                         n,
                         &mut b,
-                        options,
-                        Context {
+                        options.clone(),
+                        &mut Context {
                             indent_level: context.indent_level + 1,
-                            ..context
+                            ..context.clone()
                         },
                     );
 
@@ -635,8 +725,8 @@ fn format_array(
 fn format_entry(
     node: SyntaxNode,
     builder: &mut GreenNodeBuilder,
-    options: &Options,
-    mut context: Context,
+    options: Options,
+    context: &mut Context,
 ) {
     builder.start_node(ENTRY.into());
 
@@ -644,10 +734,10 @@ fn format_entry(
         match c {
             NodeOrToken::Node(n) => match n.kind() {
                 KEY => {
-                    format_key(n, builder, options, &mut context);
+                    format_key(n, builder, options.clone(), context);
                     builder.token(WHITESPACE.into(), " ".into())
                 }
-                VALUE => format_value(n, builder, options, context),
+                VALUE => format_value(n, builder, options.clone(), context),
                 _ => add_all(n, builder),
             },
             NodeOrToken::Token(t) => match t.kind() {
@@ -670,7 +760,7 @@ fn format_entry(
 fn format_key(
     node: SyntaxNode,
     builder: &mut GreenNodeBuilder,
-    _options: &Options,
+    _options: Options,
     context: &mut Context,
 ) {
     builder.start_node(KEY.into());
@@ -702,16 +792,16 @@ fn format_key(
 fn format_value(
     node: SyntaxNode,
     builder: &mut GreenNodeBuilder,
-    options: &Options,
-    context: Context,
+    options: Options,
+    context: &mut Context,
 ) {
     builder.start_node(VALUE.into());
 
     for c in node.children_with_tokens() {
         match c {
             NodeOrToken::Node(n) => match n.kind() {
-                ARRAY => format_array(n, builder, options, context),
-                INLINE_TABLE => format_inline_table(n, builder, options, context),
+                ARRAY => format_array(n, builder, options.clone(), context),
+                INLINE_TABLE => format_inline_table(n, builder, options.clone(), context),
                 _ => add_all(n, builder),
             },
             NodeOrToken::Token(t) => match t.kind() {
@@ -727,15 +817,15 @@ fn format_value(
 fn format_table_header(
     node: SyntaxNode,
     builder: &mut GreenNodeBuilder,
-    options: &Options,
-    mut context: Context,
+    options: Options,
+    context: &mut Context,
 ) {
     builder.start_node(node.kind().into());
 
     for c in node.children_with_tokens() {
         match c {
             NodeOrToken::Node(n) => {
-                format_key(n, builder, options, &mut context);
+                format_key(n, builder, options.clone(), context);
             }
             NodeOrToken::Token(t) => match t.kind() {
                 BRACKET_START | BRACKET_END => builder.token(t.kind().into(), t.text().clone()),

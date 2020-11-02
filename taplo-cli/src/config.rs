@@ -1,7 +1,9 @@
+use std::iter::FromIterator;
+
 use crate::glob_match_options;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use taplo::formatter;
+use taplo::{dom::Path, formatter};
 
 #[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Config {
@@ -78,7 +80,13 @@ impl Config {
     pub fn get_formatter_options(
         &self,
         path: Option<&str>,
-    ) -> Result<formatter::Options, glob::PatternError> {
+    ) -> Result<
+        (
+            formatter::Options,
+            Vec<(Path, formatter::OptionsIncomplete)>,
+        ),
+        glob::PatternError,
+    > {
         let mut opts = formatter::Options::default();
 
         if let Some(opt) = &self.global_options.formatting {
@@ -87,8 +95,41 @@ impl Config {
 
         let path = match path {
             Some(p) => p,
-            None => return Ok(opts),
+            None => {
+                return Ok((
+                    opts,
+                    self.rule
+                        .as_ref()
+                        .map(|r| {
+                            r.iter()
+                                .filter_map::<Vec<_>, _>(|r| {
+                                    if r.paths.is_none() || r.options.formatting.is_none() {
+                                        match &r.keys {
+                                            Some(k) => Some(
+                                                k.iter()
+                                                    .map(|s| {
+                                                        (
+                                                            Path::from_iter(s.split('.')),
+                                                            r.options.formatting.clone().unwrap(),
+                                                        )
+                                                    })
+                                                    .collect(),
+                                            ),
+                                            None => None,
+                                        }
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .flatten()
+                                .collect()
+                        })
+                        .unwrap_or_default(),
+                ))
+            }
         };
+
+        let mut scoped_opts: Vec<(Path, formatter::OptionsIncomplete)> = Vec::new();
 
         if let Some(rules) = &self.rule {
             for rule in rules {
@@ -98,6 +139,34 @@ impl Config {
                             let pat = glob::Pattern::new(p)?;
 
                             if pat.matches_with(path, glob_match_options()) {
+                                match &rule.keys {
+                                    Some(s) => {
+                                        if let Some(opts) = &rule.options.formatting {
+                                            for key in s {
+                                                scoped_opts.push((
+                                                    Path::from_iter(key.split('.')),
+                                                    opts.clone(),
+                                                ))
+                                            }
+                                        }
+                                    }
+                                    None => {
+                                        opts.update(f.clone());
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        match &rule.keys {
+                            Some(s) => {
+                                if let Some(opts) = &rule.options.formatting {
+                                    for key in s {
+                                        scoped_opts
+                                            .push((Path::from_iter(key.split('.')), opts.clone()))
+                                    }
+                                }
+                            }
+                            None => {
                                 opts.update(f.clone());
                             }
                         }
@@ -106,7 +175,7 @@ impl Config {
             }
         }
 
-        Ok(opts)
+        Ok((opts, scoped_opts))
     }
 }
 
@@ -143,8 +212,6 @@ pub struct Rule {
     /// For example:
     ///
     /// - `package.metadata` will enable the rule for everything inside the `package.metadata` table, including itself.
-    ///
-    /// - `package.metadata.*.config` will enable the rule for `package.metadata.one.config`, `package.metadata.two.config`, and so on.
     ///
     /// If omitted, the rule will always be valid for all keys.
     pub keys: Option<Vec<String>>,

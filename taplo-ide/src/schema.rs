@@ -11,10 +11,6 @@ pub const EXTENSION_KEY: &str = "evenBetterToml";
 pub const BUILTIN_SCHEME: &str = "toml_builtin";
 
 pub fn register_built_in_schemas(world: &mut WorldState) {
-    register_cargo_schema(world);
-}
-
-pub fn register_cargo_schema(world: &mut WorldState) {
     let cargo_schema =
         serde_json::from_str::<RootSchema>(include_str!("../schemas/Cargo.json")).unwrap();
     let cargo_schema_name = format!("{}://cargo", BUILTIN_SCHEME);
@@ -22,6 +18,10 @@ pub fn register_cargo_schema(world: &mut WorldState) {
     let pyproject_schema =
         serde_json::from_str::<RootSchema>(include_str!("../schemas/pyproject.json")).unwrap();
     let pyproject_schema_name = format!("{}://pyproject", BUILTIN_SCHEME);
+
+    let taplo_schema =
+        serde_json::from_str::<RootSchema>(include_str!("../schemas/taplo.json")).unwrap();
+    let taplo_schema_name = format!("{}://taplo", BUILTIN_SCHEME);
 
     // This is supplied from the configuration.
     // let cargo_re = Regex::new(r#".*Cargo\.toml"#).unwrap();
@@ -33,6 +33,7 @@ pub fn register_cargo_schema(world: &mut WorldState) {
     world
         .schemas
         .insert(pyproject_schema_name, pyproject_schema);
+    world.schemas.insert(taplo_schema_name, taplo_schema);
 }
 
 #[derive(Debug, Clone)]
@@ -42,7 +43,7 @@ pub struct ExtendedSchema<'s> {
 }
 
 impl<'s> ExtendedSchema<'s> {
-    pub fn is(&self, ty :InstanceType) -> bool {
+    pub fn is(&self, ty: InstanceType) -> bool {
         match &self.schema.instance_type {
             Some(t) => match t {
                 SingleOrVec::Single(s) => **s == ty,

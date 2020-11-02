@@ -410,14 +410,10 @@ pub(crate) async fn format(
         }
     }
 
-    todo!()
-    // let mut range = doc.mapper.all_range();
-    // range.end.line += 1; // Make sure to cover everything
-
-    // Ok(Some(vec![TextEdit {
-    //     range,
-    //     new_text: taplo::formatter::format_syntax(doc.parse.clone().into_syntax(), format_opts),
-    // }]))
+    Ok(Some(vec![TextEdit {
+        range: doc.mapper.all_range(),
+        new_text: taplo::formatter::format_syntax(doc.parse.clone().into_syntax(), format_opts),
+    }]))
 }
 
 pub(crate) async fn completion(

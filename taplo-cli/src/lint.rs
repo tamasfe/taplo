@@ -125,19 +125,6 @@ fn lint_paths<'i, F: Iterator<Item = &'i str>>(
             continue;
         }
 
-        match config.is_excluded(val) {
-            Ok(excluded) => {
-                if excluded {
-                    res.excluded_document_count += 1;
-                    continue;
-                }
-            }
-            Err(err) => {
-                print_message(Severity::Error, "error", &err.to_string());
-                return;
-            }
-        }
-
         match get_paths_by_glob(val) {
             Ok((sources, errors)) => {
                 for err in errors {
@@ -148,8 +135,22 @@ fn lint_paths<'i, F: Iterator<Item = &'i str>>(
                 for path in sources {
                     match read_file(&path) {
                         Ok(src) => {
-                            lint_source(path.to_str(), schema, &src, res);
                             res.matched_document_count += 1;
+
+                            match config.is_excluded(val) {
+                                Ok(excluded) => {
+                                    if excluded {
+                                        res.excluded_document_count += 1;
+                                        continue;
+                                    }
+                                }
+                                Err(err) => {
+                                    print_message(Severity::Error, "error", &err.to_string());
+                                    return;
+                                }
+                            }
+
+                            lint_source(path.to_str(), schema, &src, res);
                         }
                         Err(err) => {
                             print_message(Severity::Error, "error", &err.to_string());
@@ -536,7 +537,6 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
 
                 let err_str: &str = &err.value.to_string();
 
-                // TODO better messages
                 let mut p_lint = PrettyLint::error(src)
                     .with_message("failed schema validation")
                     .at({

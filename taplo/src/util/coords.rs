@@ -3,7 +3,7 @@
 use rowan::{TextRange, TextSize};
 
 pub use lsp_types::{Position, Range};
-use std::{collections::BTreeMap};
+use std::collections::BTreeMap;
 
 /// Offset in characters instead of bytes.
 /// It is u64 because lsp_types uses u64.
@@ -25,6 +25,9 @@ pub struct Mapper {
 
     /// Line count.
     lines: usize,
+
+    /// Ending position.
+    end: Position,
 }
 
 impl Mapper {
@@ -75,6 +78,7 @@ impl Mapper {
             offset_to_position,
             position_to_offset,
             lines: line as usize,
+            end: Position { line, character },
         }
     }
 
@@ -102,6 +106,16 @@ impl Mapper {
 
     pub fn line_count(&self) -> usize {
         self.lines
+    }
+
+    pub fn all_range(&self) -> Range {
+        Range {
+            start: Position {
+                line: 0,
+                character: 0,
+            },
+            end: self.end,
+        }
     }
 }
 

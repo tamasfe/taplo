@@ -10,8 +10,6 @@ export function register(
 ) {
   c.onReady().then(() => {
     registerShowSyntaxTree(ctx, c);
-    registerShowDomTree(ctx, c);
-    registerShowLineMappings(ctx, c);
   });
 }
 
@@ -35,71 +33,6 @@ function registerShowSyntaxTree(
         let doc = await vscode.workspace.openTextDocument({
           content: res.text,
           language: "ra_syntax_tree",
-        });
-
-        await vscode.window.showTextDocument(doc, {
-          preview: true,
-          viewColumn: vscode.ViewColumn.Beside,
-        });
-      }
-    )
-  );
-}
-
-function registerShowDomTree(
-  ctx: vscode.ExtensionContext,
-  c: client.LanguageClient
-) {
-  ctx.subscriptions.push(
-    vscode.commands.registerTextEditorCommand(
-      "evenBetterToml.debug.showDomTree",
-      async (editor) => {
-        const params: requestExt.DomTree.Params = {
-          uri: editor.document.uri.toString(),
-        };
-
-        const res = await c.sendRequest<requestExt.DomTree.Response>(
-          requestExt.DomTree.METHOD,
-          params
-        );
-
-        let doc = await vscode.workspace.openTextDocument({
-          content: res.text,
-        });
-
-        await vscode.window.showTextDocument(doc, {
-          preview: true,
-          viewColumn: vscode.ViewColumn.Beside,
-        });
-      }
-    )
-  );
-}
-
-function registerShowLineMappings(
-  ctx: vscode.ExtensionContext,
-  c: client.LanguageClient
-) {
-  ctx.subscriptions.push(
-    vscode.commands.registerTextEditorCommand(
-      "evenBetterToml.debug.showLineMappings",
-      async (editor) => {
-        const params: requestExt.SyntaxTree.Params = {
-          uri: editor.document.uri.toString(),
-        };
-
-        const res = await c.sendRequest<requestExt.LineMappings.Response>(
-          requestExt.LineMappings.METHOD,
-          params
-        );
-
-        let s = "";
-        for (const line of res.lines) {
-          s += line + "\n";
-        }
-
-        let doc = await vscode.workspace.openTextDocument({
-          content: s,
         });
 
         await vscode.window.showTextDocument(doc, {

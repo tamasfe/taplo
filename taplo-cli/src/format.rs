@@ -1,15 +1,13 @@
+use std::path::Path;
+
 use crate::{
     config::Config,
-    external::{
-        get_paths_by_glob, get_stdin_source, print_message, print_stdout, read_file, write_file,
-    },
+    external::{get_paths_by_glob, read_file, read_stdin, write_file},
+    print_message,
 };
 use clap::ArgMatches;
 use pretty_lint::Severity;
-use taplo::{
-    dom,
-    formatter::{self, Options},
-};
+use taplo::formatter::{self, Options};
 
 pub(crate) struct FormatResult {
     pub matched_document_count: usize,
@@ -36,13 +34,14 @@ pub(crate) fn format(config: Config, m: &ArgMatches) -> FormatResult {
     };
 
     if let Some(files) = m.values_of("files") {
-        format_paths(&config, opts, files, &mut res);
+        format_paths(&config, opts, files, &mut res, false);
     } else {
         format_paths(
             &config,
             opts,
             config.get_include_paths().iter().map(|s| s.as_ref()),
             &mut res,
+            true,
         );
     }
 
@@ -54,10 +53,11 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
     opts: CliOptions,
     files: F,
     res: &mut FormatResult,
+    allow_exclude: bool, // for cli file args
 ) {
     for val in files {
         if val == "-" {
-            let src = match get_stdin_source() {
+            let src = match read_stdin() {
                 Ok(s) => s,
                 Err(e) => {
                     print_message(Severity::Error, "error", &e.to_string());
@@ -76,7 +76,7 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
             res.matched_document_count += 1;
             match format_source(&src, opts, format_opts, res) {
                 Ok(s) => {
-                    print_stdout(&s);
+                    print!("{}", &s);
                 }
                 Err(_) => {
                     res.error_count += 1;
@@ -85,26 +85,35 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
             continue;
         }
 
-        match config.is_excluded(val) {
-            Ok(excluded) => {
-                if excluded {
-                    res.excluded_document_count += 1;
-                    continue;
+        if allow_exclude {
+            // Don't lint taplo config files unless asked explicitly.
+            let p = Path::new(val);
+            match p.file_name() {
+                Some(file_name) => {
+                    if file_name == "taplo.toml" || file_name == ".taplo.toml" {
+                        // Don't count it as excluded.
+                        continue;
+                    }
                 }
-            }
-            Err(err) => {
-                print_message(Severity::Error, "error", &err.to_string());
-                return;
+                None => {}
+            };
+
+            match config.is_excluded(val) {
+                Ok(excluded) => {
+                    if excluded {
+                        res.excluded_document_count += 1;
+                        continue;
+                    }
+                }
+                Err(err) => {
+                    print_message(Severity::Error, "error", &err.to_string());
+                    return;
+                }
             }
         }
 
         match get_paths_by_glob(val) {
-            Ok((sources, errors)) => {
-                for err in errors {
-                    print_message(Severity::Error, "error", &err.to_string());
-                    res.error_count += 1;
-                }
-
+            Ok(sources) => {
                 for path in sources {
                     match read_file(&path) {
                         Ok(src) => {
@@ -119,7 +128,7 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
                             };
 
                             match format_source(&src, opts, format_opts, res) {
-                                Ok(s) => match write_file(&path, s) {
+                                Ok(s) => match write_file(&path, s.as_bytes()) {
                                     Ok(_) => {}
                                     Err(err) => {
                                         res.error_count += 1;
@@ -147,7 +156,7 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
 fn format_source(
     src: &str,
     opts: CliOptions,
-    formatter_options: (Options, Vec<(dom::Path, formatter::OptionsIncomplete)>),
+    formatter_options: (Options, Vec<(String, formatter::OptionsIncomplete)>),
     res: &mut FormatResult,
 ) -> Result<String, ()> {
     let parse = taplo::parser::parse(src);

@@ -1,11 +1,12 @@
 use crate::{
     config::Config,
-    external::{eprint_line, get_paths_by_glob, get_stdin_source, print_message, read_file},
+    external::{get_paths_by_glob, get_schema, read_file, read_stdin},
+    print_message,
 };
 use clap::ArgMatches;
 use pretty_lint::{PrettyLint, Severity};
 use schemars::schema::RootSchema;
-use std::collections::HashSet;
+use std::{collections::HashSet, path::Path};
 use taplo::{dom, rowan::TextRange, util::coords::Mapper};
 use verify::Verifier;
 
@@ -15,7 +16,7 @@ pub(crate) struct LintResult {
     pub error_count: usize,
 }
 
-pub(crate) fn lint(config: Config, m: &ArgMatches) -> LintResult {
+pub(crate) async fn lint(config: Config, m: &ArgMatches) -> LintResult {
     let mut res = LintResult {
         matched_document_count: 0,
         excluded_document_count: 0,
@@ -25,94 +26,45 @@ pub(crate) fn lint(config: Config, m: &ArgMatches) -> LintResult {
     let mut schema = None;
 
     if let Some(schema_path) = m.value_of("schema") {
-        match read_file(schema_path.as_ref()) {
-            Ok(schema_content) => match serde_json::from_str::<RootSchema>(&schema_content) {
-                Ok(rs) => {
-                    schema = Some(rs);
-                }
-                Err(err) => {
-                    print_message(
-                        Severity::Error,
-                        "error",
-                        &format!("could not load schema: {}", err),
-                    );
-                    res.error_count += 1;
-                    return res;
-                }
-            },
+        match get_schema(schema_path).await {
+            Ok(s) => schema = Some(s),
             Err(err) => {
                 print_message(
                     Severity::Error,
                     "error",
                     &format!("could not load schema: {}", err),
                 );
-
                 res.error_count += 1;
                 return res;
             }
         }
     }
 
-    if schema.is_none() {
-        if let Some(schema_opts) = &config.global_options.schema {
-            if schema_opts.enabled.unwrap_or(false) {
-                if let Some(schema_path) = &schema_opts.path {
-                    match read_file(schema_path.as_ref()) {
-                        Ok(schema_content) => {
-                            match serde_json::from_str::<RootSchema>(&schema_content) {
-                                Ok(rs) => {
-                                    schema = Some(rs);
-                                }
-                                Err(err) => {
-                                    print_message(
-                                        Severity::Error,
-                                        "error",
-                                        &format!("could not load schema: {}", err),
-                                    );
-                                    res.error_count += 1;
-                                    return res;
-                                }
-                            }
-                        }
-                        Err(err) => {
-                            print_message(
-                                Severity::Error,
-                                "error",
-                                &format!("could not load schema: {}", err),
-                            );
-
-                            res.error_count += 1;
-                            return res;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     if let Some(files) = m.values_of("files") {
-        lint_paths(&config, schema.as_ref(), files, &mut res);
+        lint_paths(&config, schema, files, &mut res, false).await;
     } else {
         lint_paths(
             &config,
-            schema.as_ref(),
+            schema,
             config.get_include_paths().iter().map(|s| s.as_ref()),
             &mut res,
-        );
+            true,
+        ).await;
     }
 
     res
 }
 
-fn lint_paths<'i, F: Iterator<Item = &'i str>>(
+async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
     config: &Config,
-    schema: Option<&RootSchema>,
+    schema: Option<RootSchema>,
     files: F,
     res: &mut LintResult,
+    allow_exclude: bool,
 ) {
     for val in files {
         if val == "-" {
-            let src = match get_stdin_source() {
+            let src = match read_stdin() {
                 Ok(s) => s,
                 Err(e) => {
                     print_message(Severity::Error, "error", &e.to_string());
@@ -120,37 +72,66 @@ fn lint_paths<'i, F: Iterator<Item = &'i str>>(
                 }
             };
 
-            lint_source(None, schema, &src, res);
+            lint_source(None, schema.as_ref(), &src, res);
             res.matched_document_count += 1;
             continue;
         }
 
         match get_paths_by_glob(val) {
-            Ok((sources, errors)) => {
-                for err in errors {
-                    print_message(Severity::Error, "error", &err.to_string());
-                    res.error_count += 1;
-                }
-
+            Ok(sources) => {
                 for path in sources {
                     match read_file(&path) {
                         Ok(src) => {
                             res.matched_document_count += 1;
 
-                            match config.is_excluded(val) {
-                                Ok(excluded) => {
-                                    if excluded {
-                                        res.excluded_document_count += 1;
-                                        continue;
+                            if allow_exclude {
+                                // Don't lint taplo config files unless asked explicitly.
+                                let p = Path::new(val);
+                                match p.file_name() {
+                                    Some(file_name) => {
+                                        if file_name == "taplo.toml" || file_name == ".taplo.toml" {
+                                            // Don't count it as excluded.
+                                            continue;
+                                        }
                                     }
-                                }
-                                Err(err) => {
-                                    print_message(Severity::Error, "error", &err.to_string());
-                                    return;
+                                    None => {}
+                                };
+
+                                match config.is_excluded(val) {
+                                    Ok(excluded) => {
+                                        if excluded {
+                                            res.excluded_document_count += 1;
+                                            continue;
+                                        }
+                                    }
+                                    Err(err) => {
+                                        print_message(Severity::Error, "error", &err.to_string());
+                                        return;
+                                    }
                                 }
                             }
 
-                            lint_source(path.to_str(), schema, &src, res);
+                            match &schema {
+                                Some(s) => {
+                                    lint_source(path.to_str(), Some(s), &src, res);
+                                }
+                                None => {
+                                    match config.get_schema(path.to_str().unwrap()).await {
+                                        Ok(schema) => {
+                                            lint_source(path.to_str(), schema.as_ref(), &src, res);
+                                        }
+                                        Err(err) => {
+                                            print_message(
+                                                Severity::Error,
+                                                "error",
+                                                &format!("could not load schema: {}", err),
+                                            );
+                                            res.error_count += 1;
+                                            return;
+                                        }
+                                    };
+                                }
+                            }
                         }
                         Err(err) => {
                             print_message(Severity::Error, "error", &err.to_string());
@@ -187,7 +168,8 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
             }
             res.error_count += 1;
 
-            eprint_line(
+            eprintln!(
+                "{}",
                 &PrettyLint::error(src)
                     .with_file_path(fpath)
                     .with_message("invalid syntax")
@@ -207,7 +189,6 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                     .with_inline_message(&err.message)
                     .to_string(),
             );
-            eprint_line("");
 
             ranges.insert(err.range);
         }
@@ -222,7 +203,8 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
         for err in dom.errors() {
             match err {
                 dom::Error::DuplicateKey { first, second } => {
-                    eprint_line(
+                    eprintln!(
+                        "{}",
                         &PrettyLint::error(src)
                             .with_file_path(fpath)
                             .with_message(&format!(
@@ -263,10 +245,10 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                             )
                             .to_string(),
                     );
-                    eprint_line("");
                 }
                 dom::Error::ExpectedTableArray { target, key } => {
-                    eprint_line(
+                    eprintln!(
+                        "{}",
                         &PrettyLint::error(src)
                             .with_file_path(fpath)
                             .with_message(&format!(
@@ -307,10 +289,10 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                             )
                             .to_string(),
                     );
-                    eprint_line("");
                 }
                 dom::Error::ExpectedTable { target, key } => {
-                    eprint_line(
+                    eprintln!(
+                        "{}",
                         &PrettyLint::error(src)
                             .with_file_path(fpath)
                             .with_message(&format!(
@@ -351,10 +333,10 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                             )
                             .to_string(),
                     );
-                    eprint_line("");
                 }
                 dom::Error::InlineTable { target, key } => {
-                    eprint_line(
+                    eprintln!(
+                        "{}",
                         &PrettyLint::error(src)
                             .with_file_path(fpath)
                             .with_message(&format!(
@@ -395,10 +377,10 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                             )
                             .to_string(),
                     );
-                    eprint_line("");
                 }
                 dom::Error::Spanned { range, message } => {
-                    eprint_line(
+                    eprintln!(
+                        "{}",
                         &PrettyLint::error(src)
                             .with_file_path(fpath)
                             .with_message(message)
@@ -418,7 +400,6 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                             .with_inline_message("inline table here")
                             .to_string(),
                     );
-                    eprint_line("");
                 }
                 dom::Error::Generic(g) => {
                     if fpath.is_empty() {
@@ -428,7 +409,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                     }
                 }
                 dom::Error::DottedKeyConflict { first, second } => {
-                    eprint_line(
+                    eprintln!("{}",
                         &PrettyLint::error(src)
                             .with_file_path(fpath)
                             .with_message(
@@ -474,10 +455,10 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                             )
                             .to_string(),
                     );
-                    eprint_line("");
                 }
                 dom::Error::SubTableBeforeTableArray { target, key } => {
-                    eprint_line(
+                    eprintln!(
+                        "{}",
                         &PrettyLint::error(src)
                             .with_file_path(fpath)
                             .with_message(r#"subtable is before array of tables"#)
@@ -515,7 +496,6 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                             )
                             .to_string(),
                     );
-                    eprint_line("");
                 }
             };
 
@@ -558,8 +538,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                     p_lint = p_lint.with_file_path(p);
                 }
 
-                eprint_line(&p_lint.to_string());
-                eprint_line("");
+                eprintln!("{}", &p_lint.to_string());
 
                 res.error_count += 1;
             }

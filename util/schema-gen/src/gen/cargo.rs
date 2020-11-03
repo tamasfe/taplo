@@ -71,7 +71,7 @@ impl schemars::visit::Visitor for CargoVisitor {
                     schema.metadata().default = Some(json!("*"));
                     // Regex that combines the SemVer regex above, or a list of Cargo version requirements.
                     schema.string().pattern = Some(
-                    r#"^((((>=|>|<|=|\^|~)?\s*[0-9]+(.[0-9]+)?(.[0-9]+)?|([0-9]+|\*)(.([0-9]+|\*))?(.([0-9]+|\*))?)+)(,\s*(((>=|>|<|=|\^|~)?\s*[0-9]+(.[0-9]+)?(.[0-9]+)?|([0-9]+|\*)(.([0-9]+|\*))?(.([0-9]+|\*))?)))*|(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$"#.into()
+                    r#"^((((>=|>|<|=|\^|~)?\s*[0-9]+(.[0-9]+)?(.[0-9]+)?|([0-9]+|\*)(.([0-9]+|\*))?(.([0-9]+|\*))?)+)(,\s*(((>=|>|<|=|\^|~)?\s*[0-9]+(.[0-9]+)?(.[0-9]+)?|(>=|>|<|=|\^|~)?([0-9]+|\*)(.([0-9]+|\*))?(.([0-9]+|\*))?)))*|(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$"#.into()
                 );
                 }
                 "Build" => {
@@ -1453,7 +1453,7 @@ impl schemars::visit::Visitor for CargoVisitor {
                 "Detailed Dependency" => {
                     let mut ext = ExtMeta::default();
 
-                    ext.init_fields = Some(
+                    ext.init_keys = Some(
                         vec!["version".into()]
                     );
 

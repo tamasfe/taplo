@@ -1,2 +1,2 @@
 #!/bin/sh
-(cd util/schema-gen && cargo run -- -o ../../taplo-ide/schemas/)
+(cd util/schema-gen && cargo run -- -o ./schemas)

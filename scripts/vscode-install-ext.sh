@@ -1,2 +1,2 @@
 #!/bin/sh
-(code --install-extension taplo-ide/vscode/*.vsix --force)
+(code --install-extension node/vscode/*.vsix --force)

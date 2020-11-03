@@ -3,10 +3,10 @@
 //! The formatting can be done on documents that might
 //! contain invalid syntax. In that case the invalid part is skipped.
 // TODO This is fine for now, but will need a refactor
-// of more features are added either to the formatter or the toml spec.
+// if more features are added either to the toml spec.
 
 use crate::{
-    dom::{Cast, EntryNode, KeyNode, NodeSyntax, Path, RootNode},
+    dom::{Cast, EntryNode, KeyNode, NodeSyntax, RootNode},
     syntax::{SyntaxKind, SyntaxKind::*, SyntaxNode, SyntaxToken},
 };
 use rowan::{GreenNode, GreenNodeBuilder, NodeOrToken, SmolStr, TextRange};
@@ -19,12 +19,12 @@ use serde::{Deserialize, Serialize};
 mod macros;
 
 #[derive(Debug, Clone, Default)]
-/// Scoped formatter options based on text ranges scopes.
+/// Scoped formatter options based on text ranges.
 pub struct ScopedOptions(Vec<(TextRange, OptionsIncomplete)>);
 
 impl FromIterator<(TextRange, OptionsIncomplete)> for ScopedOptions {
     fn from_iter<T: IntoIterator<Item = (TextRange, OptionsIncomplete)>>(iter: T) -> Self {
-        Self(Vec::from_iter(iter))
+        Self(Vec::from_iter(iter.into_iter()))
     }
 }
 
@@ -193,8 +193,11 @@ pub fn format_with_scopes(dom: RootNode, options: Options, scopes: ScopedOptions
 
 /// Formats a DOM root node with given scopes.
 ///
+/// All the scope keys must be valid glob patterns,
+/// otherwise this function will panic!
+///
 /// **This doesn't check errors of the DOM.**
-pub fn format_with_path_scopes<I: IntoIterator<Item = (Path, OptionsIncomplete)>>(
+pub fn format_with_path_scopes<I: IntoIterator<Item = (String, OptionsIncomplete)>>(
     dom: RootNode,
     options: Options,
     scopes: I,
@@ -203,9 +206,10 @@ pub fn format_with_path_scopes<I: IntoIterator<Item = (Path, OptionsIncomplete)>
 
     let mut s = Vec::new();
 
-    for (p1, opts) in scopes {
+    for (scope, opts) in scopes {
+        let pat = glob::Pattern::new(&scope).unwrap();
         for (p2, node) in dom.iter() {
-            if p1 == p2 {
+            if pat.matches(&p2.dotted()) {
                 s.extend(node.text_ranges().into_iter().map(|r| (r, opts.clone())))
             }
         }
@@ -213,12 +217,7 @@ pub fn format_with_path_scopes<I: IntoIterator<Item = (Path, OptionsIncomplete)>
 
     c.scopes = Rc::new(ScopedOptions::from_iter(s));
 
-    let mut s = format_impl(
-        dom.syntax().into_node().unwrap(),
-        options.clone(),
-        c,
-    )
-    .to_string();
+    let mut s = format_impl(dom.syntax().into_node().unwrap(), options.clone(), c).to_string();
 
     s = s.trim_end().into();
 

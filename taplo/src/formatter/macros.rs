@@ -46,6 +46,19 @@ macro_rules! create_options {
             )+
         }
 
+        impl OptionsIncomplete {
+            #[doc(hidden)]
+            pub fn from_options(opts: Options) -> Self {
+                let mut o = Self::default();
+
+                $(
+                    o.$name = Some(opts.$name);
+                )+
+
+                o
+            }
+        }
+
         $(#[$attr])*
         #[doc(hidden)]
         #[derive(Default)]
@@ -55,6 +68,19 @@ macro_rules! create_options {
                 $(#[$field_attr])*
                 pub $name: Option<$ty>,
             )+
+        }
+
+        impl OptionsIncompleteCamel {
+            #[doc(hidden)]
+            pub fn from_options(opts: Options) -> Self {
+                let mut o = Self::default();
+
+                $(
+                    o.$name = Some(opts.$name);
+                )+
+
+                o
+            }
         }
     };
 }

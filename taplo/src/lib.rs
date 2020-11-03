@@ -67,6 +67,9 @@ mod serde;
 #[cfg(feature = "verify")]
 pub mod verify;
 
+#[cfg(feature = "schema")]
+pub mod schema;
+
 pub mod util;
 pub mod dom;
 pub mod formatter;
@@ -79,3 +82,4 @@ pub use rowan;
 
 #[cfg(test)]
 mod tests;
+

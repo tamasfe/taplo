@@ -1,10 +1,7 @@
-use crate::request_ext;
 use crate::request_ext::*;
-use crate::{
-    read_file,
-    schema::{get_schema_objects, BUILTIN_SCHEME},
-    Configuration, Document, HashRegex, World,
-};
+use crate::{is_absolute_path, request_ext};
+use crate::{read_file, Configuration, Document, HashRegex, World};
+use anyhow::anyhow;
 use indexmap::IndexMap;
 use itertools::Itertools;
 use lsp_async_stub::{rpc::Error, Context, Params, RequestWriter};
@@ -12,10 +9,11 @@ use lsp_types::*;
 use regex::Regex;
 use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, convert::TryFrom, mem};
+use std::{collections::HashMap, convert::TryFrom, mem, path::Path};
 use taplo::{
     analytics::NodeRef,
     formatter,
+    schema::{util::get_schema_objects, BUILTIN_SCHEMAS, BUILTIN_SCHEME, REGEX_ASSOCIATIONS},
     util::{coords::Mapper, syntax::join_ranges},
     value::Value,
 };
@@ -55,6 +53,21 @@ pub(crate) async fn initialize(
             w.configuration = config;
         }
     }
+
+    drop(w);
+
+    // safety: guaranteed to execute only after this function
+    // has returned, and the reply has been already sent.
+    spawn_local(async move {
+        context
+            .write_notification::<request_ext::UpdateBuiltInSchemas, _>(Some(
+                UpdateBuiltInSchemasParams {
+                    associations: REGEX_ASSOCIATIONS.clone(),
+                },
+            ))
+            .await
+            .unwrap();
+    });
 
     Ok(InitializeResult {
         capabilities: ServerCapabilities {
@@ -101,6 +114,10 @@ pub(crate) async fn initialize(
     })
 }
 
+fn is_deprecated_schema(s: &str) -> bool {
+    s.starts_with("toml_builtin://")
+}
+
 async fn update_configuration(mut context: Context<World>) {
     let res = context
         .write_request::<request::WorkspaceConfiguration, _>(Some(ConfigurationParams {
@@ -130,7 +147,6 @@ async fn update_configuration(mut context: Context<World>) {
 
     let mut schemas: HashMap<String, RootSchema> = mem::take(&mut w.schemas);
 
-    let base_url = w.workspace_uri.clone();
     let config = w.configuration.clone();
 
     drop(w);
@@ -139,6 +155,11 @@ async fn update_configuration(mut context: Context<World>) {
 
     if let Some(assoc) = config.schema.associations {
         for (k, s) in assoc {
+            if is_deprecated_schema(&s) {
+                log_warn!("Schema is deprecated, ignoring it ({})", &s);
+                continue;
+            }
+
             let re = match Regex::new(&k) {
                 Ok(r) => r,
                 Err(err) => {
@@ -148,77 +169,30 @@ async fn update_configuration(mut context: Context<World>) {
                 }
             };
 
+            // Save the schema association
             new_schema_associations.insert(HashRegex(re), s.clone());
+
+            // Then get the schema itself.
 
             if schemas.contains_key(&s) {
                 continue;
             }
 
-            if s.starts_with(BUILTIN_SCHEME) && !schemas.iter().any(|(k, _)| k == &s) {
+            if s.starts_with(&format!("{}://", BUILTIN_SCHEME))
+                && !schemas.iter().any(|(k, _)| k == &s)
+            {
                 log_error!("Invalid built-in schema: {}", s);
                 show_schema_error(context.clone());
                 continue;
             }
 
-            let mut url_opts = Url::options();
-
-            if let Some(base_url) = &base_url {
-                if s.starts_with("./") {
-                    url_opts = url_opts.base_url(Some(base_url));
+            match get_schema(&s, context.clone()).await {
+                Ok(schema) => {
+                    schemas.insert(s, schema);
                 }
-            }
-
-            let url = match url_opts.parse(&s) {
-                Ok(u) => u,
                 Err(err) => {
-                    log_error!("Invalid schema URL: {}", err);
+                    log_error!("Failed to load schema: {}", err);
                     show_schema_error(context.clone());
-                    continue;
-                }
-            };
-
-            match url.scheme() {
-                "file" => {
-                    let fpath_str = url.path();
-                    // unsafe: Extern JS call
-                    let schema_bytes = match unsafe { read_file(fpath_str) } {
-                        Ok(b) => b,
-                        Err(err) => {
-                            log_error!("Failed to read schema file: {:?}", err);
-                            show_schema_error(context.clone());
-                            continue;
-                        }
-                    };
-
-                    let root_schema = match serde_json::from_slice::<RootSchema>(&schema_bytes) {
-                        Ok(s) => s,
-                        Err(err) => {
-                            log_error!("Invalid schema: {}", err);
-                            show_schema_error(context.clone());
-                            continue;
-                        }
-                    };
-
-                    if let Err(errors) = root_schema.verify() {
-                        log_error!(
-                            "Invalid schema: \n{}",
-                            errors
-                                .iter()
-                                .map(|e| format!("{}", e))
-                                .collect::<Vec<String>>()
-                                .join("\n")
-                        );
-                        show_schema_error(context.clone());
-                        continue;
-                    }
-
-                    schemas.insert(s, root_schema);
-                }
-                "http" | "https" => {}
-                scheme => {
-                    log_error!("Invalid schema URL scheme: {}", scheme);
-                    show_schema_error(context.clone());
-                    continue;
                 }
             }
         }
@@ -250,7 +224,7 @@ pub(crate) async fn configuration_change(
     context: Context<World>,
     _params: Params<DidChangeConfigurationParams>,
 ) {
-    update_configuration(context).await;
+    spawn_local(update_configuration(context));
 }
 
 pub(crate) async fn document_open(
@@ -866,4 +840,74 @@ pub(crate) async fn syntax_tree(
     Ok(SyntaxTreeResponse {
         text: format!("{:#?}", doc.parse.clone().into_syntax()),
     })
+}
+
+pub(crate) async fn get_schema(
+    mut path: &str,
+    mut context: Context<World>,
+) -> Result<RootSchema, anyhow::Error> {
+    if path.starts_with(&format!("{}://", BUILTIN_SCHEME)) {
+        match BUILTIN_SCHEMAS.get(path) {
+            Some(s) => Ok(s.clone()),
+            None => Err(anyhow!("builtin schema was not found: {}", path)),
+        }
+    } else if path.starts_with("http://") || path.starts_with("https://") {
+        let schema_uri = Url::parse(path)?;
+        let cached_res = context
+            .write_request::<request_ext::GetCachedSchemaRequest, _>(Some(GetCachedSchemaParams {
+                schema_uri: schema_uri.clone(),
+            }))
+            .await
+            .unwrap()
+            .into_result()?;
+
+        if let Some(s) = cached_res.schema_json {
+            return serde_json::from_str(&s).map_err(Into::into);
+        }
+
+        let w = context.world().lock().await;
+        let client = w.http_client.clone();
+        drop(w);
+
+        let res = client.get(path).send().await?;
+        let schema: RootSchema = res.json().await.map_err::<anyhow::Error, _>(Into::into)?;
+
+        context
+            .write_request::<request_ext::CacheSchemaRequest, _>(Some(CacheSchemaParams {
+                schema_uri,
+                schema_json: serde_json::to_string(&schema)?,
+            }))
+            .await
+            .unwrap()
+            .into_result()?;
+
+        Ok(schema)
+    } else {
+        if path.starts_with("file://") {
+            path = path.trim_start_matches("file://");
+            serde_json::from_slice(unsafe { &read_file(path).map_err(|e| anyhow!("{:?}", e))? })
+                .map_err(Into::into)
+        } else {
+            if unsafe { is_absolute_path(path) } {
+                serde_json::from_slice(unsafe { &read_file(path).map_err(|e| anyhow!("{:?}", e))? })
+                    .map_err(Into::into)
+            } else {
+                let w = context.world().lock().await;
+                let workspace = w.workspace_uri.clone();
+                drop(w);
+
+                match workspace {
+                    Some(uri) => {
+                        let p = Path::new(uri.path()).join(path);
+
+                        serde_json::from_slice(unsafe {
+                            &read_file(p.to_str().unwrap()).map_err(|e| anyhow!("{:?}", e))?
+                        })
+                        .map_err(Into::into)
+                    }
+                    None => Err(anyhow!("cannot determine workspace root for relative path")),
+                }
+            }
+        }
+    }
 }

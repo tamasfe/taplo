@@ -1,4 +1,6 @@
 /// Requests that are not in the LSP spec
+use std::collections::HashMap;
+
 use lsp_types::{notification::Notification, request::Request, Url};
 use serde::{Deserialize, Serialize};
 
@@ -72,4 +74,54 @@ pub(crate) struct MessageWithOutputParams {
 impl Notification for MessageWithOutput {
     type Params = MessageWithOutputParams;
     const METHOD: &'static str = "taplo/messageWithOutput";
+}
+
+pub(crate) enum UpdateBuiltInSchemas {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct UpdateBuiltInSchemasParams {
+    pub associations: HashMap<String, String>,
+}
+
+impl Notification for UpdateBuiltInSchemas {
+    type Params = UpdateBuiltInSchemasParams;
+    const METHOD: &'static str = "taplo/updateBuiltinSchemas";
+}
+
+pub(crate) enum GetCachedSchemaRequest {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct GetCachedSchemaParams {
+    /// URI of the schema
+    pub schema_uri: Url,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct GetCachedSchemaResponse {
+    pub schema_json: Option<String>,
+}
+
+impl Request for GetCachedSchemaRequest {
+    type Params = GetCachedSchemaParams;
+    type Result = GetCachedSchemaResponse;
+    const METHOD: &'static str = "taplo/getCachedSchema";
+}
+
+pub(crate) enum CacheSchemaRequest {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CacheSchemaParams {
+    /// URI of the schema
+    pub schema_uri: Url,
+    pub schema_json: String,
+}
+
+impl Request for CacheSchemaRequest {
+    type Params = CacheSchemaParams;
+    type Result = ();
+    const METHOD: &'static str = "taplo/CacheSchema";
 }

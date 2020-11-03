@@ -1,9 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{
-    schema::{get_schema_objects, ExtendedSchema},
-    Document,
-};
+use crate::Document;
 use itertools::Itertools;
 use lsp_types::*;
 use schemars::{
@@ -14,6 +11,7 @@ use serde_json::Value;
 use taplo::{
     analytics::NodeRef,
     dom::{self, RootNode},
+    schema::util::{get_schema_objects, ExtendedSchema},
     syntax::SyntaxKind,
 };
 
@@ -1076,7 +1074,7 @@ fn empty_value_inserts(
                             if o.required.contains(key)
                                 || schema
                                     .ext
-                                    .init_fields
+                                    .init_keys
                                     .as_ref()
                                     .map(|i| i.iter().any(|i| i == key))
                                     .unwrap_or(false)

@@ -15,7 +15,7 @@ use once_cell::sync::Lazy;
 use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, hash::Hash, io, sync::Arc, task};
-use taplo::{parser::Parse, util::coords::Mapper};
+use taplo::{schema::BUILTIN_SCHEMAS, parser::Parse, util::coords::Mapper};
 use task::Poll;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
@@ -50,7 +50,6 @@ macro_rules! log_debug {
 
 mod handlers;
 mod request_ext;
-pub mod schema;
 mod utils;
 
 #[derive(Debug, Clone)]
@@ -88,10 +87,20 @@ pub struct WorldState {
     documents: HashMap<lsp_types::Url, Document>,
     schemas: HashMap<String, RootSchema>,
     schema_associations: IndexMap<HashRegex, String>,
+    http_client: reqwest::Client,
     configuration: Configuration,
 }
 
 impl WorldState {
+    pub fn register_built_in_schemas(&mut self) {
+        for (name, schema) in &*BUILTIN_SCHEMAS {
+            self.schemas.insert(
+                name.clone(),
+                schema.clone(),
+            );
+        }
+    }
+
     fn get_schema_name(&self, uri: &Url) -> Option<&str> {
         let s = uri.as_str();
 
@@ -127,6 +136,7 @@ pub struct SchemaConfiguration {
     pub links: Option<bool>,
 }
 
+// This is not exhaustive
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Configuration {
@@ -159,12 +169,15 @@ extern {
 
     #[wasm_bindgen(js_namespace = global, js_name = readFile, catch)]
     fn read_file(path: &str) -> Result<Vec<u8>, JsValue>;
+
+    #[wasm_bindgen(js_namespace = global, js_name = isAbsolutePath)]
+    fn is_absolute_path(path: &str) -> bool;
 }
 
 #[wasm_bindgen]
 pub async fn init() {
     utils::set_panic_hook();
-    schema::register_built_in_schemas(&mut *WORLD.lock().await);
+    WORLD.lock().await.register_built_in_schemas();
 }
 
 #[wasm_bindgen]

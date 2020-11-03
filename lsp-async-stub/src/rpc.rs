@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 pub type RequestId = lsp_types::NumberOrString;
@@ -226,6 +227,12 @@ pub struct Error {
     pub data: Option<serde_json::Value>,
 }
 
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "RPC error ({}): {}", self.code, self.message)
+    }
+}
+
 impl Error {
     pub fn new(message: &str) -> Self {
         Error {
@@ -322,8 +329,10 @@ impl Error {
     }
 }
 
-impl<E: std::error::Error> From<E> for Error {
-    fn from(err: E) -> Self {
-        Error::internal_error().with_data(err.to_string())
-    }
-}
+impl std::error::Error for Error {}
+
+// impl<E: std::error::Error> From<E> for Error {
+//     fn from(err: E) -> Self {
+//         Error::internal_error().with_data(err.to_string())
+//     }
+// }

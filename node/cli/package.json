@@ -1,15 +1,31 @@
 {
-  "name": "taplo",
-  "version": "1.0.0",
-  "description": "A TOML utility tool and library.",
-  "main": "dist/index.js",
+  "name": "@taplo/cli",
+  "version": "0.1.0",
+  "description": "A TOML utility tool.",
   "bin": {
     "taplo": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "yarn build-cli",
+    "build-lib": "rollup src/index.ts --file dist/index.js --format cjs",
+    "build-cli": "rollup src/cli.ts -c rollup.config.js && node util/add_shebang.js"
   },
   "repository": "https://github.com/tamasfe/taplo",
   "author": "tamasfe",
   "license": "MIT",
   "dependencies": {
+    "fast-glob": "^3.2.4",
+    "node-fetch": "^2.6.1",
     "typescript": "^4.0.5"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^6.1.0",
+    "@types/node": "^14.14.6",
+    "@types/node-fetch": "^2.5.7",
+    "@wasm-tool/rollup-plugin-rust": "^1.0.5",
+    "esbuild": "^0.8.2",
+    "rollup-plugin-esbuild": "^2.5.2",
+    "rollup-plugin-typescript2": "^0.29.0",
+    "tslib": "^2.0.3"
   }
 }

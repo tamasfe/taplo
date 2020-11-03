@@ -1,0 +1,25 @@
+{
+  "name": "taplo-site",
+  "version": "0.1.0",
+  "description": "A TOML toolkit.",
+  "main": "index.js",
+  "authors": {
+    "name": "tamasfe",
+    "email": ""
+  },
+  "repository": "/taplo-site",
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@goy/vuepress-plugin-svg-icons": "^4.2.1",
+    "typescript": "^4.0.5",
+    "vuepress": "^1.5.3",
+    "vuepress-theme-hope": "^1.4.7"
+  },
+  "dependencies": {
+    "@mdi/font": "^5.8.55"
+  }
+}

@@ -1,0 +1,12 @@
+.custom-block
+  &.info, &.tip, &.warning, &.danger, &.details
+    a
+      color var(--accent-color)
+
+  .theme-dark &
+    &.info, &.tip, &.warning, &.danger, &.details
+      background-color lighten($nightBgColor, 10%)
+      color lighten($nightTextColor, 10%)
+
+      code
+        background-color #444

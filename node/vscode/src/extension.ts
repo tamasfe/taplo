@@ -9,7 +9,8 @@ import {
   UpdateBuiltInSchemas,
 } from "./requestExt";
 import deepEqual from "deep-equal";
-import fs from "fs";
+import { Uri } from "vscode";
+import { TextDecoder, TextEncoder } from "util";
 
 let output: vscode.OutputChannel;
 let extensionContext: vscode.ExtensionContext;
@@ -84,7 +85,7 @@ export async function activate(context: vscode.ExtensionContext) {
     showMessage(params, c)
   );
   c.onNotification(UpdateBuiltInSchemas.METHOD, updateAssociations);
-  c.onRequest(CacheSchema.METHOD, cacheSchema);
+  c.onNotification(CacheSchema.METHOD, cacheSchema);
   c.onRequest(GetCachedSchema.METHOD, getCachedSchema);
 }
 
@@ -117,37 +118,48 @@ async function showMessage(
 }
 
 async function cacheSchema(params: CacheSchema.Params) {
-  const storagePath = extensionContext.globalStoragePath;
-  const schemaPath = path.join(storagePath, "schemas.json");
+  const storagePath = extensionContext.globalStorageUri;
+  const schemaPath = Uri.joinPath(storagePath, "schemas.json");
 
-  output.appendLine(storagePath);
-
-  await fs.promises.mkdir(storagePath, { recursive: true });
+  await vscode.workspace.fs.createDirectory(storagePath);
 
   let schemas: { [key: string]: string } = {};
-  if (fs.existsSync(schemaPath)) {
-    schemas = JSON.parse(await fs.promises.readFile(schemaPath, "utf-8"));
+  try {
+    schemas = JSON.parse(
+      new TextDecoder("utf-8").decode(
+        await vscode.workspace.fs.readFile(schemaPath)
+      )
+    );
+  } catch (e) {
+    // Doesn't yet exist.
   }
 
   schemas[params.schemaUri] = params.schemaJson;
 
-  await fs.promises.writeFile(schemaPath, JSON.stringify(schemas));
+  await vscode.workspace.fs.writeFile(
+    schemaPath,
+    new TextEncoder().encode(JSON.stringify(schemas))
+  );
 }
 
 async function getCachedSchema(
   params: GetCachedSchema.Params
 ): Promise<GetCachedSchema.Response> {
-  const storagePath = extensionContext.globalStoragePath;
-  const schemaPath = path.join(storagePath, "schemas.json");
+  const storagePath = extensionContext.globalStorageUri;
+  const schemaPath = Uri.joinPath(storagePath, "schemas.json");
 
-  await fs.promises.mkdir(storagePath, { recursive: true });
+  await vscode.workspace.fs.createDirectory(storagePath);
 
-  if (!fs.existsSync(schemaPath)) {
-    return {};
+  let schemas: { [key: string]: string } = {};
+  try {
+    schemas = JSON.parse(
+      new TextDecoder("utf-8").decode(
+        await vscode.workspace.fs.readFile(schemaPath)
+      )
+    );
+  } catch (e) {
+    // Doesn't yet exist.
   }
-  const schemas: { [key: string]: string } = JSON.parse(
-    await fs.promises.readFile(schemaPath, "utf-8")
-  );
 
   return { schemaJson: schemas[params.schemaUri] };
 }

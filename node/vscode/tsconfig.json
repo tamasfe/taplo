@@ -1,13 +1,13 @@
 {
-	"compilerOptions": {
-		"module": "commonjs",
-		"target": "es2019",
-		"lib": ["ES2019"],
-		"outDir": "out",
-		"sourceMap": true,
-		"rootDir": "src",
-		"strict": true,
-		"esModuleInterop": true
-	},
-	"exclude": ["node_modules", ".vscode-test"]
+  "compilerOptions": {
+    "target": "es2019",
+    "lib": ["ES2019"],
+    "sourceMap": false,
+    "rootDir": "src",
+    "moduleResolution": "node",
+    "module": "ESNext",
+    "allowSyntheticDefaultImports": true,
+    "strict": false
+  },
+  "exclude": ["node_modules"]
 }

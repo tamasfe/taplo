@@ -2,12 +2,12 @@
 import taploCli from "../../../taplo-cli/Cargo.toml";
 import fs from "fs";
 import fastGlob from "fast-glob";
+import fetch, { Headers, Request, Response } from "node-fetch";
 
 // In order to support reqwest
-const fetch = require("node-fetch");
-(global as any).Headers = fetch.Headers;
-(global as any).Request = fetch.Request;
-(global as any).Response = fetch.Response;
+(global as any).Headers = Headers;
+(global as any).Request = Request;
+(global as any).Response = Response;
 (global as any).Window = Object;
 (global as any).fetch = fetch;
 

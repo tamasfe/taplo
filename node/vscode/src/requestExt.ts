@@ -70,7 +70,5 @@ export namespace CacheSchema {
     schemaJson: string;
   }
 
-  export type Response = null;
-
   export const METHOD = "taplo/cacheSchema";
 }

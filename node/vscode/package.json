@@ -290,30 +290,25 @@
   "main": "./dist/extension.js",
   "scripts": {
     "build:syntax": "ts-node src/syntax/index.ts",
-    "vscode:prepublish": "npm run build:syntax && webpack --mode production && npm run webpack-server",
-    "webpack": "webpack --mode development",
-    "webpack-server": "webpack --config webpack.config.server.js --mode production",
-    "webpack-dev": "webpack --mode development --watch",
-    "test-compile": "tsc -p ./"
+    "vscode:prepublish": "yarn --ignore-engines build",
+    "build": "yarn --ignore-engines rollup --silent -c rollup.config.js"
   },
   "dependencies": {
     "deep-equal": "^2.0.4",
     "node-fetch": "^2.6.1",
-    "taplo": "../../taplo-ide/pkg",
     "vscode-languageclient": "^6.1.3"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^16.0.0",
+    "@rollup/plugin-node-resolve": "^10.0.0",
     "@types/deep-equal": "^1.0.1",
     "@types/node": "^12.12.0",
     "@types/node-fetch": "^2.5.7",
     "@types/vscode": "^1.44.0",
-    "clean-webpack-plugin": "^3.0.0",
-    "copy-webpack-plugin": "^6.0.1",
-    "ts-loader": "^7.0.5",
+    "@wasm-tool/rollup-plugin-rust": "^1.0.5",
+    "rollup": "^2.33.1",
+    "rollup-plugin-typescript2": "^0.29.0",
     "ts-node": "^8.10.2",
-    "tslint": "^5.19.0",
-    "typescript": "^3.8.3",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11"
+    "typescript": "^4.0.5"
   }
 }

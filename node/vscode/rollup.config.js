@@ -1,11 +1,12 @@
 import rust from "@wasm-tool/rollup-plugin-rust";
 import typescript from "rollup-plugin-typescript2";
-import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
+import resolve from "@rollup/plugin-node-resolve";
 
 export default {
   input: {
-    cli: "src/cli.ts",
+    server: "src/server.ts",
+    extension: "src/extension.ts",
   },
   output: {
     sourcemap: false,
@@ -17,10 +18,9 @@ export default {
       debug: process.env["RELEASE"] !== "true",
       nodejs: true,
       inlineWasm: process.env["SEPARATE_WASM"] !== "true",
-      cargoArgs: ["--no-default-features", "--features=internal-node"],
     }),
-    resolve({ jsnext: true, preferBuiltins: true }),
-    commonjs({ include: ["src/*.ts", "node_modules/**"] }),
     typescript(),
+    commonjs({ include: ["src/*.ts", "node_modules/**"] }),
+    resolve({ jsnext: true, preferBuiltins: true }),
   ],
 };

@@ -5,7 +5,6 @@ out/**/*.map
 dist/**/*.map
 src/**
 **/*.ts
-node_modules
 webpack.config.*
 .gitignore
 tsconfig.json

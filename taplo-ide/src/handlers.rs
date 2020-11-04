@@ -236,7 +236,7 @@ pub(crate) async fn document_open(
     };
 
     let parse = taplo::parser::parse(&p.text_document.text);
-    let mapper = Mapper::new_utf16(&p.text_document.text);
+    let mapper = Mapper::new_utf16(&p.text_document.text, false);
     let uri = p.text_document.uri.clone();
 
     context
@@ -265,7 +265,7 @@ pub(crate) async fn document_change(
     };
 
     let parse = taplo::parser::parse(&change.text);
-    let mapper = Mapper::new_utf16(&change.text);
+    let mapper = Mapper::new_utf16(&change.text, false);
     let uri = p.text_document.uri.clone();
 
     context

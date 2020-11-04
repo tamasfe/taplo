@@ -35,13 +35,13 @@ impl Mapper {
     /// each line starts and ends.
     ///
     /// Uses UTF-16 character sizes for positions.
-    pub fn new_utf16(source: &str) -> Self {
-        Self::new_impl(source, true)
+    pub fn new_utf16(source: &str, one_based: bool) -> Self {
+        Self::new_impl(source, true, if one_based { 1 } else { 0 })
     }
 
     /// Uses UTF-8 character sizes for positions.
-    pub fn new_utf8(source: &str) -> Self {
-        Self::new_impl(source, false)
+    pub fn new_utf8(source: &str, one_based: bool) -> Self {
+        Self::new_impl(source, false, if one_based { 1 } else { 0 })
     }
 
     pub fn offset(&self, position: Position) -> Option<TextSize> {
@@ -59,7 +59,7 @@ impl Mapper {
 
     pub fn range(&self, range: TextRange) -> Option<Range> {
         self.position(range.start()).and_then(|start| {
-            self.position(range.end().checked_sub(1.into()).unwrap_or_default())
+            self.position(range.end())
                 .map(|end| Range { start, end })
         })
     }
@@ -82,12 +82,12 @@ impl Mapper {
         }
     }
 
-    fn new_impl(source: &str, utf16: bool) -> Self {
+    fn new_impl(source: &str, utf16: bool, base: u64) -> Self {
         let mut offset_to_position = BTreeMap::new();
         let mut position_to_offset = BTreeMap::new();
 
-        let mut line: u64 = 0;
-        let mut character: u64 = 0;
+        let mut line: u64 = base;
+        let mut character: u64 = base;
         let mut last_offset = 0;
 
         for c in source.chars() {
@@ -111,7 +111,7 @@ impl Mapper {
             if c == '\n' {
                 // LF is at the start of each line.
                 line += 1;
-                character = 0;
+                character = base;
             }
         }
 
@@ -194,7 +194,7 @@ fn test_mapper() {
 line-2
 line-3"#;
 
-    let mapper = Mapper::new_utf16(s1);
+    let mapper = Mapper::new_utf16(s1, false);
 
     assert!(s1.len() == mapper.mappings().0.len() - 1);
 

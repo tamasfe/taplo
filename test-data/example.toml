@@ -1,0 +1,25 @@
+# An example file that contains most features
+
+a_value = 2
+
+a_date_time = 2002-10-02T15:00:00.05Z
+a_date = 2002-10-02
+
+[[fruit]]
+name = "apple"
+
+[fruit.physical] # subtable
+color = "red"
+shape = "round"
+
+[[fruit.variety]] # nested array of tables
+name = "red delicious"
+
+[[fruit.variety]]
+name = "granny smith"
+
+[[fruit]]
+name = "banana"
+
+[[fruit.variety]]
+name = "plantain"

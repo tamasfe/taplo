@@ -49,7 +49,8 @@ pub(crate) async fn lint(config: Config, m: &ArgMatches) -> LintResult {
             config.get_include_paths().iter().map(|s| s.as_ref()),
             &mut res,
             true,
-        ).await;
+        )
+        .await;
     }
 
     res
@@ -151,7 +152,7 @@ async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
 fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: &mut LintResult) {
     let parse = taplo::parser::parse(src);
 
-    let mapper = Mapper::new_utf16(src);
+    let mapper = Mapper::new_utf16(src, false);
 
     // So that same range lint aren't applied twice.
     let mut ranges: HashSet<TextRange> = HashSet::new();

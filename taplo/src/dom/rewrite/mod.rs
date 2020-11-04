@@ -352,8 +352,8 @@ pub struct StringNode {
 
 impl StringNode {
     pub(crate) fn into_tree(self, builder: &mut GreenNodeBuilder) {
-        // TODO: handle multiple content.
-        builder.token(STRING.into(), self.val.into());
+        // FIXME: handle multiline content.
+        builder.token(STRING.into(), format!(r#"'{}'"#, self.val).into());
     }
 }
 
@@ -383,7 +383,7 @@ impl FloatNode {
 pub struct DateNode {}
 
 impl DateNode {
-    pub(crate) fn into_tree(self, builder: &mut GreenNodeBuilder) {
+    pub(crate) fn into_tree(self, _builder: &mut GreenNodeBuilder) {
         todo!()
     }
 }

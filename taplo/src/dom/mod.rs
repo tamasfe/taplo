@@ -245,7 +245,13 @@ impl Cast for RootNode {
                     };
 
                     if let Some(t) = tables.last_mut() {
-                        t.end_offset = table.syntax.text_range().start();
+                        t.end_offset = table
+                            .syntax
+                            .text_range()
+                            .start()
+                            .checked_sub(1.into())
+                            .unwrap_or_default()
+                            .into();
                     }
 
                     tables.push(table);
@@ -274,7 +280,7 @@ impl Cast for RootNode {
         }
 
         if let Some(t) = tables.last_mut() {
-            t.end_offset = root_syntax.text_range().end();
+            t.end_offset = root_syntax.text_range().end().into();
         }
 
         entries.add_tables(tables, &mut errors);
@@ -312,7 +318,7 @@ dom_node! {
         // Offset of the next entry or EOF,
         // this is needed because tables span
         // longer than their actual syntax in TOML.
-        end_offset: TextSize,
+        end_offset: Option<TextSize>,
 
         entries: Entries,
     }
@@ -346,8 +352,16 @@ impl TableNode {
     pub fn text_ranges(&self) -> TextRanges {
         let mut ranges = SmallVec::with_capacity(self.entries.len() + 1);
 
-        ranges.push(self.syntax().text_range().cover_offset(self.end_offset));
+        let self_range = match self.end_offset {
+            Some(end_offset) => self.syntax().text_range().cover_offset(end_offset),
+            None => self.syntax().text_range(),
+        };
+
+        ranges.push(self_range);
         ranges.extend(self.entries.iter().map(|(_, e)| e.syntax().text_range()));
+
+        dbg!(self.key().map(|k| k.full_key_string_stripped()));
+        dbg!(&ranges);
 
         ranges
     }
@@ -367,7 +381,7 @@ impl Cast for TableNode {
 
                 Some(Self {
                     entries: Entries::default(),
-                    end_offset: syntax.text_range().end(),
+                    end_offset: syntax.text_range().end().into(),
                     pseudo: false,
                     inline: false,
                     array: syntax.kind() == TABLE_ARRAY_HEADER,
@@ -391,7 +405,7 @@ impl Cast for TableNode {
                         .collect(),
                 ),
                 key: None,
-                end_offset: syntax.text_range().end(),
+                end_offset: syntax.text_range().end().into(),
                 inline: true,
                 array: false,
                 pseudo: false,
@@ -480,7 +494,7 @@ impl Entries {
                     value: ValueNode::Table(TableNode {
                         syntax: common_prefix.syntax.clone(),
                         inline: false,
-                        end_offset: Default::default(),
+                        end_offset: None,
                         pseudo: true,
                         array: false,
                         key: None,
@@ -531,7 +545,7 @@ impl Entries {
                     value: ValueNode::Table(TableNode {
                         syntax: common_prefix_key.syntax,
                         inline: false,
-                        end_offset: Default::default(),
+                        end_offset: None,
                         pseudo: true,
                         array: false,
                         key: None,
@@ -693,7 +707,7 @@ impl Entries {
                         entry.key = common_prefix_key;
                         entry.value = ValueNode::Table(TableNode {
                             inline: false,
-                            end_offset: entry.syntax.text_range().end(),
+                            end_offset: entry.syntax.text_range().end().into(),
                             syntax: entry.syntax.clone(),
                             key: None,
                             pseudo: true,
@@ -1090,7 +1104,7 @@ impl EntryNode {
 
             self.value = ValueNode::Table(TableNode {
                 inline: false,
-                end_offset: Default::default(),
+                end_offset: None,
                 syntax: inner_entry_syntax,
                 key: None,
                 pseudo: true,

@@ -57,6 +57,15 @@ struct Parser<'p> {
     // The syntax error is still reported,
     // but the the surrounding context can still
     // be parsed.
+    // FIXME(bit_flags):    
+    //      This is VERY wrong, as the members of the
+    //      enums are not proper bit flags.
+    //
+    //      However this incorrect behavior marks fewer tokens
+    //      as errors making the parser more fault-tolerant.
+    //      Instead of fixing this it would probably be better to
+    //      remove the ERROR token altogether, or reserving it for
+    //      special cases.
     error_whitelist: u16,
 
     lexer: Lexer<'p, SyntaxKind>,
@@ -631,6 +640,11 @@ impl<'p> Parser<'p> {
             }
             BRACKET_START => with_node!(self.builder, ARRAY, self.parse_array()),
             BRACE_START => with_node!(self.builder, INLINE_TABLE, self.parse_inline_table()),
+            IDENT => {
+                // FIXME(bit_flags): This branch is just a workaround.
+                self.report_error("expected value").ok();
+                self.token_as(ERROR)
+            }
             _ => self.error("expected value"),
         }
     }
@@ -643,8 +657,8 @@ impl<'p> Parser<'p> {
         let mut was_newline = false;
         loop {
             let t = match self.get_token() {
-                Ok(t) => {t}
-                Err(_) => {return self.report_error(r#"expected "}""#)}
+                Ok(t) => t,
+                Err(_) => return self.report_error(r#"expected "}""#),
             };
 
             match t {

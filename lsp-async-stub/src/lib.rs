@@ -67,6 +67,7 @@ impl CancelToken {
 impl Future for CancelToken {
     type Output = ();
 
+    #[allow(unused_mut)] // differs between compiler versions
     fn poll(
         mut self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,

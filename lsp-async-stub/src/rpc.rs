@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 pub type RequestId = lsp_types::NumberOrString;
@@ -330,9 +329,3 @@ impl Error {
 }
 
 impl std::error::Error for Error {}
-
-// impl<E: std::error::Error> From<E> for Error {
-//     fn from(err: E) -> Self {
-//         Error::internal_error().with_data(err.to_string())
-//     }
-// }

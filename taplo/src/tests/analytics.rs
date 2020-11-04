@@ -10,7 +10,7 @@ fn cargo_toml(idx: usize) -> String {
 #[test]
 fn query_author() {
     let src = cargo_toml(1);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
 
@@ -35,7 +35,7 @@ fn query_author() {
 #[test]
 fn query_package_field() {
     let src = cargo_toml(1);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
 
@@ -66,7 +66,7 @@ fn query_package_field() {
 #[test]
 fn query_lib_table() {
     let src = cargo_toml(1);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
 
@@ -96,7 +96,7 @@ fn query_lib_table() {
 #[test]
 fn query_table_header() {
     let src = cargo_toml(1);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
 
@@ -118,7 +118,7 @@ fn query_table_header() {
 #[test]
 fn query_incomplete_key() {
     let src = cargo_toml(1);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
 
@@ -139,7 +139,7 @@ fn query_incomplete_key() {
 #[test]
 fn query_subtable() {
     let src = cargo_toml(2);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
 
     let dom = crate::parser::parse(&src).into_dom();
 
@@ -161,7 +161,7 @@ fn query_subtable() {
 #[test]
 fn query_table_key() {
     let src = cargo_toml(1);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(6, 1)).unwrap();
@@ -172,7 +172,7 @@ fn query_table_key() {
 #[test]
 fn query_key_period() {
     let src = cargo_toml(1);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(53, 6)).unwrap();
@@ -199,7 +199,7 @@ fn query_key_period() {
 #[test]
 fn query_start() {
     let src = cargo_toml(3);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(1, 1)).unwrap();
@@ -211,7 +211,7 @@ fn query_start() {
 #[test]
 fn query_comment() {
     let src = cargo_toml(3);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(18, 11)).unwrap();
@@ -226,7 +226,7 @@ fn query_comment() {
 #[test]
 fn query_key() {
     let src = cargo_toml(4);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(1, 4)).unwrap();
@@ -240,7 +240,7 @@ fn query_key() {
     assert!(pos.before.as_ref().unwrap().path.dotted() == "package.asd");
 
     let src = cargo_toml(5);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
     let pos = mapper.offset(Position::new(1, 10)).unwrap();
     let pos = dom.query_position(pos);
@@ -248,7 +248,7 @@ fn query_key() {
     assert!(pos.before.as_ref().unwrap().path.dotted() == "lib.bench");
 
     let src = cargo_toml(5);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
     let pos = mapper.offset(Position::new(1, 9)).unwrap();
     let pos = dom.query_position(pos);
@@ -256,7 +256,7 @@ fn query_key() {
     assert!(pos.before.as_ref().unwrap().path.dotted() == "lib.bench");
 
     let src = cargo_toml(6);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
     let pos = mapper.offset(Position::new(1, 5)).unwrap();
     let pos = dom.query_position(pos);
@@ -264,7 +264,7 @@ fn query_key() {
     assert!(pos.before.as_ref().unwrap().path.dotted() == "lib");
 
     let src = cargo_toml(7);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
     let pos = mapper.offset(Position::new(2, 6)).unwrap();
     let pos = dom.query_position(pos);
@@ -275,7 +275,7 @@ fn query_key() {
 #[test]
 fn check_token_before() {
     let src = cargo_toml(7);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(4, 11)).unwrap();
@@ -310,7 +310,7 @@ fn check_token_before() {
 #[test]
 fn query_value() {
     let src = cargo_toml(8);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(1, 7)).unwrap();
@@ -327,7 +327,7 @@ fn query_value() {
 #[test]
 fn query_value2() {
     let src = cargo_toml(9);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(2, 8)).unwrap();
@@ -339,7 +339,7 @@ fn query_value2() {
 #[test]
 fn query_value_in_array() {
     let src = cargo_toml(10);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(2, 10)).unwrap();
@@ -355,7 +355,7 @@ fn query_value_in_array() {
 #[test]
 fn query_complete_value() {
     let src = cargo_toml(10);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(6, 9)).unwrap();
@@ -367,7 +367,7 @@ fn query_complete_value() {
 #[test]
 fn query_inline_table() {
     let src = cargo_toml(11);
-    let mapper = Mapper::new(&src);
+    let mapper = Mapper::new_utf16(&src);
     let dom = crate::parser::parse(&src).into_dom();
 
     let pos = mapper.offset(Position::new(1, 24)).unwrap();

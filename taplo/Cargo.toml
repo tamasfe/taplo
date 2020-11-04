@@ -19,7 +19,7 @@ rewrite = []
 [dependencies]
 indexmap = "1.6.0"
 logos = "0.11.4"
-lsp-types = { version = "0.74.1" }
+"lsp-types" = { version = "0.74.1" }
 rowan = "0.10.0"
 smallvec = "1.4"
 regex = "1.4"

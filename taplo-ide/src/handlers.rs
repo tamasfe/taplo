@@ -17,7 +17,6 @@ use taplo::{
     util::{coords::Mapper, syntax::join_ranges},
     value::Value,
 };
-use verify::Verify;
 use wasm_bindgen_futures::spawn_local;
 
 mod completion;
@@ -237,7 +236,7 @@ pub(crate) async fn document_open(
     };
 
     let parse = taplo::parser::parse(&p.text_document.text);
-    let mapper = Mapper::new(&p.text_document.text);
+    let mapper = Mapper::new_utf16(&p.text_document.text);
     let uri = p.text_document.uri.clone();
 
     context
@@ -266,7 +265,7 @@ pub(crate) async fn document_change(
     };
 
     let parse = taplo::parser::parse(&change.text);
-    let mapper = Mapper::new(&change.text);
+    let mapper = Mapper::new_utf16(&change.text);
     let uri = p.text_document.uri.clone();
 
     context
@@ -873,13 +872,12 @@ pub(crate) async fn get_schema(
         let schema: RootSchema = res.json().await.map_err::<anyhow::Error, _>(Into::into)?;
 
         context
-            .write_request::<request_ext::CacheSchemaRequest, _>(Some(CacheSchemaParams {
+            .write_notification::<request_ext::CacheSchemaRequest, _>(Some(CacheSchemaParams {
                 schema_uri,
                 schema_json: serde_json::to_string(&schema)?,
             }))
             .await
-            .unwrap()
-            .into_result()?;
+            .unwrap();
 
         Ok(schema)
     } else {

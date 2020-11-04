@@ -151,7 +151,7 @@ async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
 fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: &mut LintResult) {
     let parse = taplo::parser::parse(src);
 
-    let mapper = Mapper::new(src);
+    let mapper = Mapper::new_utf16(src);
 
     // So that same range lint aren't applied twice.
     let mut ranges: HashSet<TextRange> = HashSet::new();

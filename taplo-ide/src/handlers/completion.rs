@@ -231,7 +231,6 @@ pub(crate) fn get_completions(
                                     .map(|range| doc.mapper.range(range).unwrap())
                             });
 
-                        log_debug!("{:?}", &range);
 
                         return get_schema_objects(query_path.clone(), &root_schema, true)
                             .into_iter()
@@ -344,7 +343,6 @@ pub(crate) fn get_completions(
                             .as_ref()
                             .map(|el| doc.mapper.range(el.text_range()).unwrap());
 
-                        log_debug!("{:?}", &range);
 
                         return get_schema_objects(query_path.clone(), &root_schema, true)
                             .into_iter()

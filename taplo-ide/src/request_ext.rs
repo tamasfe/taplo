@@ -120,8 +120,7 @@ pub(crate) struct CacheSchemaParams {
     pub schema_json: String,
 }
 
-impl Request for CacheSchemaRequest {
+impl Notification for CacheSchemaRequest {
     type Params = CacheSchemaParams;
-    type Result = ();
-    const METHOD: &'static str = "taplo/CacheSchema";
+    const METHOD: &'static str = "taplo/cacheSchema";
 }

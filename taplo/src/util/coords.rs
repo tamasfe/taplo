@@ -33,7 +33,56 @@ pub struct Mapper {
 impl Mapper {
     /// Creates a new Mapper that remembers where
     /// each line starts and ends.
-    pub fn new(source: &str) -> Self {
+    ///
+    /// Uses UTF-16 character sizes for positions.
+    pub fn new_utf16(source: &str) -> Self {
+        Self::new_impl(source, true)
+    }
+
+    /// Uses UTF-8 character sizes for positions.
+    pub fn new_utf8(source: &str) -> Self {
+        Self::new_impl(source, false)
+    }
+
+    pub fn offset(&self, position: Position) -> Option<TextSize> {
+        self.position_to_offset.get(&position).copied()
+    }
+
+    pub fn text_range(&self, range: Range) -> Option<TextRange> {
+        self.offset(range.start)
+            .and_then(|start| self.offset(range.end).map(|end| TextRange::new(start, end)))
+    }
+
+    pub fn position(&self, offset: TextSize) -> Option<Position> {
+        self.offset_to_position.get(&offset).copied()
+    }
+
+    pub fn range(&self, range: TextRange) -> Option<Range> {
+        self.position(range.start()).and_then(|start| {
+            self.position(range.end().checked_sub(1.into()).unwrap_or_default())
+                .map(|end| Range { start, end })
+        })
+    }
+
+    pub fn mappings(&self) -> (&BTreeMap<TextSize, Position>, &BTreeMap<Position, TextSize>) {
+        (&self.offset_to_position, &self.position_to_offset)
+    }
+
+    pub fn line_count(&self) -> usize {
+        self.lines
+    }
+
+    pub fn all_range(&self) -> Range {
+        Range {
+            start: Position {
+                line: 0,
+                character: 0,
+            },
+            end: self.end,
+        }
+    }
+
+    fn new_impl(source: &str, utf16: bool) -> Self {
         let mut offset_to_position = BTreeMap::new();
         let mut position_to_offset = BTreeMap::new();
 
@@ -42,7 +91,9 @@ impl Mapper {
         let mut last_offset = 0;
 
         for c in source.chars() {
-            let new_offset = last_offset + c.len_utf16();
+            let new_offset = last_offset + c.len_utf8();
+
+            let character_size = if utf16 { c.len_utf16() } else { 1 };
 
             offset_to_position.extend(
                 (last_offset..new_offset)
@@ -56,7 +107,7 @@ impl Mapper {
 
             last_offset = new_offset;
 
-            character += 1;
+            character += character_size as u64;
             if c == '\n' {
                 // LF is at the start of each line.
                 line += 1;
@@ -81,55 +132,19 @@ impl Mapper {
             end: Position { line, character },
         }
     }
-
-    pub fn offset(&self, position: Position) -> Option<TextSize> {
-        self.position_to_offset.get(&position).copied()
-    }
-
-    pub fn text_range(&self, range: Range) -> Option<TextRange> {
-        self.offset(range.start)
-            .and_then(|start| self.offset(range.end).map(|end| TextRange::new(start, end)))
-    }
-
-    pub fn position(&self, offset: TextSize) -> Option<Position> {
-        self.offset_to_position.get(&offset).copied()
-    }
-
-    pub fn range(&self, range: TextRange) -> Option<Range> {
-        self.position(range.start())
-            .and_then(|start| self.position(range.end()).map(|end| Range { start, end }))
-    }
-
-    pub fn mappings(&self) -> (&BTreeMap<TextSize, Position>, &BTreeMap<Position, TextSize>) {
-        (&self.offset_to_position, &self.position_to_offset)
-    }
-
-    pub fn line_count(&self) -> usize {
-        self.lines
-    }
-
-    pub fn all_range(&self) -> Range {
-        Range {
-            start: Position {
-                line: 0,
-                character: 0,
-            },
-            end: self.end,
-        }
-    }
 }
 
 /// This trait is used for splitting a range into multiple
 /// single-line ranges.
 ///
-/// This was originally needed because in VSCode semantic tokens
+/// This is needed because in VSCode semantic tokens
 /// could not span across multiple lines.
 pub trait SplitLines {
     fn is_single_line(&self) -> bool;
     fn split_lines(self, mapper: &Mapper) -> Vec<Range>;
 }
 impl SplitLines for Range {
-    fn split_lines(self, mapper: &Mapper) -> Vec<Range> {
+    fn split_lines(self, _mapper: &Mapper) -> Vec<Range> {
         unimplemented!()
     }
 
@@ -179,7 +194,7 @@ fn test_mapper() {
 line-2
 line-3"#;
 
-    let mapper = Mapper::new(s1);
+    let mapper = Mapper::new_utf16(s1);
 
     assert!(s1.len() == mapper.mappings().0.len() - 1);
 

@@ -1,7 +1,10 @@
 use crate::Document;
 use lsp_types::{DocumentSymbol, SymbolKind};
 use rowan::TextRange;
-use taplo::{dom::{NodeSyntax, ValueNode}, util::{coords::Mapper, syntax::join_ranges}};
+use taplo::{
+    dom::{NodeSyntax, ValueNode},
+    util::{coords::Mapper, syntax::join_ranges},
+};
 
 pub(crate) fn create_symbols(doc: &Document) -> Vec<DocumentSymbol> {
     let mapper = &doc.mapper;

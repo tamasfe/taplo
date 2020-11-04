@@ -175,7 +175,7 @@ extern {
 }
 
 #[wasm_bindgen]
-pub async fn init() {
+pub async fn initialize() {
     utils::set_panic_hook();
     WORLD.lock().await.register_built_in_schemas();
 }

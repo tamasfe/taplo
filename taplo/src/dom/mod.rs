@@ -245,13 +245,7 @@ impl Cast for RootNode {
                     };
 
                     if let Some(t) = tables.last_mut() {
-                        t.end_offset = table
-                            .syntax
-                            .text_range()
-                            .start()
-                            .checked_sub(1.into())
-                            .unwrap_or_default()
-                            .into();
+                        t.end_offset = table.syntax.text_range().start().into();
                     }
 
                     tables.push(table);
@@ -359,9 +353,6 @@ impl TableNode {
 
         ranges.push(self_range);
         ranges.extend(self.entries.iter().map(|(_, e)| e.syntax().text_range()));
-
-        dbg!(self.key().map(|k| k.full_key_string_stripped()));
-        dbg!(&ranges);
 
         ranges
     }

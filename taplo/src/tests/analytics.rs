@@ -1,6 +1,5 @@
-use crate::{analytics::NodeRef, dom::NodeSyntax, syntax::SyntaxKind::*, util::coords::Mapper};
+use crate::{analytics::NodeRef, syntax::SyntaxKind::*, util::coords::Mapper};
 use lsp_types::Position;
-use rowan::TextSize;
 use std::fs;
 
 fn cargo_toml(idx: usize) -> String {

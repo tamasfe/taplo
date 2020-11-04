@@ -19,8 +19,6 @@ fn rewrite_key() {
     let rewritten = dom.rewrite(|_, node| match node {
         crate::dom::Node::Key(k) => {
             if k.full_key_string_stripped() == "rewrite_me" {
-                dbg!(&k);
-
                 KeyNode::rewrite()
                     .with_dotted_keys("rewritten")
                     .build()

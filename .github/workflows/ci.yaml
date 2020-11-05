@@ -187,18 +187,13 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: Install WASM Pack
-        uses: jetli/wasm-pack-action@v0.3.0
-      - name: Build WASM LSP
-        run: wasm-pack build --target nodejs
-        working-directory: taplo-ide
       - name: Extension NPM Install
-        run: npm i
-        working-directory: taplo-ide/vscode
+        run: yarn
+        working-directory: node/vscode
       - name: Install vsce
         run: npm install -g vsce
       - name: Publish Extension
-        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/taplo-ide/vscode/images -p $VSCE_TOKEN $RELEASE_VERSION
-        working-directory: taplo-ide/vscode
+        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/node/vscode/images -p $VSCE_TOKEN $RELEASE_VERSION
+        working-directory: node/vscode
         env:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}

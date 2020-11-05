@@ -25,12 +25,11 @@
 
 <script>
 import { Taplo } from "taplo";
-import Ace from "vue2-ace-editor";
+import Vue from "vue";
+
+Vue.component("ace-editor", () => import("vue2-ace-editor"))
 
 export default {
-  components: {
-    "ace-editor": Ace,
-  },
   data: function() {
     return {
       loading: false,

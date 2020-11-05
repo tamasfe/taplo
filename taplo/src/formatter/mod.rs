@@ -91,18 +91,18 @@ create_options!(
 impl Default for Options {
     fn default() -> Self {
         Options {
-            align_entries: true,
+            align_entries: false,
             array_trailing_comma: true,
             array_auto_expand: true,
             array_auto_collapse: true,
             compact_arrays: true,
             compact_inline_tables: false,
             column_width: 80,
-            indent_tables: true,
+            indent_tables: false,
             trailing_newline: true,
             allowed_blank_lines: 2,
             indent_string: "  ".into(),
-            reorder_keys: true,
+            reorder_keys: false,
             crlf: false,
         }
     }

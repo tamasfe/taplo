@@ -1679,53 +1679,41 @@ impl core::fmt::Display for Error {
         match self {
             Error::DuplicateKey { first, second } => write!(
                 f,
-                "duplicate keys: \"{}\" ({:?}) and \"{}\" ({:?})",
+                "duplicate keys: \"{}\" and \"{}\"",
                 &first.full_key_string(),
-                &first.syntax().text_range(),
                 &second.full_key_string(),
-                &second.syntax().text_range()
             ),
             Error::DottedKeyConflict { first, second } => write!(
                 f,
-                "conflicting dotted keys: \"{}\" ({:?}) and \"{}\" ({:?}), entries with overlapping keys must have the same amount of keys",
+                "conflicting dotted keys: \"{}\" and \"{}\", entries with overlapping keys must have the same amount of keys",
                 &first.full_key_string(),
-                &first.syntax().text_range(),
                 &second.full_key_string(),
-                &second.syntax().text_range()
             ),
             Error::ExpectedTable { target, key } => write!(
                 f,
-                "Expected \"{}\" ({:?}) to be a table, but it is not, required by \"{}\" ({:?})",
+                "Expected \"{}\" to be a table, but it is not, required by \"{}\"",
                 &target.full_key_string(),
-                &target.syntax().text_range(),
                 &key.full_key_string(),
-                &key.syntax().text_range()
             ),
             Error::ExpectedTableArray { target, key } => write!(
                 f,
-                "\"{}\" ({:?}) conflicts with array of tables: \"{}\" ({:?})",
+                "\"{}\" conflicts with array of tables: \"{}\"",
                 &target.full_key_string(),
-                &target.syntax().text_range(),
                 &key.full_key_string(),
-                &key.syntax().text_range()
             ),
             Error::InlineTable { target, key } => write!(
                 f,
-                "inline tables cannot be modified: \"{}\" ({:?}), modification attempted here: \"{}\" ({:?})",
+                "inline tables cannot be modified: \"{}\", modification attempted here: \"{}\"",
                 &target.full_key_string(),
-                &target.syntax().text_range(),
                 &key.full_key_string(),
-                &key.syntax().text_range()
             ),
             Error::SubTableBeforeTableArray { target, key } => write!(
                 f,
-                "subtable declared before array of tables: \"{}\" ({:?}), array of tables here: \"{}\" ({:?})",
+                "subtable declared before array of tables: \"{}\", array of tables here: \"{}\"",
                 &target.full_key_string(),
-                &target.syntax().text_range(),
                 &key.full_key_string(),
-                &key.syntax().text_range()
             ),
-            Error::Spanned { range, message } => write!(f, "{} ({:?})", message, range),
+            Error::Spanned { range: _ , message } => write!(f, "{}", message),
             Error::Generic(s) => s.fmt(f),
         }
     }

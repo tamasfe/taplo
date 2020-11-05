@@ -1,7 +1,4 @@
-use crate::{
-    dom::*,
-    value::{Date, Value},
-};
+use crate::{dom::*, value::Value};
 
 use verify::{
     span::{Span, Spanned},
@@ -220,19 +217,38 @@ impl Validate for ValueNode {
                     .ok_or_else(|| V::Error::custom("invalid value".to_string()))?,
             ),
             ValueNode::Array(v) => v.validate(validator),
+            #[cfg(any(feature = "time", feature = "chrono"))]
             ValueNode::Date(v) => {
                 let date = Value::try_from(v.clone())
                     .map_err(|err| V::Error::custom(err.to_string()))?
                     .into_date()
                     .ok_or_else(|| V::Error::custom("invalid value".to_string()))?;
 
+                #[cfg(feature = "chrono")]
                 match date {
                     Date::OffsetDateTime(d) => validator.validate_str(&d.to_rfc3339()),
                     Date::LocalDateTime(d) => validator.validate_str(&d.to_string()),
                     Date::LocalDate(d) => validator.validate_str(&d.to_string()),
                     Date::LocalTime(d) => validator.validate_str(&d.to_string()),
                 }
+
+                #[cfg(feature = "time")]
+                match date {
+                    Date::OffsetDateTime(d) => {
+                        validator.validate_str(&d.format(time::Format::Rfc3339))
+                    }
+                    Date::LocalDateTime(d) => validator.validate_str(&d.to_string()),
+                    Date::LocalDate(d) => validator.validate_str(&d.to_string()),
+                    Date::LocalTime(d) => validator.validate_str(&d.to_string()),
+                }
             }
+            #[cfg(all(not(feature = "time"), not(feature = "chrono")))]
+            ValueNode::Date(d) => validator.validate_str(
+                &Value::try_from(d.clone())
+                    .map_err(|err| V::Error::custom(err.to_string()))?
+                    .into_string()
+                    .ok_or_else(|| V::Error::custom("invalid value".to_string()))?,
+            ),
             ValueNode::Table(v) => v.validate(validator),
             ValueNode::Invalid(_) => Err(V::Error::custom("invalid node")),
             ValueNode::Empty => Err(V::Error::custom("empty value")),

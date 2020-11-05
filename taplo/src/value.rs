@@ -5,9 +5,11 @@ use crate::{
     dom::{self, NodeSyntax},
     util::unescape,
 };
-use chrono::{DateTime, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime};
 use indexmap::IndexMap;
 use std::convert::{TryFrom, TryInto};
+
+#[cfg(feature = "chrono")]
+use chrono::{DateTime, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime};
 
 /// This occurs when a key has an invalid escape
 /// sequence.
@@ -19,17 +21,27 @@ impl core::fmt::Display for UnescapeError {
         write!(f, "the key contains invalid escape sequence")
     }
 }
- 
+
 impl std::error::Error for UnescapeError {}
 
 pub type Map = IndexMap<String, Value>;
 
+#[cfg(feature = "chrono")]
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum Date {
     OffsetDateTime(DateTime<FixedOffset>),
     LocalDateTime(NaiveDateTime),
     LocalDate(NaiveDate),
     LocalTime(NaiveTime),
+}
+
+#[cfg(feature = "time")]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub enum Date {
+    OffsetDateTime(time::OffsetDateTime),
+    LocalDateTime(time::PrimitiveDateTime),
+    LocalDate(time::Date),
+    LocalTime(time::Time),
 }
 
 /// Contains all possible value types in a TOML document.
@@ -39,6 +51,7 @@ pub enum Value {
     UnsizedInteger(u64),
     Integer(i64),
     Float(f64),
+    #[cfg(any(feature = "time", feature = "chrono"))]
     Date(Date),
     String(String),
     Array(Vec<Value>),
@@ -102,6 +115,7 @@ impl Value {
         }
     }
 
+    #[cfg(any(feature = "time", feature = "chrono"))]
     pub fn as_date(&self) -> Option<&Date> {
         match self {
             Value::Date(v) => Some(v),
@@ -109,6 +123,7 @@ impl Value {
         }
     }
 
+    #[cfg(any(feature = "time", feature = "chrono"))]
     pub fn into_date(self) -> Option<Date> {
         match self {
             Value::Date(v) => Some(v),
@@ -316,6 +331,7 @@ impl TryFrom<dom::FloatNode> for Value {
     }
 }
 
+#[cfg(feature = "chrono")]
 impl TryFrom<dom::DateNode> for Value {
     type Error = Error;
     fn try_from(node: dom::DateNode) -> Result<Self, Self::Error> {
@@ -342,6 +358,50 @@ impl TryFrom<dom::DateNode> for Value {
         }
 
         Err(InvalidDateError(date_str).into())
+    }
+}
+
+#[cfg(feature = "time")]
+impl TryFrom<dom::DateNode> for Value {
+    type Error = Error;
+    fn try_from(node: dom::DateNode) -> Result<Self, Self::Error> {
+        let date_str = node
+            .syntax()
+            .to_string()
+            .replace(" ", "T")
+            .replace("t", "T");
+
+        if let Ok(d) = time::OffsetDateTime::parse(&date_str, time::Format::Rfc3339) {
+            return Ok(Value::Date(Date::OffsetDateTime(d)));
+        }
+
+        if let Ok(d) = time::PrimitiveDateTime::parse(&date_str, "%Y-%m-%dT%H:%M:%S") {
+            return Ok(Value::Date(Date::LocalDateTime(d)));
+        }
+
+        if let Ok(d) = time::Time::parse(&date_str, "%H:%M:%S") {
+            return Ok(Value::Date(Date::LocalTime(d)));
+        }
+
+        if let Ok(d) = time::Date::parse(&date_str, "%Y-%m-%d") {
+            return Ok(Value::Date(Date::LocalDate(d)));
+        }
+
+        Err(InvalidDateError(date_str).into())
+    }
+}
+
+#[cfg(all(not(feature = "time"), not(feature = "chrono")))]
+impl TryFrom<dom::DateNode> for Value {
+    type Error = Error;
+    fn try_from(node: dom::DateNode) -> Result<Self, Self::Error> {
+        let date_str = node
+            .syntax()
+            .to_string()
+            .replace(" ", "T")
+            .replace("t", "T");
+
+        Ok(Value::String(date_str))
     }
 }
 

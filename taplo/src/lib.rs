@@ -70,16 +70,21 @@ pub mod verify;
 #[cfg(feature = "schema")]
 pub mod schema;
 
-pub mod util;
+pub mod analytics;
 pub mod dom;
 pub mod formatter;
 pub mod parser;
 pub mod syntax;
+pub mod util;
 pub mod value;
-pub mod analytics;
 
 pub use rowan;
 
 #[cfg(test)]
 mod tests;
 
+#[cfg(all(target_arch = "wasm32", feature = "_internal_nodejs"))]
+pub mod wasm;
+
+#[cfg(all(feature = "chrono", feature = "time"))]
+compile_error!(r#"the "chrono" and "time" features cannot be used at the same time"#);

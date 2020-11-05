@@ -3,5 +3,7 @@ mod generated {
     mod valid;
 }
 
+#[cfg(feature = "rewrite")]
 mod rewrite;
+
 mod analytics;

@@ -13,7 +13,7 @@ use rowan::{GreenNode, GreenNodeBuilder, NodeOrToken, SmolStr, TextRange};
 use std::{iter::FromIterator, mem, rc::Rc};
 
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde_crate::{Deserialize, Serialize};
 
 #[macro_use]
 mod macros;
@@ -30,8 +30,10 @@ impl FromIterator<(TextRange, OptionsIncomplete)> for ScopedOptions {
 
 create_options!(
     /// All the formatting options.
-    #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, Eq, PartialEq, )]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(crate = "serde_crate"))]
     pub struct Options {
         /// Align entries vertically.
         ///

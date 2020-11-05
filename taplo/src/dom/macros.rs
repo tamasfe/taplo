@@ -110,6 +110,7 @@ macro_rules! dom_sealed {
     };
 }
 
+#[cfg(feature = "rewrite")]
 macro_rules! rewrite_node_from {
     ($($inner:ty => $name:ident),*) => {
         $(
@@ -128,6 +129,7 @@ macro_rules! rewrite_node_from {
     };
 }
 
+#[cfg(feature = "rewrite")]
 macro_rules! rewrite_impl {
     ($(dom::$id:ident,)*) => {
         $(
@@ -142,6 +144,7 @@ macro_rules! rewrite_impl {
     };
 }
 
+#[cfg(feature = "rewrite")]
 macro_rules! rewrite_value_node_from {
     ($($v:ident => $id:ident,)*) => {
         $(

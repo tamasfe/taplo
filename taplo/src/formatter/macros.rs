@@ -62,7 +62,7 @@ macro_rules! create_options {
         $(#[$attr])*
         #[doc(hidden)]
         #[derive(Default)]
-        #[serde(rename_all = "camelCase")]
+        #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
         pub struct OptionsIncompleteCamel {
             $(
                 $(#[$field_attr])*

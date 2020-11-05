@@ -2,7 +2,7 @@
 
 use crate::value::Value;
 use indexmap::IndexMap;
-use serde::{
+use serde_crate::{
     de::{MapAccess, Visitor},
     ser::{Serialize, SerializeMap, SerializeSeq, Serializer},
     Deserialize,
@@ -19,9 +19,15 @@ impl Serialize for Value {
             Value::Integer(i) => serializer.serialize_i64(*i),
             Value::Float(f) => serializer.serialize_f64(*f),
             Value::String(s) => serializer.serialize_str(s),
+            #[cfg(any(feature = "time", feature = "chrono"))]
             Value::Date(d) => match d {
+                #[cfg(feature = "chrono")]
                 crate::value::Date::OffsetDateTime(dt) => {
                     serializer.serialize_str(&dt.to_rfc3339())
+                }
+                #[cfg(feature = "time")]
+                crate::value::Date::OffsetDateTime(dt) => {
+                    serializer.serialize_str(&dt.format(time::Format::Rfc3339))
                 }
                 crate::value::Date::LocalDateTime(dt) => {
                     serializer.serialize_str(&dt.format("%Y-%m-%d %H:%M:%S").to_string())
@@ -79,119 +85,119 @@ impl<'de> Visitor<'de> for ValueVisitor {
 
     fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::Bool(v))
     }
 
     fn visit_i8<E>(self, v: i8) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::Integer(v.into()))
     }
 
     fn visit_i16<E>(self, v: i16) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::Integer(v.into()))
     }
 
     fn visit_i32<E>(self, v: i32) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::Integer(v.into()))
     }
 
     fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::Integer(v))
     }
 
     fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::UnsizedInteger(v.into()))
     }
 
     fn visit_u16<E>(self, v: u16) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::UnsizedInteger(v.into()))
     }
 
     fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::UnsizedInteger(v.into()))
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::UnsizedInteger(v))
     }
 
     fn visit_f32<E>(self, v: f32) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::Float(v.into()))
     }
 
     fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::Float(v))
     }
 
     fn visit_char<E>(self, v: char) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::String(v.to_string()))
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::String(v.to_string()))
     }
 
     fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
     where
-        E: serde::de::Error,
+        E: serde_crate::de::Error,
     {
         Ok(Value::String(v))
     }
 
     fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: serde_crate::Deserializer<'de>,
     {
         deserializer.deserialize_any(ValueVisitor)
     }
 
     fn visit_newtype_struct<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: serde_crate::Deserializer<'de>,
     {
         deserializer.deserialize_any(ValueVisitor)
     }
 
     fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
     where
-        A: serde::de::SeqAccess<'de>,
+        A: serde_crate::de::SeqAccess<'de>,
     {
         let mut arr = Vec::with_capacity(seq.size_hint().unwrap_or(0));
 
@@ -206,7 +212,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
 impl<'de> Deserialize<'de> for Value {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: serde_crate::Deserializer<'de>,
     {
         deserializer.deserialize_any(ValueVisitor)
     }

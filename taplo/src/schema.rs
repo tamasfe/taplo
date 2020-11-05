@@ -48,7 +48,7 @@ pub mod util {
         schema::{InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec},
         Map,
     };
-    use serde::{Deserialize, Serialize};
+    use serde_crate::{Deserialize, Serialize};
     use smallvec::{smallvec, SmallVec};
 
     use crate::dom::{self, PathKey};
@@ -418,6 +418,7 @@ pub mod util {
 
     #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
     #[serde(rename_all = "camelCase")]
+    #[serde(crate = "serde_crate")]
     pub struct ExtDocs {
         #[serde(skip_serializing_if = "Option::is_none")]
         pub main: Option<String>,
@@ -431,6 +432,7 @@ pub mod util {
 
     #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
     #[serde(rename_all = "camelCase")]
+    #[serde(crate = "serde_crate")]
     pub struct ExtLinks {
         #[serde(skip_serializing_if = "Option::is_none")]
         pub key: Option<String>,
@@ -440,6 +442,7 @@ pub mod util {
 
     #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
     #[serde(rename_all = "camelCase")]
+    #[serde(crate = "serde_crate")]
     pub struct ExtMeta {
         #[serde(skip_serializing_if = "Option::is_none")]
         pub hidden: Option<bool>,

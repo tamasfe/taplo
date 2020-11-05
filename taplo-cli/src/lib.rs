@@ -1,5 +1,5 @@
 #![cfg_attr(
-    any(target_arch = "wasm32", feature = "internal-wasm-testing"),
+    any(target_arch = "wasm32", feature = "_internal_wasm_testing"),
     feature(set_stdio)
 )]
 
@@ -16,16 +16,16 @@ use std::{
 };
 use taplo::formatter;
 
-#[cfg(any(target_arch = "wasm32", feature = "internal-wasm-testing"))]
+#[cfg(any(target_arch = "wasm32", feature = "_internal_wasm_testing"))]
 use wasm_bindgen::prelude::*;
 
 pub mod config;
 
-#[cfg(any(target_arch = "wasm32", feature = "internal-wasm-testing"))]
+#[cfg(any(target_arch = "wasm32", feature = "_internal_wasm_testing"))]
 #[path = "external/wasm32/mod.rs"]
 mod external;
 
-#[cfg(not(any(target_arch = "wasm32", feature = "internal-wasm-testing")))]
+#[cfg(not(any(target_arch = "wasm32", feature = "_internal_wasm_testing")))]
 #[path = "external/native/mod.rs"]
 mod external;
 
@@ -101,7 +101,7 @@ pub(crate) fn print_message(severity: Severity, name: &str, message: &str) {
     }
 }
 
-#[cfg(any(target_arch = "wasm32", feature = "internal-wasm-testing"))]
+#[cfg(any(target_arch = "wasm32", feature = "_internal_wasm_testing"))]
 #[wasm_bindgen]
 #[allow(improper_ctypes_definitions)]
 pub async extern fn run_node(args: JsValue) -> bool {
@@ -438,14 +438,14 @@ async fn execute(matches: ArgMatches) -> bool {
 }
 
 #[cfg(all(
-    any(target_arch = "wasm32", feature = "internal-wasm-testing"),
+    any(target_arch = "wasm32", feature = "_internal_wasm_testing"),
     feature = "console_error_panic_hook"
 ))]
 pub fn set_panic_hook() {
     console_error_panic_hook::set_once();
 }
 
-#[cfg(any(target_arch = "wasm32", feature = "internal-wasm-testing"))]
+#[cfg(any(target_arch = "wasm32", feature = "_internal_wasm_testing"))]
 pub fn set_node_out() {
     use wasm_bindgen::prelude::*;
 

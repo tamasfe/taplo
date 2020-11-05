@@ -183,7 +183,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                             },
                             end: pretty_lint::Position {
                                 line: r.end.line as usize + 1,
-                                col: r.end.character as usize + 1,
+                                col: r.end.character as usize,
                             },
                         }
                     })
@@ -221,7 +221,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                     },
                                     end: pretty_lint::Position {
                                         line: r.end.line as usize + 1,
-                                        col: r.end.character as usize + 1,
+                                        col: r.end.character as usize,
                                     },
                                 }
                             })
@@ -238,7 +238,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                             },
                                             end: pretty_lint::Position {
                                                 line: r.end.line as usize + 1,
-                                                col: r.end.character as usize + 1,
+                                                col: r.end.character as usize,
                                             },
                                         }
                                     })
@@ -265,7 +265,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                     },
                                     end: pretty_lint::Position {
                                         line: r.end.line as usize + 1,
-                                        col: r.end.character as usize + 1,
+                                        col: r.end.character as usize,
                                     },
                                 }
                             })
@@ -282,7 +282,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                             },
                                             end: pretty_lint::Position {
                                                 line: r.end.line as usize + 1,
-                                                col: r.end.character as usize + 1,
+                                                col: r.end.character as usize,
                                             },
                                         }
                                     })
@@ -309,7 +309,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                     },
                                     end: pretty_lint::Position {
                                         line: r.end.line as usize + 1,
-                                        col: r.end.character as usize + 1,
+                                        col: r.end.character as usize,
                                     },
                                 }
                             })
@@ -326,7 +326,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                             },
                                             end: pretty_lint::Position {
                                                 line: r.end.line as usize + 1,
-                                                col: r.end.character as usize + 1,
+                                                col: r.end.character as usize,
                                             },
                                         }
                                     })
@@ -353,7 +353,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                     },
                                     end: pretty_lint::Position {
                                         line: r.end.line as usize + 1,
-                                        col: r.end.character as usize + 1,
+                                        col: r.end.character as usize,
                                     },
                                 }
                             })
@@ -370,7 +370,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                             },
                                             end: pretty_lint::Position {
                                                 line: r.end.line as usize + 1,
-                                                col: r.end.character as usize + 1,
+                                                col: r.end.character as usize,
                                             },
                                         }
                                     })
@@ -394,7 +394,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                     },
                                     end: pretty_lint::Position {
                                         line: r.end.line as usize + 1,
-                                        col: r.end.character as usize + 1,
+                                        col: r.end.character as usize,
                                     },
                                 }
                             })
@@ -425,7 +425,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                     },
                                     end: pretty_lint::Position {
                                         line: r.end.line as usize + 1,
-                                        col: r.end.character as usize + 1,
+                                        col: r.end.character as usize,
                                     },
                                 }
                             })
@@ -442,7 +442,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                             },
                                             end: pretty_lint::Position {
                                                 line: r.end.line as usize + 1,
-                                                col: r.end.character as usize + 1,
+                                                col: r.end.character as usize,
                                             },
                                         }
                                     })
@@ -472,7 +472,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                     },
                                     end: pretty_lint::Position {
                                         line: r.end.line as usize + 1,
-                                        col: r.end.character as usize + 1,
+                                        col: r.end.character as usize,
                                     },
                                 }
                             })
@@ -489,7 +489,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                                             },
                                             end: pretty_lint::Position {
                                                 line: r.end.line as usize + 1,
-                                                col: r.end.character as usize + 1,
+                                                col: r.end.character as usize,
                                             },
                                         }
                                     })
@@ -529,7 +529,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
                             },
                             end: pretty_lint::Position {
                                 line: r.end.line as usize + 1,
-                                col: r.end.character as usize + 1,
+                                col: r.end.character as usize,
                             },
                         }
                     })

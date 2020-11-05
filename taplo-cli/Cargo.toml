@@ -11,8 +11,8 @@ crate-type = ["cdylib", "lib"]
 default = ["tokio-compat-02"]
 
 # Internal use only
-internal-wasm-testing = []
-internal-node = ["console_error_panic_hook"]
+_internal_wasm_testing = []
+_internal_nodejs = ["console_error_panic_hook"]
 
 [dependencies]
 clap = { version = "3.0.0-beta.2", features = ["suggestions", "std", "cargo"] }
@@ -24,7 +24,7 @@ pretty-lint = { version = "0.1", path = "../../pretty-lint" }
 schemars = "0.8"
 serde = "1"
 serde_json = "1"
-taplo = { version = "*", path = "../taplo", features = ["serde", "verify", "schemars"] }
+taplo = { version = "0.2", path = "../taplo", features = ["serde", "verify", "schema"] }
 toml = "0.5"
 verify = { version = "0.3", features = ["schemars"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }

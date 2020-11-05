@@ -129,9 +129,12 @@ where
         .about("A TOML linter and formatter tool.")
         .long_about("A TOML linter and formatter tool (https://github.com/tamasfe/taplo).")
         .arg(
-            Arg::new("no-colors")
-                .long("no-colors")
-                .about("Disable colors in the output")
+            Arg::new("colors")
+                .long("colors")
+                .about("Set when to colorize output")
+                .takes_value(true)
+                .possible_values(&["auto", "always", "never"])
+                .default_value("auto")
                 .global(true)
         )
         .arg(
@@ -222,15 +225,17 @@ where
     match app.try_get_matches_from_mut(itr) {
         Ok(matches) => execute(matches).await,
         Err(err) => {
-            println!("{}", err);
+            eprintln!("{}", err);
             false
         }
     }
 }
 
 async fn execute(matches: ArgMatches) -> bool {
-    if matches.is_present("no-colors") {
-        colored::control::set_override(false);
+    match matches.value_of("colors") {
+        Some("always") => colored::control::set_override(true),
+        Some("never") => colored::control::set_override(false),
+        _ => {}
     }
 
     if matches.is_present("silent") {
@@ -286,11 +291,7 @@ async fn execute(matches: ArgMatches) -> bool {
             let format_result = format::format(config, format_matches);
 
             if format_result.matched_document_count == 0 {
-                print_message(
-                    Severity::Warning,
-                    "warning",
-                    "no documents were found",
-                );
+                print_message(Severity::Warning, "warning", "no documents were found");
             }
 
             if format_result.error_count > 0 {
@@ -368,11 +369,7 @@ async fn execute(matches: ArgMatches) -> bool {
             let lint_result = lint::lint(config, lint_matches).await;
 
             if lint_result.matched_document_count == 0 {
-                print_message(
-                    Severity::Warning,
-                    "warning",
-                    "no documents were found",
-                );
+                print_message(Severity::Warning, "warning", "no documents were found");
             }
 
             if lint_result.error_count > 0 {

@@ -25,7 +25,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.8"
 taplo = { path = "../taplo", features = ["serde", "verify"] }
-taplo-cli = { path = "../taplo-cli", default-features = false, features = ["internal-node"] }
+taplo-cli = { path = "../taplo-cli", default-features = false, features = ["_internal_nodejs"] }
 verify = { version = "0.3", features = ["schemars"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4.12"

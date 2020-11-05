@@ -2,13 +2,13 @@
 home: true
 heroImage: /taplo-icon.svg
 action:
-  - text: A VS Code Extension
+  - text: CLI Tool
+    link: /cli/
+  - text: Library
+    link: /lib/
+  - text: VS Code Extension
     link: https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml
     icon: open-in-new
-  - text: A CLI Tool
-    link: /cli/
-  - text: A Library
-    link: /lib/
 features:
   - title: TOML 1.0.0-rc.3
     details: Support for the latest specification
@@ -22,7 +22,7 @@ features:
   - title: Completion
     details: Autocompletion for well-known tools
   - title: Blazing Fast
-    details: The buzzwords every tool need
+    details: The buzzwords that every tool needs
 footer: MIT license | Copyright © 2020- Ferenc Tamás (tamasfe)
 copyrightText: false
 ---

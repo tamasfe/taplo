@@ -69,10 +69,14 @@ let DarkmodeSwitch = class DarkmodeSwitch extends Vue {
     /** 切换深色模式 */
     toggleDarkmode(isDarkmode) {
         const classes = document.body.classList;
-        if (isDarkmode)
+        if (isDarkmode){
+            this.$root.$emit("theme", "theme-dark");
             dom.changeClass(classes, ["theme-dark"], ["theme-light"]);
-        else
+        }
+        else {
+            this.$root.$emit("theme", "theme-light");
             dom.changeClass(classes, ["theme-light"], ["theme-dark"]);
+        }
     }
 };
 DarkmodeSwitch = __decorate([

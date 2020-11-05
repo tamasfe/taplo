@@ -15,11 +15,16 @@
   "license": "MIT",
   "devDependencies": {
     "@goy/vuepress-plugin-svg-icons": "^4.2.1",
+    "ansi-to-html": "^0.6.14",
     "typescript": "^4.0.5",
+    "vue2-ace-editor": "^0.0.15",
     "vuepress": "^1.5.3",
     "vuepress-theme-hope": "^1.4.7"
   },
   "dependencies": {
-    "@mdi/font": "^5.8.55"
+    "@mdi/font": "^5.8.55",
+    "markdown-it-footnote": "^3.0.2",
+    "prismjs": "^1.22.0",
+    "taplo": "../node/lib"
   }
 }

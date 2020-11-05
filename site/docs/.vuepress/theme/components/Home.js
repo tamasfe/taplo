@@ -3,6 +3,7 @@ import { Component, Vue } from "vue-property-decorator";
 import MyTransition from "@theme/components/MyTransition.vue";
 import NavLink from "@theme/components/NavLink.vue";
 import PageFooter from "@theme/components/PageFooter.vue";
+import TaploInteractive from "@theme/components/TaploInteractive.vue";
 import navigate from "@theme/util/navigate";
 let Home = class Home extends Vue {
     get actionLinks() {
@@ -16,6 +17,6 @@ let Home = class Home extends Vue {
     }
 };
 Home = __decorate([
-    Component({ components: { MyTransition, NavLink, PageFooter } })
+    Component({ components: { MyTransition, NavLink, PageFooter, TaploInteractive } })
 ], Home);
 export default Home;

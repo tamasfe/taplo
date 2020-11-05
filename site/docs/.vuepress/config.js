@@ -2,6 +2,8 @@ const { description } = require("../../package");
 const { config } = require("vuepress-theme-hope");
 
 module.exports = config({
+  // base: "/taplo/",
+
   /**
    * Ref：https://v1.vuepress.vuejs.org/config/#title
    */
@@ -42,7 +44,7 @@ module.exports = config({
     logo: "/taplo-icon.svg",
     darkmode: "auto-switch",
     typescript: true,
-    smoothScroll: true,
+    smoothScroll: false,
     iconPrefix: "mdi-",
     pageInfo: [],
     copyCode: false,
@@ -62,11 +64,17 @@ module.exports = config({
       {
         text: "Repository",
         link: "https://github.com/tamasfe/taplo",
-        icon: "github"
+        icon: "github",
       },
     ],
     sidebarDepth: 4,
     sidebar: "auto",
+  },
+
+  markdown: {
+    extendMarkdown: md => {
+      md.use(require("markdown-it-footnote"));
+    },
   },
 
   /**

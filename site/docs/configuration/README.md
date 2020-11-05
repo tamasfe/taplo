@@ -42,7 +42,7 @@ The given example values are used by default.
 ```toml
 [formatting]
 # Align consecutive entries vertically.
-align_entries = true
+align_entries = false
 
 # Append trailing commas for multi-line arrays.
 array_trailing_comma = true
@@ -64,7 +64,7 @@ compact_inline_tables = false
 column_width = 80
 
 # Indent based on tables and arrays of tables and their subtables, subtables out of order are not indented.
-indent_tables = true
+indent_tables = false
 
 # The substring that is used for indentation, should be tabs or spaces (but technically can be anything).
 indent_string = '  '
@@ -73,7 +73,7 @@ indent_string = '  '
 trailing_newline = true
 
 # Alphabetically reorder keys that are not separated by empty lines.
-reorder_keys = true
+reorder_keys = false
 
 # Maximum amount of allowed consecutive blank lines. This does not affect the whitespace at the end of the document, as it is always stripped.
 allowed_blank_lines = 2

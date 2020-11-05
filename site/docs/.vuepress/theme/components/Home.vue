@@ -50,6 +50,7 @@
         </MyTransition>
       </div>
     </header>
+    <TaploInteractive />
 
     <MyTransition :delay="0.16">
       <div
@@ -68,6 +69,7 @@
         </div>
       </div>
     </MyTransition>
+
 
     <MyTransition :delay="0.24">
       <Content class="theme-default-content custom" />

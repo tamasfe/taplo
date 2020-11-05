@@ -6,9 +6,7 @@
     "taplo": "dist/cli.js"
   },
   "scripts": {
-    "build": "yarn build-cli",
-    "build-lib": "rollup src/index.ts --file dist/index.js --format cjs",
-    "build-cli": "rollup -c rollup.config.js && node util/add_shebang.js"
+    "build": "yarn rollup -c rollup.config.js && node util/add_shebang.js"
   },
   "repository": "https://github.com/tamasfe/taplo",
   "author": "tamasfe",
@@ -25,6 +23,7 @@
     "@types/node-fetch": "^2.5.7",
     "@wasm-tool/rollup-plugin-rust": "^1.0.5",
     "rollup": "^2.33.1",
+    "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.29.0",
     "tslib": "^2.0.3",
     "typescript": "^4.0.5"

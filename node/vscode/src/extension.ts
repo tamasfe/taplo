@@ -4,16 +4,21 @@ import * as path from "path";
 import { registerCommands } from "./commands";
 import {
   CacheSchema,
+  ConfigFileChanged,
   GetCachedSchema,
   MessageWithOutput,
   UpdateBuiltInSchemas,
+  WatchConfigFile,
 } from "./requestExt";
 import deepEqual from "deep-equal";
 import { Uri } from "vscode";
 import { TextDecoder, TextEncoder } from "util";
+import fs from "fs";
 
 let output: vscode.OutputChannel;
 let extensionContext: vscode.ExtensionContext;
+let taploConfigWatcher: fs.FSWatcher | undefined;
+let serverTaploConfigWatcher: fs.FSWatcher | undefined;
 
 export function getOutput(): vscode.OutputChannel {
   return output;
@@ -81,11 +86,27 @@ export async function activate(context: vscode.ExtensionContext) {
     await c.onReady();
   }
 
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration(cfgEvent => {
+      if (
+        cfgEvent.affectsConfiguration("evenBetterToml.taploConfig") ||
+        cfgEvent.affectsConfiguration("evenBetterToml.taploConfigEnabled")
+      ) {
+        watchConfigFile(c);
+      }
+    })
+  );
+
+  watchConfigFile(c);
+
   c.onNotification(MessageWithOutput.METHOD, async params =>
     showMessage(params, c)
   );
   c.onNotification(UpdateBuiltInSchemas.METHOD, updateAssociations);
   c.onNotification(CacheSchema.METHOD, cacheSchema);
+  c.onNotification(WatchConfigFile.METHOD, params =>
+    watchServerTaploConfigFile(params, c)
+  );
   c.onRequest(GetCachedSchema.METHOD, getCachedSchema);
 }
 
@@ -115,6 +136,52 @@ async function showMessage(
   if (show) {
     c.outputChannel.show();
   }
+}
+
+function watchConfigFile(c: client.LanguageClient) {
+  taploConfigWatcher?.close();
+  taploConfigWatcher = undefined;
+
+  let cfgPath: string | undefined = vscode.workspace
+    .getConfiguration()
+    .get("evenBetterToml.taploConfig");
+
+  if (typeof cfgPath === "string" && cfgPath.length > 0) {
+    let p = cfgPath;
+
+    if (!isAbsolutePath(p)) {
+      let wsPath = vscode.workspace.workspaceFolders[0]?.uri.path;
+
+      if (typeof wsPath !== "undefined") {
+        return;
+      }
+
+      p = path.join(wsPath, p);
+    }
+
+    taploConfigWatcher = fs.watch(p);
+    taploConfigWatcher.on("change", () => {
+      c.sendNotification(ConfigFileChanged.METHOD);
+    });
+  }
+}
+
+function watchServerTaploConfigFile(
+  params: WatchConfigFile.Params,
+  c: client.LanguageClient
+) {
+  serverTaploConfigWatcher?.close();
+  serverTaploConfigWatcher = undefined;
+
+  let ws = vscode.workspace.workspaceFolders[0]?.uri;
+
+  if (typeof ws === "undefined") {
+    return;
+  }
+
+  serverTaploConfigWatcher = fs.watch(params.configPath, () => {
+    c.sendNotification(ConfigFileChanged.METHOD);
+  });
 }
 
 async function cacheSchema(params: CacheSchema.Params) {
@@ -374,4 +441,10 @@ async function updateAssociations(params: UpdateBuiltInSchemas.Params) {
       }
     }
   }
+}
+
+function isAbsolutePath(p: string): boolean {
+  return (
+    path.resolve(p) === path.normalize(p).replace(RegExp(path.sep + "$"), "")
+  );
 }

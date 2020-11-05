@@ -52,7 +52,7 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
 
     let mut schema_diag = Vec::new();
     if let Some(schema_name) = w.get_schema_name(&uri) {
-        if let Some(s) = w.get_schema(schema_name) {
+        if let Some(s) = w.get_schema(&schema_name) {
             schema_diag = collect_schema_diagnostics(s, &doc.parse, &uri, &doc.mapper);
         }
     }

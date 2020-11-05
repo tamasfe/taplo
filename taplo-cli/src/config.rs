@@ -87,6 +87,54 @@ impl Config {
         Ok(None)
     }
 
+    pub fn get_schema_path(&self, path: &str) -> Result<Option<String>, anyhow::Error> {
+        if let Some(rules) = &self.rule {
+            for rule in rules.iter().rev() {
+                if let Some(schema_opts) = &rule.options.schema {
+                    if schema_opts.enabled.unwrap_or(false) {
+                        match &schema_opts.path {
+                            Some(schema_path) => {
+                                if rule.includes(path)? {
+                                    return Ok(Some(schema_path.clone()));
+                                }
+                            }
+                            None => return Err(anyhow!("schema is enabled, but path is missing")),
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some(schema_opts) = &self.global_options.schema {
+            if schema_opts.enabled.unwrap_or(false) {
+                match &schema_opts.path {
+                    Some(schema_path) => return Ok(Some(schema_path.clone())),
+                    None => return Err(anyhow!("schema is enabled, but path is missing")),
+                }
+            }
+        }
+
+        Ok(None)
+    }
+
+    pub fn collect_schemas(&self) -> Vec<String> {
+        let mut schemas = Vec::new();
+
+        if let Some(s) = self.global_options.schema.as_ref().and_then(|s| s.path.as_ref()) {
+            schemas.push(s.clone());
+        }
+
+        if let Some(rules) = &self.rule {
+            for r in rules {
+                if let Some(s) = r.options.schema.as_ref().and_then(|s| s.path.as_ref()) {
+                    schemas.push(s.clone());
+                }
+            }
+        }
+
+        schemas
+    }
+
     pub fn get_include_paths(&self) -> Vec<String> {
         match &self.include {
             Some(i) => i.clone(),
@@ -137,6 +185,7 @@ impl Config {
     pub fn get_formatter_options(
         &self,
         path: Option<&str>,
+        default_opts: Option<formatter::Options>
     ) -> Result<
         (
             formatter::Options,
@@ -144,7 +193,7 @@ impl Config {
         ),
         glob::PatternError,
     > {
-        let mut opts = formatter::Options::default();
+        let mut opts = default_opts.unwrap_or_default();
 
         if let Some(opt) = &self.global_options.formatting {
             opts.update(opt.clone());

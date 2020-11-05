@@ -133,6 +133,17 @@
           "scope": "resource",
           "default": true
         },
+        "evenBetterToml.taploConfig": {
+          "description": "An absolute, or workspace relative path to the Taplo configuration file.",
+          "type": "string",
+          "scope": "resource"
+        },
+        "evenBetterToml.taploConfigEnabled": {
+          "description": "Whether to enable the usage of a Taplo configuration file.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": true
+        },
         "evenBetterToml.semanticTokens": {
           "description": "Enable semantic tokens for inline table and array keys. If enabled, keys of arrays and inline tables will have the same color as table headers and array of tables headers.",
           "type": "boolean",

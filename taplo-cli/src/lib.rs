@@ -19,7 +19,7 @@ use taplo::formatter;
 #[cfg(any(target_arch = "wasm32", feature = "internal-wasm-testing"))]
 use wasm_bindgen::prelude::*;
 
-mod config;
+pub mod config;
 
 #[cfg(any(target_arch = "wasm32", feature = "internal-wasm-testing"))]
 #[path = "external/wasm32/mod.rs"]

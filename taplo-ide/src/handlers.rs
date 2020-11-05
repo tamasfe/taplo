@@ -1,4 +1,4 @@
-use crate::request_ext::*;
+use crate::{file_exists, request_ext::*};
 use crate::{is_absolute_path, request_ext};
 use crate::{read_file, Configuration, Document, HashRegex, World};
 use anyhow::anyhow;
@@ -9,7 +9,7 @@ use lsp_types::*;
 use regex::Regex;
 use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, convert::TryFrom, mem, path::Path};
+use std::{collections::HashMap, convert::TryFrom, mem};
 use taplo::{
     analytics::NodeRef,
     formatter,
@@ -113,8 +113,21 @@ pub(crate) async fn initialize(
     })
 }
 
-fn is_deprecated_schema(s: &str) -> bool {
-    s.starts_with("toml_builtin://")
+pub(crate) async fn config_file_changed(mut context: Context<World>, _: Params<()>) {
+    spawn_local(async move {
+        if let Err(err) = load_config(context.clone()).await {
+            log_error!("{}", err);
+            context
+                .write_notification::<request_ext::MessageWithOutput, _>(Some(
+                    MessageWithOutputParams {
+                        kind: MessageKind::Error,
+                        message: "Failed to load configuration!".into(),
+                    },
+                ))
+                .await
+                .unwrap();
+        }
+    });
 }
 
 async fn update_configuration(mut context: Context<World>) {
@@ -203,6 +216,23 @@ async fn update_configuration(mut context: Context<World>) {
     }
 
     w.schemas = schemas;
+    drop(w);
+
+    if let Err(e) = load_config(context.clone()).await {
+        log_error!("failed to load configuration file: {}", e);
+
+        let mut c = context.clone();
+        spawn_local(async move {
+            c.write_notification::<request_ext::MessageWithOutput, _>(Some(
+                MessageWithOutputParams {
+                    kind: MessageKind::Error,
+                    message: "Failed to load configuration!".into(),
+                },
+            ))
+            .await
+            .unwrap();
+        });
+    }
 }
 
 fn show_schema_error(mut context: Context<World>) {
@@ -383,9 +413,15 @@ pub(crate) async fn format(
         }
     }
 
+    let (format_opts, scopes) = w.get_config_formatter_options(&p.text_document.uri, format_opts);
+
     Ok(Some(vec![TextEdit {
         range: doc.mapper.all_range(),
-        new_text: taplo::formatter::format_syntax(doc.parse.clone().into_syntax(), format_opts),
+        new_text: taplo::formatter::format_with_path_scopes(
+            doc.parse.clone().into_dom(),
+            format_opts,
+            scopes,
+        ),
     }]))
 }
 
@@ -890,22 +926,125 @@ pub(crate) async fn get_schema(
                 serde_json::from_slice(unsafe { &read_file(path).map_err(|e| anyhow!("{:?}", e))? })
                     .map_err(Into::into)
             } else {
-                let w = context.world().lock().await;
-                let workspace = w.workspace_uri.clone();
-                drop(w);
-
-                match workspace {
-                    Some(uri) => {
-                        let p = Path::new(uri.path()).join(path);
-
-                        serde_json::from_slice(unsafe {
-                            &read_file(p.to_str().unwrap()).map_err(|e| anyhow!("{:?}", e))?
-                        })
-                        .map_err(Into::into)
-                    }
+                match context.world().lock().await.workspace_absolute(path) {
+                    Some(p) => serde_json::from_slice(unsafe {
+                        &read_file(p.to_str().unwrap()).map_err(|e| anyhow!("{:?}", e))?
+                    })
+                    .map_err(Into::into),
                     None => Err(anyhow!("cannot determine workspace root for relative path")),
                 }
             }
         }
     }
+}
+
+fn is_deprecated_schema(s: &str) -> bool {
+    s.starts_with("toml_builtin://")
+}
+
+async fn load_config_file(mut context: Context<World>) -> Result<(), anyhow::Error> {
+    let mut w = context.world().lock().await;
+    w.taplo_config = None;
+
+    if !w.configuration.taplo_config_enabled.unwrap_or(false) {
+        return Ok(());
+    }
+
+    if let Some(config_path) = &w.configuration.taplo_config {
+        if !config_path.is_empty() {
+            if unsafe { is_absolute_path(&config_path) } {
+                let f = unsafe { read_file(&config_path).map_err(|e| anyhow!("{:?}", e))? };
+
+                w.taplo_config = Some(toml::from_slice(&f)?);
+
+                return Ok(());
+            } else {
+                let workspace_path = w.workspace_path();
+
+                match workspace_path {
+                    Some(ws_path) => {
+                        let f = unsafe {
+                            read_file(ws_path.join(&config_path).to_str().unwrap())
+                                .map_err(|e| anyhow!("{:?}", e))?
+                        };
+
+                        w.taplo_config = Some(toml::from_slice(&f)?);
+
+                        return Ok(());
+                    }
+                    None => {
+                        log_warn!("couldn't load workspace relative config, as there is no workspace open");
+                        return Ok(());
+                    }
+                }
+            }
+        }
+    }
+
+    let workspace_path = w.workspace_path();
+
+    match workspace_path {
+        Some(ws_path) => {
+            for name in taplo_cli::config::CONFIG_FILE_NAMES {
+                if unsafe { file_exists(ws_path.join(name).to_str().unwrap()) } {
+                    if let Ok(cfg_file) = unsafe { read_file(ws_path.join(name).to_str().unwrap()) }
+                    {
+                        w.taplo_config = Some(toml::from_slice(&cfg_file)?);
+                        drop(w);
+
+                        spawn_local(async move {
+                            context
+                                .write_notification::<request_ext::WatchConfigFile, _>(Some(
+                                    WatchConfigFileParams {
+                                        config_path: ws_path.join(name).to_str().unwrap().into(),
+                                    },
+                                ))
+                                .await
+                                .unwrap();
+                        });
+
+                        return Ok(());
+                    }
+                }
+            }
+            Ok(())
+        }
+        None => Ok(()),
+    }
+}
+
+async fn load_config(mut context: Context<World>) -> Result<(), anyhow::Error> {
+    load_config_file(context.clone()).await?;
+
+    let w = context.world().lock().await;
+    let c = w.taplo_config.clone();
+    // FIXME(perf)
+    let old_schemas = w.schemas.clone();
+    drop(w);
+
+    let mut new_schemas: HashMap<String, RootSchema> = HashMap::new();
+
+    if let Some(c) = c {
+        for schema_name in c.collect_schemas() {
+            if old_schemas.contains_key(&schema_name) {
+                continue;
+            }
+
+            match get_schema("", context.clone()).await {
+                Ok(s) => {
+                    new_schemas.insert(schema_name, s);
+                }
+                Err(err) => {
+                    log_error!("Failed to load schema: {}", err);
+                    show_schema_error(context.clone());
+                }
+            }
+        }
+    }
+
+    let mut w = context.world().lock().await;
+
+    w.schemas.extend(new_schemas);
+
+    Ok(())
 }

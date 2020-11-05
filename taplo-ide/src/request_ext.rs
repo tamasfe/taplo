@@ -124,3 +124,25 @@ impl Notification for CacheSchemaRequest {
     type Params = CacheSchemaParams;
     const METHOD: &'static str = "taplo/cacheSchema";
 }
+
+pub(crate) enum ConfigFileChanged {}
+
+impl Notification for ConfigFileChanged {
+    type Params = ();
+    const METHOD: &'static str = "taplo/configFileChanged";
+}
+
+
+pub(crate) enum WatchConfigFile {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct WatchConfigFileParams {
+    pub config_path: String,
+}
+
+
+impl Notification for WatchConfigFile {
+    type Params = WatchConfigFileParams;
+    const METHOD: &'static str = "taplo/watchConfigFile";
+}

@@ -65,7 +65,7 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
                 }
             };
 
-            let format_opts = match config.get_formatter_options(None) {
+            let format_opts = match config.get_formatter_options(None, None) {
                 Ok(opts) => opts,
                 Err(err) => {
                     print_message(Severity::Error, "error", &err.to_string());
@@ -119,13 +119,14 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
                         Ok(src) => {
                             res.matched_document_count += 1;
 
-                            let format_opts = match config.get_formatter_options(path.to_str()) {
-                                Ok(opts) => opts,
-                                Err(err) => {
-                                    print_message(Severity::Error, "error", &err.to_string());
-                                    continue;
-                                }
-                            };
+                            let format_opts =
+                                match config.get_formatter_options(path.to_str(), None) {
+                                    Ok(opts) => opts,
+                                    Err(err) => {
+                                        print_message(Severity::Error, "error", &err.to_string());
+                                        continue;
+                                    }
+                                };
 
                             match format_source(&src, opts, format_opts, res) {
                                 Ok(s) => match write_file(&path, s.as_bytes()) {

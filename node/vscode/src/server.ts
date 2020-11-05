@@ -34,6 +34,10 @@ import fetch, { Headers, Request, Response } from "node-fetch";
   );
 };
 
+(global as any).fileExists = (p: string): boolean => {
+  return fs.existsSync(p);
+};
+
 let taplo: any;
 
 process.on("message", async d => {

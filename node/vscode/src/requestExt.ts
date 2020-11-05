@@ -72,3 +72,15 @@ export namespace CacheSchema {
 
   export const METHOD = "taplo/cacheSchema";
 }
+
+export namespace ConfigFileChanged {
+  export const METHOD = "taplo/configFileChanged";
+}
+
+export namespace WatchConfigFile {
+  export interface Params {
+    configPath: string;
+  }
+
+  export const METHOD = "taplo/watchConfigFile";
+}

@@ -25,6 +25,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.8"
 taplo = { path = "../taplo", features = ["serde", "verify"] }
+taplo-cli = { path = "../taplo-cli", default-features = false, features = ["internal-node"] }
 verify = { version = "0.3", features = ["schemars"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4.12"
@@ -32,6 +33,8 @@ smallvec = "1.4"
 itertools = "0.9"
 reqwest = { version = "0.10", features = ["json"] }
 anyhow = "*"
+pathdiff = "0.2"
+toml = "0.5"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

@@ -14,8 +14,8 @@ use lsp_types::{notification, request, Url};
 use once_cell::sync::Lazy;
 use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, hash::Hash, io, sync::Arc, task};
-use taplo::{schema::BUILTIN_SCHEMAS, parser::Parse, util::coords::Mapper};
+use std::{collections::HashMap, hash::Hash, io, path::Path, path::PathBuf, sync::Arc, task};
+use taplo::{parser::Parse, schema::BUILTIN_SCHEMAS, util::coords::Mapper};
 use task::Poll;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
@@ -89,24 +89,97 @@ pub struct WorldState {
     schema_associations: IndexMap<HashRegex, String>,
     http_client: reqwest::Client,
     configuration: Configuration,
+    taplo_config: Option<taplo_cli::config::Config>,
 }
 
 impl WorldState {
     pub fn register_built_in_schemas(&mut self) {
         for (name, schema) in &*BUILTIN_SCHEMAS {
-            self.schemas.insert(
-                name.clone(),
-                schema.clone(),
-            );
+            self.schemas.insert(name.clone(), schema.clone());
         }
     }
 
-    fn get_schema_name(&self, uri: &Url) -> Option<&str> {
+    fn get_config_formatter_options(
+        &self,
+        uri: &Url,
+        mut default_opts: taplo::formatter::Options,
+    ) -> (
+        taplo::formatter::Options,
+        Vec<(String, taplo::formatter::OptionsIncomplete)>,
+    ) {
+        let mut incomplete = Vec::new();
+
+        if let Some(c) = &self.taplo_config {
+            if let Some(ws) = &self.workspace_uri {
+                if let Some(p) = pathdiff::diff_paths(Path::new(uri.path()), ws.path()) {
+                    if let Some(p) = p.to_str() {
+                        match c.get_formatter_options(Some(p), Some(default_opts.clone())) {
+                            Ok((opts, inc)) => {
+                                default_opts = opts;
+                                incomplete.extend(inc);
+                            }
+                            Err(err) => {
+                                log_warn!("invalid config: {}", err);
+                            }
+                        }
+                    }
+                }
+            }
+
+            let p = uri.path();
+
+            match c.get_formatter_options(Some(p), Some(default_opts.clone())) {
+                Ok((opts, inc)) => {
+                    default_opts = opts;
+                    incomplete.extend(inc);
+                }
+                Err(err) => {
+                    log_warn!("invalid config: {}", err);
+                }
+            }
+        }
+
+        (default_opts, incomplete)
+    }
+
+    fn get_schema_name(&self, uri: &Url) -> Option<String> {
+        if let Some(c) = &self.taplo_config {
+            if let Some(ws) = &self.workspace_uri {
+                if let Some(p) = pathdiff::diff_paths(Path::new(uri.path()), ws.path()) {
+                    if let Some(p) = p.to_str() {
+                        match c.get_schema_path(p) {
+                            Ok(p) => {
+                                if p.is_some() {
+                                    return p;
+                                }
+                            }
+                            Err(err) => {
+                                log_warn!("invalid config: {}", err);
+                            }
+                        }
+                    }
+                }
+            }
+
+            let p = uri.path();
+
+            match c.get_schema_path(p) {
+                Ok(p) => {
+                    if p.is_some() {
+                        return p;
+                    }
+                }
+                Err(err) => {
+                    log_warn!("invalid config: {}", err);
+                }
+            }
+        }
+
         let s = uri.as_str();
 
         for (re, name) in self.schema_associations.iter() {
             if re.0.is_match(s) {
-                return Some(name);
+                return Some(name.clone());
             }
         }
 
@@ -126,6 +199,22 @@ impl WorldState {
 
         None
     }
+
+    fn workspace_path(&self) -> Option<PathBuf> {
+        match &self.workspace_uri {
+            Some(uri) => Some(PathBuf::from(uri.path())),
+            None => None,
+        }
+    }
+
+    fn workspace_absolute<P: AsRef<Path>>(&self, path: P) -> Option<PathBuf> {
+        let workspace = &self.workspace_uri;
+
+        match workspace {
+            Some(uri) => Some(Path::new(uri.path()).join(path)),
+            None => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -140,6 +229,8 @@ pub struct SchemaConfiguration {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Configuration {
+    taplo_config: Option<String>,
+    taplo_config_enabled: Option<bool>,
     schema: SchemaConfiguration,
     semantic_tokens: Option<bool>,
     formatter: taplo::formatter::OptionsIncompleteCamel,
@@ -169,6 +260,9 @@ extern {
 
     #[wasm_bindgen(js_namespace = global, js_name = readFile, catch)]
     fn read_file(path: &str) -> Result<Vec<u8>, JsValue>;
+
+    #[wasm_bindgen(js_namespace = global, js_name = fileExists)]
+    fn file_exists(path: &str) -> bool;
 
     #[wasm_bindgen(js_namespace = global, js_name = isAbsolutePath)]
     fn is_absolute_path(path: &str) -> bool;
@@ -240,6 +334,11 @@ static SERVER: Lazy<Server<World>> = Lazy::new(|| {
         .handler(RequestHandler::<request::DocumentLinkRequest, _, _>::new(
             handlers::links,
         ))
+        .handler(
+            NotificationHandler::<request_ext::ConfigFileChanged, _, _>::new(
+                handlers::config_file_changed,
+            ),
+        )
         .request_writer(RequestWriter)
         .build()
 });

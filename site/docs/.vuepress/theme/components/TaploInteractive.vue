@@ -24,7 +24,7 @@
 </template>
 
 <script>
-import { Taplo } from "taplo";
+import { Taplo } from "@taplo/lib";
 import Vue from "vue";
 
 Vue.component("ace-editor", () => import("vue2-ace-editor"))

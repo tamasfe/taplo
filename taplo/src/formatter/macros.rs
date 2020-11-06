@@ -8,6 +8,7 @@ macro_rules! create_options {
             )+
         }
     ) => {
+        #[cfg_attr(feature = "schema", derive(JsonSchema))]
         $(#[$attr])*
         pub struct Options {
             $(
@@ -36,6 +37,7 @@ macro_rules! create_options {
             }
         }
 
+        #[cfg_attr(feature = "schema", derive(JsonSchema))]
         $(#[$attr])*
         #[doc(hidden)]
         #[derive(Default)]
@@ -59,6 +61,7 @@ macro_rules! create_options {
             }
         }
 
+        #[cfg_attr(feature = "schema", derive(JsonSchema))]
         $(#[$attr])*
         #[doc(hidden)]
         #[derive(Default)]

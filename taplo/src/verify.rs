@@ -226,20 +226,20 @@ impl Validate for ValueNode {
 
                 #[cfg(feature = "chrono")]
                 match date {
-                    Date::OffsetDateTime(d) => validator.validate_str(&d.to_rfc3339()),
-                    Date::LocalDateTime(d) => validator.validate_str(&d.to_string()),
-                    Date::LocalDate(d) => validator.validate_str(&d.to_string()),
-                    Date::LocalTime(d) => validator.validate_str(&d.to_string()),
+                    crate::value::Date::OffsetDateTime(d) => validator.validate_str(&d.to_rfc3339()),
+                    crate::value::Date::LocalDateTime(d) => validator.validate_str(&d.to_string()),
+                    crate::value::Date::LocalDate(d) => validator.validate_str(&d.to_string()),
+                    crate::value::Date::LocalTime(d) => validator.validate_str(&d.to_string()),
                 }
 
                 #[cfg(feature = "time")]
                 match date {
-                    Date::OffsetDateTime(d) => {
+                    crate::value::Date::OffsetDateTime(d) => {
                         validator.validate_str(&d.format(time::Format::Rfc3339))
                     }
-                    Date::LocalDateTime(d) => validator.validate_str(&d.to_string()),
-                    Date::LocalDate(d) => validator.validate_str(&d.to_string()),
-                    Date::LocalTime(d) => validator.validate_str(&d.to_string()),
+                    crate::value::Date::LocalDateTime(d) => validator.validate_str(&d.to_string()),
+                    crate::value::Date::LocalDate(d) => validator.validate_str(&d.to_string()),
+                    crate::value::Date::LocalTime(d) => validator.validate_str(&d.to_string()),
                 }
             }
             #[cfg(all(not(feature = "time"), not(feature = "chrono")))]

@@ -15,6 +15,8 @@ use std::{iter::FromIterator, mem, rc::Rc};
 #[cfg(feature = "serde")]
 use serde_crate::{Deserialize, Serialize};
 
+use schemars::JsonSchema;
+
 #[macro_use]
 mod macros;
 
@@ -30,8 +32,7 @@ impl FromIterator<(TextRange, OptionsIncomplete)> for ScopedOptions {
 
 create_options!(
     /// All the formatting options.
-    #[derive(Debug, Clone, Eq, PartialEq, )]
-    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[derive(Debug, Clone, Eq, PartialEq)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(crate = "serde_crate"))]
     pub struct Options {

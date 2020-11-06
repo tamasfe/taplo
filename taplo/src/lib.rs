@@ -44,7 +44,7 @@ let parse_result = parse(SOURCE);
 
 // Check for syntax errors.
 // These are not carried over to DOM errors.
-assert_eq!(parse_result.errors.is_empty());
+assert!(parse_result.errors.is_empty());
 
 let root_node = parse_result.into_dom();
 

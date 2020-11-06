@@ -38,4 +38,4 @@ ___
 
 *Defined in [index.ts:89](https://github.com/tamasfe/taplo/blob/b68fd29/node/lib/src/index.ts#L89)*
 
-Options to pass to the formatter. (https://tamasfe.dev/taplo/configuration/#formatting-options)
+Options to pass to the formatter. (https://taplo.tamasfe.dev/configuration/#formatting-options)

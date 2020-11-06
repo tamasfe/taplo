@@ -2,8 +2,6 @@ const { description } = require("../../package");
 const { config } = require("vuepress-theme-hope");
 
 module.exports = config({
-  base: "/taplo/",
-
   /**
    * Ref：https://v1.vuepress.vuejs.org/config/#title
    */
@@ -49,7 +47,7 @@ module.exports = config({
     pageInfo: [],
     copyCode: false,
     sitemap: {
-      hostname: "https://tamasfe.dev"
+      hostname: "https://taplo.tamasfe.dev"
     },
     nav: [
       {

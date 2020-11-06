@@ -2,7 +2,7 @@
 import loadTaplo from "../../../taplo/Cargo.toml";
 
 /**
- * Taplo formatter options. (https://tamasfe.dev/taplo/configuration/#formatting-options)
+ * Taplo formatter options. (https://taplo.tamasfe.dev/configuration/#formatting-options)
  */
 export interface FormatterOptions {
   /**
@@ -84,7 +84,7 @@ export interface FormatOptions {
    */
   ignoreErrors?: boolean;
   /**
-   * Options to pass to the formatter. (https://tamasfe.dev/taplo/configuration/#formatting-options)
+   * Options to pass to the formatter. (https://taplo.tamasfe.dev/configuration/#formatting-options)
    */
   options?: FormatterOptions;
 }

@@ -4,7 +4,7 @@
 
 # Interface: FormatterOptions
 
-Taplo formatter options. (https://tamasfe.dev/taplo/configuration/#formatting-options)
+Taplo formatter options. (https://taplo.tamasfe.dev/configuration/#formatting-options)
 
 ## Hierarchy
 

@@ -317,110 +317,106 @@ impl<W: Clone + Send + Sync> Server<W> {
         }
     }
 
-    fn handle_response(
+    async fn handle_response(
         inner: Arc<AsyncMutex<Inner<W>>>,
         response: rpc::Response<serde_json::Value>,
-    ) -> impl Future<Output = ()> {
-        async move {
-            if let Some(sender) = inner.lock().await.requests.remove(&response.id) {
-                sender.send(response).ok();
-            }
+    ) {
+        if let Some(sender) = inner.lock().await.requests.remove(&response.id) {
+            sender.send(response).ok();
         }
     }
 
-    fn handle_request(
+    async fn handle_request(
         inner: Arc<AsyncMutex<Inner<W>>>,
         data: W,
         request: rpc::Request<serde_json::Value>,
         response_writer: impl ResponseWriter,
-    ) -> impl Future<Output = ()> {
-        async move {
-            if &request.jsonrpc != "2.0" {
+    ) {
+        if &request.jsonrpc != "2.0" {
+            response_writer
+                .write_response(&rpc::Response::error(
+                    rpc::Error::invalid_request()
+                        .with_data("only JSON-RPC version 2.0 is accepted"),
+                ))
+                .await
+                .unwrap();
+            return;
+        }
+
+        if request.id.is_some() {
+            let mut s = inner.lock().await;
+
+            if s.shutting_down {
                 response_writer
                     .write_response(&rpc::Response::error(
-                        rpc::Error::invalid_request()
-                            .with_data("only JSON-RPC version 2.0 is accepted"),
+                        rpc::Error::invalid_request().with_data("server is shutting down"),
                     ))
                     .await
                     .unwrap();
                 return;
             }
 
-            if request.id.is_some() {
+            if request.method == req::Shutdown::METHOD {
+                s.shutting_down = true;
+            }
+
+            let is_initialize = request.method == req::Initialize::METHOD;
+
+            if !s.initialized && !is_initialize {
+                response_writer
+                    .write_response(&rpc::Response::error(rpc::Error::server_not_initialized()))
+                    .await
+                    .unwrap();
+                return;
+            }
+
+            if s.handlers.contains_key(&request.method) {
+                let mut handler = s.handlers.get_mut(&request.method).unwrap().clone();
+
+                let id = request.id.clone().unwrap();
+
+                // We expect the handler to run for a longer time
+                drop(s);
+
+                let mut w = ResponseWriterBuffer { res: None };
+                let ctx = Server::create_context(inner.clone(), data, &request).await;
+                handler.handle(ctx, request, Some(&mut w)).await;
+
                 let mut s = inner.lock().await;
 
-                if s.shutting_down {
-                    response_writer
-                        .write_response(&rpc::Response::error(
-                            rpc::Error::invalid_request().with_data("server is shutting down"),
-                        ))
-                        .await
-                        .unwrap();
-                    return;
+                s.task_done(&id);
+                if is_initialize {
+                    s.initialized = true;
                 }
+                drop(s);
 
-                if request.method == req::Shutdown::METHOD {
-                    s.shutting_down = true;
-                }
-
-                let is_initialize = request.method == req::Initialize::METHOD;
-
-                if !s.initialized && !is_initialize {
-                    response_writer
-                        .write_response(&rpc::Response::error(rpc::Error::server_not_initialized()))
-                        .await
-                        .unwrap();
-                    return;
-                }
-
-                if s.handlers.contains_key(&request.method) {
-                    let mut handler = s.handlers.get_mut(&request.method).unwrap().clone();
-
-                    let id = request.id.clone().unwrap();
-
-                    // We expect the handler to run for a longer time
-                    drop(s);
-
-                    let mut w = ResponseWriterBuffer { res: None };
-                    let ctx = Server::create_context(inner.clone(), data, &request).await;
-                    handler.handle(ctx, request, Some(&mut w)).await;
-
-                    let mut s = inner.lock().await;
-
-                    s.task_done(&id);
-                    if is_initialize {
-                        s.initialized = true;
-                    }
-                    drop(s);
-
-                    if let Some(r) = w.res {
-                        response_writer.write_response(&r).await.unwrap();
-                    }
-                } else {
-                    response_writer
-                        .write_response(&rpc::Response::error(rpc::Error::method_not_found()))
-                        .await
-                        .unwrap();
+                if let Some(r) = w.res {
+                    response_writer.write_response(&r).await.unwrap();
                 }
             } else {
-                if request.method == lsp_types::notification::Cancel::METHOD {
-                    if let Some(p) = request.params {
-                        if let Ok(c) = serde_json::from_value::<lsp_types::CancelParams>(p) {
-                            inner.lock().await.task_done(&c.id);
-                        }
+                response_writer
+                    .write_response(&rpc::Response::error(rpc::Error::method_not_found()))
+                    .await
+                    .unwrap();
+            }
+        } else {
+            if request.method == lsp_types::notification::Cancel::METHOD {
+                if let Some(p) = request.params {
+                    if let Ok(c) = serde_json::from_value::<lsp_types::CancelParams>(p) {
+                        inner.lock().await.task_done(&c.id);
                     }
-                    return;
                 }
+                return;
+            }
 
-                let mut s = inner.lock().await;
+            let mut s = inner.lock().await;
 
-                if s.handlers.contains_key(&request.method) {
-                    let mut handler = s.handlers.get_mut(&request.method).unwrap().clone();
-                    drop(s);
+            if s.handlers.contains_key(&request.method) {
+                let mut handler = s.handlers.get_mut(&request.method).unwrap().clone();
+                drop(s);
 
-                    let ctx = Server::create_context(inner, data, &request).await;
-                    handler.handle(ctx, request, None).await;
-                }
+                let ctx = Server::create_context(inner, data, &request).await;
+                handler.handle(ctx, request, None).await;
             }
         }
     }
@@ -579,8 +575,7 @@ where
         let call_result = (self.f)(context, req.params.into()).await;
 
         if let Some(w) = writer {
-            let res = rpc::Response::from(call_result)
-            .with_request_id(req.id.unwrap());
+            let res = rpc::Response::from(call_result).with_request_id(req.id.unwrap());
             w.write_response(res);
         }
     }

@@ -5,10 +5,12 @@
   "scripts": {
     "build": "yarn rollup -c rollup.config.js"
   },
+  "homepage": "https://tamasfe.dev/taplo",
   "main": "dist/index.js",
   "repository": "https://github.com/tamasfe/taplo",
   "author": "tamasfe",
   "license": "MIT",
+  "private": false,
   "dependencies": {},
   "devDependencies": {
     "@wasm-tool/rollup-plugin-rust": "^1.0.5",

@@ -5,9 +5,11 @@
   "bin": {
     "taplo": "dist/cli.js"
   },
+  "private": false,
   "scripts": {
     "build": "yarn rollup -c rollup.config.js && node util/add_shebang.js"
   },
+  "homepage": "https://tamasfe.dev/taplo",
   "repository": "https://github.com/tamasfe/taplo",
   "author": "tamasfe",
   "license": "MIT",

@@ -1,5 +1,5 @@
 #![cfg_attr(
-    any(target_arch = "wasm32", feature = "_internal_wasm_testing"),
+    all(target_arch = "wasm32", feature = "_internal_nodejs"),
     feature(set_stdio)
 )]
 

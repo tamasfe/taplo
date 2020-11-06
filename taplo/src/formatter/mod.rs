@@ -15,6 +15,7 @@ use std::{iter::FromIterator, mem, rc::Rc};
 #[cfg(feature = "serde")]
 use serde_crate::{Deserialize, Serialize};
 
+#[cfg(feature = "schema")]
 use schemars::JsonSchema;
 
 #[macro_use]

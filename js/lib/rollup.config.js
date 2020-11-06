@@ -17,6 +17,7 @@ export default {
       debug: process.env["RELEASE"] !== "true",
       nodejs: true,
       inlineWasm: process.env["SEPARATE_WASM"] !== "true",
+      cargoArgs: ["--features", "serde,schema,verify"]
     }),
     typescript(),
     terser()

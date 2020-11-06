@@ -18,7 +18,6 @@ export default {
       debug: process.env["RELEASE"] !== "true",
       nodejs: true,
       inlineWasm: process.env["SEPARATE_WASM"] !== "true",
-      cargoArgs: ["--no-default-features", "--features=_internal_nodejs"],
     }),
     resolve({ jsnext: true, preferBuiltins: true }),
     commonjs({ include: ["src/*.ts", "node_modules/**"] }),

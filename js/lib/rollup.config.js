@@ -14,11 +14,9 @@ export default {
   },
   plugins: [
     rust({
-      debug: false,
+      debug: process.env["RELEASE"] !== "true",
       nodejs: true,
       inlineWasm: process.env["SEPARATE_WASM"] !== "true",
-      cargoArgs: ["--features=_internal_nodejs"],
-      
     }),
     typescript(),
     terser()

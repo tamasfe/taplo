@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.9.1
+
+### Fixes
+- Fixed missing syntax highlights
+
 ## 0.9.0
 
 ### Features

@@ -18,6 +18,11 @@ import fetch, { Headers, Request, Response } from "node-fetch";
 (global as any).Window = Object;
 (global as any).fetch = fetch;
 
+// Needed for taplo-cli's glob matching
+(global as any).isWindows = () => {
+  return process.platform == "win32";
+};
+
 (global as any).sendMessage = (msg: any) => {
   if (process.send) {
     process.send(msg);

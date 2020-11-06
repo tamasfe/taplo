@@ -7,7 +7,7 @@
   },
   "private": false,
   "scripts": {
-    "build": "yarn rollup -c rollup.config.js && node util/add_shebang.js"
+    "build": "yarn rollup --silent -c rollup.config.js && node util/add_shebang.js"
   },
   "homepage": "https://taplo.tamasfe.dev",
   "repository": "https://github.com/tamasfe/taplo",

@@ -488,7 +488,7 @@ pub(crate) async fn hover(
     let query = dom.query_position(doc.mapper.offset(pos).unwrap());
 
     let schemas = get_schema_objects(query.after.path, &schema, true);
-    let syntax_range = query.after.syntax.range.clone();
+    let syntax_range = query.after.syntax.range;
 
     Ok(query
         .after
@@ -613,7 +613,7 @@ pub(crate) async fn hover(
                                 if let Some((idx, enum_doc)) = enum_doc {
                                     if let Some(enum_doc) = enum_doc {
                                         let link = s.ext.links.as_ref().and_then(|l| {
-                                            l.enum_values.as_ref().and_then(|e| e.get(idx)).clone()
+                                            l.enum_values.as_ref().and_then(|e| e.get(idx))
                                         });
 
                                         let link = match link {
@@ -719,7 +719,7 @@ pub(crate) async fn links(
                         .into_iter()
                         .filter_map(|s| s.ext.links.as_ref().and_then(|links| links.key.clone()))
                         .unique()
-                        .map(move |link| (link, node.clone()))
+                        .map(move |link| (link, node))
                         .filter_map(|(link, node)| {
                             let target = match Url::parse(&link) {
                                 Ok(u) => u,
@@ -785,11 +785,11 @@ pub(crate) async fn links(
                                         })
                                 })
                                 .filter_map(|doc| match doc {
-                                    Some(doc) => Some(doc.clone()),
+                                    Some(doc) => Some(doc),
                                     None => None,
                                 })
                                 .unique()
-                                .map(move |link| (link, node.clone()))
+                                .map(move |link| (link, node))
                                 .filter_map(|(link, node)| {
                                     let target = match Url::parse(&link) {
                                         Ok(u) => u,
@@ -916,24 +916,20 @@ pub(crate) async fn get_schema(
             .unwrap();
 
         Ok(schema)
+    } else if path.starts_with("file://") {
+        path = path.trim_start_matches("file://");
+        serde_json::from_slice(unsafe { &read_file(path).map_err(|e| anyhow!("{:?}", e))? })
+            .map_err(Into::into)
+    } else if unsafe { is_absolute_path(path) } {
+        serde_json::from_slice(unsafe { &read_file(path).map_err(|e| anyhow!("{:?}", e))? })
+            .map_err(Into::into)
     } else {
-        if path.starts_with("file://") {
-            path = path.trim_start_matches("file://");
-            serde_json::from_slice(unsafe { &read_file(path).map_err(|e| anyhow!("{:?}", e))? })
-                .map_err(Into::into)
-        } else {
-            if unsafe { is_absolute_path(path) } {
-                serde_json::from_slice(unsafe { &read_file(path).map_err(|e| anyhow!("{:?}", e))? })
-                    .map_err(Into::into)
-            } else {
-                match context.world().lock().await.workspace_absolute(path) {
-                    Some(p) => serde_json::from_slice(unsafe {
-                        &read_file(p.to_str().unwrap()).map_err(|e| anyhow!("{:?}", e))?
-                    })
-                    .map_err(Into::into),
-                    None => Err(anyhow!("cannot determine workspace root for relative path")),
-                }
-            }
+        match context.world().lock().await.workspace_absolute(path) {
+            Some(p) => serde_json::from_slice(unsafe {
+                &read_file(p.to_str().unwrap()).map_err(|e| anyhow!("{:?}", e))?
+            })
+            .map_err(Into::into),
+            None => Err(anyhow!("cannot determine workspace root for relative path")),
         }
     }
 }

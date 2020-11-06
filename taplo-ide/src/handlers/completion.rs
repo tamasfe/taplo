@@ -231,8 +231,7 @@ pub(crate) fn get_completions(
                                     .map(|range| doc.mapper.range(range).unwrap())
                             });
 
-
-                        return get_schema_objects(query_path.clone(), &root_schema, true)
+                        return get_schema_objects(query_path, &root_schema, true)
                             .into_iter()
                             .map(|schema| {
                                 value_completions(
@@ -343,8 +342,7 @@ pub(crate) fn get_completions(
                             .as_ref()
                             .map(|el| doc.mapper.range(el.text_range()).unwrap());
 
-
-                        return get_schema_objects(query_path.clone(), &root_schema, true)
+                        return get_schema_objects(query_path, &root_schema, true)
                             .into_iter()
                             .map(|schema| {
                                 value_completions(
@@ -369,13 +367,10 @@ pub(crate) fn get_completions(
                                 let mut is_root = true;
 
                                 for node in &before.nodes {
-                                    match node {
-                                        NodeRef::Table(t) => {
-                                            if !t.is_pseudo() {
-                                                is_root = false;
-                                            }
+                                    if let NodeRef::Table(t) = node {
+                                        if !t.is_pseudo() {
+                                            is_root = false;
                                         }
-                                        _ => {}
                                     };
                                 }
 
@@ -417,44 +412,41 @@ pub(crate) fn get_completions(
             // Start of the document
             let node = query.after.nodes.last().cloned().unwrap();
 
-            match node {
-                NodeRef::Root(_) => {
-                    let mut query_path = query.after.path.clone();
+            if node.is_root() {
+                let mut query_path = query.after.path.clone();
 
-                    query_path = query_path.skip_right(1);
+                query_path = query_path.skip_right(1);
 
-                    let range = query
-                        .after
-                        .syntax
-                        .range
-                        .map(|range| doc.mapper.range(range).unwrap());
+                let range = query
+                    .after
+                    .syntax
+                    .range
+                    .map(|range| doc.mapper.range(range).unwrap());
 
-                    return get_schema_objects(query_path.clone(), &root_schema, true)
-                        .into_iter()
-                        .map(|s| s.descendants(&root_schema.definitions, 10))
-                        .flatten()
-                        .filter(|(_, s, _)| !s.is_hidden())
-                        .unique_by(|(p, ..)| p.clone())
-                        .map(|(path, schema, required)| {
-                            key_completion(
-                                &root_schema.definitions,
-                                query_path.extend(path),
-                                schema,
-                                required,
-                                range,
-                                true,
-                                None,
-                                false,
-                            )
-                        })
-                        .collect();
-                }
-                _ => {}
+                return get_schema_objects(query_path.clone(), &root_schema, true)
+                    .into_iter()
+                    .map(|s| s.descendants(&root_schema.definitions, 10))
+                    .flatten()
+                    .filter(|(_, s, _)| !s.is_hidden())
+                    .unique_by(|(p, ..)| p.clone())
+                    .map(|(path, schema, required)| {
+                        key_completion(
+                            &root_schema.definitions,
+                            query_path.extend(path),
+                            schema,
+                            required,
+                            range,
+                            true,
+                            None,
+                            false,
+                        )
+                    })
+                    .collect();
             }
         }
     }
 
-    return Vec::new();
+    Vec::new()
 }
 
 fn detail_text(schema: Option<ExtendedSchema>, text: Option<&str>) -> Option<String> {
@@ -507,8 +499,9 @@ fn key_documentation(schema: ExtendedSchema) -> Option<Documentation> {
         })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn key_completion(
-    defs: &Map<String, Schema>,
+    _defs: &Map<String, Schema>,
     path: dom::Path,
     schema: ExtendedSchema,
     required: bool,
@@ -540,8 +533,6 @@ fn key_completion(
         insert_text: Some(insert_text),
         kind: if schema.is(InstanceType::Object) {
             Some(CompletionItemKind::Struct)
-        } else if schema.is_array_of_objects(defs) {
-            Some(CompletionItemKind::Variable)
         } else {
             Some(CompletionItemKind::Variable)
         },
@@ -643,7 +634,7 @@ fn value_completions(
     {
         if let Some(value_completion) = value_insert(default, range, comma_before, space_before) {
             return vec![CompletionItem {
-                additional_text_edits: additional_text_edits.clone(),
+                additional_text_edits,
                 detail: detail_text(Some(schema.clone()), None),
                 documentation: default_value_documentation(schema.clone()),
                 preselect: Some(true),
@@ -663,7 +654,7 @@ fn value_completions(
                     defs,
                     schema.clone(),
                     **ty,
-                    range.clone(),
+                    range,
                     comma_before,
                     space_before,
                 ) {
@@ -683,7 +674,7 @@ fn value_completions(
                         defs,
                         schema.clone(),
                         *ty,
-                        range.clone(),
+                        range,
                         comma_before,
                         space_before,
                     ) {
@@ -773,7 +764,7 @@ fn value_insert(
                 kind: Some(CompletionItemKind::Constant),
                 insert_text_format: Some(InsertTextFormat::Snippet),
                 insert_text: Some(with_leading_space(
-                    with_comma(insert_text.clone(), comma_before),
+                    with_comma(insert_text, comma_before),
                     space_before,
                 )),
                 label: format_value(value, false, 0),
@@ -796,7 +787,7 @@ fn value_insert(
                 kind: Some(CompletionItemKind::Constant),
                 insert_text_format: Some(InsertTextFormat::Snippet),
                 insert_text: Some(with_leading_space(
-                    with_comma(insert_text.clone(), comma_before),
+                    with_comma(insert_text, comma_before),
                     space_before,
                 )),
                 label: format_value(value, false, 0),
@@ -818,7 +809,7 @@ fn value_insert(
                 }),
                 kind: Some(CompletionItemKind::Constant),
                 insert_text: Some(with_leading_space(
-                    with_comma(insert_text.clone(), comma_before),
+                    with_comma(insert_text, comma_before),
                     space_before,
                 )),
                 label: format_value(value, false, 0),

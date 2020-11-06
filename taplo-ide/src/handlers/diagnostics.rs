@@ -282,7 +282,7 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                             range: first_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"conflicting dotted keys here"#),
+                        message: "conflicting dotted keys here".to_string(),
                     }]),
                     tags: None,
                 });
@@ -298,7 +298,7 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                             range: second_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"conflicting dotted keys here"#),
+                        message: "conflicting dotted keys here".to_string(),
                     }]),
                     tags: None,
                 });
@@ -318,7 +318,7 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                             range: target_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"subtable here"#),
+                        message: "subtable here".to_string(),
                     }]),
                     tags: None,
                 });
@@ -334,7 +334,7 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                             range: key_range,
                             uri: uri.clone(),
                         },
-                        message: format!(r#"array of tables here"#),
+                        message: "array of tables here".to_string(),
                     }]),
                     tags: None,
                 });

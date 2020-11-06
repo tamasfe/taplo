@@ -10,6 +10,3 @@ opt-level = 3
 [profile.bench]
 lto = true
 opt-level = 3
-
-[patch.crates-io]
-os_str_bytes = { path = "../os_str_bytes" }

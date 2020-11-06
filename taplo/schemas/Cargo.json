@@ -1036,7 +1036,7 @@
     },
     "Publish": {
       "title": "Publish",
-      "description": "package registry (like *crates.io*) by mistake, for instance to keep a package\nprivate in a company.\n\n```toml\n[package]\n# ...\npublish = false\n```\n\nThe value may also be an array of strings which are registry names that are\nallowed to be published to.\n\n```toml\n[package]\n# ...\npublish = [\"some-registry-name\"]\n```",
+      "description": "The `publish` field can be used to prevent a package from being published to a package registry (like *crates.io*) by mistake, for instance to keep a package\nprivate in a company.\n\n```toml\n[package]\n# ...\npublish = false\n```\n\nThe value may also be an array of strings which are registry names that are\nallowed to be published to.\n\n```toml\n[package]\n# ...\npublish = [\"some-registry-name\"]\n```",
       "anyOf": [
         {
           "type": "array",

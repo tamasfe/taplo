@@ -2,4 +2,4 @@
 User-agent:*
 Disallow:
 
-Sitemap: https://tamasfe.devsitemap.xml
+Sitemap: https://taplo.tamasfe.devsitemap.xml

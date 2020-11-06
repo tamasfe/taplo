@@ -1,11 +1,22 @@
 # Change Log
 
-# 0.8.7
+## 0.9.0
+
+### Features
+- Support for [Taplo CLI's](https://taplo.tamasfe.dev/configuration/#configuration-file) configuration file
+- Support for remote (http/https) schemas
+
+### Fixes
+- Several incorrect parsing errors, mainly concerning arrays of tables.
+- Rewritten parsing for increased performance
+- A lot more accurate completions
+
+## 0.8.7
 
 ### Fixes
 - Python schema fixes
 
-# 0.8.6
+## 0.8.6
 
 ### Fixes
 - Major Python schema improvements ([PR](https://github.com/tamasfe/taplo/pull/45))

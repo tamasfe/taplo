@@ -1,7 +1,7 @@
 {
   "name": "even-better-toml",
   "displayName": "Even Better TOML",
-  "description": "Fully-featured TOML language support",
+  "description": "Fully-featured TOML support",
   "version": "0.1.0",
   "repository": {
     "url": "https://github.com/tamasfe/taplo"

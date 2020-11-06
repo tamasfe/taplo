@@ -1,11 +1,11 @@
 
 
-A TOML language support extension backed by [Taplo](https://github.com/tamasfe/taplo).
+A TOML language support extension backed by [Taplo](https://taplo.tamasfe.dev).
 
 It is currently a **preview extension**, it might contain bugs, or might even crash. If you encounter any issues, please report them [on github](https://github.com/tamasfe/taplo/issues).
 
 - [Features](#features)
-  - [TOML version 1.0.0-rc.1 support](#toml-version-100-rc1-support)
+  - [TOML version 1.0.0-rc.3 support](#toml-version-100-rc3-support)
   - [Syntax highlighting](#syntax-highlighting)
     - [Extended Colors](#extended-colors)
   - [Semantic highlighting](#semantic-highlighting)
@@ -15,18 +15,15 @@ It is currently a **preview extension**, it might contain bugs, or might even cr
   - [Formatting](#formatting)
   - [Completion and Validation with JSON Schema](#completion-and-validation-with-json-schema)
     - [Built-in schemas](#built-in-schemas)
-      - [Cargo.toml](#cargotoml)
-      - [pyproject.toml](#pyprojecttoml)
   - [Commands](#commands)
     - [Copy Selection as JSON](#copy-selection-as-json)
     - [Paste as JSON](#paste-as-json)
-- [Planned Features](#planned-features)
-  - [Configuration File](#configuration-file)
+- [Configuration File](#configuration-file)
 - [Special Thanks](#special-thanks)
 
 # Features
 
-## TOML version [1.0.0-rc.1](https://toml.io/en/v1.0.0-rc.1) support
+## TOML version [1.0.0-rc.3](https://toml.io/en/v1.0.0-rc.3) support
 
 This extension will try to support all the TOML versions in the future.
 
@@ -113,23 +110,15 @@ There is support for completion, hover text, links and validation.
 
 Schemas can be associated with document URIs with the `evenBetterToml.schema.associations` configuration.
 
-You can provide your own schemas or use the ones provided with the extension. More details [here](https://github.com/tamasfe/taplo/tree/master/taplo-ide/schemas). Schema submissions and fixes are welcome!
+You can provide your own schemas or use the ones provided with the extension. More details [here](https://taplo.tamasfe.dev/configuration/#schemas). Schema submissions and fixes are welcome!
 
 ![Schema](schema.gif)
-
 
 ### Built-in schemas
 
 Several schemas are bundled with the extension, these can be turned off individually by removing their associations.
 
-#### Cargo.toml
-
-Most of `Cargo.toml` is covered with documentation.
-
-#### pyproject.toml
-
-The following tool configurations are currently in the schema:
-- [Poetry ](https://python-poetry.org/)
+More information on the [website](https://taplo.tamasfe.dev/configuration/#built-in-schemas).
 
 ## Commands
 
@@ -143,16 +132,9 @@ Copies the selected TOML text converted to JSON to the system clipboard.
 
 Parses the TOML text from the system clipboard and pastes it converted into JSON in the active selection.
 
-# Planned Features
+# Configuration File
 
-Features that are definitely planned but no work has been done.
-The current focus of the extension is polishing (and completing) the current feature set.
-
-You can see the future feature requests [here](https://github.com/tamasfe/taplo/issues?q=is%3Aissue+is%3Aopen+label%3Afeature).
-
-## Configuration File
-
-A configuration file for formatter and validation behaviour.
+Taplo CLI's [configuration file](https://taplo.tamasfe.dev/configuration/#configuration-file) is supported and automatically found in workspace roots, or can be manually set in the VS Code configuration.
 
 # Special Thanks
 

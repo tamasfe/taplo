@@ -1,6 +1,6 @@
 {
   "name": "@taplo/lib",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A TOML linter and formatter and utility library.",
   "scripts": {
     "build": "yarn rollup -c rollup.config.js"

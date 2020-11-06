@@ -88,15 +88,13 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
         if allow_exclude {
             // Don't lint taplo config files unless asked explicitly.
             let p = Path::new(val);
-            match p.file_name() {
-                Some(file_name) => {
-                    if file_name == "taplo.toml" || file_name == ".taplo.toml" {
-                        // Don't count it as excluded.
-                        continue;
-                    }
+
+            if let Some(file_name) = p.file_name() {
+                if file_name == "taplo.toml" || file_name == ".taplo.toml" {
+                    // Don't count it as excluded.
+                    continue;
                 }
-                None => {}
-            };
+            }
 
             match config.is_excluded(val) {
                 Ok(excluded) => {
@@ -129,13 +127,21 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
                                 };
 
                             match format_source(&src, opts, format_opts, res) {
-                                Ok(s) => match write_file(&path, s.as_bytes()) {
-                                    Ok(_) => {}
-                                    Err(err) => {
-                                        res.error_count += 1;
-                                        print_message(Severity::Error, "error", &err.to_string());
+                                Ok(s) => {
+                                    if src != s {
+                                        match write_file(&path, s.as_bytes()) {
+                                            Ok(_) => {}
+                                            Err(err) => {
+                                                res.error_count += 1;
+                                                print_message(
+                                                    Severity::Error,
+                                                    "error",
+                                                    &err.to_string(),
+                                                );
+                                            }
+                                        }
                                     }
-                                },
+                                }
                                 Err(_) => res.error_count += 1,
                             }
                         }

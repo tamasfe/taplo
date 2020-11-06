@@ -1,7 +1,4 @@
-#![cfg_attr(
-    all(target_arch = "wasm32", feature = "_internal_nodejs"),
-    feature(set_stdio)
-)]
+#![cfg_attr(target_arch = "wasm32", feature(set_stdio))]
 
 use clap::{App, AppSettings, Arg, ArgMatches};
 use external::load_config;
@@ -16,16 +13,16 @@ use std::{
 };
 use taplo::formatter;
 
-#[cfg(any(target_arch = "wasm32", feature = "_internal_wasm_testing"))]
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
 pub mod config;
 
-#[cfg(any(target_arch = "wasm32", feature = "_internal_wasm_testing"))]
+#[cfg(target_arch = "wasm32")]
 #[path = "external/wasm32/mod.rs"]
 mod external;
 
-#[cfg(not(any(target_arch = "wasm32", feature = "_internal_wasm_testing")))]
+#[cfg(not(target_arch = "wasm32"))]
 #[path = "external/native/mod.rs"]
 mod external;
 
@@ -101,7 +98,7 @@ pub(crate) fn print_message(severity: Severity, name: &str, message: &str) {
     }
 }
 
-#[cfg(any(target_arch = "wasm32", feature = "_internal_wasm_testing"))]
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 #[allow(improper_ctypes_definitions)]
 pub async extern fn run_node(args: JsValue) -> bool {
@@ -226,7 +223,7 @@ where
         Ok(matches) => execute(matches).await,
         Err(err) => {
             eprintln!("{}", err);
-            false
+            matches!(err.kind, clap::ErrorKind::DisplayHelp | clap::ErrorKind::DisplayVersion)
         }
     }
 }
@@ -434,15 +431,12 @@ async fn execute(matches: ArgMatches) -> bool {
     success
 }
 
-#[cfg(all(
-    any(target_arch = "wasm32", feature = "_internal_wasm_testing"),
-    feature = "console_error_panic_hook"
-))]
+#[cfg(target_arch = "wasm32")]
 pub fn set_panic_hook() {
     console_error_panic_hook::set_once();
 }
 
-#[cfg(any(target_arch = "wasm32", feature = "_internal_wasm_testing"))]
+#[cfg(target_arch = "wasm32")]
 pub fn set_node_out() {
     use wasm_bindgen::prelude::*;
 

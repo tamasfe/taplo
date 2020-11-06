@@ -88,15 +88,13 @@ async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
                             if allow_exclude {
                                 // Don't lint taplo config files unless asked explicitly.
                                 let p = Path::new(val);
-                                match p.file_name() {
-                                    Some(file_name) => {
-                                        if file_name == "taplo.toml" || file_name == ".taplo.toml" {
-                                            // Don't count it as excluded.
-                                            continue;
-                                        }
+
+                                if let Some(file_name) = p.file_name() {
+                                    if file_name == "taplo.toml" || file_name == ".taplo.toml" {
+                                        // Don't count it as excluded.
+                                        continue;
                                     }
-                                    None => {}
-                                };
+                                }
 
                                 match config.is_excluded(val) {
                                     Ok(excluded) => {

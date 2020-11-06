@@ -21,7 +21,7 @@ use std::{
 use taplo::schema::{BUILTIN_SCHEMAS, BUILTIN_SCHEME};
 use tokio_compat_02::FutureExt;
 
-static HTTP_CLIENT: Lazy<Client> = Lazy::new(|| Client::new());
+static HTTP_CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
 pub(crate) const fn colored_output() -> Option<bool> {
     None

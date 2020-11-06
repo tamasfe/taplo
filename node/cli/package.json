@@ -1,6 +1,6 @@
 {
   "name": "@taplo/cli",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "A TOML utility tool.",
   "bin": {
     "taplo": "dist/cli.js"
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "yarn rollup -c rollup.config.js && node util/add_shebang.js"
   },
-  "homepage": "https://tamasfe.dev/taplo",
+  "homepage": "https://taplo.tamasfe.dev",
   "repository": "https://github.com/tamasfe/taplo",
   "author": "tamasfe",
   "license": "MIT",

@@ -1,11 +1,11 @@
 {
   "name": "@taplo/lib",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A TOML linter and formatter and utility library.",
   "scripts": {
     "build": "yarn rollup -c rollup.config.js"
   },
-  "homepage": "https://tamasfe.dev/taplo",
+  "homepage": "https://taplo.tamasfe.dev",
   "main": "dist/index.js",
   "repository": "https://github.com/tamasfe/taplo",
   "author": "tamasfe",

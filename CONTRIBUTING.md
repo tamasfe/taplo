@@ -6,7 +6,7 @@
     - [taplo](#taplo)
     - [taplo-cli](#taplo-cli)
     - [taplo-ide](#taplo-ide)
-    - [node](#node)
+    - [js](#js)
       - [vscode](#vscode)
       - [cli](#cli)
       - [lib](#lib)
@@ -47,19 +47,19 @@ A CLI tool that uses Taplo, it is the home of `taplo.config` as well.
 An IDE-agnostic language server, right now it expects to run within a `wasm32` environment only, however other than that it contains no IDE-specific code or settings.
 Originally designed to run alongside a VSCode extension, but with minimal work it can be made into a standalone executable.
 
-### [node](node)
+### [js](node)
 
 Directory containing everything related to Node.js and JavaScript.
 
-#### [vscode](node/vscode)
+#### [vscode](js/vscode)
 
 The VSCode extension, and a Node.js wrapper for [taplo-ide](taplo-ide).
 
-#### [cli](node/cli)
+#### [cli](js/cli)
 
 A Node.js wrapper over [taplo-cli](taplo-cli).
 
-#### [lib](node/lib)
+#### [lib](js/lib)
 
 A JavaScript wrapper over the core [taplo](taplo) library exposing a high-level API.
 

@@ -5,7 +5,7 @@ value = 2
 [table]
 string = 'some string'";
 
-    let parse_result = parse(SOURCE);
+    let parse_result = taplo::parser::parse(SOURCE);
 
     // Check for syntax errors.
     // These are not carried over to DOM errors.

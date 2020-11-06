@@ -44,7 +44,7 @@ let parse_result = parse(SOURCE);
 
 // Check for syntax errors.
 // These are not carried over to DOM errors.
-assert_eq!(parse_result.errors.len(), 0);
+assert_eq!(parse_result.errors.is_empty());
 
 let root_node = parse_result.into_dom();
 
@@ -53,13 +53,6 @@ let root_node = parse_result.into_dom();
 assert_eq!(root_node.errors().len(), 1);
 ```
 */
-
-// TODO: time impls for value
-// #[cfg(all(feature = "time", feature = "chrono"))]
-// compile_error!("time and chrono features are mutually exclusive");
-
-// #[cfg(not(any(feature = "time", feature = "chrono")))]
-// compile_error!("either time or chrono feature is required");
 
 #[cfg(feature = "serde")]
 mod serde;

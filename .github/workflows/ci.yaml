@@ -35,7 +35,7 @@ jobs:
           path: taplo/src/tests/generated
 
   test:
-    name: Cargo Test
+    name: Test taplo and taplo-cli on stable
     needs: test_gen
     runs-on: ubuntu-latest
     steps:
@@ -68,44 +68,13 @@ jobs:
           toolchain: stable
           override: true
       - uses: actions-rs/cargo@v1
+        name: Test Taplo
         with:
-          command: test
-
-  # clippy:
-  #   name: Clippy
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-
-  #     - name: Cache cargo registry
-  #       uses: actions/cache@v1
-  #       with:
-  #         path: ~/.cargo/registry
-  #         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-  #     - name: Cache cargo index
-  #       uses: actions/cache@v1
-  #       with:
-  #         path: ~/.cargo/git
-  #         key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-  #     - name: Cache cargo build
-  #       uses: actions/cache@v1
-  #       with:
-  #         path: target
-  #         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-  #     - name: Install Rust toolchain
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         profile: minimal
-  #         toolchain: stable
-  #         override: true
-  #     - name: Install Clippy
-  #       run: rustup component add clippy
-  #     - name: Run Clippy
-  #       uses: actions-rs/cargo@v1
-  #       with:
-  #         command: clippy
-  #         args: -- -D warnings
+          command: test -p taplo
+      - uses: actions-rs/cargo@v1
+        name: Test Taplo-cli
+        with:
+          command: test -p taplo-cli
 
   # Run on tags like "release-lib-1.0.0-alpha.1"
   publish_taplo_crate:
@@ -149,15 +118,14 @@ jobs:
         working-directory: taplo
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-          
+
   publish_taplo_cli:
-    name: Publish Taplo Crate
+    name: Publish Taplo CLI
     needs: test
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-cli-')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
@@ -192,15 +160,14 @@ jobs:
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
-  # Run on tags like "release-vscode-1.0.0-alpha.1"
-  publish_vscode_ext:
-    name: Publish VSCode Extension
+  # Run on tags like "release-js-cli-1.0.0-alpha.1"
+  publish_js_cli:
+    name: Publish Js CLI
     needs: test
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-vscode-')
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-cli-')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
@@ -216,7 +183,107 @@ jobs:
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Retrieve release version
+        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-node-cli-})"
+      - name: Install Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@taplo"
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2020-10-15
+          override: true
+      - name: Yarn Dependencies
+        run: yarn
+        working-directory: js/cli
+      - name: Yarn Dependencies
+        run: yarn build
+        env:
+          RELEASE: "true"
+        working-directory: js/cli
+      - name: Publish Package
+        run: yarn publish --access public --no-commit-hooks --no-git-tag-version --new-version $RELEASE_VERSION
+        working-directory: js/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  # Run on tags like "release-js-lib-1.0.0-alpha.1"
+  publish_js_lib:
+    name: Publish Js Lib
+    needs: test
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-lib-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Retrieve release version
+        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-node-lib-})"
+      - name: Install Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@taplo"
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2020-10-15
+          override: true
+      - name: Yarn Dependencies
+        run: yarn
+        working-directory: js/lib
+      - name: Yarn Dependencies
+        run: yarn build
+        env:
+          RELEASE: "true"
+        working-directory: js/lib
+      - name: Publish Package
+        run: yarn publish --access public --no-commit-hooks --no-git-tag-version --new-version $RELEASE_VERSION
+        working-directory: js/vscode
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish_vscode_ext:
+    name: Publish VSCode Extension
+    needs: test
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-vscode-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Retrieve release version
         run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-vscode-})"
       - name: Install Node.js
@@ -227,15 +294,15 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly-2020-10-15
           override: true
       - name: Extension NPM Install
         run: yarn
-        working-directory: node/vscode
+        working-directory: js/vscode
       - name: Install vsce
         run: npm install -g vsce
       - name: Publish Extension
-        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/node/vscode/images -p $VSCE_TOKEN $RELEASE_VERSION
-        working-directory: node/vscode
+        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/js/vscode/images -p $VSCE_TOKEN $RELEASE_VERSION
+        working-directory: js/vscode
         env:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}

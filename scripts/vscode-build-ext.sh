@@ -1,2 +1,2 @@
 #!/bin/sh
-cd node/vscode && yarn --ignore-engines && vsce package
+cd js/vscode && yarn --ignore-engines && vsce package

@@ -18,6 +18,17 @@ and can be serialized with [Serde](serde) allowing for conversion to JSON, YAML 
 
 TOML serialization is currently not implemented, but it is planned with a low priority.
 
+# Features
+
+- **chrono**: Use [chrono](https://github.com/chronotope/chrono) for TOML dates and times
+- **time**: Use [time](https://github.com/time-rs/time) for TOML dates and times
+
+`chrono` and `time` are mutually exclusive, if neither is set dates will be treated as strings.
+
+- **serde**: Support for [serde](https://serde.rs)
+- **schema**: Enable schema-related utilities and built-in schemas.
+- **rewrite**: Enable DOM manipulation features (**WIP!**)
+
 # Usage
 
 A TOML document has to be parsed with [parse](parser::parse) first, it
@@ -28,7 +39,7 @@ can be constructed. It will build a DOM tree and validate the TOML document acco
 to the specification. A DOM tree can be constructed even with syntax errors present, however
 parts of it will be missing.
 
-If any errors occurred, they will be collected in the root node. In that case
+If any errors ocurred, they will be collected in the root node. In that case
 the DOM must be analyzed with caution as parts of it might be missing.
 
 ```edition2018
@@ -76,7 +87,7 @@ pub use rowan;
 #[cfg(test)]
 mod tests;
 
-#[cfg(all(target_arch = "wasm32", feature = "_internal_nodejs"))]
+#[cfg(target_arch = "wasm32")]
 pub mod wasm;
 
 #[cfg(all(feature = "chrono", feature = "time"))]

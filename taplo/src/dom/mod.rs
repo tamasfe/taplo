@@ -1583,8 +1583,10 @@ impl Cast for StringNode {
                         .unwrap()
                         .text()
                         .as_str()
-                        .remove_prefix(r#"""#)
-                        .remove_suffix(r#"""#),
+                        .strip_prefix(r#"""#)
+                        .unwrap()
+                        .strip_suffix(r#"""#)
+                        .unwrap(),
                 ) {
                     Ok(s) => s,
                     Err(_) => return None,
@@ -1593,18 +1595,25 @@ impl Cast for StringNode {
             }),
             MULTI_LINE_STRING => Some(StringNode {
                 kind: StringKind::MultiLine,
-                content: match unescape(
-                    element
+                content: {
+                    let mut s = element
                         .as_token()
                         .unwrap()
                         .text()
                         .as_str()
-                        .remove_prefix(r#"""""#)
-                        .remove_suffix(r#"""""#)
-                        .remove_prefix("\n"),
-                ) {
-                    Ok(s) => s,
-                    Err(_) => return None,
+                        .strip_prefix(r#"""""#)
+                        .unwrap()
+                        .strip_suffix(r#"""""#)
+                        .unwrap();
+
+                    if let Some(n) = s.strip_prefix("\n") {
+                        s = n
+                    }
+
+                    match unescape(s) {
+                        Ok(s) => s,
+                        Err(_) => return None,
+                    }
                 },
                 syntax: element,
             }),
@@ -1615,22 +1624,32 @@ impl Cast for StringNode {
                     .unwrap()
                     .text()
                     .as_str()
-                    .remove_prefix(r#"'"#)
-                    .remove_suffix(r#"'"#)
+                    .strip_prefix(r#"'"#)
+                    .unwrap()
+                    .strip_suffix(r#"'"#)
+                    .unwrap()
                     .into(),
                 syntax: element,
             }),
             MULTI_LINE_STRING_LITERAL => Some(StringNode {
                 kind: StringKind::MultiLineLiteral,
-                content: element
-                    .as_token()
-                    .unwrap()
-                    .text()
-                    .as_str()
-                    .remove_prefix(r#"'''"#)
-                    .remove_suffix(r#"'''"#)
-                    .remove_prefix("\n")
-                    .into(),
+                content: {
+                    let mut s = element
+                        .as_token()
+                        .unwrap()
+                        .text()
+                        .as_str()
+                        .strip_prefix(r#"'''"#)
+                        .unwrap()
+                        .strip_suffix(r#"'''"#)
+                        .unwrap();
+
+                    if let Some(n) = s.strip_prefix("\n") {
+                        s = n
+                    }
+
+                    s.into()
+                },
                 syntax: element,
             }),
             _ => None,

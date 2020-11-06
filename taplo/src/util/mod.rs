@@ -100,28 +100,10 @@ pub(crate) mod allowed_chars {
 }
 
 pub trait StrExt {
-    fn remove_prefix(self, p: &str) -> Self;
-    fn remove_suffix(self, p: &str) -> Self;
     fn strip_quotes(self) -> Self;
 }
 
 impl StrExt for &str {
-    fn remove_prefix(self, p: &str) -> Self {
-        if self.starts_with(p) {
-            &self[p.len()..]
-        } else {
-            self
-        }
-    }
-
-    fn remove_suffix(self, p: &str) -> Self {
-        if self.ends_with(p) {
-            &self[..self.len() - p.len()]
-        } else {
-            self
-        }
-    }
-
     fn strip_quotes(self) -> Self {
         if self.starts_with('\"') || self.starts_with('\'') {
             &self[1..self.len() - 1]

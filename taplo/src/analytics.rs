@@ -37,7 +37,7 @@ impl dom::RootNode {
     }
 
     /// Returns an iterator over all the nodes of the DOM.
-    pub fn iter<'i>(&'i self) -> impl Iterator<Item = (dom::Path, NodeRef<'i>)> + 'i {
+    pub fn iter(&self) -> impl Iterator<Item = (dom::Path, NodeRef<'_>)> {
         let mut nodes = SmallVec::with_capacity(1 + self.entries().len());
         collect::collect_root(dom::Path::new(), self, &mut nodes);
         nodes.into_iter()

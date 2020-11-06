@@ -13,15 +13,15 @@ pub static BUILTIN_SCHEMAS: Lazy<HashMap<String, RootSchema>> = Lazy::new(|| {
     
     schemas.insert(
         format!("{}://cargo@Cargo.toml", BUILTIN_SCHEME),
-        serde_json::from_str(include_str!("../../schemas/Cargo.json")).unwrap(),
+        serde_json::from_str(include_str!("../schemas/Cargo.json")).unwrap(),
     );
     schemas.insert(
         format!("{}://python@pyproject.toml", BUILTIN_SCHEME),
-        serde_json::from_str(include_str!("../../schemas/pyproject.json")).unwrap(),
+        serde_json::from_str(include_str!("../schemas/pyproject.json")).unwrap(),
     );
     schemas.insert(
         format!("{}://taplo@taplo.toml", BUILTIN_SCHEME),
-        serde_json::from_str(include_str!("../../schemas/taplo.json")).unwrap(),
+        serde_json::from_str(include_str!("../schemas/taplo.json")).unwrap(),
     );
 
     #[cfg(not(target_arch = "wasm32"))]

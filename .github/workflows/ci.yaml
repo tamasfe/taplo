@@ -35,7 +35,7 @@ jobs:
           path: taplo/src/tests/generated
 
   test:
-    name: Test taplo and taplo-cli on stable
+    name: Test on Rust stable
     needs: test_gen
     runs-on: ubuntu-latest
     steps:
@@ -70,11 +70,13 @@ jobs:
       - uses: actions-rs/cargo@v1
         name: Test Taplo
         with:
-          command: test -p taplo
+          command: test
+          args: -p taplo
       - uses: actions-rs/cargo@v1
         name: Test Taplo-cli
         with:
-          command: test -p taplo-cli
+          command: test
+          args: -p taplo-cli
 
   # Run on tags like "release-lib-1.0.0-alpha.1"
   publish_taplo_crate:

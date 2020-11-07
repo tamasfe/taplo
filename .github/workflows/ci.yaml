@@ -266,7 +266,7 @@ jobs:
         working-directory: js/lib
       - name: Publish Package
         run: yarn publish --access public --no-commit-hooks --no-git-tag-version --new-version $RELEASE_VERSION
-        working-directory: js/vscode
+        working-directory: js/lib
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

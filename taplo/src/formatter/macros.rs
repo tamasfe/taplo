@@ -35,6 +35,32 @@ macro_rules! create_options {
                     }
                 )+
             }
+
+            pub fn update_from_str<S: AsRef<str>, I: Iterator<Item = (S, S)>>(
+                &mut self,
+                values: I,
+            ) -> Result<(), OptionParseError> {
+                for (key, val) in values {
+
+                    $(
+                        if key.as_ref() == stringify!($name) {
+                            self.$name =
+                                val.as_ref()
+                                    .parse()
+                                    .map_err(|error| OptionParseError::InvalidValue {
+                                        key: key.as_ref().into(),
+                                        error: Box::new(error),
+                                    })?;
+
+                            continue;
+                        }
+                    )+
+
+                    return Err(OptionParseError::InvalidOption(key.as_ref().into()));
+                }
+
+                Ok(())
+            }
         }
 
         #[cfg_attr(feature = "schema", derive(JsonSchema))]

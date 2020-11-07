@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.3.1
+
+### Additions
+- Formatter options can be updated with string key=value pairs.
+
 ## 0.3.0
 
 **From this release Taplo only guarantees to support the latest stable Rust release**

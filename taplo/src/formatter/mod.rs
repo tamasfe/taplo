@@ -92,6 +92,34 @@ create_options!(
     }
 );
 
+#[derive(Debug)]
+pub enum OptionParseError {
+    InvalidOption(String),
+    InvalidValue {
+        key: String,
+        error: Box<dyn std::error::Error>,
+    },
+}
+
+impl core::fmt::Display for OptionParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "invalid formatting option: {}",
+            match self {
+                OptionParseError::InvalidOption(k) => {
+                    format!(r#"invalid option "{}""#, k)
+                }
+                OptionParseError::InvalidValue { key, error } => {
+                    format!(r#"invalid value for option "{}": {}"#, key, error)
+                }
+            }
+        )
+    }
+}
+
+impl std::error::Error for OptionParseError {}
+
 impl Default for Options {
     fn default() -> Self {
         Options {

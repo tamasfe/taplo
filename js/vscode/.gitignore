@@ -4,5 +4,3 @@ node_modules
 .vscode-test/
 *.vsix
 .vscode
-# Syntax should be built from ts source
-toml.tmLanguage.json 

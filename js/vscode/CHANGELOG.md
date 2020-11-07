@@ -1,5 +1,11 @@
 # Change Log
 
+###
+
+## 0.9.3
+
+- Fixed syntax highlights (again...)
+
 ## 0.9.2
 - Fixed unusable config files
 

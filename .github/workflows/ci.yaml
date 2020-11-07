@@ -171,7 +171,6 @@ jobs:
   # Run on tags like "release-js-cli-1.0.0-alpha.1"
   publish_js_cli:
     name: Publish Js CLI
-    needs: test
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-cli-')
     runs-on: ubuntu-latest
     steps:
@@ -222,7 +221,6 @@ jobs:
   # Run on tags like "release-js-lib-1.0.0-alpha.1"
   publish_js_lib:
     name: Publish Js Lib
-    needs: test
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-lib-')
     runs-on: ubuntu-latest
     steps:
@@ -272,7 +270,6 @@ jobs:
 
   publish_vscode_ext:
     name: Publish VSCode Extension
-    needs: test
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-vscode-')
     runs-on: ubuntu-latest
     steps:

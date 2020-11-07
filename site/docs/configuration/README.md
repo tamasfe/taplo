@@ -18,7 +18,7 @@ By default, every tool looks for one in the working directory or the root of the
 The `include` property is an array of [glob](https://en.wikipedia.org/wiki/Glob_(programming)) path strings that are relative to the working directory (or root of the workspace),
 the matched files are included in the operations by the tools unless explicitly overwritten. The pattern supports globstars (`**`) for recursive search.
 
-If this property is omitted, `TOML` files will be searched in the entry child directory tree, however if it is present but **empty**, **no files will be included**.
+If this property is omitted, `TOML` files will be searched in the entire child directory tree from the root, however if it is present but **empty**, **no files will be included**.
 
 ```toml
 include = ["Cargo.toml", "some_directory/**/*.toml"]
@@ -85,7 +85,7 @@ crlf = false
 ### Schema
 
 The `schema` table consists of only two keys:
-- `path`: the path of the schema, this can be either path to a local file path or an URL with the schemes `taplo`, `http` or `https`. (`file` scheme is also accepted, it is the same as specifying a local path)
+- `path`: the path of the schema, this can be either path to a local file or an URL with the schemes `taplo`, `http` or `https`. (`file` scheme is also accepted, it is the same as specifying a local path)
 - `enabled`: whether to enable the schema or not (`true` if omitted).
 
 An example:

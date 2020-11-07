@@ -207,7 +207,7 @@ jobs:
       - name: Yarn Dependencies
         run: yarn
         working-directory: js/cli
-      - name: Yarn Dependencies
+      - name: Build CLI
         run: yarn build
         env:
           RELEASE: "true"
@@ -258,7 +258,7 @@ jobs:
       - name: Yarn Dependencies
         run: yarn
         working-directory: js/lib
-      - name: Yarn Dependencies
+      - name: Build lib
         run: yarn build
         env:
           RELEASE: "true"

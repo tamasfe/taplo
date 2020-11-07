@@ -4,7 +4,12 @@ on:
       - master
     tags:
       - release-lib-*
+      - release-cli-*
       - release-vscode-*
+      - release-js-cli-*
+      - release-js-lib-*
+    paths-ignore:
+      - "site/**/*"
   pull_request:
     branches:
       - master
@@ -186,7 +191,7 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-node-cli-})"
+        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-js-cli-})"
       - name: Install Node.js
         uses: actions/setup-node@v1
         with:
@@ -237,7 +242,7 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-node-lib-})"
+        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-js-lib-})"
       - name: Install Node.js
         uses: actions/setup-node@v1
         with:

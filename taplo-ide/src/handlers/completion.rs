@@ -965,8 +965,8 @@ fn empty_value_inserts(
                     space_before,
                 )),
                 insert_text_format: Some(InsertTextFormat::Snippet),
-                sort_text: Some(required_text("2multiline string")),
-                label: "multiline string".into(),
+                sort_text: Some(required_text("2multi-line string")),
+                label: "multi-line string".into(),
                 ..Default::default()
             },
             CompletionItem {
@@ -1005,8 +1005,8 @@ fn empty_value_inserts(
                     space_before,
                 )),
                 insert_text_format: Some(InsertTextFormat::Snippet),
-                sort_text: Some("4multiline literal string".into()),
-                label: "multiline literal string".into(),
+                sort_text: Some("4multi-line literal string".into()),
+                label: "multi-line literal string".into(),
                 ..Default::default()
             },
         ]),

@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.9.2
+- Fixed unusable config files
+
 ## 0.9.1
 
 ### Fixes

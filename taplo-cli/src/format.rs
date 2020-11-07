@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use crate::{
     config::Config,
     external::{get_paths_by_glob, read_file, read_stdin, write_file},
@@ -85,34 +83,34 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
             continue;
         }
 
-        if allow_exclude {
-            // Don't lint taplo config files unless asked explicitly.
-            let p = Path::new(val);
-
-            if let Some(file_name) = p.file_name() {
-                if file_name == "taplo.toml" || file_name == ".taplo.toml" {
-                    // Don't count it as excluded.
-                    continue;
-                }
-            }
-
-            match config.is_excluded(val) {
-                Ok(excluded) => {
-                    if excluded {
-                        res.excluded_document_count += 1;
-                        continue;
-                    }
-                }
-                Err(err) => {
-                    print_message(Severity::Error, "error", &err.to_string());
-                    return;
-                }
-            }
-        }
-
         match get_paths_by_glob(val) {
             Ok(sources) => {
                 for path in sources {
+                    if allow_exclude {
+                        // Don't format taplo config files unless asked explicitly.
+                        if let Some(file_name) = path.file_name() {
+                            if file_name == "taplo.toml" || file_name == ".taplo.toml" {
+                                // Don't count it as excluded.
+                                continue;
+                            }
+                        }
+
+                        if let Some(p) = path.to_str() {
+                            match config.is_excluded(p) {
+                                Ok(excluded) => {
+                                    if excluded {
+                                        res.excluded_document_count += 1;
+                                        continue;
+                                    }
+                                }
+                                Err(err) => {
+                                    print_message(Severity::Error, "error", &err.to_string());
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
                     match read_file(&path) {
                         Ok(src) => {
                             res.matched_document_count += 1;

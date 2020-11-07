@@ -120,7 +120,12 @@ impl Config {
     pub fn collect_schemas(&self) -> Vec<String> {
         let mut schemas = Vec::new();
 
-        if let Some(s) = self.global_options.schema.as_ref().and_then(|s| s.path.as_ref()) {
+        if let Some(s) = self
+            .global_options
+            .schema
+            .as_ref()
+            .and_then(|s| s.path.as_ref())
+        {
             schemas.push(s.clone());
         }
 
@@ -185,7 +190,7 @@ impl Config {
     pub fn get_formatter_options(
         &self,
         path: Option<&str>,
-        default_opts: Option<formatter::Options>
+        default_opts: Option<formatter::Options>,
     ) -> Result<
         (
             formatter::Options,

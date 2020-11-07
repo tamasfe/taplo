@@ -6,7 +6,7 @@ use crate::{
 use clap::ArgMatches;
 use pretty_lint::{PrettyLint, Severity};
 use schemars::schema::RootSchema;
-use std::{collections::HashSet, path::Path};
+use std::{collections::HashSet};
 use taplo::{dom, rowan::TextRange, util::coords::Mapper};
 use verify::Verifier;
 
@@ -86,26 +86,30 @@ async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
                             res.matched_document_count += 1;
 
                             if allow_exclude {
-                                // Don't lint taplo config files unless asked explicitly.
-                                let p = Path::new(val);
-
-                                if let Some(file_name) = p.file_name() {
+                                // Don't format taplo config files unless asked explicitly.
+                                if let Some(file_name) = path.file_name() {
                                     if file_name == "taplo.toml" || file_name == ".taplo.toml" {
                                         // Don't count it as excluded.
                                         continue;
                                     }
                                 }
 
-                                match config.is_excluded(val) {
-                                    Ok(excluded) => {
-                                        if excluded {
-                                            res.excluded_document_count += 1;
-                                            continue;
+                                if let Some(p) = path.to_str() {
+                                    match config.is_excluded(p) {
+                                        Ok(excluded) => {
+                                            if excluded {
+                                                res.excluded_document_count += 1;
+                                                continue;
+                                            }
                                         }
-                                    }
-                                    Err(err) => {
-                                        print_message(Severity::Error, "error", &err.to_string());
-                                        return;
+                                        Err(err) => {
+                                            print_message(
+                                                Severity::Error,
+                                                "error",
+                                                &err.to_string(),
+                                            );
+                                            return;
+                                        }
                                     }
                                 }
                             }

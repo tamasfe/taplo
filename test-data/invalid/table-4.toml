@@ -2,4 +2,4 @@
 apple.color = "red"
 apple.taste.sweet = true
 
-[fruit.apple.taste]  # INVALID
+[fruit.apple.taste] # INVALID

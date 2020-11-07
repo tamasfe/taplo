@@ -1,0 +1,9 @@
+include = ["**/*.toml"]
+exclude = ["**/*nested-1000.toml"]
+
+[[rule]]
+include = ["**/Cargo.toml"]
+keys = ["dependencies", "dev-dependencies"]
+
+[rule.formatting]
+reorder_keys = true

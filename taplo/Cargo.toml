@@ -20,22 +20,22 @@ schema = ["once_cell", "schemars", "serde"]
 rewrite = []
 
 [dependencies]
+glob = "0.3"
 indexmap = "1"
 logos = "0.11.4"
 lsp-types = { version = "0.74.1" }
+regex = "1"
 rowan = "0.10.0"
 smallvec = "1"
-regex = "1"
-glob = "0.3"
 
 chrono = { version = "0.4", optional = true }
 time = { version = "0.2", optional = true }
 
-serde_crate = { package = "serde", version = "1", optional = true }
-verify = { version = "0.3", features = ["schemars", "serde"], optional = true }
 once_cell = { version = "1", optional = true }
 schemars = { version = "0.8", optional = true }
+serde_crate = { package = "serde", version = "1", optional = true }
 serde_json = { version = "1", optional = true }
+verify = { version = "0.3", features = ["schemars", "serde"], optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
@@ -46,9 +46,4 @@ serde_json = "1"
 toml = "0.5"
 
 [package.metadata.docs.rs]
-features = [
-    "serde",
-    "schema",
-    "chrono",
-    "rewrite"
-]
+features = ["serde", "schema", "chrono", "rewrite"]

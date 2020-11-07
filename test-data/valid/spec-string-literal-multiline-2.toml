@@ -1,4 +1,4 @@
-lines  = '''
+lines = '''
 The first newline is
 trimmed in raw strings.
    All other whitespace

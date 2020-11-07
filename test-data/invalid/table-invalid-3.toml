@@ -1,14 +1,14 @@
 # INVALID TOML DOC
 [[fruit]]
-  name = "apple"
+name = "apple"
 
-  [[fruit.variety]]
-    name = "red delicious"
+[[fruit.variety]]
+name = "red delicious"
 
-  # INVALID: This table conflicts with the previous array of tables
-  [fruit.variety]
-    name = "granny smith"
+# INVALID: This table conflicts with the previous array of tables
+[fruit.variety]
+name = "granny smith"
 
-  [fruit.physical]
-    color = "red"
-    shape = "round"
+[fruit.physical]
+color = "red"
+shape = "round"

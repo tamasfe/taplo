@@ -4,8 +4,8 @@ members = ["taplo-ide", "taplo", "lsp-async-stub"]
 
 [profile.release]
 codegen-units = 1
-lto           = true
-opt-level     = 3
+lto = true
+opt-level = 3
 
 [profile.bench]
 lto = true

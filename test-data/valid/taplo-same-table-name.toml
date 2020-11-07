@@ -1,7 +1,7 @@
 [package] # Cargo.toml(1, 2): table "package" here
-name    = "uuid"
+name = "uuid"
 version = "0.1.0"
 
 [dependencies.renamed_example]
-version = "0.1.0"
+version = "0.1.0" 
 package = "example" # entry conflicts with table Even Better TOML

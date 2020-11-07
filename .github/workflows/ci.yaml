@@ -5,7 +5,7 @@ on:
     tags:
       - release-lib-*
       - release-cli-*
-      - release-vscode-*
+      - release-js-vscode-*
       - release-js-cli-*
       - release-js-lib-*
     paths-ignore:
@@ -273,7 +273,7 @@ jobs:
   publish_vscode_ext:
     name: Publish VSCode Extension
     needs: test
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-vscode-')
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-vscode-')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -293,7 +293,7 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-vscode-})"
+        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-js-vscode-})"
       - name: Install Node.js
         uses: actions/setup-node@v1
         with:

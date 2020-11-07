@@ -6,7 +6,7 @@ use crate::{
 use clap::ArgMatches;
 use pretty_lint::{PrettyLint, Severity};
 use schemars::schema::RootSchema;
-use std::{collections::HashSet};
+use std::collections::HashSet;
 use taplo::{dom, rowan::TextRange, util::coords::Mapper};
 use verify::Verifier;
 
@@ -69,6 +69,7 @@ async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
                 Ok(s) => s,
                 Err(e) => {
                     print_message(Severity::Error, "error", &e.to_string());
+                    res.error_count += 1;
                     continue;
                 }
             };
@@ -108,6 +109,7 @@ async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
                                                 "error",
                                                 &err.to_string(),
                                             );
+                                            res.error_count += 1;
                                             return;
                                         }
                                     }
@@ -145,6 +147,7 @@ async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
             }
             Err(e) => {
                 print_message(Severity::Error, "error", &e.to_string());
+                res.error_count += 1;
                 break;
             }
         }

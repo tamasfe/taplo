@@ -123,8 +123,8 @@ where
         .author("tamasfe (https://github.com/tamasfe)")
         .bin_name("taplo")
         .version(env!("CARGO_PKG_VERSION"))
-        .about("A TOML linter and formatter tool.")
-        .long_about("A TOML linter and formatter tool (https://github.com/tamasfe/taplo).")
+        .about("A TOML linter and formatter tool")
+        .long_about("A TOML linter and formatter tool (https://github.com/tamasfe/taplo)")
         .arg(
             Arg::new("colors")
                 .long("colors")
@@ -149,16 +149,17 @@ where
         .subcommand(
             App::new("format")
                 .visible_alias("fmt")
-                .about("Format TOML documents")
+                .about("Format TOML documents in place")
+                .long_about("Format TOML documents. Files are modified in-place unless the input comes from the standard input, in which case the formatted result is printed to the standard output")
                 .arg(
                     Arg::new("files")
                         .about("Paths or glob patterns to TOML documents")
-                        .long_about("Paths or glob patterns to TOML documents, can be omitted if a configuration file is provided or found that provides document paths.")
+                        .long_about("Paths or glob patterns to TOML documents, can be omitted if a configuration file is provided or found that provides document paths")
                 )
                 .arg(
                     Arg::new("stdin")
                     .about("Provide a TOML document from the standard input")
-                    .long_about("Provide a TOML document from the standard input. If this is supplied, the formatted document will be written to the standard output.")
+                    .long_about("Provide a TOML document from the standard input. If this is supplied, the formatted document will be written to the standard output")
                     .possible_value("-")
                     .conflicts_with("files"),
                 )
@@ -167,6 +168,15 @@ where
                         .short('f')
                         .long("force")   
                         .about("Ignore syntax errors and format anyway (potentially destructive)"),
+                )
+                .arg(
+                    Arg::new("options")
+                        .short('o')
+                        .long("options")
+                        .about("A comma-separated list of key=value pairs to pass to the formatter")
+                        .long_about("A comma-separated list of key=value pairs to pass to the formatter. The valid options and values are available here: https://taplo.tamasfe.dev/configuration/#formatting-options")
+                        .takes_value(true)
+                        .multiple_occurrences(true)
                 )
                 .arg(
                     Arg::new("config")

@@ -213,11 +213,11 @@ fn query_comment() {
     let mapper = Mapper::new_utf16(&src, true);
     let dom = crate::parser::parse(&src).into_dom();
 
-    let pos = mapper.offset(Position::new(18, 11)).unwrap();
+    let pos = mapper.offset(Position::new(16, 11)).unwrap();
     let pos = dom.query_position(pos);
     assert!(!pos.is_completable());
 
-    let pos = mapper.offset(Position::new(18, 1)).unwrap();
+    let pos = mapper.offset(Position::new(16, 1)).unwrap();
     let pos = dom.query_position(pos);
     assert!(pos.is_completable());
 }

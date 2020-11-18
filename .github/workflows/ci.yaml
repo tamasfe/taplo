@@ -110,7 +110,7 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-lib-})"
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-lib-})" >> $GITHUB_ENV
       - name: Set release version in Cargo.toml
         run: |
           awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo/Cargo.toml > cargo_tmp
@@ -151,7 +151,7 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-cli-})"
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-cli-})" >> $GITHUB_ENV
       - name: Set release version in Cargo.toml
         run: |
           awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo-cli/Cargo.toml > cargo_tmp
@@ -191,7 +191,7 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-js-cli-})"
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-js-cli-})" >> $GITHUB_ENV
       - name: Install Node.js
         uses: actions/setup-node@v1
         with:
@@ -241,7 +241,7 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-js-lib-})"
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-js-lib-})" >> $GITHUB_ENV
       - name: Install Node.js
         uses: actions/setup-node@v1
         with:
@@ -290,7 +290,7 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF#refs/tags/release-js-vscode-})"
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-js-vscode-})" >> $GITHUB_ENV
       - name: Install Node.js
         uses: actions/setup-node@v1
         with:

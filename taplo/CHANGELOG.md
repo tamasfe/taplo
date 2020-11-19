@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.4.0
+
+### Breaking Changes
+
+- `lsp-types` dependency version bump (this dependency is likely to be removed in future versions)
+
 ## 0.3.1
 
 ### Additions

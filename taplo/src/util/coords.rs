@@ -2,8 +2,29 @@
 
 use rowan::{TextRange, TextSize};
 
-pub use lsp_types::{Position, Range};
 use std::collections::BTreeMap;
+
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Default)]
+pub struct Position {
+    /// Line position in a document (could be zero-based or one-based based on the usage).
+    pub line: u64,
+    /// Character offset on a line in a document (could be zero-based or one-based based on the usage).
+    pub character: u64,
+}
+
+impl Position {
+    pub fn new(line: u64, character: u64) -> Self {
+        Position { line, character }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Default)]
+pub struct Range {
+    /// The range's start position.
+    pub start: Position,
+    /// The range's end position.
+    pub end: Position,
+}
 
 /// Offset in characters instead of bytes.
 /// It is u64 because lsp_types uses u64.
@@ -58,10 +79,8 @@ impl Mapper {
     }
 
     pub fn range(&self, range: TextRange) -> Option<Range> {
-        self.position(range.start()).and_then(|start| {
-            self.position(range.end())
-                .map(|end| Range { start, end })
-        })
+        self.position(range.start())
+            .and_then(|start| self.position(range.end()).map(|end| Range { start, end }))
     }
 
     pub fn mappings(&self) -> (&BTreeMap<TextSize, Position>, &BTreeMap<Position, TextSize>) {

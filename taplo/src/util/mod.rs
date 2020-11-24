@@ -1,11 +1,12 @@
-pub mod coords;
+use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
+use rowan::TextSize;
+
 mod escape;
 pub mod syntax;
+pub mod coords;
 
-use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
 pub use escape::check_escape;
 pub use escape::unescape;
-use rowan::TextSize;
 
 pub(crate) mod allowed_chars {
     pub(crate) fn comment(s: &str) -> Result<(), Vec<usize>> {

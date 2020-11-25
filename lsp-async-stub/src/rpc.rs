@@ -49,7 +49,7 @@ impl Message {
 
 #[derive(Default, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Request<T> {
+pub struct Request<T = ()> {
     pub jsonrpc: String,
     pub method: String,
 

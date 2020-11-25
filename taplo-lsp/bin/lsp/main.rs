@@ -14,9 +14,19 @@ use taplo_lsp::{log_error, log_info};
 use tokio::sync::broadcast;
 
 static CTRL_C_PRESSED: AtomicBool = AtomicBool::new(false);
+static SHUTTING_DOWN: AtomicBool = AtomicBool::new(false);
 
 // Manual shutdown message for handling CTRL+C and other scenarios.
 static SHUTDOWN_CHAN: OnceCell<broadcast::Sender<rpc::Message>> = OnceCell::new();
+
+fn shutdown(msg: rpc::Message) {
+    SHUTTING_DOWN.store(true, Ordering::SeqCst);
+    SHUTDOWN_CHAN.get().unwrap().send(msg).unwrap();
+}
+
+fn is_shutting_down() -> bool {
+    SHUTTING_DOWN.load(Ordering::SeqCst)
+}
 
 mod common;
 mod stdio;
@@ -56,15 +66,11 @@ fn main() {
 
         log_info!("shutting down gracefully... (press CTRL+C again to force)");
         CTRL_C_PRESSED.store(true, Ordering::SeqCst);
-        SHUTDOWN_CHAN
-            .get()
-            .unwrap()
-            .send(
-                rpc::Request::<()>::new()
-                    .with_method("shutdown")
-                    .into_message(),
-            )
-            .unwrap();
+        shutdown(
+            rpc::Request::<()>::new()
+                .with_method("shutdown")
+                .into_message(),
+        );
     })
     .unwrap();
 
@@ -107,8 +113,12 @@ fn run_lsp(kind: IoKind<'_>) -> i32 {
     let server = taplo_lsp::create_server();
     let world = taplo_lsp::create_world();
 
-    match kind {
+    let exit_code = match kind {
         IoKind::Stdio => stdio::run(rt, server, world),
         IoKind::Tcp { addr, port } => tcp::run(rt, server, world, addr, port),
-    }
+    };
+
+    log_info!("exiting...");
+
+    exit_code
 }

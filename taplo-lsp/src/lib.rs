@@ -1,7 +1,7 @@
 #![allow(unused_macros)]
 // extern WASM calls are wrapped in unsafe,
 // but they don't technically have to be.
-#![allow(unused_unsafe)]
+#![deny(unused_unsafe)]
 
 use futures::lock::Mutex as AsyncMutex;
 use indexmap::IndexMap;
@@ -11,9 +11,6 @@ use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, hash::Hash, path::Path, path::PathBuf, sync::Arc};
 use taplo::{parser::Parse, schema::BUILTIN_SCHEMAS, util::coords::Mapper};
-
-#[cfg(test)]
-mod tests;
 
 #[cfg(not(target_arch = "wasm32"))]
 #[path = "external/native/mod.rs"]

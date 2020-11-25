@@ -1,6 +1,4 @@
-use std::collections::HashSet;
-
-use crate::Document;
+use crate::{utils::LspExt, Document};
 use itertools::Itertools;
 use lsp_types::*;
 use schemars::{
@@ -8,6 +6,7 @@ use schemars::{
     Map,
 };
 use serde_json::Value;
+use std::collections::HashSet;
 use taplo::{
     analytics::NodeRef,
     dom::{self, RootNode},
@@ -23,7 +22,10 @@ pub(crate) fn get_completions(
     let dom = doc.parse.clone().into_dom();
     let paths: HashSet<dom::Path> = dom.iter().map(|(p, _)| p).collect();
 
-    let offset = doc.mapper.offset(position).unwrap();
+    let offset = doc
+        .mapper
+        .offset(taplo::util::coords::Position::from_lsp(position))
+        .unwrap();
 
     let query = dom.query_position(offset);
 
@@ -92,7 +94,7 @@ pub(crate) fn get_completions(
                             query_path.without_index().extend(path),
                             schema,
                             required,
-                            range,
+                            range.map(LspExt::into_lsp),
                             false,
                             None,
                             false,
@@ -203,7 +205,7 @@ pub(crate) fn get_completions(
                                     },
                                     schema,
                                     required,
-                                    range,
+                                    range.map(LspExt::into_lsp),
                                     true,
                                     if !additional_edits.is_empty() {
                                         Some(additional_edits.clone())
@@ -237,7 +239,7 @@ pub(crate) fn get_completions(
                                 value_completions(
                                     &root_schema.definitions,
                                     schema,
-                                    range,
+                                    range.map(LspExt::into_lsp),
                                     None,
                                     false,
                                     true,
@@ -348,7 +350,7 @@ pub(crate) fn get_completions(
                                 value_completions(
                                     &root_schema.definitions,
                                     schema,
-                                    range,
+                                    range.map(LspExt::into_lsp),
                                     None,
                                     false,
                                     false,
@@ -395,7 +397,7 @@ pub(crate) fn get_completions(
                                             },
                                             schema,
                                             required,
-                                            range,
+                                            range.map(LspExt::into_lsp),
                                             false,
                                             None,
                                             false,
@@ -435,7 +437,7 @@ pub(crate) fn get_completions(
                             query_path.extend(path),
                             schema,
                             required,
-                            range,
+                            range.map(LspExt::into_lsp),
                             true,
                             None,
                             false,

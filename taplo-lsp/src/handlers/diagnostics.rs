@@ -1,4 +1,4 @@
-use crate::World;
+use crate::{utils::LspExt, World};
 use lsp_async_stub::{Context, RequestWriter};
 use lsp_types::*;
 use schemars::schema::{InstanceType, Metadata, RootSchema, SingleOrVec};
@@ -91,15 +91,17 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
         .errors
         .iter()
         .map(|e| {
-            let range = mapper.range(e.range).unwrap_or_default();
+            let range = mapper.range(e.range).unwrap_or_default().into_lsp();
             Diagnostic {
                 range,
                 severity: Some(DiagnosticSeverity::Error),
                 code: None,
+                code_description: None,
                 source: Some("Even Better TOML".into()),
                 message: e.message.clone(),
                 related_information: None,
                 tags: None,
+                data: None,
             }
         })
         .collect();
@@ -118,35 +120,39 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                 let second_range = mapper.range(second.syntax().text_range()).unwrap();
 
                 diag.push(Diagnostic {
-                    range: first_range,
+                    range: first_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: format!(r#"duplicate key "{}""#, first.full_key_string()),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: second_range,
+                            range: second_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: "other declaration".into(),
                     }]),
                     tags: None,
+                    data: None,
                 });
 
                 diag.push(Diagnostic {
-                    range: second_range,
+                    range: second_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: format!(r#"duplicate key "{}""#, first.full_key_string()),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: first_range,
+                            range: first_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: "first declaration".into(),
                     }]),
                     tags: None,
+                    data: None,
                 });
             }
             dom::Error::ExpectedTable { target, key } => {
@@ -154,19 +160,21 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                 let second_range = mapper.range(key.syntax().text_range()).unwrap();
 
                 diag.push(Diagnostic {
-                    range: target_range,
+                    range: target_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: format!(r#"expected table for "{}""#, target.full_key_string()),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: second_range,
+                            range: second_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: format!(r#"required by "{}""#, key.full_key_string()),
                     }]),
                     tags: None,
+                    data: None,
                 });
             }
             dom::Error::ExpectedTableArray { target, key } => {
@@ -174,35 +182,39 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                 let second_range = mapper.range(key.syntax().text_range()).unwrap();
 
                 diag.push(Diagnostic {
-                    range: target_range,
+                    range: target_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: "array conflicts with array of tables".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: second_range,
+                            range: second_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: "array of tables declaration".to_string(),
                     }]),
                     tags: None,
+                    data: None,
                 });
 
                 diag.push(Diagnostic {
-                    range: second_range,
+                    range: second_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: "array conflicts with array of tables".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: target_range,
+                            range: target_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: "array declaration".to_string(),
                     }]),
                     tags: None,
+                    data: None,
                 });
             }
             dom::Error::InlineTable { target, key } => {
@@ -210,35 +222,39 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                 let second_range = mapper.range(key.syntax().text_range()).unwrap();
 
                 diag.push(Diagnostic {
-                    range: target_range,
+                    range: target_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: "inline table cannot be modified".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: second_range,
+                            range: second_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: format!(r#"modified here by "{}""#, key.full_key_string()),
                     }]),
                     tags: None,
+                    data: None,
                 });
 
                 diag.push(Diagnostic {
-                    range: second_range,
+                    range: second_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: "inline table cannot be modified".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: target_range,
+                            range: target_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: format!(r#"inline table "{}" here"#, target.full_key_string()),
                     }]),
                     tags: None,
+                    data: None,
                 });
             }
 
@@ -246,13 +262,15 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                 let r = mapper.range(*range).unwrap();
 
                 diag.push(Diagnostic {
-                    range: r,
+                    range: r.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: message.clone(),
                     related_information: None,
                     tags: None,
+                    data: None,
                 });
             }
 
@@ -261,10 +279,12 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                     range: Default::default(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: err.clone(),
                     related_information: None,
                     tags: None,
+                    data: None,
                 });
             }
             dom::Error::DottedKeyConflict { first, second } => {
@@ -272,35 +292,35 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                 let second_range = mapper.range(second.syntax().text_range()).unwrap();
 
                 diag.push(Diagnostic {
-                    range: second_range,
+                    range: second_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
-                    code: None,
+                    code: None,code_description:None,
                     source: Some("Even Better TOML".into()),
                     message: "conflicting dotted keys, entries with overlapping keys must have the same amount of keys".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: first_range,
+                            range: first_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: "conflicting dotted keys here".to_string(),
                     }]),
-                    tags: None,
+                    tags: None, data: None
                 });
 
                 diag.push(Diagnostic {
-                    range: first_range,
+                    range: first_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
-                    code: None,
+                    code: None,code_description:None,
                     source: Some("Even Better TOML".into()),
                     message: "conflicting dotted keys, entries with overlapping keys must have the same amount of keys".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: second_range,
+                            range: second_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: "conflicting dotted keys here".to_string(),
                     }]),
-                    tags: None,
+                    tags: None, data: None
                 });
             }
             dom::Error::SubTableBeforeTableArray { target, key } => {
@@ -308,35 +328,39 @@ fn collect_toml_diagnostics(uri: &Url, parse: &Parse, mapper: &Mapper) -> Vec<Di
                 let key_range = mapper.range(key.syntax().text_range()).unwrap();
 
                 diag.push(Diagnostic {
-                    range: key_range,
+                    range: key_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: "array of tables conflicting with subtable above".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: target_range,
+                            range: target_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: "subtable here".to_string(),
                     }]),
                     tags: None,
+                    data: None,
                 });
 
                 diag.push(Diagnostic {
-                    range: target_range,
+                    range: target_range.into_lsp(),
                     severity: Some(DiagnosticSeverity::Error),
                     code: None,
+                    code_description: None,
                     source: Some("Even Better TOML".into()),
                     message: "subtable declared before array of tables".to_string(),
                     related_information: Some(vec![DiagnosticRelatedInformation {
                         location: Location {
-                            range: key_range,
+                            range: key_range.into_lsp(),
                             uri: uri.clone(),
                         },
                         message: "array of tables here".to_string(),
                     }]),
                     tags: None,
+                    data: None,
                 });
             }
         }
@@ -401,9 +425,11 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                 range: error
                     .span
                     .map(|span| mapper.range(span.0).unwrap())
-                    .unwrap(),
+                    .unwrap()
+                    .into_lsp(),
                 severity: Some(DiagnosticSeverity::Error),
                 code: None,
+                code_description: None,
                 source: Some(format!(
                     "Even Better TOML{}",
                     schema_in_message(&error.meta)
@@ -425,6 +451,7 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                 },
                 related_information: None,
                 tags: None,
+                data: None,
             });
         }
         ErrorValue::NoPatternMatch { pattern: _ } => {
@@ -432,9 +459,11 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                 range: error
                     .span
                     .map(|span| mapper.range(span.0).unwrap())
-                    .unwrap_or_default(),
+                    .unwrap_or_default()
+                    .into_lsp(),
                 severity: Some(DiagnosticSeverity::Error),
                 code: None,
+                code_description: None,
                 source: Some(format!(
                     "Even Better TOML{}",
                     schema_in_message(&error.meta)
@@ -446,6 +475,7 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                     .unwrap_or_else(|| "the value doesn't match the given pattern".to_string()),
                 related_information: None,
                 tags: None,
+                data: None,
             });
         }
         ErrorValue::NoneValid {
@@ -457,9 +487,11 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                 range: error
                     .span
                     .map(|span| mapper.range(span.0).unwrap())
-                    .unwrap_or_default(),
+                    .unwrap_or_default()
+                    .into_lsp(),
                 severity: Some(DiagnosticSeverity::Error),
                 code: None,
+                code_description: None,
                 source: Some(format!(
                     "Even Better TOML{}",
                     schema_in_message(&error.meta)
@@ -508,6 +540,7 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                 },
                 related_information: None,
                 tags: None,
+                data: None,
             });
             for errs in errors {
                 for err in errs {
@@ -520,9 +553,9 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                 range: error
                     .span
                     .map(|span| mapper.range(span.0).unwrap())
-                    .unwrap_or_default(),
+                    .unwrap_or_default().into_lsp(),
                 severity: Some(DiagnosticSeverity::Error),
-                code: None,
+                code: None,code_description:None,
                 source: Some(format!(
                     "Even Better TOML{}",
                     schema_in_message(&error.meta)
@@ -551,16 +584,18 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                     )
                 ),
                 related_information: None,
-                tags: None,
+                tags: None, data: None
             });
         }
         ErrorValue::NotUnique { first, duplicate } => {
             diags.push(Diagnostic {
                 range: first
                     .map(|span| mapper.range(span.0).unwrap())
-                    .unwrap_or_default(),
+                    .unwrap_or_default()
+                    .into_lsp(),
                 severity: Some(DiagnosticSeverity::Error),
                 code: None,
+                code_description: None,
                 source: Some(format!(
                     "Even Better TOML{}",
                     schema_in_message(&error.meta)
@@ -570,19 +605,23 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                     location: Location {
                         range: duplicate
                             .map(|span| mapper.range(span.0).unwrap())
-                            .unwrap_or_default(),
+                            .unwrap_or_default()
+                            .into_lsp(),
                         uri: uri.clone(),
                     },
                     message: "duplicate value".into(),
                 }]),
                 tags: None,
+                data: None,
             });
             diags.push(Diagnostic {
                 range: duplicate
                     .map(|span| mapper.range(span.0).unwrap())
-                    .unwrap_or_default(),
+                    .unwrap_or_default()
+                    .into_lsp(),
                 severity: Some(DiagnosticSeverity::Error),
                 code: None,
+                code_description: None,
                 source: Some(format!(
                     "Even Better TOML{}",
                     schema_in_message(&error.meta)
@@ -592,12 +631,14 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                     location: Location {
                         range: first
                             .map(|span| mapper.range(span.0).unwrap())
-                            .unwrap_or_default(),
+                            .unwrap_or_default()
+                            .into_lsp(),
                         uri: uri.clone(),
                     },
                     message: "duplicate value".into(),
                 }]),
                 tags: None,
+                data: None,
             });
         }
         ErrorValue::InvalidSchema(err) => log_warn!(
@@ -616,9 +657,11 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                 range: error
                     .span
                     .and_then(|span| mapper.range(span.0))
-                    .unwrap_or_default(),
+                    .unwrap_or_default()
+                    .into_lsp(),
                 severity: Some(DiagnosticSeverity::Error),
                 code: None,
+                code_description: None,
                 source: Some(format!(
                     "Even Better TOML{}",
                     schema_in_message(&error.meta)
@@ -626,6 +669,7 @@ fn diags_from_error(error: Error<NodeSpan>, uri: &Url, mapper: &Mapper) -> Vec<D
                 message: error_value.to_string(),
                 related_information: None,
                 tags: None,
+                data: None,
             });
         }
     }

@@ -3,6 +3,7 @@ use futures::{
     channel::oneshot, future::FusedFuture, lock::Mutex as AsyncMutex, sink::Sink, Future,
     FutureExt, SinkExt,
 };
+use handler::Handler;
 use lsp_types::{
     notification::{self, Notification},
     request as req,
@@ -12,8 +13,8 @@ use lsp_types::{
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
     collections::HashMap,
-    io,
-    marker::PhantomData,
+    io, mem,
+    pin::Pin,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
@@ -21,6 +22,7 @@ use std::{
     task::{Poll, Waker},
 };
 
+mod handler;
 pub mod rpc;
 
 #[derive(Debug, Clone, Default)]
@@ -137,33 +139,14 @@ pub trait RequestWriter {
     async fn cancel(&mut self) -> Result<(), io::Error>;
 }
 
-pub struct ResponseWriterBuffer {
-    res: Option<rpc::Response<serde_json::Value>>,
-}
-
-impl ResponseWriterBuffer {
-    fn write_response<R: Serialize>(&mut self, response: rpc::Response<R>) {
-        let res = match response.result {
-            None => None,
-            Some(r) => Some(serde_json::to_value(r).unwrap()),
-        };
-
-        self.res = Some(rpc::Response {
-            jsonrpc: response.jsonrpc,
-            id: response.id,
-            result: res,
-            error: response.error,
-        })
-    }
-}
-
 #[derive(Clone)]
 pub struct Context<W: Clone + Send + Sync> {
     inner: Arc<AsyncMutex<Inner<W>>>,
     cancel_token: CancelToken,
     last_req_id: Option<rpc::RequestId>, // For cancellation
-    rw: Arc<AsyncMutex<Box<dyn MessageSink>>>,
+    rw: Arc<AsyncMutex<Box<dyn MessageWriter>>>,
     world: W,
+    deferred: Arc<AsyncMutex<Vec<Pin<Box<dyn Future<Output = ()> + Send>>>>>,
 }
 
 impl<W: Clone + Send + Sync> Context<W> {
@@ -181,6 +164,15 @@ impl<W: Clone + Send + Sync> Context<W> {
 
     pub fn cancel_token(&mut self) -> &mut CancelToken {
         &mut self.cancel_token
+    }
+
+    /// Defer the execution of the future until after the
+    /// handler returned (and response was sent if applicable).
+    ///
+    /// If sending a response fails, deferred futures
+    /// won't be executed.
+    pub async fn defer<F: Future<Output = ()> + Send + 'static>(&self, fut: F) {
+        self.deferred.lock().await.push(Box::pin(fut));
     }
 }
 
@@ -208,8 +200,7 @@ impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
                 .with_params(params)
                 .into_message(),
         )
-        .await
-        .unwrap();
+        .await?;
 
         self.last_req_id = Some(id.clone());
 
@@ -239,9 +230,6 @@ impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
                 .into_message(),
         )
         .await
-        .unwrap();
-
-        Ok(())
     }
 
     async fn cancel(&mut self) -> Result<(), io::Error> {
@@ -254,11 +242,11 @@ impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
     }
 }
 
-pub trait MessageSink: Sink<rpc::Message, Error = io::Error> + Send + Sync + Unpin {}
-impl<T: Sink<rpc::Message, Error = io::Error> + Send + Sync + Unpin> MessageSink for T {}
+pub trait MessageWriter: Sink<rpc::Message, Error = io::Error> + Send + Sync + Unpin {}
+impl<T: Sink<rpc::Message, Error = io::Error> + Send + Sync + Unpin> MessageWriter for T {}
 
 struct Inner<W: Clone + Send + Sync> {
-    next_request_id: u64,
+    next_request_id: i32,
     initialized: bool,
     shutting_down: bool,
     handlers: HashMap<String, Box<dyn Handler<W>>>,
@@ -297,24 +285,21 @@ impl<W: Clone + Send + Sync> Server<W> {
         &self,
         world: W,
         message: rpc::Message,
-        request_writer: impl MessageSink + 'static,
-        response_writer: impl ResponseWriter,
-    ) -> impl Future<Output = ()> {
+        writer: impl MessageWriter + Clone + 'static,
+    ) -> impl Future<Output = Result<(), io::Error>> {
         let inner = self.inner.clone();
         async move {
             if message.is_response() {
-                Server::handle_response(inner, message.into_response()).await
+                Server::handle_response(inner, message.into_response()).await;
+                Ok(())
             } else {
-                Server::handle_request(
-                    inner,
-                    world,
-                    message.into_request(),
-                    request_writer,
-                    response_writer,
-                )
-                .await
+                Server::handle_request(inner, world, message.into_request(), writer).await
             }
         }
+    }
+
+    pub async fn is_shutting_down(&self) -> bool {
+        self.inner.lock().await.shutting_down
     }
 
     async fn handle_response(
@@ -330,31 +315,33 @@ impl<W: Clone + Send + Sync> Server<W> {
         inner: Arc<AsyncMutex<Inner<W>>>,
         data: W,
         request: rpc::Request<serde_json::Value>,
-        request_writer: impl MessageSink + 'static,
-        response_writer: impl ResponseWriter,
-    ) {
+        mut writer: impl MessageWriter + Clone + 'static,
+    ) -> Result<(), io::Error> {
         if &request.jsonrpc != "2.0" {
-            response_writer
-                .write_response(&rpc::Response::error(
-                    rpc::Error::invalid_request()
-                        .with_data("only JSON-RPC version 2.0 is accepted"),
-                ))
-                .await
-                .unwrap();
-            return;
+            return writer
+                .send(
+                    rpc::Response::error(
+                        rpc::Error::invalid_request()
+                            .with_data("only JSON-RPC version 2.0 is accepted"),
+                    )
+                    .into_message(),
+                )
+                .await;
         }
 
         if request.id.is_some() {
             let mut s = inner.lock().await;
 
             if s.shutting_down {
-                response_writer
-                    .write_response(&rpc::Response::error(
-                        rpc::Error::invalid_request().with_data("server is shutting down"),
-                    ))
-                    .await
-                    .unwrap();
-                return;
+                writer
+                    .send(
+                        rpc::Response::error(
+                            rpc::Error::invalid_request().with_data("server is shutting down"),
+                        )
+                        .into_message(),
+                    )
+                    .await?;
+                return Ok(());
             }
 
             if request.method == req::Shutdown::METHOD {
@@ -364,11 +351,10 @@ impl<W: Clone + Send + Sync> Server<W> {
             let is_initialize = request.method == req::Initialize::METHOD;
 
             if !s.initialized && !is_initialize {
-                response_writer
-                    .write_response(&rpc::Response::error(rpc::Error::server_not_initialized()))
-                    .await
-                    .unwrap();
-                return;
+                writer
+                    .send(rpc::Response::error(rpc::Error::server_not_initialized()).into_message())
+                    .await?;
+                return Ok(());
             }
 
             if s.handlers.contains_key(&request.method) {
@@ -379,15 +365,22 @@ impl<W: Clone + Send + Sync> Server<W> {
                 // We expect the handler to run for a longer time
                 drop(s);
 
-                let mut w = ResponseWriterBuffer { res: None };
                 let ctx = Server::create_context(
                     inner.clone(),
-                    Arc::new(AsyncMutex::new(Box::new(request_writer))),
+                    Arc::new(AsyncMutex::new(Box::new(writer.clone()))),
                     data,
                     &request,
                 )
                 .await;
-                handler.handle(ctx, request, Some(&mut w)).await;
+                handler
+                    .handle(ctx.clone(), request, Some(&mut writer))
+                    .await;
+
+                let deferred = mem::take(&mut (*ctx.deferred.lock().await));
+
+                for d in deferred {
+                    d.await
+                }
 
                 let mut s = inner.lock().await;
 
@@ -397,14 +390,26 @@ impl<W: Clone + Send + Sync> Server<W> {
                 }
                 drop(s);
 
-                if let Some(r) = w.res {
-                    response_writer.write_response(&r).await.unwrap();
-                }
+                Ok(())
             } else {
-                response_writer
-                    .write_response(&rpc::Response::error(rpc::Error::method_not_found()))
-                    .await
-                    .unwrap();
+                if request.method == req::Shutdown::METHOD {
+                    // Shutting down without handler, everything should be OK.
+                    writer
+                        .send(
+                            rpc::Response::success(())
+                                .with_request_id(request.id.unwrap())
+                                .into_message(),
+                        )
+                        .await
+                } else {
+                    writer
+                        .send(
+                            rpc::Response::error(rpc::Error::method_not_found())
+                                .with_request_id(request.id.unwrap())
+                                .into_message(),
+                        )
+                        .await
+                }
             }
         } else {
             if request.method == lsp_types::notification::Cancel::METHOD {
@@ -413,7 +418,7 @@ impl<W: Clone + Send + Sync> Server<W> {
                         inner.lock().await.task_done(&c.id);
                     }
                 }
-                return;
+                return Ok(());
             }
 
             let mut s = inner.lock().await;
@@ -424,19 +429,27 @@ impl<W: Clone + Send + Sync> Server<W> {
 
                 let ctx = Server::create_context(
                     inner,
-                    Arc::new(AsyncMutex::new(Box::new(request_writer))),
+                    Arc::new(AsyncMutex::new(Box::new(writer))),
                     data,
                     &request,
                 )
                 .await;
-                handler.handle(ctx, request, None).await;
+                handler.handle(ctx.clone(), request, None).await;
+
+                let deferred = mem::take(&mut (*ctx.deferred.lock().await));
+
+                for d in deferred {
+                    d.await
+                }
             }
+
+            Ok(())
         }
     }
 
     async fn create_context<D>(
         inner: Arc<AsyncMutex<Inner<W>>>,
-        rw: Arc<AsyncMutex<Box<dyn MessageSink>>>,
+        rw: Arc<AsyncMutex<Box<dyn MessageWriter>>>,
         world: W,
         req: &rpc::Request<D>,
     ) -> Context<W> {
@@ -453,19 +466,40 @@ impl<W: Clone + Send + Sync> Server<W> {
             inner,
             last_req_id: None,
             rw,
+            deferred: Default::default(),
         }
     }
 }
 
-pub struct ServerBuilder<W: Clone + Send + Sync> {
+pub struct ServerBuilder<W: Clone + Send + Sync + 'static> {
     inner: Inner<W>,
 }
 
-impl<W: Clone + Send + Sync> ServerBuilder<W> {
-    pub fn handler(mut self, handler: impl Handler<W> + 'static) -> Self {
-        self.inner
-            .handlers
-            .insert(handler.method().into(), Box::new(handler));
+impl<W: Clone + Send + Sync + 'static> ServerBuilder<W> {
+    pub fn on_notification<N, F>(mut self, handler: fn(Context<W>, Params<N::Params>) -> F) -> Self
+    where
+        N: Notification + 'static,
+        N::Params: Send,
+        F: Future<Output = ()> + Send + 'static,
+    {
+        self.inner.handlers.insert(
+            N::METHOD.into(),
+            Box::new(handler::NotificationHandler::<N, _, _>::new(handler)),
+        );
+        self
+    }
+
+    pub fn on_request<R, F>(mut self, handler: fn(Context<W>, Params<R::Params>) -> F) -> Self
+    where
+        R: Request + 'static,
+        R::Params: Send,
+        R::Result: Send,
+        F: Future<Output = Result<R::Result, rpc::Error>> + Send + 'static,
+    {
+        self.inner.handlers.insert(
+            R::METHOD.into(),
+            Box::new(handler::RequestHandler::<R, _, _>::new(handler)),
+        );
         self
     }
 
@@ -494,179 +528,5 @@ impl<P> Params<P> {
 impl<P> From<Option<P>> for Params<P> {
     fn from(p: Option<P>) -> Self {
         Self(p)
-    }
-}
-
-#[async_trait]
-pub trait Handler<W: Clone + Send + Sync>: Send {
-    fn method(&self) -> &'static str;
-
-    async fn handle(
-        &mut self,
-        context: Context<W>,
-        message: rpc::Request<serde_json::Value>,
-        writer: Option<&mut ResponseWriterBuffer>,
-    );
-
-    fn box_clone(&self) -> Box<dyn Handler<W>>;
-}
-
-pub struct RequestHandler<R, F, W>
-where
-    R: Request,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send,
-    W: Clone + Send + Sync,
-{
-    f: fn(Context<W>, Params<R::Params>) -> F,
-    t: PhantomData<W>,
-}
-
-impl<R, F, W> Clone for RequestHandler<R, F, W>
-where
-    R: Request,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send,
-    W: Clone + Send + Sync,
-{
-    fn clone(&self) -> Self {
-        Self {
-            f: self.f,
-            t: Default::default(),
-        }
-    }
-}
-
-impl<R, F, W> RequestHandler<R, F, W>
-where
-    R: Request,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send,
-    W: Clone + Send + Sync,
-{
-    pub fn new(f: fn(Context<W>, Params<R::Params>) -> F) -> Self {
-        Self {
-            f,
-            t: Default::default(),
-        }
-    }
-}
-
-#[async_trait]
-impl<R, F, P, W> Handler<W> for RequestHandler<R, F, W>
-where
-    R: Request<Params = P> + 'static,
-    P: Send + Serialize + DeserializeOwned + 'static,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send + 'static,
-    W: Clone + Send + Sync + 'static,
-{
-    fn method(&self) -> &'static str {
-        R::METHOD
-    }
-
-    async fn handle(
-        &mut self,
-        context: Context<W>,
-        message: rpc::Request<serde_json::Value>,
-        writer: Option<&mut ResponseWriterBuffer>,
-    ) {
-        let req_id = message.id.clone();
-        let req = match message.into_params::<R::Params>() {
-            Ok(r) => r,
-            Err(e) => {
-                if let Some(w) = writer {
-                    w.write_response(
-                        rpc::Response::error(rpc::Error::invalid_params().with_data(e.to_string()))
-                            .with_request_id(req_id.unwrap()),
-                    );
-                }
-
-                return;
-            }
-        };
-
-        let call_result = (self.f)(context, req.params.into()).await;
-
-        if let Some(w) = writer {
-            let res = rpc::Response::from(call_result).with_request_id(req.id.unwrap());
-            w.write_response(res);
-        }
-    }
-
-    fn box_clone(&self) -> Box<dyn Handler<W>> {
-        Box::new((*self).clone())
-    }
-}
-
-impl<W: Clone + Send + Sync> Clone for Box<dyn Handler<W>> {
-    fn clone(&self) -> Self {
-        self.box_clone()
-    }
-}
-
-#[derive(Clone)]
-pub struct NotificationHandler<N, F, W>
-where
-    N: Notification,
-    F: Future + Send,
-    W: Clone + Send + Sync,
-{
-    f: fn(Context<W>, Params<N::Params>) -> F,
-    t: PhantomData<W>,
-}
-
-impl<N, F, W> NotificationHandler<N, F, W>
-where
-    N: Notification,
-    F: Future + Send,
-    W: Clone + Send + Sync,
-{
-    pub fn new(f: fn(Context<W>, Params<N::Params>) -> F) -> Self {
-        Self {
-            f,
-            t: Default::default(),
-        }
-    }
-}
-
-impl<N, F, W> NotificationHandler<N, F, W>
-where
-    N: Notification,
-    F: Future + Send,
-    W: Clone + Send + Sync,
-{
-    fn clone(&self) -> Self {
-        Self {
-            f: self.f,
-            t: Default::default(),
-        }
-    }
-}
-
-#[async_trait]
-impl<N, F, P, W> Handler<W> for NotificationHandler<N, F, W>
-where
-    N: Notification<Params = P> + 'static,
-    P: Send + Serialize + DeserializeOwned + 'static,
-    F: Future + Send + 'static,
-    W: Clone + Send + Sync + 'static,
-{
-    fn method(&self) -> &'static str {
-        N::METHOD
-    }
-
-    async fn handle(
-        &mut self,
-        context: Context<W>,
-        message: rpc::Request<serde_json::Value>,
-        _writer: Option<&mut ResponseWriterBuffer>,
-    ) {
-        let req = match message.into_params::<N::Params>() {
-            Ok(r) => r,
-            Err(_) => return,
-        };
-
-        (self.f)(context, req.params.into()).await;
-    }
-
-    fn box_clone(&self) -> Box<dyn Handler<W>> {
-        Box::new((*self).clone())
     }
 }

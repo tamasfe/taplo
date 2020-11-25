@@ -1,4 +1,4 @@
-/// Requests that are not in the LSP spec
+//! Messages that are not part of the LSP spec.
 use std::collections::HashMap;
 
 use lsp_types::{notification::Notification, request::Request, Url};

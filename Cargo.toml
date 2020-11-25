@@ -1,6 +1,6 @@
 [workspace]
 exclude = ["util/schema-gen", "util/test-gen"]
-members = ["taplo-ide", "taplo-cli", "taplo", "lsp-async-stub"]
+members = ["taplo-lsp", "taplo-cli", "taplo", "lsp-async-stub"]
 
 [profile.release]
 codegen-units = 1

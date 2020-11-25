@@ -24,9 +24,6 @@ pub static BUILTIN_SCHEMAS: Lazy<HashMap<String, RootSchema>> = Lazy::new(|| {
         serde_json::from_str(include_str!("../schemas/taplo.json")).unwrap(),
     );
 
-    #[cfg(not(target_arch = "wasm32"))]
-    debug_assert!(schemas.len() == REGEX_ASSOCIATIONS.len());
-
     schemas
 });
 
@@ -36,9 +33,6 @@ pub static REGEX_ASSOCIATIONS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     associations.insert(".*/Cargo\\.toml".to_string(), "taplo://cargo@Cargo.toml".to_string());
     associations.insert(".*/pyproject\\.toml".to_string(), "taplo://python@pyproject.toml".to_string());
     associations.insert(".*/\\.?taplo\\.toml".to_string(), "taplo://taplo@taplo.toml".to_string());
-
-    #[cfg(not(target_arch = "wasm32"))]
-    debug_assert!(associations.len() == BUILTIN_SCHEMAS.len());
 
     associations
 });

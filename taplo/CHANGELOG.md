@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.5.0
+
+### Breaking Changes
+
+- Removed `lsp-types` dependency.
+
 ## 0.4.0
 
 ### Breaking Changes

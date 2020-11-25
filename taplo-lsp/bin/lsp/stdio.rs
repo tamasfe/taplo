@@ -9,7 +9,7 @@ use std::{io::BufReader, sync::Arc};
 use taplo_lsp::{log_error, log_info, World};
 use tokio::{prelude::*, runtime::Runtime, task::JoinHandle};
 
-use crate::{common::write_message, SHUTDOWN_CHAN};
+use crate::{common::write_message, is_shutting_down, shutdown, SHUTDOWN_CHAN};
 
 pub(crate) fn run(rt: Arc<Runtime>, server: Server<World>, world: World) -> i32 {
     let mut input = create_input(rt.clone());
@@ -37,6 +37,11 @@ pub(crate) fn run(rt: Arc<Runtime>, server: Server<World>, world: World) -> i32 
                         Some(msg) => {
                             if msg.method.as_ref().map(|m| m == "exit").unwrap_or(false) {
                                 break;
+                            } else if msg.method.as_ref().map(|m| m == "shutdown").unwrap_or(false) {
+                                // We broadcast it so that every task will know that we're shutting down.
+                                log_info!("received shutdown request.");
+                                shutdown(msg);
+                                continue;
                             }
 
                             let task_fut = server.handle_message(
@@ -86,7 +91,9 @@ pub(crate) fn create_input(rt: Arc<Runtime>) -> UnboundedReceiver<rpc::Message> 
                     None => return,
                 },
                 Err(err) => {
-                    log_error!("failed to read message: {}", err);
+                    if !is_shutting_down() {
+                        log_error!("failed to read message: {}", err);
+                    }
                 }
             }
         }
@@ -95,16 +102,16 @@ pub(crate) fn create_input(rt: Arc<Runtime>) -> UnboundedReceiver<rpc::Message> 
     receiver
 }
 
-pub(crate) fn create_output(
-    rt: Arc<Runtime>,
-) -> (UnboundedSender<rpc::Message>, JoinHandle<()>) {
+pub(crate) fn create_output(rt: Arc<Runtime>) -> (UnboundedSender<rpc::Message>, JoinHandle<()>) {
     let (sender, mut receiver) = unbounded::<rpc::Message>();
     let handle = rt.spawn(async move {
         let mut out = io::stdout();
 
         while let Some(message) = receiver.next().await {
             if let Err(err) = write_message(&mut out, message).await {
-                log_error!("{}", err)
+                if !is_shutting_down() {
+                    log_error!("{}", err)
+                }
             };
         }
     });

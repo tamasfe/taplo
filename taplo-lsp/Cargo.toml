@@ -42,7 +42,9 @@ tokio = { version = "0.3", features = [
     "io-util",
     "io-std",
     "sync",
-    "net"
+    "net",
+    "time",
+    "process",
 ] }
 tokio-compat-02 = { version = "0.1" }
 clap = "3.0.0-beta.2"
@@ -55,8 +57,13 @@ console_error_panic_hook = { version = "0.1" }
 js-sys = "0.3"
 
 [dev-dependencies]
+pretty_assertions = "0.6"
 wasm-bindgen-test = "0.3"
 
 [[bin]]
 name = "taplo-lsp"
 path = "bin/lsp/main.rs"
+
+[[test]]
+name = "taplo_lsp"
+path = "tests/taplo_lsp.rs"

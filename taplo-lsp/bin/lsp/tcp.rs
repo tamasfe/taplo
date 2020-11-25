@@ -9,7 +9,7 @@ use std::sync::Arc;
 use taplo_lsp::{log_error, log_info, World};
 use tokio::{net::TcpListener, prelude::*, runtime::Runtime, task::JoinHandle};
 
-use crate::{common::write_message, SHUTDOWN_CHAN};
+use crate::{common::write_message, is_shutting_down, shutdown, SHUTDOWN_CHAN};
 
 pub(crate) fn run(
     rt: Arc<Runtime>,
@@ -66,6 +66,11 @@ pub(crate) fn run(
                         Some(msg) => {
                             if msg.method.as_ref().map(|m| m == "exit").unwrap_or(false) {
                                 break;
+                            } else if msg.method.as_ref().map(|m| m == "shutdown").unwrap_or(false) {
+                                // We broadcast it so that every task will know that we're shutting down.
+                                log_info!("received shutdown request.");
+                                shutdown(msg);
+                                continue;
                             }
 
                             let task_fut = server.handle_message(
@@ -86,6 +91,9 @@ pub(crate) fn run(
                 }
             };
         }
+
+        drop(output);
+        drop(listener);
 
         let _ = input_handle.await;
         let _ = output_handle.await;
@@ -123,7 +131,9 @@ pub(crate) fn create_input(
                             }
                         }
                         Err(err) => {
-                            log_error!("failed to read message: {}", err);
+                            if !is_shutting_down() {
+                                log_error!("failed to read message: {}", err);
+                            }
                         }
                     }
                 }
@@ -142,7 +152,9 @@ pub(crate) fn create_output(
     let handle = rt.spawn(async move {
         while let Some(message) = receiver.next().await {
             if let Err(err) = write_message(&mut stream, message).await {
-                log_error!("{}", err)
+                if !is_shutting_down() {
+                    log_error!("failed to send message: {}", err)
+                }
             };
         }
     });
@@ -154,13 +166,20 @@ async fn read_message<R: AsyncBufRead + Unpin>(
 ) -> Result<Option<rpc::Message>, anyhow::Error> {
     let mut size = 0;
     let mut buf = String::new();
+    let mut shutdown_chan = SHUTDOWN_CHAN.get().unwrap().subscribe();
 
     // Parse headers
     loop {
         buf.clear();
 
-        if input.read_line(&mut buf).await? == 0 {
-            return Ok(None);
+        tokio::select! {
+            _ = shutdown_chan.recv() => return Ok(None),
+            count = input.read_line(&mut buf) => {
+                if count? == 0 {
+                    return Ok(None);
+
+                }
+            }
         };
 
         if !buf.ends_with("\r\n") {
@@ -196,7 +215,10 @@ async fn read_message<R: AsyncBufRead + Unpin>(
     let mut buf = buf.into_bytes();
     buf.resize(size, 0);
 
-    input.read_exact(&mut buf).await?;
+    tokio::select! {
+        _ = shutdown_chan.recv() => return Ok(None),
+        ok = input.read_exact(&mut buf) => ok?
+    };
 
     Ok(Some(serde_json::from_slice(&buf)?))
 }

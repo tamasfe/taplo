@@ -5,12 +5,6 @@ fn array_of_tables_1() {
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
 #[test]
-fn array_of_tables_2() {
-    let src = "# INVALID TOML DOC\n[[fruit]]\n  name = \"apple\"\n\n  [[fruit.variety]]\n    name = \"red delicious\"\n\n  # This table conflicts with the previous table\n  [fruit.variety]\n    name = \"granny smith\"\n" ;
-    let p = crate::parser::parse(&src);
-    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
-}
-#[test]
 fn bare_key_1() {
     let src = "bare!key = 123\n";
     let p = crate::parser::parse(&src);
@@ -49,18 +43,6 @@ fn comment_control_3() {
 #[test]
 fn comment_control_4() {
     let src = "a = \"0x7f\" # \u{7f}\n";
-    let p = crate::parser::parse(&src);
-    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
-}
-#[test]
-fn inline_table_imutable_1() {
-    let src = "[product]\ntype = { name = \"Nail\" }\ntype.edible = false  # INVALID\n";
-    let p = crate::parser::parse(&src);
-    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
-}
-#[test]
-fn inline_table_imutable_2() {
-    let src = "[product]\ntype.name = \"Nail\"\ntype = { edible = false }  # INVALID\n";
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
@@ -287,45 +269,20 @@ fn table_2() {
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
 #[test]
-fn table_3() {
-    let src =
-        "[fruit]\napple.color = \"red\"\napple.taste.sweet = true\n\n[fruit.apple]  # INVALID\n";
-    let p = crate::parser::parse(&src);
-    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
-}
-#[test]
-fn table_4() {
-    let src = "[fruit]\napple.color = \"red\"\napple.taste.sweet = true\n\n[fruit.apple.taste]  # INVALID\n" ;
-    let p = crate::parser::parse(&src);
-    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
-}
-#[test]
-fn table_invalid_1() {
-    let src = "[fruit.physical]  # subtable, but to which parent element should it belong?\n  color = \"red\"\n  shape = \"round\"\n\n[[fruit]]  # parser must throw an error upon discovering that \"fruit\" is\n           # an array rather than a table\n  name = \"apple\"\n  " ;
-    let p = crate::parser::parse(&src);
-    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
-}
-#[test]
 fn table_invalid_2() {
     let src = "# INVALID TOML DOC\nfruit = []\n\n[[fruit]] # Not allowed\n";
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
 #[test]
-fn table_invalid_3() {
-    let src = "# INVALID TOML DOC\n[[fruit]]\n  name = \"apple\"\n\n  [[fruit.variety]]\n    name = \"red delicious\"\n\n  # INVALID: This table conflicts with the previous array of tables\n  [fruit.variety]\n    name = \"granny smith\"\n\n  [fruit.physical]\n    color = \"red\"\n    shape = \"round\"\n" ;
+fn taplo_duplicate_keys() {
+    let src = "# THIS WILL NOT WORK\nspelling = \"favorite\"\n\"spelling\" = \"favourite\"\n";
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
 #[test]
-fn table_invalid_4() {
-    let src = "# INVALID TOML DOC\n[[fruit]]\n  name = \"apple\"\n\n  [[fruit.variety]]\n    name = \"red delicious\"\n\n  [fruit.physical]\n    color = \"red\"\n    shape = \"round\"\n\n  # INVALID: This array of tables conflicts with the previous table\n  [[fruit.physical]]\n    color = \"green\"\n" ;
-    let p = crate::parser::parse(&src);
-    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
-}
-#[test]
-fn taplo_inner_key_conflict() {
-    let src = "package.something.else = 2\n\n[package]\nsomething.other = 2\n\n";
+fn taplo_incomplete_inline_table() {
+    let src = "schema = { enabled = false";
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
@@ -360,20 +317,63 @@ fn taplo_invalid_padding() {
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
 #[test]
-fn taplo_duplicate_keys() {
-    let src = "# THIS WILL NOT WORK\nspelling = \"favorite\"\n\"spelling\" = \"favourite\"\n";
+fn array_of_tables_2() {
+    let src = "# INVALID TOML DOC\n[[fruit]]\nname = \"apple\"\n\n[[fruit.variety]]\nname = \"red delicious\"\n\n# This table conflicts with the previous table\n[fruit.variety]\nname = \"granny smith\"\n" ;
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
+fn inline_table_imutable_1() {
+    let src = "[product]\ntype = { name = \"Nail\" } \ntype.edible = false # INVALID\n";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
+fn inline_table_imutable_2() {
+    let src = "[product]\ntype.name = \"Nail\"\ntype = { edible = false }# INVALID\n";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
+fn table_3() {
+    let src =
+        "[fruit]\napple.color = \"red\"\napple.taste.sweet = true\n\n[fruit.apple] # INVALID\n";
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
+fn table_4() {
+    let src = "[fruit]\napple.color = \"red\"\napple.taste.sweet = true\n\n[fruit.apple.taste] # INVALID\n" ;
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
+fn table_invalid_1() {
+    let src = "[fruit.physical] # subtable, but to which parent element should it belong?\ncolor = \"red\"\nshape = \"round\"\n\n[[fruit]] # parser must throw an error upon discovering that \"fruit\" is\n# an array rather than a table\nname = \"apple\"\n" ;
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
+fn table_invalid_3() {
+    let src = "# INVALID TOML DOC\n[[fruit]]\nname = \"apple\"\n\n[[fruit.variety]]\nname = \"red delicious\"\n\n# INVALID: This table conflicts with the previous array of tables\n[fruit.variety]\nname = \"granny smith\"\n\n[fruit.physical]\ncolor = \"red\"\nshape = \"round\"\n" ;
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
+fn table_invalid_4() {
+    let src = "# INVALID TOML DOC\n[[fruit]]\nname = \"apple\"\n\n[[fruit.variety]]\nname = \"red delicious\"\n\n[fruit.physical]\ncolor = \"red\"\nshape = \"round\"\n\n# INVALID: This array of tables conflicts with the previous table\n[[fruit.physical]]\ncolor = \"green\"\n" ;
+    let p = crate::parser::parse(&src);
+    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
+}
+#[test]
+fn taplo_inner_key_conflict() {
+    let src = "package.something.else = 2\n\n[package]\nsomething.other = 2\n";
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }
 #[test]
 fn taplo_table_before_array() {
-    let src = "[foo.bar]\n[[foo]]";
-    let p = crate::parser::parse(&src);
-    assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
-}
-#[test]
-fn taplo_incomplete_inline_table() {
-    let src = "schema = { enabled = false";
+    let src = "[foo.bar]\n[[foo]]\n";
     let p = crate::parser::parse(&src);
     assert!(!p.errors.is_empty() || !p.into_dom().errors().is_empty());
 }

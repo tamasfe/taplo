@@ -57,7 +57,7 @@ struct Parser<'p> {
     // The syntax error is still reported,
     // but the the surrounding context can still
     // be parsed.
-    // FIXME(bit_flags):    
+    // FIXME(bit_flags):
     //      This is VERY wrong, as the members of the
     //      enums are not proper bit flags.
     //
@@ -403,6 +403,7 @@ impl<'p> Parser<'p> {
         let t = self.get_token()?;
         match t {
             IDENT => self.token(),
+            INTEGER_HEX | INTEGER_BIN | INTEGER_OCT => self.token_as(IDENT),
             INTEGER => {
                 if self.lexer.slice().starts_with('+') {
                     Err(())

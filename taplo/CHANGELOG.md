@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+### Additions
+- Builtin `rustfmt.toml` schema added
+
 ## 0.4.0
 
 ### Breaking Changes

@@ -1,4 +1,4 @@
-#![cfg_attr(target_arch = "wasm32", feature(set_stdio))]
+#![cfg_attr(all(target_arch = "wasm32", feature = "nightly"), feature(set_stdio))]
 
 use clap::{App, AppSettings, Arg, ArgMatches};
 use external::load_config;
@@ -233,7 +233,10 @@ where
         Ok(matches) => execute(matches).await,
         Err(err) => {
             eprintln!("{}", err);
-            matches!(err.kind, clap::ErrorKind::DisplayHelp | clap::ErrorKind::DisplayVersion)
+            matches!(
+                err.kind,
+                clap::ErrorKind::DisplayHelp | clap::ErrorKind::DisplayVersion
+            )
         }
     }
 }
@@ -442,12 +445,15 @@ async fn execute(matches: ArgMatches) -> bool {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn set_panic_hook() {
+fn set_panic_hook() {
     console_error_panic_hook::set_once();
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn set_node_out() {
+fn set_node_out() {}
+
+#[cfg(all(target_arch = "wasm32", feature = "nightly"))]
+fn set_node_out() {
     use wasm_bindgen::prelude::*;
 
     #[wasm_bindgen]

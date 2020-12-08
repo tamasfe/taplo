@@ -12,6 +12,10 @@ crate-type = ["cdylib", "lib"]
 [features]
 default = []
 
+# In order to output anything on nightly, an unstable feature
+# `set_stdio` must be used.
+nightly = []
+
 [dependencies]
 anyhow = "1"
 clap = { package = "tamasfe-clap", version = "3.0.0-beta.2", features = ["suggestions", "std", "cargo"] }

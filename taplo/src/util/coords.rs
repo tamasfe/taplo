@@ -82,12 +82,12 @@ impl Mapper {
         }
     }
 
-    fn new_impl(source: &str, utf16: bool, base: u64) -> Self {
+    fn new_impl(source: &str, utf16: bool, base: u32) -> Self {
         let mut offset_to_position = BTreeMap::new();
         let mut position_to_offset = BTreeMap::new();
 
-        let mut line: u64 = base;
-        let mut character: u64 = base;
+        let mut line: u32 = base;
+        let mut character: u32 = base;
         let mut last_offset = 0;
 
         for c in source.chars() {
@@ -107,7 +107,7 @@ impl Mapper {
 
             last_offset = new_offset;
 
-            character += character_size as u64;
+            character += character_size as u32;
             if c == '\n' {
                 // LF is at the start of each line.
                 line += 1;

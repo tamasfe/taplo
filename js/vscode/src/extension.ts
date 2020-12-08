@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import * as client from "vscode-languageclient";
+import * as client from "vscode-languageclient/node";
 import * as path from "path";
 import { registerCommands } from "./commands";
 import {

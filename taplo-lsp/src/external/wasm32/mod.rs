@@ -1,10 +1,10 @@
-use crate::{create_server, utils, World, WorldState};
+use crate::{create_server, create_world, utils, World};
 use anyhow::anyhow;
-use futures::{lock::Mutex, Future, Sink};
+use futures::{ Future, Sink};
 use js_sys::Uint8Array;
 use lsp_async_stub::{rpc::Message, Server};
 use once_cell::sync::Lazy;
-use std::{io, sync::Arc, task::Poll};
+use std::{io, task::Poll};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
@@ -71,7 +71,7 @@ pub async fn initialize() {
 
 #[wasm_bindgen]
 pub fn message(message: JsValue) {
-    // log_debug!("message: {:?}", message);
+    log_debug!("in: {:?}", message);
     let msg = message.into_serde().unwrap();
     spawn(async move {
         SERVER
@@ -125,7 +125,7 @@ impl Sink<Message> for MessageWriter {
     }
 
     fn start_send(self: std::pin::Pin<&mut Self>, item: Message) -> Result<(), Self::Error> {
-        // log_debug!("request: {}", serde_json::to_string(&item).unwrap());
+        log_debug!("out: {}", serde_json::to_string(&item).unwrap());
         js_send_message(JsValue::from_serde(&item).unwrap());
         Ok(())
     }

@@ -1,6 +1,8 @@
 # Change Log
 
-###
+## 0.9.4
+
+- Added `rustfmt.toml` schema ([#65](https://github.com/tamasfe/taplo/pull/65))
 
 ## 0.9.3
 

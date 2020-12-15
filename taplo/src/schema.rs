@@ -10,7 +10,7 @@ pub const BUILTIN_SCHEME: &str = "taplo";
 
 pub static BUILTIN_SCHEMAS: Lazy<HashMap<String, RootSchema>> = Lazy::new(|| {
     let mut schemas = HashMap::new();
-    
+
     schemas.insert(
         format!("{}://cargo@Cargo.toml", BUILTIN_SCHEME),
         serde_json::from_str(include_str!("../schemas/Cargo.json")).unwrap(),
@@ -18,6 +18,10 @@ pub static BUILTIN_SCHEMAS: Lazy<HashMap<String, RootSchema>> = Lazy::new(|| {
     schemas.insert(
         format!("{}://python@pyproject.toml", BUILTIN_SCHEME),
         serde_json::from_str(include_str!("../schemas/pyproject.json")).unwrap(),
+    );
+    schemas.insert(
+        format!("{}://rustfmt@rustfmt.toml", BUILTIN_SCHEME),
+        serde_json::from_str(include_str!("../schemas/rustfmt.json")).unwrap(),
     );
     schemas.insert(
         format!("{}://taplo@taplo.toml", BUILTIN_SCHEME),
@@ -32,9 +36,10 @@ pub static BUILTIN_SCHEMAS: Lazy<HashMap<String, RootSchema>> = Lazy::new(|| {
 
 pub static REGEX_ASSOCIATIONS: Lazy<HashMap<String, String>> = Lazy::new(|| {
     let mut associations = HashMap::new();
-   
+
     associations.insert(".*/Cargo\\.toml".to_string(), "taplo://cargo@Cargo.toml".to_string());
     associations.insert(".*/pyproject\\.toml".to_string(), "taplo://python@pyproject.toml".to_string());
+    associations.insert(".*/\\.?rustfmt\\.toml".to_string(), "taplo://rustfmt@rustfmt.toml".to_string());
     associations.insert(".*/\\.?taplo\\.toml".to_string(), "taplo://taplo@taplo.toml".to_string());
 
     #[cfg(not(target_arch = "wasm32"))]

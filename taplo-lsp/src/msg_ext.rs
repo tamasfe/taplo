@@ -1,5 +1,4 @@
 //! Messages that are not part of the LSP spec.
-use std::collections::HashMap;
 
 use lsp_types::{notification::Notification, request::Request, Url};
 use serde::{Deserialize, Serialize};
@@ -76,73 +75,15 @@ impl Notification for MessageWithOutput {
     const METHOD: &'static str = "taplo/messageWithOutput";
 }
 
-pub(crate) enum UpdateBuiltInSchemas {}
+pub(crate) enum CachePath {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct UpdateBuiltInSchemasParams {
-    pub associations: HashMap<String, String>,
+pub(crate) struct CachePathParams {
+    pub path: String,
 }
 
-impl Notification for UpdateBuiltInSchemas {
-    type Params = UpdateBuiltInSchemasParams;
-    const METHOD: &'static str = "taplo/updateBuiltinSchemas";
-}
-
-pub(crate) enum GetCachedSchemaRequest {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct GetCachedSchemaParams {
-    /// URI of the schema
-    pub schema_uri: Url,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct GetCachedSchemaResponse {
-    pub schema_json: Option<String>,
-}
-
-impl Request for GetCachedSchemaRequest {
-    type Params = GetCachedSchemaParams;
-    type Result = GetCachedSchemaResponse;
-    const METHOD: &'static str = "taplo/getCachedSchema";
-}
-
-pub(crate) enum CacheSchemaRequest {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct CacheSchemaParams {
-    /// URI of the schema
-    pub schema_uri: Url,
-    pub schema_json: String,
-}
-
-impl Notification for CacheSchemaRequest {
-    type Params = CacheSchemaParams;
-    const METHOD: &'static str = "taplo/cacheSchema";
-}
-
-pub(crate) enum ConfigFileChanged {}
-
-impl Notification for ConfigFileChanged {
-    type Params = ();
-    const METHOD: &'static str = "taplo/configFileChanged";
-}
-
-
-pub(crate) enum WatchConfigFile {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct WatchConfigFileParams {
-    pub config_path: String,
-}
-
-
-impl Notification for WatchConfigFile {
-    type Params = WatchConfigFileParams;
-    const METHOD: &'static str = "taplo/watchConfigFile";
+impl Notification for CachePath {
+    type Params = CachePathParams;
+    const METHOD: &'static str = "taplo/cachePath";
 }

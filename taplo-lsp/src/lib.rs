@@ -57,6 +57,7 @@ impl From<regex::Regex> for HashRegex {
 
 #[derive(Default)]
 pub struct WorldState {
+    cache_path: Option<PathBuf>,
     workspace_uri: Option<Url>,
     documents: HashMap<lsp_types::Url, Document>,
     schemas: HashMap<String, RootSchema>,
@@ -228,7 +229,7 @@ pub fn create_server() -> Server<World> {
         .on_notification::<notification::DidChangeTextDocument, _>(handlers::document_change)
         .on_notification::<notification::DidCloseTextDocument, _>(handlers::document_close)
         .on_notification::<notification::DidChangeConfiguration, _>(handlers::configuration_change)
-        .on_notification::<msg_ext::ConfigFileChanged, _>(handlers::config_file_changed)
+        .on_notification::<msg_ext::CachePath, _>(handlers::cache_path)
         .build()
 }
 

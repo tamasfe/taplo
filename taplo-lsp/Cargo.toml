@@ -49,6 +49,7 @@ tokio = { version = "0.3", features = [
 tokio-compat-02 = { version = "0.1" }
 clap = "3.0.0-beta.2"
 ctrlc = "3"
+notify = "4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }

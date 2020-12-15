@@ -1,4 +1,9 @@
-use crate::{external::*, msg_ext, utils::LspExt, Configuration, Document, HashRegex, World};
+use crate::{
+    external::*,
+    msg_ext::{self, CachePathParams},
+    utils::LspExt,
+    Configuration, Document, HashRegex, World,
+};
 use anyhow::anyhow;
 use indexmap::IndexMap;
 use itertools::Itertools;
@@ -11,7 +16,7 @@ use std::{collections::HashMap, convert::TryFrom, mem};
 use taplo::{
     analytics::NodeRef,
     formatter,
-    schema::{util::get_schema_objects, BUILTIN_SCHEMAS, BUILTIN_SCHEME, REGEX_ASSOCIATIONS},
+    schema::{util::get_schema_objects, BUILTIN_SCHEMAS, BUILTIN_SCHEME},
     util::{coords::Mapper, syntax::join_ranges},
     value::Value,
 };
@@ -51,18 +56,6 @@ pub(crate) async fn initialize(
     }
 
     drop(w);
-
-    // FIXME: is this always a safe thing to do?
-    spawn(async move {
-        context
-            .write_notification::<msg_ext::UpdateBuiltInSchemas, _>(Some(
-                msg_ext::UpdateBuiltInSchemasParams {
-                    associations: REGEX_ASSOCIATIONS.clone(),
-                },
-            ))
-            .await
-            .unwrap();
-    });
 
     Ok(InitializeResult {
         capabilities: ServerCapabilities {
@@ -109,21 +102,10 @@ pub(crate) async fn initialize(
     })
 }
 
-pub(crate) async fn config_file_changed(mut context: Context<World>, _: Params<()>) {
-    spawn(async move {
-        if let Err(err) = load_config(context.clone()).await {
-            log_error!("{}", err);
-            context
-                .write_notification::<msg_ext::MessageWithOutput, _>(Some(
-                    msg_ext::MessageWithOutputParams {
-                        kind: msg_ext::MessageKind::Error,
-                        message: "Failed to load configuration!".into(),
-                    },
-                ))
-                .await
-                .unwrap();
-        }
-    });
+pub(crate) async fn cache_path(mut context: Context<World>, params: Params<CachePathParams>) {
+    if let Some(params) = params.optional() {
+        context.world().lock().await.cache_path = Some(params.path.into());
+    }
 }
 
 async fn update_configuration(mut context: Context<World>) {
@@ -932,17 +914,14 @@ pub(crate) async fn get_schema(
         Ok(schema)
     } else if path.starts_with("file://") {
         path = path.trim_start_matches("file://");
-        serde_json::from_slice(&read_file(path).await?)
-            .map_err(Into::into)
+        serde_json::from_slice(&read_file(path).await?).map_err(Into::into)
     } else if is_absolute_path(path) {
-        serde_json::from_slice(&read_file(path).await?)
-            .map_err(Into::into)
+        serde_json::from_slice(&read_file(path).await?).map_err(Into::into)
     } else {
         match context.world().lock().await.workspace_absolute(path) {
-            Some(p) => serde_json::from_slice(
-                &read_file(p.to_str().unwrap()).await?,
-            )
-            .map_err(Into::into),
+            Some(p) => {
+                serde_json::from_slice(&read_file(p.to_str().unwrap()).await?).map_err(Into::into)
+            }
             None => Err(anyhow!("cannot determine workspace root for relative path")),
         }
     }
@@ -973,8 +952,7 @@ async fn load_config_file(mut context: Context<World>) -> Result<(), anyhow::Err
 
                 match workspace_path {
                     Some(ws_path) => {
-                        let f = read_file(ws_path.join(&config_path).to_str().unwrap())
-                            .await?;
+                        let f = read_file(ws_path.join(&config_path).to_str().unwrap()).await?;
 
                         w.taplo_config = Some(toml::from_slice(&f)?);
 

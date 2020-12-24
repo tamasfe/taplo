@@ -935,6 +935,11 @@ fn add_aligned(
             builder.token(WHITESPACE.into(), ind.into());
         }
 
+        let child_count = node
+            .children_with_tokens()
+            .filter(|c| c.kind() != WHITESPACE)
+            .count();
+
         for (i, c) in node
             .children_with_tokens()
             .filter(|c| c.kind() != WHITESPACE)
@@ -952,7 +957,10 @@ fn add_aligned(
                 }
             }
 
-            if ws_count > 0 && i != max_lengths.len().checked_sub(1).unwrap_or_default() {
+            if i != child_count - 1
+                && ws_count > 0
+                && i != max_lengths.len().checked_sub(1).unwrap_or_default()
+            {
                 builder.token(WHITESPACE.into(), " ".repeat(ws_count).into())
             }
         }

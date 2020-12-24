@@ -47,4 +47,14 @@ fn comment_indentation() {
 
     assert_eq!(formatted, expected);
 }
+
+#[test]
+fn comment_after_entry() {
+    let src = r#"incremental = true
+debug = 0 # Set this to 1 or 2 to get more useful backtraces in debugger.
+"#;
+
+    let formatted = crate::formatter::format(src, formatter::Options::default());
+
+    assert_eq!(src, formatted);
 }

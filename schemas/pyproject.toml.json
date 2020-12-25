@@ -3,7 +3,7 @@
   "title": "pyproject.toml",
   "x-taplo-info": {
     "authors": ["zevisert (https://github.com/zevisert)"],
-    "patterns": ["^(.*(\\/|\\\\)pyproject\\.toml|pyproject\\.toml)$"]
+    "patterns": ["^(.*(/|\\\\)pyproject\\.toml|pyproject\\.toml)$"]
   },
   "definitions": {
     "poetry-author-pattern": {

@@ -4,7 +4,7 @@
   "description": "A schema for Cargo.toml.",
   "x-taplo-info": {
     "authors": ["tamasfe (https://github.com/tamasfe)"],
-    "patterns": ["^(.*(\\/|\\\\)Cargo\\.toml|Cargo\\.toml)$"]
+    "patterns": ["^(.*(/|\\\\)Cargo\\.toml|Cargo\\.toml)$"]
   },
   "type": "object",
   "properties": {

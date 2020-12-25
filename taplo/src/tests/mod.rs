@@ -7,3 +7,4 @@ mod generated {
 mod rewrite;
 
 mod analytics;
+mod formatter;

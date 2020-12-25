@@ -306,6 +306,32 @@ fn format_root(
     // because it is manually added if needed.
     let mut skip_newline = 0;
 
+    // Comments are not immediately inserted because
+    // their indentation might depend on the item below them.
+    let mut comments: Vec<SyntaxToken> = Vec::new();
+
+    fn add_comments(
+        indent: &str,
+        comments: &mut Vec<SyntaxToken>,
+        builder: &mut GreenNodeBuilder,
+        options: &Options,
+        trailing_newline: bool,
+    ) {
+        for (i, comment) in comments.iter().enumerate() {
+            builder.token(WHITESPACE.into(), indent.into());
+            if i != 0 {
+                builder.token(NEWLINE.into(), options.newline());
+            }
+            builder.token(comment.kind().into(), comment.text().clone());
+        }
+
+        if trailing_newline && !comments.is_empty() {
+            builder.token(NEWLINE.into(), options.newline());
+        }
+
+        comments.clear();
+    }
+
     for c in node.children_with_tokens() {
         let mut options = options.clone();
         context.update_options(&mut options, c.text_range());
@@ -320,7 +346,6 @@ fn format_root(
                 match n.kind() {
                     TABLE_HEADER | TABLE_ARRAY_HEADER => {
                         let indent_str = options.indent_string.repeat(indent_level);
-
                         if options.reorder_keys {
                             entry_group.sort_by(|a, b| {
                                 let ea = EntryNode::cast(NodeOrToken::Node(a.clone())).unwrap();
@@ -374,10 +399,13 @@ fn format_root(
                                     indent_levels.push((key.clone(), indent_level));
                                 }
                             }
-                            builder.token(
-                                WHITESPACE.into(),
-                                options.indent_string.repeat(indent_level).into(),
-                            );
+                        }
+
+                        let indent_str = options.indent_string.repeat(indent_level);
+                        add_comments(&indent_str, &mut comments, builder, &options, true);
+
+                        if options.indent_tables {
+                            builder.token(WHITESPACE.into(), indent_str.into());
                         }
                         format_table_header(n, builder, options.clone(), context)
                     }
@@ -410,9 +438,14 @@ fn format_root(
             }
             NodeOrToken::Token(t) => match t.kind() {
                 NEWLINE => {
-                    if t.text().as_str().newline_count() > 1 && options.allowed_blank_lines != 0 {
-                        let indent_str = options.indent_string.repeat(indent_level);
+                    let newline_count = t.text().as_str().newline_count();
+                    let indent_str = options.indent_string.repeat(indent_level);
 
+                    if newline_count > 1 && !comments.is_empty() {
+                        add_comments(&indent_str, &mut comments, builder, &options, false);
+                    }
+
+                    if newline_count > 1 && options.allowed_blank_lines != 0 {
                         if !entry_group.is_empty() {
                             if options.reorder_keys {
                                 entry_group.sort_by(|a, b| {
@@ -444,8 +477,6 @@ fn format_root(
                     skip_newline = i32::max(0, skip_newline - 1);
                 }
                 COMMENT => {
-                    let indent_str = options.indent_string.repeat(indent_level);
-
                     if options.reorder_keys {
                         entry_group.sort_by(|a, b| {
                             let ea = EntryNode::cast(NodeOrToken::Node(a.clone())).unwrap();
@@ -458,6 +489,7 @@ fn format_root(
                         });
                     }
                     if !entry_group.is_empty() {
+                        let indent_str = options.indent_string.repeat(indent_level);
                         add_aligned(
                             mem::take(&mut entry_group),
                             builder,
@@ -471,14 +503,8 @@ fn format_root(
                         );
                         builder.token(NEWLINE.into(), options.newline());
                     }
-
-                    if options.indent_tables {
-                        builder.token(
-                            WHITESPACE.into(),
-                            options.indent_string.repeat(indent_level).into(),
-                        );
-                    }
-                    builder.token(t.kind().into(), t.text().clone())
+                    comments.push(t);
+                    skip_newline += 1;
                 }
                 WHITESPACE => {}
                 _ => {
@@ -518,6 +544,8 @@ fn format_root(
         },
         if options.align_entries { None } else { Some(1) },
     );
+
+    add_comments(&indent_str, &mut comments, builder, &options, false);
 
     builder.finish_node();
 }
@@ -907,6 +935,11 @@ fn add_aligned(
             builder.token(WHITESPACE.into(), ind.into());
         }
 
+        let child_count = node
+            .children_with_tokens()
+            .filter(|c| c.kind() != WHITESPACE)
+            .count();
+
         for (i, c) in node
             .children_with_tokens()
             .filter(|c| c.kind() != WHITESPACE)
@@ -924,7 +957,10 @@ fn add_aligned(
                 }
             }
 
-            if ws_count > 0 && i != max_lengths.len().checked_sub(1).unwrap_or_default() {
+            if i != child_count - 1
+                && ws_count > 0
+                && i != max_lengths.len().checked_sub(1).unwrap_or_default()
+            {
                 builder.token(WHITESPACE.into(), " ".repeat(ws_count).into())
             }
         }

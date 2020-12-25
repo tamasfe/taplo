@@ -31,6 +31,33 @@ impl Request for TomlToJsonRequest {
     const METHOD: &'static str = "taplo/tomlToJson";
 }
 
+/// Serialize a TOML text to JSON.
+pub(crate) enum JsonToTomlRequest {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct JsonToTomlParams {
+    /// JSON text.
+    pub text: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct JsonToTomlResponse {
+    /// TOML text.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+impl Request for JsonToTomlRequest {
+    type Params = JsonToTomlParams;
+    type Result = JsonToTomlResponse;
+    const METHOD: &'static str = "taplo/jsonToToml";
+}
+
 /// Show Syntax Tree
 pub(crate) enum SyntaxTreeRequest {}
 

@@ -3,14 +3,22 @@
 // but they don't technically have to be.
 #![deny(unused_unsafe)]
 
+use anyhow::anyhow;
+use external::{file_exists, is_absolute_path, mkdir, read_file, spawn, write_file};
 use futures::lock::Mutex as AsyncMutex;
+use hex::ToHex;
 use indexmap::IndexMap;
-use lsp_async_stub::Server;
+use lsp_async_stub::{Context, Server};
 use lsp_types::{notification, request, Url};
-use schemars::schema::RootSchema;
+use schemars::{schema::RootSchema, schema_for};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::{collections::HashMap, hash::Hash, path::Path, path::PathBuf, sync::Arc};
-use taplo::{parser::Parse, schema::BUILTIN_SCHEMAS, util::coords::Mapper};
+use taplo::{
+    parser::Parse,
+    schema::{CachedSchema, BUILTIN_SCHEME},
+    util::coords::Mapper,
+};
 
 #[cfg(not(target_arch = "wasm32"))]
 #[path = "external/native/mod.rs"]
@@ -60,7 +68,6 @@ pub struct WorldState {
     cache_path: Option<PathBuf>,
     workspace_uri: Option<Url>,
     documents: HashMap<lsp_types::Url, Document>,
-    schemas: HashMap<String, RootSchema>,
     schema_associations: IndexMap<HashRegex, String>,
     http_client: reqwest::Client,
     configuration: Configuration,
@@ -68,12 +75,6 @@ pub struct WorldState {
 }
 
 impl WorldState {
-    fn register_built_in_schemas(&mut self) {
-        for (name, schema) in &*BUILTIN_SCHEMAS {
-            self.schemas.insert(name.clone(), schema.clone());
-        }
-    }
-
     fn get_config_formatter_options(
         &self,
         uri: &Url,
@@ -161,20 +162,6 @@ impl WorldState {
         None
     }
 
-    fn get_schema(&self, name: &str) -> Option<&RootSchema> {
-        self.schemas.get(name)
-    }
-
-    fn get_schema_by_uri(&self, uri: &Url) -> Option<&RootSchema> {
-        for (re, name) in &self.schema_associations {
-            if re.0.is_match(uri.as_str()) {
-                return self.get_schema(name);
-            }
-        }
-
-        None
-    }
-
     fn workspace_path(&self) -> Option<PathBuf> {
         match &self.workspace_uri {
             Some(uri) => Some(PathBuf::from(uri.path())),
@@ -190,6 +177,93 @@ impl WorldState {
             None => None,
         }
     }
+
+    async fn get_schema(
+        mut path: &str,
+        mut context: Context<World>,
+    ) -> Result<RootSchema, anyhow::Error> {
+        if path.starts_with(&format!("{}://", BUILTIN_SCHEME)) {
+            if path == "taplo://taplo.toml" {
+                Ok(schema_for!(taplo_cli::config::Config))
+            } else {
+                Err(anyhow!("invalid builtin schema: {}", path))
+            }
+        } else if path.starts_with("http://") || path.starts_with("https://") {
+            let w = context.world().lock().await;
+
+            let mut hasher = Sha256::new();
+            hasher.update(path.as_bytes());
+            let url_hash = hasher.finalize().encode_hex::<String>();
+
+            if let Some(cache_path) = &w.cache_path {
+                let file_path = cache_path
+                    .join("schemas")
+                    .join(&url_hash)
+                    .with_extension("json");
+                let fp = file_path.to_str().unwrap();
+
+                if file_exists(fp) {
+                    let schema_bytes = read_file(fp).await?;
+                    let cached_schema: CachedSchema = serde_json::from_slice(&schema_bytes)?;
+                    return Ok(cached_schema.schema);
+                }
+            }
+
+            let client = w.http_client.clone();
+            drop(w);
+
+            let res = client.get(path).send().await?;
+            let schema: RootSchema = res.json().await.map_err::<anyhow::Error, _>(Into::into)?;
+
+            let w = context.world().lock().await;
+
+            let p = path.to_string();
+            let s = schema.clone();
+
+            // We also cache it here.
+            if let Some(cache_path) = w.cache_path.clone() {
+                match mkdir(cache_path.join("schemas").to_str().unwrap()) {
+                    Ok(_) => {
+                        spawn(async move {
+                            if let Err(err) = write_file(
+                                cache_path
+                                    .join("schemas")
+                                    .join(&url_hash)
+                                    .with_extension("json")
+                                    .to_str()
+                                    .unwrap(),
+                                &serde_json::to_vec(&CachedSchema {
+                                    url: Some(p),
+                                    schema: s,
+                                })
+                                .unwrap(),
+                            )
+                            .await
+                            {
+                                log_error!("failed to cache schema: {}", err);
+                            };
+                        });
+                    }
+                    Err(err) => {
+                        log_error!("failed to cache schema: {}", err);
+                    }
+                }
+            }
+
+            Ok(schema)
+        } else if path.starts_with("file://") {
+            path = path.trim_start_matches("file://");
+            serde_json::from_slice(&read_file(path).await?).map_err(Into::into)
+        } else if is_absolute_path(path) {
+            serde_json::from_slice(&read_file(path).await?).map_err(Into::into)
+        } else {
+            match context.world().lock().await.workspace_absolute(path) {
+                Some(p) => serde_json::from_slice(&read_file(p.to_str().unwrap()).await?)
+                    .map_err(Into::into),
+                None => Err(anyhow!("cannot determine workspace root for relative path")),
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -197,6 +271,7 @@ impl WorldState {
 pub struct SchemaConfiguration {
     pub enabled: Option<bool>,
     pub associations: Option<HashMap<String, String>>,
+    pub index_url: Option<String>,
     pub links: Option<bool>,
 }
 
@@ -208,6 +283,7 @@ pub struct Configuration {
     taplo_config_enabled: Option<bool>,
     schema: SchemaConfiguration,
     semantic_tokens: Option<bool>,
+    cache_path: Option<String>,
     formatter: taplo::formatter::OptionsIncompleteCamel,
 }
 
@@ -224,6 +300,7 @@ pub fn create_server() -> Server<World> {
         .on_request::<request::DocumentLinkRequest, _>(handlers::links)
         .on_request::<request::SemanticTokensFullRequest, _>(handlers::semantic_tokens)
         .on_request::<msg_ext::TomlToJsonRequest, _>(handlers::toml_to_json)
+        .on_request::<msg_ext::JsonToTomlRequest, _>(handlers::json_to_toml)
         .on_request::<msg_ext::SyntaxTreeRequest, _>(handlers::syntax_tree)
         .on_notification::<notification::DidOpenTextDocument, _>(handlers::document_open)
         .on_notification::<notification::DidChangeTextDocument, _>(handlers::document_change)
@@ -234,7 +311,5 @@ pub fn create_server() -> Server<World> {
 }
 
 pub fn create_world() -> World {
-    let mut w = WorldState::default();
-    w.register_built_in_schemas();
     Arc::new(AsyncMutex::new(WorldState::default()))
 }

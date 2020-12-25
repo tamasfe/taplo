@@ -6,8 +6,9 @@ use pretty_lint::Severity;
 use reqwest::Client;
 use schemars::schema::RootSchema;
 use std::path::{Path, PathBuf};
-use taplo::schema::{BUILTIN_SCHEMAS, BUILTIN_SCHEME};
+use taplo::schema::{BUILTIN_SCHEME};
 use wasm_bindgen::prelude::*;
+use schemars::schema_for;
 
 static HTTP_CLIENT: Lazy<Client> = Lazy::new(|| Client::new());
 
@@ -17,9 +18,10 @@ pub(crate) fn colored_output() -> Option<bool> {
 
 pub(crate) async fn get_schema(mut path: &str) -> Result<RootSchema, anyhow::Error> {
     if path.starts_with(&format!("{}://", BUILTIN_SCHEME)) {
-        match BUILTIN_SCHEMAS.get(path) {
-            Some(s) => Ok(s.clone()),
-            None => Err(anyhow!("builtin schema was not found: {}", path)),
+        if path == "taplo://taplo.toml" {
+            Ok(schema_for!(Config))
+        } else {
+            Err(anyhow!("invalid builtin schema: {}", path))
         }
     } else if path.starts_with("http://") || path.starts_with("https://") {
         print_message(

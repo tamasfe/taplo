@@ -34,6 +34,10 @@ import { exit } from "process";
   return fs.promises.readFile(path);
 };
 
+(global as any).writeFile = (path: string, data: Uint8Array): Promise<void> => {
+  return fs.promises.writeFile(path, data);
+};
+
 (global as any).isAbsolutePath = (p: string): boolean => {
   return (
     path.resolve(p) === path.normalize(p).replace(RegExp(path.sep + "$"), "")
@@ -43,6 +47,14 @@ import { exit } from "process";
 (global as any).fileExists = (p: string): boolean => {
   return fs.existsSync(p);
 };
+
+(global as any).mkdir = (p: string) => {
+  fs.mkdirSync(p, { recursive: true });
+};
+
+// For cached schemas.
+(global as any).needsUpdate = (path: string, newDate: number): boolean =>
+  fs.statSync(path).mtimeMs < newDate;
 
 let taplo: any;
 
@@ -55,7 +67,7 @@ process.on("message", async d => {
     taplo = await loadTaplo();
     await taplo.initialize();
   }
-  
+
   taplo.message(d);
 });
 

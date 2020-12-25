@@ -1,4 +1,4 @@
-use crate::{utils::LspExt, World};
+use crate::{utils::LspExt, World, WorldState};
 use lsp_async_stub::{Context, RequestWriter};
 use lsp_types::*;
 use schemars::schema::{InstanceType, Metadata, RootSchema, SingleOrVec};
@@ -51,13 +51,20 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
     }
 
     let mut schema_diag = Vec::new();
-    if let Some(schema_name) = w.get_schema_name(&uri) {
-        if let Some(s) = w.get_schema(&schema_name) {
-            schema_diag = collect_schema_diagnostics(s, &doc.parse, &uri, &doc.mapper);
+    match w.get_schema_name(&uri) {
+        Some(schema_path) => {
+            drop(w);
+            match WorldState::get_schema(&schema_path, context.clone()).await {
+                Ok(s) => {
+                    schema_diag = collect_schema_diagnostics(&s, &doc.parse, &uri, &doc.mapper);
+                }
+                Err(err) => {
+                    log_error!("failed to load schema: {}", err);
+                }
+            }
         }
-    }
-
-    drop(w);
+        None => drop(w),
+    };
 
     if !schema_diag.is_empty() {
         diags.extend(schema_diag.into_iter());

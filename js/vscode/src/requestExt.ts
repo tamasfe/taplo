@@ -15,6 +15,21 @@ export namespace TomlToJson {
   export const METHOD = "taplo/tomlToJson";
 }
 
+export namespace JsonToToml {
+  export interface Params {
+    // JSON text
+    text: string;
+  }
+
+  export interface Response {
+    // TOML text
+    text?: string;
+    error?: string;
+  }
+
+  export const METHOD = "taplo/jsonToToml";
+}
+
 export namespace SyntaxTree {
   export interface Params {
     // URI of the TOML document
@@ -44,43 +59,10 @@ export namespace MessageWithOutput {
   export const METHOD = "taplo/messageWithOutput";
 }
 
-export namespace UpdateBuiltInSchemas {
+export namespace CachePath {
   export interface Params {
-    associations: { [key: string]: string };
+    path: string;
   }
 
-  export const METHOD = "taplo/updateBuiltinSchemas";
-}
-
-export namespace GetCachedSchema {
-  export interface Params {
-    schemaUri: string;
-  }
-
-  export interface Response {
-    schemaJson?: string;
-  }
-
-  export const METHOD = "taplo/getCachedSchema";
-}
-
-export namespace CacheSchema {
-  export interface Params {
-    schemaUri: string;
-    schemaJson: string;
-  }
-
-  export const METHOD = "taplo/cacheSchema";
-}
-
-export namespace ConfigFileChanged {
-  export const METHOD = "taplo/configFileChanged";
-}
-
-export namespace WatchConfigFile {
-  export interface Params {
-    configPath: string;
-  }
-
-  export const METHOD = "taplo/watchConfigFile";
+  export const METHOD = "taplo/cachePath";
 }

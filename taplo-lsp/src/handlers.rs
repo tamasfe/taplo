@@ -2,21 +2,21 @@ use crate::{
     external::*,
     msg_ext::{self, CachePathParams},
     utils::LspExt,
-    Configuration, Document, HashRegex, World,
+    Configuration, Document, HashRegex, World, WorldState,
 };
-use anyhow::anyhow;
-use indexmap::IndexMap;
+use hex::ToHex;
 use itertools::Itertools;
 use lsp_async_stub::{rpc::Error, Context, Params, RequestWriter};
 use lsp_types::*;
 use regex::Regex;
 use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, convert::TryFrom, mem};
+use sha2::{Digest, Sha256};
+use std::convert::TryFrom;
 use taplo::{
     analytics::NodeRef,
     formatter,
-    schema::{util::get_schema_objects, BUILTIN_SCHEMAS, BUILTIN_SCHEME},
+    schema::{util::get_schema_objects, CachedSchema, SchemaIndex},
     util::{coords::Mapper, syntax::join_ranges},
     value::Value,
 };
@@ -104,7 +104,8 @@ pub(crate) async fn initialize(
 
 pub(crate) async fn cache_path(mut context: Context<World>, params: Params<CachePathParams>) {
     if let Some(params) = params.optional() {
-        context.world().lock().await.cache_path = Some(params.path.into());
+        let mut w = context.world().lock().await;
+        w.cache_path = Some(params.path.into());
     }
 }
 
@@ -133,70 +134,26 @@ async fn update_configuration(mut context: Context<World>) {
         return;
     }
 
-    w.schema_associations.clear();
+    if w.configuration.schema.associations.is_some() {
+        w.schema_associations.clear();
+    }
 
-    let mut schemas: HashMap<String, RootSchema> = mem::take(&mut w.schemas);
-
-    let config = w.configuration.clone();
+    if let Some(assoc) = &w.configuration.schema.associations {
+        w.schema_associations = assoc
+            .iter()
+            .filter_map(|(k, v)| match Regex::new(k) {
+                Ok(re) => Some((HashRegex(re), v.clone())),
+                Err(err) => {
+                    log_error!("invalid schema pattern: {}", err);
+                    None
+                }
+            })
+            .collect();
+    }
 
     drop(w);
 
-    let mut new_schema_associations: IndexMap<HashRegex, String> = IndexMap::new();
-
-    if let Some(assoc) = config.schema.associations {
-        for (k, s) in assoc {
-            if is_deprecated_schema(&s) {
-                log_warn!("Schema is deprecated, ignoring it ({})", &s);
-                continue;
-            }
-
-            let re = match Regex::new(&k) {
-                Ok(r) => r,
-                Err(err) => {
-                    log_error!("Invalid schema association pattern: {}", err);
-                    show_schema_error(context.clone());
-                    continue;
-                }
-            };
-
-            // Save the schema association
-            new_schema_associations.insert(HashRegex(re), s.clone());
-
-            // Then get the schema itself.
-
-            if schemas.contains_key(&s) {
-                continue;
-            }
-
-            if s.starts_with(&format!("{}://", BUILTIN_SCHEME))
-                && !schemas.iter().any(|(k, _)| k == &s)
-            {
-                log_error!("Invalid built-in schema: {}", s);
-                show_schema_error(context.clone());
-                continue;
-            }
-
-            match get_schema(&s, context.clone()).await {
-                Ok(schema) => {
-                    schemas.insert(s, schema);
-                }
-                Err(err) => {
-                    log_error!("Failed to load schema: {}", err);
-                    show_schema_error(context.clone());
-                }
-            }
-        }
-    }
-    let mut w = context.world().lock().await;
-
-    if !new_schema_associations.is_empty() {
-        w.schema_associations.extend(new_schema_associations);
-    }
-
-    w.schemas = schemas;
-    drop(w);
-
-    if let Err(e) = load_config(context.clone()).await {
+    if let Err(e) = load_config_file(context.clone()).await {
         log_error!("failed to load configuration file: {}", e);
 
         let mut c = context.clone();
@@ -211,20 +168,148 @@ async fn update_configuration(mut context: Context<World>) {
             .unwrap();
         });
     }
-}
 
-fn show_schema_error(mut context: Context<World>) {
-    spawn(async move {
-        context
-            .write_notification::<msg_ext::MessageWithOutput, _>(Some(
-                msg_ext::MessageWithOutputParams {
-                    kind: msg_ext::MessageKind::Error,
-                    message: "Failed to load schema!".into(),
-                },
-            ))
-            .await
-            .unwrap();
-    });
+    let mut w = context.world().lock().await;
+
+    let mut index = None;
+
+    if let Some(index_url) = &w.configuration.schema.index_url {
+        match w.http_client.clone().get(index_url).send().await {
+            Ok(res) => match res.json::<SchemaIndex>().await {
+                Ok(idx) => {
+                    index = Some(idx);
+
+                    if let Some(cache_path) = &w.cache_path {
+                        if let Err(err) = write_file(
+                            cache_path
+                                .join("schema_index")
+                                .with_extension("json")
+                                .to_str()
+                                .unwrap(),
+                            &serde_json::to_vec(&index).unwrap(),
+                        )
+                        .await
+                        {
+                            log_error!("failed to save schema index: {}", err);
+                        }
+                    }
+                }
+                Err(err) => {
+                    log_error!("invalid schema index: {}", err);
+                }
+            },
+            Err(err) => {
+                log_error!("failed to download schema index: {}", err);
+            }
+        }
+    }
+
+    if index.is_none() {
+        if let Some(cache_path) = &w.cache_path {
+            let index_path = cache_path.join("schema_index").with_extension("json");
+
+            if file_exists(index_path.to_str().unwrap()) {
+                match read_file(index_path.to_str().unwrap()).await {
+                    Ok(data) => match serde_json::from_slice(&data) {
+                        Ok(idx) => index = Some(idx),
+                        Err(err) => {
+                            log_error!("invalid schema index (cached): {}", err);
+                        }
+                    },
+                    Err(err) => {
+                        log_error!("failed invalid schema index: {}", err);
+                    }
+                }
+            }
+        }
+    }
+
+    if let Some(index) = index {
+        for schema in index.schemas {
+            for pat in &schema.patterns {
+                match Regex::new(pat) {
+                    Ok(re) => {
+                        w.schema_associations
+                            .insert(HashRegex(re), schema.url.clone());
+                    }
+                    Err(err) => {
+                        log_error!(
+                            r#"invalid pattern for schema "{}" ({}): {}"#,
+                            schema.name.as_ref().map(|s| s.as_str()).unwrap_or(""),
+                            schema.url,
+                            err
+                        );
+                    }
+                };
+            }
+
+            let client = w.http_client.clone();
+
+            if let Some(updated) = schema.updated {
+                match time::OffsetDateTime::parse(updated, time::Format::Rfc3339) {
+                    Ok(updated) => {
+                        if let Some(cache_path) = w.cache_path.clone() {
+                            let mut hasher = Sha256::new();
+                            hasher.update(schema.url.as_bytes());
+                            let url_hash = hasher.finalize().encode_hex::<String>();
+
+                            let file_path = cache_path
+                                .join("schemas")
+                                .join(&url_hash)
+                                .with_extension("json");
+                            let fp = file_path.to_str().unwrap();
+
+                            if let Ok(true) = needs_update(fp, (updated.timestamp() * 1000) as u64)
+                            {
+                                let path = schema.url;
+
+                                spawn(async move {
+                                    let res = client.get(&path).send().await.unwrap();
+                                    let schema: RootSchema = res
+                                        .json()
+                                        .await
+                                        .map_err::<anyhow::Error, _>(Into::into)
+                                        .unwrap();
+
+                                    let s = schema.clone();
+
+                                    match mkdir(cache_path.join("schemas").to_str().unwrap()) {
+                                        Ok(_) => {
+                                            spawn(async move {
+                                                if let Err(err) = write_file(
+                                                    cache_path
+                                                        .join("schemas")
+                                                        .join(&url_hash)
+                                                        .with_extension("json")
+                                                        .to_str()
+                                                        .unwrap(),
+                                                    &serde_json::to_vec(&CachedSchema {
+                                                        url: Some(path),
+                                                        schema: s,
+                                                    })
+                                                    .unwrap(),
+                                                )
+                                                .await
+                                                {
+                                                    log_error!("failed to update schema: {}", err);
+                                                };
+                                            });
+                                        }
+                                        Err(err) => {
+                                            log_error!("failed to update schema: {}", err);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        log_error!("schema update date is invalid ({}): {}", &schema.url, err);
+                    }
+                }
+            }
+        }
+    }
 }
 
 pub(crate) async fn configuration_change(
@@ -423,12 +508,20 @@ pub(crate) async fn completion(
         None => return Err(Error::new("document not found")),
     };
 
-    let schema: RootSchema = match w.get_schema_by_uri(&uri) {
-        Some(s) => s.clone(),
+    let schema_path = match w.get_schema_name(&uri) {
+        Some(s) => s,
         None => return Ok(None),
     };
 
     drop(w);
+
+    let schema: RootSchema = match WorldState::get_schema(&schema_path, context.clone()).await {
+        Ok(s) => s,
+        Err(err) => {
+            log_error!("failed to load schema: {}", err);
+            return Ok(None);
+        }
+    };
 
     Ok(Some(CompletionResponse::List(CompletionList {
         is_incomplete: false,
@@ -456,10 +549,22 @@ pub(crate) async fn hover(
         None => return Err(Error::new("document not found")),
     };
 
-    let schema: RootSchema = match w.get_schema_by_uri(&uri) {
-        Some(s) => s.clone(),
+    let schema_path = match w.get_schema_name(&uri) {
+        Some(s) => s,
         None => return Ok(None),
     };
+
+    drop(w);
+
+    let schema: RootSchema = match WorldState::get_schema(&schema_path, context.clone()).await {
+        Ok(s) => s,
+        Err(err) => {
+            log_error!("failed to load schema: {}", err);
+            return Ok(None);
+        }
+    };
+
+    let w = context.world().lock().await;
 
     let dom = doc.parse.clone().into_dom();
 
@@ -681,9 +786,19 @@ pub(crate) async fn links(
         None => return Err(Error::new("document not found")),
     };
 
-    let schema: RootSchema = match w.get_schema_by_uri(&uri) {
-        Some(s) => s.clone(),
+    let schema_path = match w.get_schema_name(&uri) {
+        Some(s) => s,
         None => return Ok(None),
+    };
+
+    drop(w);
+
+    let schema: RootSchema = match WorldState::get_schema(&schema_path, context.clone()).await {
+        Ok(s) => s,
+        Err(err) => {
+            log_error!("failed to load schema: {}", err);
+            return Ok(None);
+        }
     };
 
     let dom = doc.parse.clone().into_dom();
@@ -854,6 +969,30 @@ pub(crate) async fn toml_to_json(
     })
 }
 
+pub(crate) async fn json_to_toml(
+    _context: Context<World>,
+    params: Params<msg_ext::JsonToTomlParams>,
+) -> Result<msg_ext::JsonToTomlResponse, Error> {
+    let p = params.required()?;
+
+    match serde_json::from_str::<serde_json::Value>(&p.text) {
+        Ok(v) => match toml::to_string_pretty(&v) {
+            Ok(v) => Ok(msg_ext::JsonToTomlResponse {
+                text: Some(v),
+                error: None,
+            }),
+            Err(err) => Ok(msg_ext::JsonToTomlResponse {
+                text: None,
+                error: Some(err.to_string()),
+            }),
+        },
+        Err(err) => Ok(msg_ext::JsonToTomlResponse {
+            text: None,
+            error: Some(err.to_string()),
+        }),
+    }
+}
+
 pub(crate) async fn syntax_tree(
     mut context: Context<World>,
     params: Params<msg_ext::SyntaxTreeParams>,
@@ -867,68 +1006,6 @@ pub(crate) async fn syntax_tree(
     Ok(msg_ext::SyntaxTreeResponse {
         text: format!("{:#?}", doc.parse.clone().into_syntax()),
     })
-}
-
-pub(crate) async fn get_schema(
-    mut path: &str,
-    mut context: Context<World>,
-) -> Result<RootSchema, anyhow::Error> {
-    if path.starts_with(&format!("{}://", BUILTIN_SCHEME)) {
-        match BUILTIN_SCHEMAS.get(path) {
-            Some(s) => Ok(s.clone()),
-            None => Err(anyhow!("builtin schema was not found: {}", path)),
-        }
-    } else if path.starts_with("http://") || path.starts_with("https://") {
-        let schema_uri = Url::parse(path)?;
-        let cached_res = context
-            .write_request::<msg_ext::GetCachedSchemaRequest, _>(Some(
-                msg_ext::GetCachedSchemaParams {
-                    schema_uri: schema_uri.clone(),
-                },
-            ))
-            .await
-            .unwrap()
-            .into_result()?;
-
-        if let Some(s) = cached_res.schema_json {
-            return serde_json::from_str(&s).map_err(Into::into);
-        }
-
-        let w = context.world().lock().await;
-        let client = w.http_client.clone();
-        drop(w);
-
-        let res = client.get(path).send().await?;
-        let schema: RootSchema = res.json().await.map_err::<anyhow::Error, _>(Into::into)?;
-
-        context
-            .write_notification::<msg_ext::CacheSchemaRequest, _>(Some(
-                msg_ext::CacheSchemaParams {
-                    schema_uri,
-                    schema_json: serde_json::to_string(&schema)?,
-                },
-            ))
-            .await
-            .unwrap();
-
-        Ok(schema)
-    } else if path.starts_with("file://") {
-        path = path.trim_start_matches("file://");
-        serde_json::from_slice(&read_file(path).await?).map_err(Into::into)
-    } else if is_absolute_path(path) {
-        serde_json::from_slice(&read_file(path).await?).map_err(Into::into)
-    } else {
-        match context.world().lock().await.workspace_absolute(path) {
-            Some(p) => {
-                serde_json::from_slice(&read_file(p.to_str().unwrap()).await?).map_err(Into::into)
-            }
-            None => Err(anyhow!("cannot determine workspace root for relative path")),
-        }
-    }
-}
-
-fn is_deprecated_schema(s: &str) -> bool {
-    s.starts_with("toml_builtin://")
 }
 
 async fn load_config_file(mut context: Context<World>) -> Result<(), anyhow::Error> {
@@ -977,17 +1054,6 @@ async fn load_config_file(mut context: Context<World>) -> Result<(), anyhow::Err
                         w.taplo_config = Some(toml::from_slice(&cfg_file)?);
                         drop(w);
 
-                        spawn(async move {
-                            context
-                                .write_notification::<msg_ext::WatchConfigFile, _>(Some(
-                                    msg_ext::WatchConfigFileParams {
-                                        config_path: ws_path.join(name).to_str().unwrap().into(),
-                                    },
-                                ))
-                                .await
-                                .unwrap();
-                        });
-
                         return Ok(());
                     }
                 }
@@ -996,40 +1062,4 @@ async fn load_config_file(mut context: Context<World>) -> Result<(), anyhow::Err
         }
         None => Ok(()),
     }
-}
-
-async fn load_config(mut context: Context<World>) -> Result<(), anyhow::Error> {
-    load_config_file(context.clone()).await?;
-
-    let w = context.world().lock().await;
-    let c = w.taplo_config.clone();
-    // FIXME(perf)
-    let old_schemas = w.schemas.clone();
-    drop(w);
-
-    let mut new_schemas: HashMap<String, RootSchema> = HashMap::new();
-
-    if let Some(c) = c {
-        for schema_name in c.collect_schemas() {
-            if old_schemas.contains_key(&schema_name) {
-                continue;
-            }
-
-            match get_schema("", context.clone()).await {
-                Ok(s) => {
-                    new_schemas.insert(schema_name, s);
-                }
-                Err(err) => {
-                    log_error!("Failed to load schema: {}", err);
-                    show_schema_error(context.clone());
-                }
-            }
-        }
-    }
-
-    let mut w = context.world().lock().await;
-
-    w.schemas.extend(new_schemas);
-
-    Ok(())
 }

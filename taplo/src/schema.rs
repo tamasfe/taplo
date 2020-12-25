@@ -1,41 +1,45 @@
-use once_cell::sync::Lazy;
 use schemars::schema::RootSchema;
-use std::collections::HashMap;
+
+#[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_crate::Serialize, serde_crate::Deserialize)
+)]
+#[cfg_attr(feature = "serde", serde(crate = "serde_crate"))]
+pub struct SchemaMeta {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub patterns: Vec<String>,
+    pub updated: Option<String>,
+    pub url: String,
+}
+
+#[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_crate::Serialize, serde_crate::Deserialize)
+)]
+#[cfg_attr(feature = "serde", serde(crate = "serde_crate"))]
+pub struct CachedSchema {
+    pub url: Option<String>,
+    pub schema: RootSchema,
+}
+
+#[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_crate::Serialize, serde_crate::Deserialize)
+)]
+#[cfg_attr(feature = "serde", serde(crate = "serde_crate"))]
+pub struct SchemaIndex {
+    pub schemas: Vec<SchemaMeta>,
+}
 
 /// The key of the schema extension property.
-pub const EXTENSION_KEY: &str = "evenBetterToml";
+pub const EXTENSION_KEY: &str = "x-taplo";
 
 /// The scheme of the built-in schemas.
 pub const BUILTIN_SCHEME: &str = "taplo";
-
-pub static BUILTIN_SCHEMAS: Lazy<HashMap<String, RootSchema>> = Lazy::new(|| {
-    let mut schemas = HashMap::new();
-    
-    schemas.insert(
-        format!("{}://cargo@Cargo.toml", BUILTIN_SCHEME),
-        serde_json::from_str(include_str!("../schemas/Cargo.json")).unwrap(),
-    );
-    schemas.insert(
-        format!("{}://python@pyproject.toml", BUILTIN_SCHEME),
-        serde_json::from_str(include_str!("../schemas/pyproject.json")).unwrap(),
-    );
-    schemas.insert(
-        format!("{}://taplo@taplo.toml", BUILTIN_SCHEME),
-        serde_json::from_str(include_str!("../schemas/taplo.json")).unwrap(),
-    );
-
-    schemas
-});
-
-pub static REGEX_ASSOCIATIONS: Lazy<HashMap<String, String>> = Lazy::new(|| {
-    let mut associations = HashMap::new();
-   
-    associations.insert(".*/Cargo\\.toml".to_string(), "taplo://cargo@Cargo.toml".to_string());
-    associations.insert(".*/pyproject\\.toml".to_string(), "taplo://python@pyproject.toml".to_string());
-    associations.insert(".*/\\.?taplo\\.toml".to_string(), "taplo://taplo@taplo.toml".to_string());
-
-    associations
-});
 
 pub mod util {
     use schemars::{
@@ -182,6 +186,12 @@ pub mod util {
             .extensions
             .get(EXTENSION_KEY)
             .and_then(|v| serde_json::from_value::<ExtMeta>(v.clone()).ok())
+            .or_else(|| {
+                schema
+                    .extensions
+                    .get("evenBetterToml")
+                    .and_then(|v| serde_json::from_value::<ExtMeta>(v.clone()).ok())
+            })
             .unwrap_or_default()
     }
 

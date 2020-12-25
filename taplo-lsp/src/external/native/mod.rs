@@ -1,9 +1,5 @@
 use futures::Future;
-use lsp_async_stub::Context;
-use notify::{RecursiveMode, watcher, Watcher};
-use std::{path::Path, sync::mpsc::channel, thread, time::Duration};
-
-use crate::World;
+use std::{path::Path, time::UNIX_EPOCH};
 
 #[macro_export]
 macro_rules! log_info {
@@ -45,32 +41,23 @@ pub(crate) async fn read_file(p: &str) -> Result<Vec<u8>, anyhow::Error> {
     Ok(tokio::fs::read(p).await?)
 }
 
+pub(crate) async fn write_file(p: &str, data: &[u8]) -> Result<(), anyhow::Error> {
+    Ok(tokio::fs::write(p, data).await?)
+}
+
 pub(crate) fn file_exists(p: &str) -> bool {
     Path::new(p).exists()
 }
 
-pub(crate) fn watch_config(path: &Path, context: Context<World>) {
-    let (tx, rx) = channel();
-
-    let mut watcher = watcher(tx, Duration::from_secs(2)).unwrap();
-
-    watcher.watch(path, RecursiveMode::Recursive).unwrap();
-
-    thread::spawn(move || {
-        loop {
-            match rx.recv() {
-                Ok(ev) => {
-                    spawn(async{
-                        context.world().lock().await;
-                        // TODO
-                    });
-                }
-                Err(e) => {
-                    log_debug!("watch error: {}", e)
-                }
-            }
-        }
-    });
+pub(crate) fn mkdir(p: &str) -> Result<(), anyhow::Error> {
+    std::fs::create_dir_all(p)?;
+    Ok(())
 }
 
-pub(crate) fn unwatch_config() {}
+pub(crate) fn needs_update(p: &str, new_date_ms: u64) -> Result<bool, anyhow::Error> {
+    Ok(std::fs::metadata(p)?
+        .modified()?
+        .duration_since(UNIX_EPOCH)?
+        .as_millis()
+        < new_date_ms as u128)
+}

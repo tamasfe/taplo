@@ -1,12 +1,13 @@
-use crate::{rpc, Context, MessageWriter, Params};
+use super::{Context, MessageWriter, Params};
+use crate::rpc;
 use async_trait::async_trait;
 use futures::{Future, SinkExt};
 use lsp_types::{notification::Notification, request::Request};
 use serde::{de::DeserializeOwned, Serialize};
 use std::marker::PhantomData;
 
-#[async_trait]
-pub(crate) trait Handler<W: Clone + Send + Sync>: Send {
+#[async_trait(?Send)]
+pub(crate) trait Handler<W: Clone> {
     fn method(&self) -> &'static str;
 
     async fn handle(
@@ -19,7 +20,7 @@ pub(crate) trait Handler<W: Clone + Send + Sync>: Send {
     fn box_clone(&self) -> Box<dyn Handler<W>>;
 }
 
-impl<W: Clone + Send + Sync> Clone for Box<dyn Handler<W>> {
+impl<W: Clone> Clone for Box<dyn Handler<W>> {
     fn clone(&self) -> Self {
         self.box_clone()
     }
@@ -28,8 +29,8 @@ impl<W: Clone + Send + Sync> Clone for Box<dyn Handler<W>> {
 pub struct RequestHandler<R, F, W>
 where
     R: Request,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send,
-    W: Clone + Send + Sync,
+    F: Future<Output = Result<R::Result, rpc::Error>>,
+    W: Clone,
 {
     f: fn(Context<W>, Params<R::Params>) -> F,
     t: PhantomData<W>,
@@ -38,8 +39,8 @@ where
 impl<R, F, W> Clone for RequestHandler<R, F, W>
 where
     R: Request,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send,
-    W: Clone + Send + Sync,
+    F: Future<Output = Result<R::Result, rpc::Error>>,
+    W: Clone,
 {
     fn clone(&self) -> Self {
         Self {
@@ -52,8 +53,8 @@ where
 impl<R, F, W> RequestHandler<R, F, W>
 where
     R: Request,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send,
-    W: Clone + Send + Sync,
+    F: Future<Output = Result<R::Result, rpc::Error>>,
+    W: Clone,
 {
     pub fn new(f: fn(Context<W>, Params<R::Params>) -> F) -> Self {
         Self {
@@ -63,14 +64,13 @@ where
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl<R, F, P, W> Handler<W> for RequestHandler<R, F, W>
 where
     R: Request<Params = P> + 'static,
-    R::Result: Send,
-    P: Send + Serialize + DeserializeOwned + 'static,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send + 'static,
-    W: Clone + Send + Sync + 'static,
+    P: Serialize + DeserializeOwned + 'static,
+    F: Future<Output = Result<R::Result, rpc::Error>> + 'static,
+    W: Clone + 'static,
 {
     fn method(&self) -> &'static str {
         R::METHOD
@@ -91,7 +91,9 @@ where
                         rpc::Response::error(rpc::Error::invalid_params().with_data(e.to_string()))
                             .with_request_id(req_id.unwrap())
                             .into_message(),
-                    ).await.unwrap();
+                    )
+                    .await
+                    .unwrap();
                 }
 
                 return;
@@ -115,8 +117,8 @@ where
 pub struct NotificationHandler<N, F, W>
 where
     N: Notification,
-    F: Future + Send,
-    W: Clone + Send + Sync,
+    F: Future,
+    W: Clone,
 {
     f: fn(Context<W>, Params<N::Params>) -> F,
     t: PhantomData<W>,
@@ -125,8 +127,8 @@ where
 impl<N, F, W> NotificationHandler<N, F, W>
 where
     N: Notification,
-    F: Future + Send,
-    W: Clone + Send + Sync,
+    F: Future,
+    W: Clone,
 {
     pub fn new(f: fn(Context<W>, Params<N::Params>) -> F) -> Self {
         Self {
@@ -139,8 +141,8 @@ where
 impl<N, F, W> NotificationHandler<N, F, W>
 where
     N: Notification,
-    F: Future + Send,
-    W: Clone + Send + Sync,
+    F: Future,
+    W: Clone,
 {
     fn clone(&self) -> Self {
         Self {
@@ -150,13 +152,13 @@ where
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl<N, F, P, W> Handler<W> for NotificationHandler<N, F, W>
 where
     N: Notification<Params = P> + 'static,
-    P: Send + Serialize + DeserializeOwned + 'static,
-    F: Future + Send + 'static,
-    W: Clone + Send + Sync + 'static,
+    P: Serialize + DeserializeOwned + 'static,
+    F: Future + 'static,
+    W: Clone + 'static,
 {
     fn method(&self) -> &'static str {
         N::METHOD

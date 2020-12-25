@@ -1,4 +1,4 @@
-use crate::Document;
+use crate::{Document, utils::LspExt};
 use lsp_types::{DocumentSymbol, SymbolKind};
 use rowan::TextRange;
 use taplo::{
@@ -23,6 +23,7 @@ pub(crate) fn create_symbols(doc: &Document) -> Vec<DocumentSymbol> {
     symbols
 }
 
+#[allow(deprecated)]
 fn symbols_for_value(
     name: String,
     key_range: Option<TextRange>,
@@ -48,55 +49,61 @@ fn symbols_for_value(
         ValueNode::Bool(_) => symbols.push(DocumentSymbol {
             name,
             kind: SymbolKind::Boolean,
-            range,
-            selection_range,
+            range: range.into_lsp(),
+            selection_range: selection_range.into_lsp(),
             detail: None,
             deprecated: None,
+            tags: Default::default(),
             children: None,
         }),
         ValueNode::String(_) => symbols.push(DocumentSymbol {
             name,
             kind: SymbolKind::String,
-            range,
-            selection_range,
+            range: range.into_lsp(),
+            selection_range: selection_range.into_lsp(),
             detail: None,
             deprecated: None,
+            tags: Default::default(),
             children: None,
         }),
         ValueNode::Integer(_) => symbols.push(DocumentSymbol {
             name,
             kind: SymbolKind::Number,
-            range,
-            selection_range,
+            range: range.into_lsp(),
+            selection_range: selection_range.into_lsp(),
             detail: None,
             deprecated: None,
+            tags: Default::default(),
             children: None,
         }),
         ValueNode::Float(_) => symbols.push(DocumentSymbol {
             name,
             kind: SymbolKind::Number,
-            range,
-            selection_range,
+            range: range.into_lsp(),
+            selection_range: selection_range.into_lsp(),
             detail: None,
             deprecated: None,
+            tags: Default::default(),
             children: None,
         }),
         ValueNode::Date(_) => symbols.push(DocumentSymbol {
             name,
             kind: SymbolKind::Field,
-            range,
-            selection_range,
+            range: range.into_lsp(),
+            selection_range: selection_range.into_lsp(),
             detail: None,
             deprecated: None,
+            tags: Default::default(),
             children: None,
         }),
         ValueNode::Array(arr) => symbols.push(DocumentSymbol {
             name,
             kind: SymbolKind::Array,
-            range,
-            selection_range,
+            range: range.into_lsp(),
+            selection_range: selection_range.into_lsp(),
             detail: None,
             deprecated: None,
+            tags: Default::default(),
             children: {
                 let mut child_symbols = Vec::with_capacity(arr.items().len());
 
@@ -111,10 +118,11 @@ fn symbols_for_value(
             symbols.push(DocumentSymbol {
                 name,
                 kind: SymbolKind::Object,
-                range,
-                selection_range,
+                range: range.into_lsp(),
+                selection_range: selection_range.into_lsp(),
                 detail: None,
                 deprecated: None,
+                tags: Default::default(),
                 children: {
                     let mut child_symbols = Vec::with_capacity(t.entries().len());
 

@@ -18,6 +18,8 @@ It is currently a **preview extension**, it might contain bugs, or might even cr
   - [Commands](#commands)
     - [Copy Selection as JSON](#copy-selection-as-json)
     - [Paste as JSON](#paste-as-json)
+    - [Copy JSON Selection as JSON](#copy-json-selection-as-json)
+    - [Paste JSON as TOML](#paste-json-as-toml)
 - [Configuration File](#configuration-file)
 - [Special Thanks](#special-thanks)
 
@@ -131,6 +133,14 @@ Copies the selected TOML text converted to JSON to the system clipboard.
 ### Paste as JSON
 
 Parses the TOML text from the system clipboard and pastes it converted into JSON in the active selection.
+
+### Copy JSON Selection as JSON
+
+Copies the selected JSON text converted to TOML to the system clipboard.
+
+### Paste JSON as TOML
+
+Parses the JSON text from the system clipboard and pastes it converted into TOML in the active selection.
 
 # Configuration File
 

@@ -1,14 +1,26 @@
 # Change Log
 
+### 0.10.0
+
+
+### Features
+- Conversion commands from JSON to TOML
+- Schema repository for easier schema updates
+
+### Fixes
+- Several Formatter fixes
+
 ## 0.9.4
 
+### Features
 - Added `rustfmt.toml` schema ([#65](https://github.com/tamasfe/taplo/pull/65))
-
 ## 0.9.3
-
+### Fixes
 - Fixed syntax highlights (again...)
 
 ## 0.9.2
+### Fixes
+
 - Fixed unusable config files
 
 ## 0.9.1

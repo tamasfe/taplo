@@ -33,7 +33,9 @@
     "onLanguage:toml",
     "onLanguage:cargoLock",
     "onCommand:evenBetterToml.pasteTomlAsJson",
-    "onCommand:evenBetterToml.copyTomlAsJson"
+    "onCommand:evenBetterToml.copyTomlAsJson",
+    "onCommand:evenBetterToml.pasteJsonAsToml",
+    "onCommand:evenBetterToml.copyJsonAsToml"
   ],
   "keywords": [
     "toml",
@@ -79,6 +81,10 @@
           "when": "config.evenBetterToml.commands.pasteTomlAsJson"
         },
         {
+          "command": "evenBetterToml.pasteJsonAsToml",
+          "when": "config.evenBetterToml.commands.pasteJsonAsToml"
+        },
+        {
           "command": "evenBetterToml.debug.showSyntaxTree",
           "when": "editorLangId == toml && config.evenBetterToml.debug"
         }
@@ -91,8 +97,17 @@
         "enablement": "editorHasSelection"
       },
       {
+        "command": "evenBetterToml.copyJsonAsToml",
+        "title": "TOML: Copy JSON Selection as TOML",
+        "enablement": "editorHasSelection"
+      },
+      {
         "command": "evenBetterToml.pasteTomlAsJson",
         "title": "TOML: Paste as JSON"
+      },
+      {
+        "command": "evenBetterToml.pasteJsonAsToml",
+        "title": "TOML: Paste JSON as TOML"
       },
       {
         "command": "evenBetterToml.debug.showSyntaxTree",
@@ -152,6 +167,18 @@
         },
         "evenBetterToml.commands.copyTomlAsJson": {
           "description": "Show the \"Copy Selection as JSON\" command in the palette.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": true
+        },
+        "evenBetterToml.commands.copyJsonAsToml": {
+          "description": "Show the \"Copy JSON Selection as TOML\" command in the palette.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": true
+        },
+        "evenBetterToml.commands.pasteJsonAsToml": {
+          "description": "Show the \"Paste JSON as TOML\" command in the palette.",
           "type": "boolean",
           "scope": "resource",
           "default": true
@@ -256,38 +283,20 @@
           "scope": "resource",
           "default": false
         },
+        "evenBetterToml.schema.indexUrl": {
+          "description": "A HTTP(S) URL that points to a schema index.",
+          "type": "string",
+          "scope": "resource",
+          "default": "http://localhost:9000/index.json"
+        },
         "evenBetterToml.schema.associations": {
           "description": "Document and schema associations.",
           "markdownDescription": "Document and schema associations. \n\n The key must be a regular expression, this pattern is used to associate schemas with absolute document URIs. On multiple matches the first one is used in an undefined order. \n\n The value must be an absolute URI to the JSON schema, for supported values and more information [read here](https://github.com/tamasfe/taplo/tree/master/taplo-ide/schemas).",
           "type": "object",
           "scope": "resource",
           "default": {
-            ".*/Cargo\\.toml": "taplo://cargo@Cargo.toml",
-            ".*/pyproject\\.toml": "taplo://python@pyproject.toml",
-            ".*/\\.?taplo\\.toml": "taplo://taplo@taplo.toml"
+            ".*/\\.?taplo\\.toml": "taplo://taplo.toml"
           }
-        },
-        "evenBetterToml.extension.actions.schema.addNewBuiltins": {
-          "description": "Whether to update new builtin schema associations.",
-          "scope": "resource",
-          "type": "string",
-          "enum": [
-            "ask",
-            "always",
-            "never"
-          ],
-          "default": "ask"
-        },
-        "evenBetterToml.extension.actions.schema.removeOldBuiltins": {
-          "description": "Whether to remove old builtin schema associations.",
-          "scope": "resource",
-          "type": "string",
-          "enum": [
-            "ask",
-            "always",
-            "never"
-          ],
-          "default": "ask"
         },
         "evenBetterToml.debug": {
           "description": "Enable features to debug the extension.",
@@ -307,7 +316,7 @@
   "dependencies": {
     "deep-equal": "^2.0.4",
     "node-fetch": "^2.6.1",
-    "vscode-languageclient": "^6.1.3"
+    "vscode-languageclient": "^7.0.0-next.15"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^16.0.0",

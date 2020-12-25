@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-### Additions
-- Builtin `rustfmt.toml` schema added
+### Breaking Changes
+
+- Removed `lsp-types` dependency.
+- Removed builtin schemas.
 
 ## 0.4.0
 

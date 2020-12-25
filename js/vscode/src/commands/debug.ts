@@ -1,7 +1,7 @@
 // Various debug commands
 
 import * as vscode from "vscode";
-import * as client from "vscode-languageclient";
+import * as client from "vscode-languageclient/node";
 import * as requestExt from "../requestExt";
 
 export function register(

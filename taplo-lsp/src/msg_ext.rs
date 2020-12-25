@@ -1,5 +1,4 @@
-/// Requests that are not in the LSP spec
-use std::collections::HashMap;
+//! Messages that are not part of the LSP spec.
 
 use lsp_types::{notification::Notification, request::Request, Url};
 use serde::{Deserialize, Serialize};
@@ -30,6 +29,33 @@ impl Request for TomlToJsonRequest {
     type Params = TomlToJsonParams;
     type Result = TomlToJsonResponse;
     const METHOD: &'static str = "taplo/tomlToJson";
+}
+
+/// Serialize a TOML text to JSON.
+pub(crate) enum JsonToTomlRequest {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct JsonToTomlParams {
+    /// JSON text.
+    pub text: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct JsonToTomlResponse {
+    /// TOML text.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+impl Request for JsonToTomlRequest {
+    type Params = JsonToTomlParams;
+    type Result = JsonToTomlResponse;
+    const METHOD: &'static str = "taplo/jsonToToml";
 }
 
 /// Show Syntax Tree
@@ -76,73 +102,15 @@ impl Notification for MessageWithOutput {
     const METHOD: &'static str = "taplo/messageWithOutput";
 }
 
-pub(crate) enum UpdateBuiltInSchemas {}
+pub(crate) enum CachePath {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct UpdateBuiltInSchemasParams {
-    pub associations: HashMap<String, String>,
+pub(crate) struct CachePathParams {
+    pub path: String,
 }
 
-impl Notification for UpdateBuiltInSchemas {
-    type Params = UpdateBuiltInSchemasParams;
-    const METHOD: &'static str = "taplo/updateBuiltinSchemas";
-}
-
-pub(crate) enum GetCachedSchemaRequest {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct GetCachedSchemaParams {
-    /// URI of the schema
-    pub schema_uri: Url,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct GetCachedSchemaResponse {
-    pub schema_json: Option<String>,
-}
-
-impl Request for GetCachedSchemaRequest {
-    type Params = GetCachedSchemaParams;
-    type Result = GetCachedSchemaResponse;
-    const METHOD: &'static str = "taplo/getCachedSchema";
-}
-
-pub(crate) enum CacheSchemaRequest {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct CacheSchemaParams {
-    /// URI of the schema
-    pub schema_uri: Url,
-    pub schema_json: String,
-}
-
-impl Notification for CacheSchemaRequest {
-    type Params = CacheSchemaParams;
-    const METHOD: &'static str = "taplo/cacheSchema";
-}
-
-pub(crate) enum ConfigFileChanged {}
-
-impl Notification for ConfigFileChanged {
-    type Params = ();
-    const METHOD: &'static str = "taplo/configFileChanged";
-}
-
-
-pub(crate) enum WatchConfigFile {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct WatchConfigFileParams {
-    pub config_path: String,
-}
-
-
-impl Notification for WatchConfigFile {
-    type Params = WatchConfigFileParams;
-    const METHOD: &'static str = "taplo/watchConfigFile";
+impl Notification for CachePath {
+    type Params = CachePathParams;
+    const METHOD: &'static str = "taplo/cachePath";
 }

@@ -4,6 +4,8 @@ use taplo::{
     util::coords::{relative_range, Mapper, SplitLines},
 };
 
+use crate::utils::LspExt;
+
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
 #[repr(u32)]
@@ -94,7 +96,10 @@ impl<'b> SemanticTokensBuilder<'b> {
         let range = self.mapper.range(token.text_range()).unwrap();
 
         if range.is_single_line() {
-            let relative = relative_range(range, self.last_range.unwrap_or_default());
+            let relative = relative_range(
+                range,
+                taplo::util::coords::Range::from_lsp(self.last_range.unwrap_or_default()),
+            );
 
             self.tokens.push(SemanticToken {
                 delta_line: relative.start.line as u32,
@@ -110,12 +115,15 @@ impl<'b> SemanticTokensBuilder<'b> {
                 ),
             });
 
-            self.last_range = Some(range);
+            self.last_range = Some(range.into_lsp());
         } else {
             let ranges = range.split_lines(&self.mapper);
 
             for r in ranges {
-                let relative = relative_range(r, self.last_range.unwrap_or_default());
+                let relative = relative_range(
+                    r,
+                    taplo::util::coords::Range::from_lsp(self.last_range.unwrap_or_default()),
+                );
                 self.tokens.push(SemanticToken {
                     delta_line: relative.start.line as u32,
                     delta_start: relative.start.character as u32,
@@ -130,7 +138,7 @@ impl<'b> SemanticTokensBuilder<'b> {
                     ),
                 });
 
-                self.last_range = Some(r);
+                self.last_range = Some(r.into_lsp());
             }
         }
     }

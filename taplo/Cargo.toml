@@ -25,6 +25,7 @@ indexmap = "1"
 logos = "0.11.4"
 regex = "1"
 rowan = "0.10.0"
+semver = { version = "0.11", features = ["serde"] }
 smallvec = "1"
 
 chrono = { version = "0.4", optional = true }
@@ -44,5 +45,5 @@ assert-json-diff = "1"
 serde_json = "1"
 toml = "0.5"
 
-[package.metadata.docs.rs]
-features = ["serde", "schema", "chrono", "rewrite"]
+    [package.metadata.docs.rs]
+    features = ["serde", "schema", "chrono", "rewrite"]

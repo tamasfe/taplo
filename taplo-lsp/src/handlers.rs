@@ -109,26 +109,33 @@ pub(crate) async fn cache_path(mut context: Context<World>, params: Params<Cache
     }
 }
 
-async fn update_configuration(mut context: Context<World>) {
-    let res = context
-        .write_request::<request::WorkspaceConfiguration, _>(Some(ConfigurationParams {
-            items: vec![ConfigurationItem {
-                scope_uri: None,
-                section: Some("evenBetterToml".into()),
-            }],
-        }))
-        .await
-        .unwrap()
-        .into_result();
+async fn update_configuration(mut context: Context<World>, configuration: Option<Configuration>) {
+    let config = match configuration {
+        Some(c) => c,
+        None => {
+            let res = context
+                .write_request::<request::WorkspaceConfiguration, _>(Some(ConfigurationParams {
+                    items: vec![ConfigurationItem {
+                        scope_uri: None,
+                        section: Some("evenBetterToml".into()),
+                    }],
+                }))
+                .await
+                .unwrap()
+                .into_result();
 
-    let mut config_vals = match res {
-        Ok(v) => v,
-        Err(e) => panic!(e),
+            let mut config_vals = match res {
+                Ok(v) => v,
+                Err(e) => panic!(e),
+            };
+
+            serde_json::from_value(config_vals.remove(0)).unwrap_or_default()
+        }
     };
 
     let mut w = context.world().lock().await;
 
-    w.configuration = serde_json::from_value(config_vals.remove(0)).unwrap_or_default();
+    w.configuration = config;
 
     if !w.configuration.schema.enabled.unwrap_or_default() {
         return;
@@ -173,24 +180,35 @@ async fn update_configuration(mut context: Context<World>) {
 
     let mut index = None;
 
-    if let Some(index_url) = &w.configuration.schema.index_url {
+    if !w.configuration.schema.repository_enabled.unwrap_or(true) {
+        return;
+    }
+
+    if let Some(index_url) = &w.configuration.schema.repository_url {
         match w.http_client.clone().get(index_url).send().await {
             Ok(res) => match res.json::<SchemaIndex>().await {
                 Ok(idx) => {
                     index = Some(idx);
 
                     if let Some(cache_path) = &w.cache_path {
-                        if let Err(err) = write_file(
-                            cache_path
-                                .join("schema_index")
-                                .with_extension("json")
-                                .to_str()
-                                .unwrap(),
-                            &serde_json::to_vec(&index).unwrap(),
-                        )
-                        .await
-                        {
-                            log_error!("failed to save schema index: {}", err);
+                        match mkdir(cache_path.to_str().unwrap()) {
+                            Ok(_) => {
+                                if let Err(err) = write_file(
+                                    cache_path
+                                        .join("schema_index")
+                                        .with_extension("json")
+                                        .to_str()
+                                        .unwrap(),
+                                    &serde_json::to_vec(&index).unwrap(),
+                                )
+                                .await
+                                {
+                                    log_error!("failed to save schema index: {}", err);
+                                }
+                            }
+                            Err(err) => {
+                                log_error!("failed to save schema index: {}", err);
+                            }
                         }
                     }
                 }
@@ -226,7 +244,7 @@ async fn update_configuration(mut context: Context<World>) {
 
     if let Some(index) = index {
         for schema in index.schemas {
-            for pat in &schema.patterns {
+            for pat in &schema.extra.patterns {
                 match Regex::new(pat) {
                     Ok(re) => {
                         w.schema_associations
@@ -235,7 +253,7 @@ async fn update_configuration(mut context: Context<World>) {
                     Err(err) => {
                         log_error!(
                             r#"invalid pattern for schema "{}" ({}): {}"#,
-                            schema.name.as_ref().map(|s| s.as_str()).unwrap_or(""),
+                            schema.title.as_ref().map(|s| s.as_str()).unwrap_or(""),
                             schema.url,
                             err
                         );
@@ -259,7 +277,8 @@ async fn update_configuration(mut context: Context<World>) {
                                 .with_extension("json");
                             let fp = file_path.to_str().unwrap();
 
-                            if let Ok(true) = needs_update(fp, (updated.timestamp() * 1000) as u64)
+                            if let Ok(true) =
+                                needs_update(fp, (updated.unix_timestamp() * 1000) as u64)
                             {
                                 let path = schema.url;
 
@@ -316,7 +335,7 @@ pub(crate) async fn configuration_change(
     context: Context<World>,
     _params: Params<DidChangeConfigurationParams>,
 ) {
-    spawn(update_configuration(context));
+    spawn(update_configuration(context, None));
 }
 
 pub(crate) async fn document_open(
@@ -518,7 +537,7 @@ pub(crate) async fn completion(
     let schema: RootSchema = match WorldState::get_schema(&schema_path, context.clone()).await {
         Ok(s) => s,
         Err(err) => {
-            log_error!("failed to load schema: {}", err);
+            log_error!("failed to load schema ({}): {}", &schema_path, err);
             return Ok(None);
         }
     };
@@ -559,7 +578,7 @@ pub(crate) async fn hover(
     let schema: RootSchema = match WorldState::get_schema(&schema_path, context.clone()).await {
         Ok(s) => s,
         Err(err) => {
-            log_error!("failed to load schema: {}", err);
+            log_error!("failed to load schema ({}): {}", &schema_path, err);
             return Ok(None);
         }
     };

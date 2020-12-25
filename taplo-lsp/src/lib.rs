@@ -271,7 +271,8 @@ impl WorldState {
 pub struct SchemaConfiguration {
     pub enabled: Option<bool>,
     pub associations: Option<HashMap<String, String>>,
-    pub index_url: Option<String>,
+    pub repository_enabled: Option<bool>,
+    pub repository_url: Option<String>,
     pub links: Option<bool>,
 }
 

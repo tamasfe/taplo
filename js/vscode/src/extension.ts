@@ -70,8 +70,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await c.onReady();
   }
   c.sendNotification(CachePath.METHOD, {
-    // path: extensionContext.globalStorageUri.path,
-    path: "/home/tamasfe/work/opensauce/taplo/.local.cache",
+    path: context.globalStorageUri.path,
   });
   c.onNotification(MessageWithOutput.METHOD, async params =>
     showMessage(params, c)

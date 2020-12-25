@@ -283,11 +283,17 @@
           "scope": "resource",
           "default": false
         },
-        "evenBetterToml.schema.indexUrl": {
+        "evenBetterToml.schema.repositoryEnabled": {
+          "description": "Whether to enable the online schema repository.",
+          "type": "bool",
+          "scope": "resource",
+          "default": true
+        },
+        "evenBetterToml.schema.repositoryUrl": {
           "description": "A HTTP(S) URL that points to a schema index.",
           "type": "string",
           "scope": "resource",
-          "default": "http://localhost:9000/index.json"
+          "default": "https://taplo.tamasfe.dev/schema_index.json"
         },
         "evenBetterToml.schema.associations": {
           "description": "Document and schema associations.",

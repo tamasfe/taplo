@@ -1,4 +1,24 @@
 use schemars::schema::RootSchema;
+use semver::Version;
+
+#[derive(Debug, Default, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_crate::Serialize, serde_crate::Deserialize)
+)]
+#[cfg_attr(feature = "serde", serde(crate = "serde_crate"))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct SchemaExtraInfo {
+    #[cfg_attr(feature = "serde", serde(default))]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty"))]
+    pub authors: Vec<String>,
+    #[cfg_attr(feature = "serde", serde(default))]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub version: Option<Version>,
+    #[cfg_attr(feature = "serde", serde(default))]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty"))]
+    pub patterns: Vec<String>,
+}
 
 #[derive(Debug, Clone)]
 #[cfg_attr(
@@ -6,12 +26,19 @@ use schemars::schema::RootSchema;
     derive(serde_crate::Serialize, serde_crate::Deserialize)
 )]
 #[cfg_attr(feature = "serde", serde(crate = "serde_crate"))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct SchemaMeta {
-    pub name: Option<String>,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub title: Option<String>,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub description: Option<String>,
-    pub patterns: Vec<String>,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub updated: Option<String>,
     pub url: String,
+    pub url_hash: String,
+
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub extra: SchemaExtraInfo,
 }
 
 #[derive(Debug, Clone)]
@@ -25,7 +52,7 @@ pub struct CachedSchema {
     pub schema: RootSchema,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_crate::Serialize, serde_crate::Deserialize)

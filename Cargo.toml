@@ -1,5 +1,5 @@
 [workspace]
-exclude = ["util/schema-gen", "util/test-gen"]
+exclude = ["util/schema-gen", "util/test-gen", "util/schema-index"]
 members = ["taplo-lsp", "taplo-cli", "taplo", "lsp-async-stub"]
 
 [profile.release]

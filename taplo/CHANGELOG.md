@@ -1,11 +1,15 @@
 # Change Log
 
-## Unreleased
+## 0.5.0
 
 ### Breaking Changes
 
-- Removed `lsp-types` dependency.
-- Removed builtin schemas.
+- Removed `lsp-types` dependency
+- Removed builtin schemas
+
+### Fixes
+
+- Formatting fixes
 
 ## 0.4.0
 

@@ -3,7 +3,7 @@ authors = ["tamasfe"]
 categories = ["parser-implementations", "parsing"]
 description = "A TOML parser, analyzer and formatter library"
 edition = "2018"
-homepage = "https://github.com/tamasfe/taplo"
+homepage = "https://taplo.tamasfe.dev"
 keywords = ["toml", "parser", "formatter", "linter"]
 license = "MIT"
 name = "taplo"
@@ -45,5 +45,5 @@ assert-json-diff = "1"
 serde_json = "1"
 toml = "0.5"
 
-    [package.metadata.docs.rs]
-    features = ["serde", "schema", "chrono", "rewrite"]
+[package.metadata.docs.rs]
+features = ["serde", "schema", "chrono", "rewrite"]

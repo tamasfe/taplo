@@ -40,6 +40,15 @@ module.exports = {
       __key: "pages",
     },
     {
+      resolve: "gatsby-source-filesystem",
+      options: {
+        name: "schemas",
+        path: "./static/schemas",
+      },
+      __key: "schemas",
+    },
+    "gatsby-transformer-json",
+    {
       resolve: "gatsby-plugin-antd",
       options: {
         style: true,

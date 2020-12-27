@@ -86,7 +86,6 @@ const IndexPage = () => {
             </Space>
           </div>
         </Layout>
-
         <CurvedBackground />
         <div
           className="main-bg"
@@ -121,6 +120,7 @@ const IndexPage = () => {
             </Card>
             <Card
               title="Formatting"
+              extra={<a href="/configuration#formatting-options">more</a>}
               hoverable
               style={{ width: 300, height: 170 }}
             >
@@ -131,6 +131,7 @@ const IndexPage = () => {
             <Card
               title="JSON Schema"
               hoverable
+              extra={<a href="/configuration#schemas">more</a>}
               style={{ width: 300, height: 170 }}
             >
               <h4 style={{ textAlign: "center" }}>

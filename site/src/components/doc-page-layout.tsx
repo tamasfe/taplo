@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Layout, Menu, Breadcrumb, Tooltip } from "antd";
+import { Layout, Menu, Tooltip, Divider } from "antd";
 import { graphql, useStaticQuery } from "gatsby";
 import "../__generated__/gatsby-types";
 import { AppHeader } from "./header";
@@ -8,6 +8,14 @@ import "./doc-page-layout.scss";
 import Highlight, { defaultProps } from "prism-react-renderer";
 import theme from "prism-react-renderer/themes/github";
 import { Helmet } from "react-helmet";
+import Prism from "prism-react-renderer/prism";
+
+((typeof global !== "undefined" ? global : window) as any).Prism = Prism;
+
+require("prismjs/components/prism-toml");
+require("prismjs/components/prism-json");
+require("prismjs/components/prism-json5");
+require("prismjs/components/prism-typescript");
 
 const CodeHighlight: React.FunctionComponent = props => {
   if (!(props.children as any).props) {
@@ -77,9 +85,11 @@ const DocPage: React.FunctionComponent<any> = props => {
 
   const [selectedMenu, setSelectedMenu] = useState(undefined);
 
-  const selectMenu = (value: string) => {
+  const selectMenu = (value: string, side?: boolean) => {
     history.pushState(null, null, value);
-    setSelectedMenu(value);
+    if (side) {
+      setSelectedMenu(value);
+    }
   };
 
   const generateTree = (item: any) => ({
@@ -98,32 +108,34 @@ const DocPage: React.FunctionComponent<any> = props => {
     }, 200);
   };
 
-  const createLink = (Tag: any) => (props: any) => {
+  const createLink = (Tag: any, side?: boolean, underline?: boolean) => (
+    props: any
+  ) => {
     let ref = useRef<HTMLElement>();
 
-    useEffect(() => {
-      const listener = (ev: Event) => {
-        if (!ref.current) {
-          return;
-        }
-
-        const rect = ref.current.getBoundingClientRect();
-
-        if (rect.top > 64 && rect.top < 100) {
-          if (!itemClicked.current) {
-            setTimeout(() => {
-              selectMenu("#" + props.id);
-            }, 100);
+      useEffect(() => {
+        const listener = (ev: Event) => {
+          if (!ref.current) {
+            return;
           }
-        }
-      };
 
-      window.addEventListener("scroll", listener);
+          const rect = ref.current.getBoundingClientRect();
 
-      return () => {
-        window.removeEventListener("scroll", listener);
-      };
-    }, []);
+          if (rect.top > 64 && rect.top < 100) {
+            if (!itemClicked.current) {
+              setTimeout(() => {
+                selectMenu("#" + props.id, side);
+              }, 100);
+            }
+          }
+        };
+
+        window.addEventListener("scroll", listener);
+
+        return () => {
+          window.removeEventListener("scroll", listener);
+        };
+      }, []);
 
     let [hashVisible, setHashVisible] = useState(false);
 
@@ -167,14 +179,20 @@ const DocPage: React.FunctionComponent<any> = props => {
           </Tooltip>
           {props.children}
         </Tag>
+        {underline ? (
+          <Divider
+            type="horizontal"
+            style={{ marginTop: "0.2rem", marginBottom: "1rem" }}
+          />
+        ) : undefined}
       </div>
     );
   };
 
   const createComponents = () => {
     const components: { [key: string]: React.FunctionComponent } = {
-      h1: createLink("h1"),
-      h2: createLink("h2"),
+      h1: createLink("h1", true, true),
+      h2: createLink("h2", true),
       h3: createLink("h3"),
       h4: createLink("h4"),
       h5: createLink("h5"),
@@ -225,7 +243,7 @@ const DocPage: React.FunctionComponent<any> = props => {
         >
           <Menu
             mode="inline"
-            defaultOpenKeys={(pageMeta?.tableOfContents as any)?.items.map(
+            defaultOpenKeys={(pageMeta?.tableOfContents as any)?.items?.map(
               item => item.url
             )}
             onSelect={e => {
@@ -238,7 +256,7 @@ const DocPage: React.FunctionComponent<any> = props => {
             }}
             selectedKeys={[selectedMenu]}
           >
-            {(pageMeta?.tableOfContents as any)?.items.map(item =>
+            {(pageMeta?.tableOfContents as any)?.items?.map(item =>
               buildMenuItem(item)
             )}
           </Menu>

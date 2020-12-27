@@ -1,14 +1,8 @@
 ---
 title: Library
 nav: Library
+navOrder: 2
 ---
-
-# About
-
-Taplo is available as a library for the following languages:
-
-- [Rust](https://www.rust-lang.org/)
-- [JavaScript/Typescript](https://www.javascript.com) (Node.js and modern browsers) 
 
 # Rust
 
@@ -41,7 +35,7 @@ The available features can be found in the [documentation](https://docs.rs/taplo
 
 While there is some overlap in functionality, the two tools serve different purposes, in fact [Taplo CLI](/cli) actually uses [toml-rs](https://github.com/alexcrichton/toml-rs) for reading its own configuration file.
 
-All this also means, that Taplo will always be slower by nature, however not by much (*as of Taplo `0.1.0`*):
+All this also means, that Taplo will always be slower by nature, however not by much (_as of Taplo `0.1.0`_):
 
 ```
 test bench_taplo_parse          ... bench:     109,804 ns/iter (+/- 1,187)
@@ -75,6 +69,9 @@ Currently only a high-level API is provided for the following:
 - **Linting**
 - **Validation (based on JSON schema)**
 - **Formatting**: With configurable options
+- **JSON Conversion**: From/to JavaScript objects and JSON strings
+
+TypeScript typings and documentation are available.
 
 ## Usage
 
@@ -83,20 +80,18 @@ Only a single [`Taplo`](http://localhost:8080/api/javaScript/classes/_index_.tap
 It must be initialized asynchronously with its [`initialize`](/api/javaScript/classes/_index_.taplo/#initialize) method, **any attempts to create it with `new` will throw an error**.
 This is needed because the WebAssembly module has to be compiled before use.
 
-The initialization is rather expensive performance-wise, but it has to be once, and subsequent calls to `initialize` will be basically free.
+The initialization is rather expensive, but it has to be done once and subsequent calls to `initialize` will be basically free.
 
 An example usage:
 
-```js
+```ts
 import { Taplo } from "taplo";
 
-// Somewhere at the start of your app.
-const taplo = await Taplo.initialize();
-// ...
-// The other methods will not return promises.
-const formatted = taplo.format(tomlDocument);
+const toml = await Taplo.initialize();
+
+const formatted = toml.format("   [lib]   ");
+console.assert(formatted === "[lib]\n");
+
+const obj = toml.decode<{ key: boolean }>("key = true");
+console.assert(obj.key);
 ```
-
-## API Reference
-
-The auto-generated API reference is available [here](/api/javaScript).

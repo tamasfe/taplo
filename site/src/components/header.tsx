@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import taploIcon from "../assets/taplo-icon.svg";
 import CodeIcon from "mdi-react/XmlIcon";
 import "../__generated__/gatsby-types";
+import GithubIcon from "mdi-react/GithubIcon";
 
 import SearchIcon from "mdi-react/SearchIcon";
 
@@ -41,6 +42,7 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
           slug
           frontmatter {
             nav
+            navOrder
             title
           }
         }
@@ -64,12 +66,14 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
       .map(n => ({
         title: n.frontmatter.nav,
         link: n.slug,
+        order: n.frontmatter.navOrder ?? Infinity,
         subMenus:
-          (n.tableOfContents as any).items.map(toc => ({
+          (n.tableOfContents as any)?.items?.map(toc => ({
             hash: toc.url,
             title: toc.title,
           })) ?? [],
-      })),
+      }))
+      .sort((a, b) => a.order - b.order),
   ];
 
   const currentPage = path.slice(1);
@@ -270,12 +274,17 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
       </div>
       <Divider type="vertical" style={{ height: "80%" }}></Divider>
       <Menu
-        style={{ flexShrink: 0 }}
+        style={{ flexShrink: 0, marginRight: "1rem" }}
         selectedKeys={[currentPage]}
         theme="light"
         mode="horizontal"
       >
         {navLinks.map(createMenu)}
+        <Menu.Item key={"githubLink"}>
+          <a href="https://github.com/tamasfe/taplo">
+            <GithubIcon style={{ marginBottom: "-0.5rem" }} />
+          </a>
+        </Menu.Item>
       </Menu>
     </Header>
   );

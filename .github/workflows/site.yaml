@@ -1,0 +1,33 @@
+name: Deploy Site
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "schemas/**/*"
+      - "site/**/*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Update Schema Repository
+        run: ./scripts/schema-repo.sh
+      - name: Setup Node
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: "12.x"
+      - run: (cd site && yarn && yarn build)
+      - name: Deploy Site
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .site/public

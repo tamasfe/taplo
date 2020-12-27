@@ -1,3 +1,5 @@
+name: Continuous integration
+
 on:
   push:
     branches:
@@ -13,8 +15,6 @@ on:
   pull_request:
     branches:
       - master
-
-name: Continuous integration
 
 jobs:
   test_gen:

@@ -5,9 +5,10 @@ use crate::{
 };
 use clap::ArgMatches;
 use pretty_lint::{PrettyLint, Severity};
+use regex::Regex;
 use schemars::schema::RootSchema;
 use std::collections::HashSet;
-use taplo::{dom, rowan::TextRange, util::coords::Mapper};
+use taplo::{dom, rowan::TextRange, schema::SchemaIndex, util::coords::Mapper};
 use verify::Verifier;
 
 pub(crate) struct LintResult {
@@ -16,7 +17,11 @@ pub(crate) struct LintResult {
     pub error_count: usize,
 }
 
-pub(crate) async fn lint(config: Config, m: &ArgMatches) -> LintResult {
+pub(crate) async fn lint(
+    config: Config,
+    m: &ArgMatches,
+    schema_index: Option<SchemaIndex>,
+) -> LintResult {
     let mut res = LintResult {
         matched_document_count: 0,
         excluded_document_count: 0,
@@ -26,8 +31,8 @@ pub(crate) async fn lint(config: Config, m: &ArgMatches) -> LintResult {
     let mut schema = None;
 
     if let Some(schema_path) = m.value_of("schema") {
-        match get_schema(schema_path).await {
-            Ok(s) => schema = Some(s),
+        match get_schema(schema_path, m.value_of("cache-path")).await {
+            Ok(s) => schema = Some(s.0),
             Err(err) => {
                 print_message(
                     Severity::Error,
@@ -40,12 +45,25 @@ pub(crate) async fn lint(config: Config, m: &ArgMatches) -> LintResult {
         }
     }
 
+    let cache_path = m.value_of("cache-path").map(|s| s.to_string());
+
     if let Some(files) = m.values_of("files") {
-        lint_paths(&config, schema, files, &mut res, false).await;
+        lint_paths(
+            &config,
+            schema_index.as_ref(),
+            schema,
+            cache_path,
+            files,
+            &mut res,
+            false,
+        )
+        .await;
     } else {
         lint_paths(
             &config,
+            schema_index.as_ref(),
             schema,
+            cache_path,
             config.get_include_paths().iter().map(|s| s.as_ref()),
             &mut res,
             true,
@@ -58,7 +76,9 @@ pub(crate) async fn lint(config: Config, m: &ArgMatches) -> LintResult {
 
 async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
     config: &Config,
+    schema_index: Option<&SchemaIndex>,
     schema: Option<RootSchema>,
+    cache_path: Option<String>,
     files: F,
     res: &mut LintResult,
     allow_exclude: bool,
@@ -82,7 +102,7 @@ async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
         match get_paths_by_glob(val) {
             Ok(sources) => {
                 for path in sources {
-                    match read_file(&path) {
+                    match read_file(path.to_str().unwrap()).await {
                         Ok(src) => {
                             res.matched_document_count += 1;
 
@@ -116,14 +136,80 @@ async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
                                 }
                             }
 
+                            let str_src = match std::str::from_utf8(&src) {
+                                Ok(s) => s,
+                                Err(err) => {
+                                    print_message(
+                                        Severity::Error,
+                                        "error",
+                                        &format!("file {:?} is not valid UTF-8: {}", path, err),
+                                    );
+                                    res.error_count += 1;
+                                    continue;
+                                }
+                            };
+
                             match &schema {
                                 Some(s) => {
-                                    lint_source(path.to_str(), Some(s), &src, res);
+                                    lint_source(path.to_str(), Some(s), str_src, res);
                                 }
                                 None => {
-                                    match config.get_schema(path.to_str().unwrap()).await {
+                                    let schema_path = match config
+                                        .get_schema_path(path.to_str().unwrap())
+                                    {
+                                        Ok(p) => match p {
+                                            Some(p) => p,
+                                            None => match schema_index {
+                                                Some(idx) => {
+                                                    match idx.schemas.iter().find(|s| {
+                                                        s.extra.patterns.iter().any(|p| {
+                                                            Regex::new(p)
+                                                                .ok()
+                                                                .map(|r| {
+                                                                    r.is_match(
+                                                                        path.to_str().unwrap(),
+                                                                    )
+                                                                })
+                                                                .unwrap_or(false)
+                                                        })
+                                                    }) {
+                                                        Some(s) => s.url.clone(),
+                                                        None => {
+                                                            lint_source(
+                                                                path.to_str(),
+                                                                None,
+                                                                str_src,
+                                                                res,
+                                                            );
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                                None => {
+                                                    lint_source(path.to_str(), None, str_src, res);
+                                                    continue;
+                                                }
+                                            },
+                                        },
+                                        Err(err) => {
+                                            print_message(
+                                                Severity::Error,
+                                                "error",
+                                                &format!("invalid config: {}", err),
+                                            );
+                                            res.error_count += 1;
+                                            continue;
+                                        }
+                                    };
+
+                                    match get_schema(&schema_path, cache_path.as_ref()).await {
                                         Ok(schema) => {
-                                            lint_source(path.to_str(), schema.as_ref(), &src, res);
+                                            lint_source(
+                                                path.to_str(),
+                                                Some(&schema.0),
+                                                str_src,
+                                                res,
+                                            );
                                         }
                                         Err(err) => {
                                             print_message(
@@ -132,7 +218,7 @@ async fn lint_paths<'i, F: Iterator<Item = &'i str>>(
                                                 &format!("could not load schema: {}", err),
                                             );
                                             res.error_count += 1;
-                                            return;
+                                            continue;
                                         }
                                     };
                                 }

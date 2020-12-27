@@ -1,9 +1,9 @@
 use anyhow::anyhow;
-use schemars::{schema::RootSchema, JsonSchema};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use taplo::formatter;
 
-use crate::external::{self, glob_match_options};
+use crate::external::glob_match_options;
 
 pub const CONFIG_FILE_NAMES: &[&str] = &[".taplo.toml", "taplo.toml"];
 
@@ -55,36 +55,6 @@ impl Config {
             }
             None => Ok(false),
         }
-    }
-
-    pub async fn get_schema(&self, path: &str) -> Result<Option<RootSchema>, anyhow::Error> {
-        if let Some(rules) = &self.rule {
-            for rule in rules.iter().rev() {
-                if let Some(schema_opts) = &rule.options.schema {
-                    if schema_opts.enabled.unwrap_or(false) {
-                        match &schema_opts.path {
-                            Some(schema_path) => {
-                                if rule.includes(path)? {
-                                    return Ok(Some(external::get_schema(schema_path).await?));
-                                }
-                            }
-                            None => return Err(anyhow!("schema is enabled, but path is missing")),
-                        }
-                    }
-                }
-            }
-        }
-
-        if let Some(schema_opts) = &self.global_options.schema {
-            if schema_opts.enabled.unwrap_or(false) {
-                match &schema_opts.path {
-                    Some(schema_path) => return Ok(Some(external::get_schema(schema_path).await?)),
-                    None => return Err(anyhow!("schema is enabled, but path is missing")),
-                }
-            }
-        }
-
-        Ok(None)
     }
 
     pub fn get_schema_path(&self, path: &str) -> Result<Option<String>, anyhow::Error> {

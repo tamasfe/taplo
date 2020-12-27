@@ -21,7 +21,7 @@ pub(crate) struct CliOptions {
     pub force: bool,
 }
 
-pub(crate) fn format(config: Config, m: &ArgMatches) -> FormatResult {
+pub(crate) async fn format(config: Config, m: &ArgMatches) -> FormatResult {
     let mut res = FormatResult {
         matched_document_count: 0,
         error_count: 0,
@@ -51,7 +51,7 @@ pub(crate) fn format(config: Config, m: &ArgMatches) -> FormatResult {
     }
 
     if let Some(files) = m.values_of("files") {
-        format_paths(&config, opts, files, &mut res, false, cli_opts);
+        format_paths(&config, opts, files, &mut res, false, cli_opts).await;
     } else {
         format_paths(
             &config,
@@ -60,7 +60,8 @@ pub(crate) fn format(config: Config, m: &ArgMatches) -> FormatResult {
             &mut res,
             true,
             cli_opts,
-        );
+        )
+        .await;
     }
 
     res
@@ -101,7 +102,7 @@ fn collect_cli_opts<'i, I: Iterator<Item = &'i str>>(
     Ok(values)
 }
 
-fn format_paths<'i, F: Iterator<Item = &'i str>>(
+async fn format_paths<'i, F: Iterator<Item = &'i str>>(
     config: &Config,
     opts: CliOptions,
     files: F,
@@ -181,8 +182,21 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
                         }
                     }
 
-                    match read_file(&path) {
+                    match read_file(path.to_str().unwrap()).await {
                         Ok(src) => {
+                            let src = match String::from_utf8(src) {
+                                Ok(src) => src,
+                                Err(err) => {
+                                    print_message(
+                                        Severity::Error,
+                                        "error",
+                                        &format!("file {:?} is not valid UTF-8: {}", path, err),
+                                    );
+                                    res.error_count += 1;
+                                    continue;
+                                }
+                            };
+
                             res.matched_document_count += 1;
 
                             let mut format_opts =
@@ -209,7 +223,8 @@ fn format_paths<'i, F: Iterator<Item = &'i str>>(
                             match format_source(&src, opts, format_opts, res) {
                                 Ok(s) => {
                                     if src != s {
-                                        match write_file(&path, s.as_bytes()) {
+                                        match write_file(path.to_str().unwrap(), s.as_bytes()).await
+                                        {
                                             Ok(_) => {}
                                             Err(err) => {
                                                 res.error_count += 1;

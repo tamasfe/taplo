@@ -1,7 +1,7 @@
 #![cfg_attr(all(target_arch = "wasm32", feature = "nightly"), feature(set_stdio))]
 
 use clap::{App, AppSettings, Arg, ArgMatches};
-use external::load_config;
+use external::{download_schema_index, load_config, load_schema_index, update_schemas};
 use once_cell::sync::Lazy;
 use pretty_lint::{
     colored::{self, Colorize},
@@ -12,6 +12,7 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 use taplo::formatter;
+use util::cache_schema_index;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -28,6 +29,8 @@ mod external;
 
 mod format;
 mod lint;
+
+pub mod util;
 
 static ERROR_STATUS: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 static SILENT_OUTPUT: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
@@ -110,6 +113,8 @@ pub async extern fn run_node(args: JsValue) -> bool {
     run(args).await
 }
 
+const SCHEMA_REPOSITORY: &str = "https://taplo.tamasfe.dev/schema_index.json";
+
 pub async fn run<I, T>(itr: I) -> bool
 where
     I: IntoIterator<Item = T>,
@@ -122,9 +127,9 @@ where
     let mut app = App::new("Taplo TOML Utility")
         .author("tamasfe (https://github.com/tamasfe)")
         .bin_name("taplo")
-        .version(env!("CARGO_PKG_VERSION"))
+        .version(concat!(env!("CARGO_PKG_VERSION"), " (", env!("BUILD_TARGET"), ")"))
         .about("A TOML linter and formatter tool")
-        .long_about("A TOML linter and formatter tool (https://github.com/tamasfe/taplo)")
+        .long_about("A TOML linter and formatter tool (https://taplo.tamasfe.dev)")
         .arg(
             Arg::new("colors")
                 .long("colors")
@@ -213,6 +218,26 @@ where
                     .long_about("Paths or glob patterns to TOML documents, can be omitted if a configuration file is provided or found that provides document paths.")
                     .multiple(true)
             )
+            .arg(
+                Arg::new("cache-path")
+                    .long("cache-path")
+                    .about("Path to a cache folder, if omitted no caching will be done")
+                    .takes_value(true)
+            )
+            .arg(
+                Arg::new("default-schema-repository")
+                    .short('S')
+                    .long("default-schema-repository")
+                    .about("Use the default remote schema repository")
+                    .conflicts_with("schema-repository")
+                    .takes_value(false)
+            )
+            .arg(
+                Arg::new("schema-repository")
+                    .long("schema-repository")
+                    .about("Use a remote schema repository")
+                    .takes_value(true)
+            )
         )
         .subcommand(
             App::new("config")
@@ -277,7 +302,7 @@ async fn execute(matches: ArgMatches) -> bool {
             _ => unreachable!(),
         },
         Some(("format", format_matches)) => {
-            let config = match load_config(format_matches.value_of("config")) {
+            let config = match load_config(format_matches.value_of("config")).await {
                 Ok(c) => c,
                 Err(err) => {
                     print_message(
@@ -298,7 +323,7 @@ async fn execute(matches: ArgMatches) -> bool {
                 return false;
             }
 
-            let format_result = format::format(config, format_matches);
+            let format_result = format::format(config, format_matches).await;
 
             if format_result.matched_document_count == 0 {
                 print_message(Severity::Warning, "warning", "no documents were found");
@@ -355,7 +380,7 @@ async fn execute(matches: ArgMatches) -> bool {
             }
         }
         Some(("lint", lint_matches)) => {
-            let config = match load_config(lint_matches.value_of("config")) {
+            let config = match load_config(lint_matches.value_of("config")).await {
                 Ok(c) => c,
                 Err(err) => {
                     print_message(
@@ -367,6 +392,85 @@ async fn execute(matches: ArgMatches) -> bool {
                 }
             };
 
+            let schema_repository = if lint_matches.is_present("default-schema-repository") {
+                Some(SCHEMA_REPOSITORY)
+            } else {
+                lint_matches.value_of("schema-repository")
+            };
+
+            let mut schema_index = None;
+            if let Some(v) = schema_repository {
+                print_message(
+                    Severity::Info,
+                    "info",
+                    &format!("updating schema index from {}", v),
+                );
+                match download_schema_index(v).await {
+                    Ok(idx) => {
+                        if let Some(v) = lint_matches.value_of("cache-path") {
+                            if let Err(err) = cache_schema_index(&idx, v).await {
+                                print_message(
+                                    Severity::Warning,
+                                    "warning",
+                                    &format!("failed to save schema index: {}", err),
+                                );
+                            }
+                        }
+
+                        schema_index = Some(idx)
+                    }
+                    Err(err) => {
+                        if is_warn_as_error() {
+                            print_message(
+                                Severity::Error,
+                                "error",
+                                &format!("failed to download schema index: {}", err),
+                            );
+                            return false;
+                        } else {
+                            print_message(
+                                Severity::Warning,
+                                "warning",
+                                &format!("failed to download schema index: {}", err),
+                            );
+                        }
+                    }
+                };
+            }
+
+            if let Some(cache_path) = lint_matches.value_of("cache-path") {
+                match &schema_index {
+                    Some(idx) => {
+                        print_message(Severity::Info, "info", "checking for schema updates");
+                        let (updated, errors) = update_schemas(&idx, cache_path).await;
+                        if updated > 0 {
+                            print_message(
+                                Severity::Info,
+                                "info",
+                                &format!("updated remote {} schemas", updated),
+                            );
+                        }
+                        if !errors.is_empty() {
+                            print_message(
+                                Severity::Warning,
+                                "warn",
+                                &format!("failed to update {} schemas", errors.len()),
+                            );
+                        }
+                    }
+                    None => match load_schema_index(cache_path).await {
+                        Ok(idx) => schema_index = idx,
+                        Err(err) => {
+                            print_message(
+                                Severity::Warning,
+                                "warning",
+                                &format!("failed to read schema index: {}", err),
+                            );
+                        }
+                    },
+                }
+            }
+
             if let Err(e) = config.check_patterns() {
                 print_message(
                     Severity::Error,
@@ -376,7 +480,7 @@ async fn execute(matches: ArgMatches) -> bool {
                 return false;
             }
 
-            let lint_result = lint::lint(config, lint_matches).await;
+            let lint_result = lint::lint(config, lint_matches, schema_index).await;
 
             if lint_result.matched_document_count == 0 {
                 print_message(Severity::Warning, "warning", "no documents were found");
@@ -449,7 +553,7 @@ fn set_panic_hook() {
     console_error_panic_hook::set_once();
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", not(feature = "nightly")))]
 fn set_node_out() {}
 
 #[cfg(all(target_arch = "wasm32", feature = "nightly"))]

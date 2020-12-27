@@ -118,7 +118,6 @@ pub(crate) fn is_absolute_path(s: &str) -> bool {
 
 pub(crate) async fn read_file(p: &str) -> Result<Vec<u8>, anyhow::Error> {
     let res: JsValue = js_read_file(p).await.map_err(|e| anyhow!("{:?}", e))?;
-
     Ok(Uint8Array::from(res).to_vec())
 }
 

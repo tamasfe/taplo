@@ -247,7 +247,7 @@ async fn update_configuration(mut context: Context<World>, configuration: Option
             for pat in &schema.extra.patterns {
                 match Regex::new(pat) {
                     Ok(re) => {
-                        w.schema_associations
+                        w.index_schema_associations
                             .insert(HashRegex(re), schema.url.clone());
                     }
                     Err(err) => {

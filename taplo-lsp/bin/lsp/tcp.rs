@@ -7,7 +7,12 @@ use futures::{SinkExt, StreamExt};
 use lsp_async_stub::{rpc, Server};
 use std::sync::Arc;
 use taplo_lsp::{log_error, log_info, World};
-use tokio::{net::TcpListener, prelude::*, runtime::Runtime, task::JoinHandle};
+use tokio::{
+    io::{AsyncBufRead, AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWrite},
+    net::TcpListener,
+    runtime::Runtime,
+    task::JoinHandle,
+};
 
 use crate::{common::write_message, is_shutting_down, shutdown, SHUTDOWN_CHAN};
 

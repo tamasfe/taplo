@@ -7,7 +7,7 @@ use futures::{SinkExt, StreamExt};
 use lsp_async_stub::{rpc, Server};
 use std::{io::BufReader, sync::Arc};
 use taplo_lsp::{log_error, log_info, World};
-use tokio::{prelude::*, runtime::Runtime, task::JoinHandle};
+use tokio::{runtime::Runtime, task::JoinHandle};
 
 use crate::{common::write_message, is_shutting_down, shutdown, SHUTDOWN_CHAN};
 
@@ -105,7 +105,7 @@ pub(crate) fn create_input(rt: Arc<Runtime>) -> UnboundedReceiver<rpc::Message> 
 pub(crate) fn create_output(rt: Arc<Runtime>) -> (UnboundedSender<rpc::Message>, JoinHandle<()>) {
     let (sender, mut receiver) = unbounded::<rpc::Message>();
     let handle = rt.spawn(async move {
-        let mut out = io::stdout();
+        let mut out = tokio::io::stdout();
 
         while let Some(message) = receiver.next().await {
             if let Err(err) = write_message(&mut out, message).await {

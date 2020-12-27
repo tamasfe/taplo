@@ -69,6 +69,7 @@ pub struct WorldState {
     workspace_uri: Option<Url>,
     documents: HashMap<lsp_types::Url, Document>,
     schema_associations: IndexMap<HashRegex, String>,
+    index_schema_associations: IndexMap<HashRegex, String>,
     http_client: reqwest::Client,
     configuration: Configuration,
     taplo_config: Option<taplo_cli::config::Config>,
@@ -154,6 +155,12 @@ impl WorldState {
         let s = uri.as_str();
 
         for (re, name) in self.schema_associations.iter() {
+            if re.0.is_match(s) {
+                return Some(name.clone());
+            }
+        }
+
+        for (re, name) in self.index_schema_associations.iter() {
             if re.0.is_match(s) {
                 return Some(name.clone());
             }

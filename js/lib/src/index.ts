@@ -13,58 +13,58 @@ export interface FormatterOptions {
   /**
    * Append trailing commas for multi-line arrays.
    */
-  array_trailing_comma?: boolean;
+  arrayTrailingComma?: boolean;
 
   /**
    * Expand arrays to multiple lines that exceed the maximum column width.
    */
-  array_auto_expand?: boolean;
+  arrayAutoExpand?: boolean;
 
   /**
    * Collapse arrays that don't exceed the maximum column width and don't contain comments.
    */
-  array_auto_collapse?: boolean;
+  arrayAutoCollapse?: boolean;
 
   /**
    * Omit white space padding from single-line arrays
    */
-  compact_arrays?: boolean;
+  compactArrays?: boolean;
 
   /**
    * Omit white space padding from the start and end of inline tables.
    */
-  compact_inline_tables?: boolean;
+  compactInlineTables?: boolean;
 
   /**
    * Maximum column width in characters, affects array expansion and collapse, this doesn't take whitespace into account.
    * Note that this is not set in stone, and works on a best-effort basis.
    */
-  column_width?: number;
+  columnWidth?: number;
 
   /**
    * Indent based on tables and arrays of tables and their subtables, subtables out of order are not indented.
    */
-  indent_tables?: boolean;
+  indentTables?: boolean;
 
   /**
    * The substring that is used for indentation, should be tabs or spaces (but technically can be anything).
    */
-  indent_string?: string;
+  indentString?: string;
 
   /**
    * Add trailing newline at the end of the file if not present.
    */
-  trailing_newline?: boolean;
+  trailingNewline?: boolean;
 
   /**
    * Alphabetically reorder keys that are not separated by empty lines.
    */
-  reorder_keys?: boolean;
+  reorderKeys?: boolean;
 
   /**
    * Maximum amount of allowed consecutive blank lines. This does not affect the whitespace at the end of the document, as it is always stripped.
    */
-  allowed_blank_lines?: number;
+  allowedBlankLines?: number;
 
   /**
    * Use CRLF for line endings.
@@ -204,7 +204,7 @@ export class Taplo {
    * @param toml TOML document.
    * @param options Optional additional options.
    */
-  public lint(toml: string, options?: LintOptions): Promise<LintResult> {
+  public lint(toml: string, options?: LintOptions): LintResult {
     let schema = options?.schema;
 
     if (typeof schema !== "undefined") {
@@ -228,7 +228,7 @@ export class Taplo {
    * @param toml TOML document.
    * @param options Optional format options.
    */
-  public format(toml: string, options?: FormatOptions): Promise<String> {
+  public format(toml: string, options?: FormatOptions): string {
     let optsJson = undefined;
 
     if (typeof options?.options !== "undefined") {

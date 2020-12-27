@@ -12,7 +12,7 @@ use regex::Regex;
 use schemars::schema::RootSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::convert::TryFrom;
+use std::{collections::HashMap, convert::TryFrom};
 use taplo::{
     analytics::NodeRef,
     formatter,
@@ -988,13 +988,21 @@ pub(crate) async fn toml_to_json(
     })
 }
 
+// Required because JSON Keys can be in any order,
+// and toml-rs cannot handle it by default.
+#[derive(Default, Serialize, Deserialize)]
+#[serde(transparent)]
+struct JsonVal(
+    #[serde(serialize_with = "toml::ser::tables_last")] HashMap<String, serde_json::Value>,
+);
+
 pub(crate) async fn json_to_toml(
     _context: Context<World>,
     params: Params<msg_ext::JsonToTomlParams>,
 ) -> Result<msg_ext::JsonToTomlResponse, Error> {
     let p = params.required()?;
 
-    match serde_json::from_str::<serde_json::Value>(&p.text) {
+    match serde_json::from_str::<JsonVal>(&p.text) {
         Ok(v) => match toml::to_string_pretty(&v) {
             Ok(v) => Ok(msg_ext::JsonToTomlResponse {
                 text: Some(v),

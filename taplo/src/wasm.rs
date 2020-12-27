@@ -1,7 +1,7 @@
 use crate::{formatter, parser::parse, value::Value};
 use schemars::schema::RootSchema;
 use serde_crate::{Deserialize, Serialize};
-use std::convert::TryFrom;
+use std::{collections::HashMap, convert::TryFrom};
 use verify::{
     serde::{KeySpans, Spanned},
     Verifier,
@@ -158,10 +158,20 @@ pub fn lint(
     Ok(JsValue::from_serde(&LintResult::default()).unwrap())
 }
 
+// Required because JSON Keys can be in any order,
+// and toml-rs cannot handle it by default.
+#[derive(Default, Serialize, Deserialize)]
+#[serde(crate = "serde_crate")]
+#[serde(transparent)]
+struct JsonVal(
+    #[serde(serialize_with = "toml::ser::tables_last")] HashMap<String, serde_json::Value>,
+);
+
 #[wasm_bindgen]
 pub fn from_json(json_source: &str) -> Result<JsValue, JsValue> {
-    let v: serde_json::Value =
+    let v: JsonVal =
         serde_json::from_str(json_source).map_err(|err| JsValue::from_str(&format!("{}", err)))?;
+
     Ok(JsValue::from_str(
         &toml::to_string_pretty(&v).map_err(|err| JsValue::from_str(&format!("{}", err)))?,
     ))

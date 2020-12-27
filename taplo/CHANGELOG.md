@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.5.1
+
+### Fixes
+
+- Fixed comment formatting
+
 ## 0.5.0
 
 ### Breaking Changes

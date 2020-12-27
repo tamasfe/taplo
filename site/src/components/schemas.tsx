@@ -2,7 +2,11 @@ import React from "react";
 import schemaIndex from "../../static/schema_index.json";
 import "../__generated__/gatsby-types";
 
-import getUrls from "get-urls";
+const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gi;
+
+function getUrls(text: string): string[] {
+  return text.match(urlRegex);
+}
 
 import { Table, List } from "antd";
 import { graphql, useStaticQuery } from "gatsby";
@@ -92,9 +96,7 @@ export const Schemas: React.FunctionComponent = () => {
                   itemLayout="horizontal"
                   dataSource={record.authors as string[]}
                   renderItem={author => {
-                    const url = getUrls(author, { requireSchemeOrWww: true })
-                      .values()
-                      .next()?.value;
+                    const url = getUrls(author)[0];
 
                     return (
                       <List.Item>

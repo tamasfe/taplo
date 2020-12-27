@@ -801,8 +801,102 @@ enum FileFieldsEnum {
   childSchemasJson___internal___type = 'childSchemasJson.internal.type',
   childSchemasJson____schema = 'childSchemasJson._schema',
   childSchemasJson___title = 'childSchemasJson.title',
+  childSchemasJson___type = 'childSchemasJson.type',
+  childSchemasJson___description = 'childSchemasJson.description',
   childSchemasJson___x_taplo_info___authors = 'childSchemasJson.x_taplo_info.authors',
   childSchemasJson___x_taplo_info___patterns = 'childSchemasJson.x_taplo_info.patterns',
+  childSchemasJson___properties___tab_spaces___type = 'childSchemasJson.properties.tab_spaces.type',
+  childSchemasJson___properties___tab_spaces___description = 'childSchemasJson.properties.tab_spaces.description',
+  childSchemasJson___properties___tab_spaces___default = 'childSchemasJson.properties.tab_spaces.default',
+  childSchemasJson___properties___fn_args_layout___type = 'childSchemasJson.properties.fn_args_layout.type',
+  childSchemasJson___properties___fn_args_layout___description = 'childSchemasJson.properties.fn_args_layout.description',
+  childSchemasJson___properties___fn_args_layout___default = 'childSchemasJson.properties.fn_args_layout.default',
+  childSchemasJson___properties___fn_args_layout___enum = 'childSchemasJson.properties.fn_args_layout.enum',
+  childSchemasJson___properties___merge_derives___type = 'childSchemasJson.properties.merge_derives.type',
+  childSchemasJson___properties___merge_derives___description = 'childSchemasJson.properties.merge_derives.description',
+  childSchemasJson___properties___merge_derives___default = 'childSchemasJson.properties.merge_derives.default',
+  childSchemasJson___properties___merge_derives___enum = 'childSchemasJson.properties.merge_derives.enum',
+  childSchemasJson___properties___print_misformatted_file_names___type = 'childSchemasJson.properties.print_misformatted_file_names.type',
+  childSchemasJson___properties___print_misformatted_file_names___description = 'childSchemasJson.properties.print_misformatted_file_names.description',
+  childSchemasJson___properties___print_misformatted_file_names___default = 'childSchemasJson.properties.print_misformatted_file_names.default',
+  childSchemasJson___properties___print_misformatted_file_names___enum = 'childSchemasJson.properties.print_misformatted_file_names.enum',
+  childSchemasJson___properties___remove_nested_parens___type = 'childSchemasJson.properties.remove_nested_parens.type',
+  childSchemasJson___properties___remove_nested_parens___description = 'childSchemasJson.properties.remove_nested_parens.description',
+  childSchemasJson___properties___remove_nested_parens___default = 'childSchemasJson.properties.remove_nested_parens.default',
+  childSchemasJson___properties___remove_nested_parens___enum = 'childSchemasJson.properties.remove_nested_parens.enum',
+  childSchemasJson___properties___use_small_heuristics___type = 'childSchemasJson.properties.use_small_heuristics.type',
+  childSchemasJson___properties___use_small_heuristics___description = 'childSchemasJson.properties.use_small_heuristics.description',
+  childSchemasJson___properties___use_small_heuristics___default = 'childSchemasJson.properties.use_small_heuristics.default',
+  childSchemasJson___properties___use_small_heuristics___enum = 'childSchemasJson.properties.use_small_heuristics.enum',
+  childSchemasJson___properties___use_try_shorthand___type = 'childSchemasJson.properties.use_try_shorthand.type',
+  childSchemasJson___properties___use_try_shorthand___description = 'childSchemasJson.properties.use_try_shorthand.description',
+  childSchemasJson___properties___use_try_shorthand___default = 'childSchemasJson.properties.use_try_shorthand.default',
+  childSchemasJson___properties___use_try_shorthand___enum = 'childSchemasJson.properties.use_try_shorthand.enum',
+  childSchemasJson___properties___reorder_modules___type = 'childSchemasJson.properties.reorder_modules.type',
+  childSchemasJson___properties___reorder_modules___description = 'childSchemasJson.properties.reorder_modules.description',
+  childSchemasJson___properties___reorder_modules___default = 'childSchemasJson.properties.reorder_modules.default',
+  childSchemasJson___properties___reorder_modules___enum = 'childSchemasJson.properties.reorder_modules.enum',
+  childSchemasJson___properties___hard_tabs___type = 'childSchemasJson.properties.hard_tabs.type',
+  childSchemasJson___properties___hard_tabs___description = 'childSchemasJson.properties.hard_tabs.description',
+  childSchemasJson___properties___hard_tabs___default = 'childSchemasJson.properties.hard_tabs.default',
+  childSchemasJson___properties___hard_tabs___enum = 'childSchemasJson.properties.hard_tabs.enum',
+  childSchemasJson___properties___use_field_init_shorthand___type = 'childSchemasJson.properties.use_field_init_shorthand.type',
+  childSchemasJson___properties___use_field_init_shorthand___description = 'childSchemasJson.properties.use_field_init_shorthand.description',
+  childSchemasJson___properties___use_field_init_shorthand___default = 'childSchemasJson.properties.use_field_init_shorthand.default',
+  childSchemasJson___properties___use_field_init_shorthand___enum = 'childSchemasJson.properties.use_field_init_shorthand.enum',
+  childSchemasJson___properties___max_width___type = 'childSchemasJson.properties.max_width.type',
+  childSchemasJson___properties___max_width___description = 'childSchemasJson.properties.max_width.description',
+  childSchemasJson___properties___max_width___default = 'childSchemasJson.properties.max_width.default',
+  childSchemasJson___properties___reorder_imports___type = 'childSchemasJson.properties.reorder_imports.type',
+  childSchemasJson___properties___reorder_imports___description = 'childSchemasJson.properties.reorder_imports.description',
+  childSchemasJson___properties___reorder_imports___default = 'childSchemasJson.properties.reorder_imports.default',
+  childSchemasJson___properties___reorder_imports___enum = 'childSchemasJson.properties.reorder_imports.enum',
+  childSchemasJson___properties___match_arm_leading_pipes___type = 'childSchemasJson.properties.match_arm_leading_pipes.type',
+  childSchemasJson___properties___match_arm_leading_pipes___description = 'childSchemasJson.properties.match_arm_leading_pipes.description',
+  childSchemasJson___properties___match_arm_leading_pipes___default = 'childSchemasJson.properties.match_arm_leading_pipes.default',
+  childSchemasJson___properties___match_arm_leading_pipes___enum = 'childSchemasJson.properties.match_arm_leading_pipes.enum',
+  childSchemasJson___properties___force_explicit_abi___type = 'childSchemasJson.properties.force_explicit_abi.type',
+  childSchemasJson___properties___force_explicit_abi___description = 'childSchemasJson.properties.force_explicit_abi.description',
+  childSchemasJson___properties___force_explicit_abi___default = 'childSchemasJson.properties.force_explicit_abi.default',
+  childSchemasJson___properties___force_explicit_abi___enum = 'childSchemasJson.properties.force_explicit_abi.enum',
+  childSchemasJson___properties___edition___type = 'childSchemasJson.properties.edition.type',
+  childSchemasJson___properties___edition___description = 'childSchemasJson.properties.edition.description',
+  childSchemasJson___properties___edition___default = 'childSchemasJson.properties.edition.default',
+  childSchemasJson___properties___edition___enum = 'childSchemasJson.properties.edition.enum',
+  childSchemasJson___properties___newline_style___type = 'childSchemasJson.properties.newline_style.type',
+  childSchemasJson___properties___newline_style___description = 'childSchemasJson.properties.newline_style.description',
+  childSchemasJson___properties___newline_style___default = 'childSchemasJson.properties.newline_style.default',
+  childSchemasJson___properties___newline_style___enum = 'childSchemasJson.properties.newline_style.enum',
+  childSchemasJson___properties___build_system____ref = 'childSchemasJson.properties.build_system._ref',
+  childSchemasJson___properties___tool___type = 'childSchemasJson.properties.tool.type',
+  childSchemasJson___properties___tool___description = 'childSchemasJson.properties.tool.description',
+  childSchemasJson___properties___tool___additionalProperties = 'childSchemasJson.properties.tool.additionalProperties',
+  childSchemasJson___properties___badges___description = 'childSchemasJson.properties.badges.description',
+  childSchemasJson___properties___badges___type = 'childSchemasJson.properties.badges.type',
+  childSchemasJson___properties___bench___description = 'childSchemasJson.properties.bench.description',
+  childSchemasJson___properties___bench___type = 'childSchemasJson.properties.bench.type',
+  childSchemasJson___properties___bin___description = 'childSchemasJson.properties.bin.description',
+  childSchemasJson___properties___bin___type = 'childSchemasJson.properties.bin.type',
+  childSchemasJson___properties___build_dependencies___type = 'childSchemasJson.properties.build_dependencies.type',
+  childSchemasJson___properties___cargo_features___type = 'childSchemasJson.properties.cargo_features.type',
+  childSchemasJson___properties___dependencies___description = 'childSchemasJson.properties.dependencies.description',
+  childSchemasJson___properties___dependencies___type = 'childSchemasJson.properties.dependencies.type',
+  childSchemasJson___properties___dev_dependencies___type = 'childSchemasJson.properties.dev_dependencies.type',
+  childSchemasJson___properties___example___description = 'childSchemasJson.properties.example.description',
+  childSchemasJson___properties___example___type = 'childSchemasJson.properties.example.type',
+  childSchemasJson___properties___features___description = 'childSchemasJson.properties.features.description',
+  childSchemasJson___properties___features___type = 'childSchemasJson.properties.features.type',
+  childSchemasJson___properties___lib____ref = 'childSchemasJson.properties.lib._ref',
+  childSchemasJson___properties___package____ref = 'childSchemasJson.properties.package._ref',
+  childSchemasJson___properties___patch___description = 'childSchemasJson.properties.patch.description',
+  childSchemasJson___properties___patch___type = 'childSchemasJson.properties.patch.type',
+  childSchemasJson___properties___profile____ref = 'childSchemasJson.properties.profile._ref',
+  childSchemasJson___properties___project____ref = 'childSchemasJson.properties.project._ref',
+  childSchemasJson___properties___replace___type = 'childSchemasJson.properties.replace.type',
+  childSchemasJson___properties___target___type = 'childSchemasJson.properties.target.type',
+  childSchemasJson___properties___test___description = 'childSchemasJson.properties.test.description',
+  childSchemasJson___properties___test___type = 'childSchemasJson.properties.test.type',
+  childSchemasJson___properties___workspace____ref = 'childSchemasJson.properties.workspace._ref',
   childSchemasJson___definitions___poetry_author_pattern___description = 'childSchemasJson.definitions.poetry_author_pattern.description',
   childSchemasJson___definitions___poetry_author_pattern___type = 'childSchemasJson.definitions.poetry_author_pattern.type',
   childSchemasJson___definitions___poetry_author_pattern___pattern = 'childSchemasJson.definitions.poetry_author_pattern.pattern',
@@ -900,101 +994,7 @@ enum FileFieldsEnum {
   childSchemasJson___definitions___Workspace___title = 'childSchemasJson.definitions.Workspace.title',
   childSchemasJson___definitions___Workspace___description = 'childSchemasJson.definitions.Workspace.description',
   childSchemasJson___definitions___Workspace___type = 'childSchemasJson.definitions.Workspace.type',
-  childSchemasJson___type = 'childSchemasJson.type',
-  childSchemasJson___properties___build_system____ref = 'childSchemasJson.properties.build_system._ref',
-  childSchemasJson___properties___tool___type = 'childSchemasJson.properties.tool.type',
-  childSchemasJson___properties___tool___description = 'childSchemasJson.properties.tool.description',
-  childSchemasJson___properties___tool___additionalProperties = 'childSchemasJson.properties.tool.additionalProperties',
-  childSchemasJson___properties___tab_spaces___type = 'childSchemasJson.properties.tab_spaces.type',
-  childSchemasJson___properties___tab_spaces___description = 'childSchemasJson.properties.tab_spaces.description',
-  childSchemasJson___properties___tab_spaces___default = 'childSchemasJson.properties.tab_spaces.default',
-  childSchemasJson___properties___fn_args_layout___type = 'childSchemasJson.properties.fn_args_layout.type',
-  childSchemasJson___properties___fn_args_layout___description = 'childSchemasJson.properties.fn_args_layout.description',
-  childSchemasJson___properties___fn_args_layout___default = 'childSchemasJson.properties.fn_args_layout.default',
-  childSchemasJson___properties___fn_args_layout___enum = 'childSchemasJson.properties.fn_args_layout.enum',
-  childSchemasJson___properties___merge_derives___type = 'childSchemasJson.properties.merge_derives.type',
-  childSchemasJson___properties___merge_derives___description = 'childSchemasJson.properties.merge_derives.description',
-  childSchemasJson___properties___merge_derives___default = 'childSchemasJson.properties.merge_derives.default',
-  childSchemasJson___properties___merge_derives___enum = 'childSchemasJson.properties.merge_derives.enum',
-  childSchemasJson___properties___print_misformatted_file_names___type = 'childSchemasJson.properties.print_misformatted_file_names.type',
-  childSchemasJson___properties___print_misformatted_file_names___description = 'childSchemasJson.properties.print_misformatted_file_names.description',
-  childSchemasJson___properties___print_misformatted_file_names___default = 'childSchemasJson.properties.print_misformatted_file_names.default',
-  childSchemasJson___properties___print_misformatted_file_names___enum = 'childSchemasJson.properties.print_misformatted_file_names.enum',
-  childSchemasJson___properties___remove_nested_parens___type = 'childSchemasJson.properties.remove_nested_parens.type',
-  childSchemasJson___properties___remove_nested_parens___description = 'childSchemasJson.properties.remove_nested_parens.description',
-  childSchemasJson___properties___remove_nested_parens___default = 'childSchemasJson.properties.remove_nested_parens.default',
-  childSchemasJson___properties___remove_nested_parens___enum = 'childSchemasJson.properties.remove_nested_parens.enum',
-  childSchemasJson___properties___use_small_heuristics___type = 'childSchemasJson.properties.use_small_heuristics.type',
-  childSchemasJson___properties___use_small_heuristics___description = 'childSchemasJson.properties.use_small_heuristics.description',
-  childSchemasJson___properties___use_small_heuristics___default = 'childSchemasJson.properties.use_small_heuristics.default',
-  childSchemasJson___properties___use_small_heuristics___enum = 'childSchemasJson.properties.use_small_heuristics.enum',
-  childSchemasJson___properties___use_try_shorthand___type = 'childSchemasJson.properties.use_try_shorthand.type',
-  childSchemasJson___properties___use_try_shorthand___description = 'childSchemasJson.properties.use_try_shorthand.description',
-  childSchemasJson___properties___use_try_shorthand___default = 'childSchemasJson.properties.use_try_shorthand.default',
-  childSchemasJson___properties___use_try_shorthand___enum = 'childSchemasJson.properties.use_try_shorthand.enum',
-  childSchemasJson___properties___reorder_modules___type = 'childSchemasJson.properties.reorder_modules.type',
-  childSchemasJson___properties___reorder_modules___description = 'childSchemasJson.properties.reorder_modules.description',
-  childSchemasJson___properties___reorder_modules___default = 'childSchemasJson.properties.reorder_modules.default',
-  childSchemasJson___properties___reorder_modules___enum = 'childSchemasJson.properties.reorder_modules.enum',
-  childSchemasJson___properties___hard_tabs___type = 'childSchemasJson.properties.hard_tabs.type',
-  childSchemasJson___properties___hard_tabs___description = 'childSchemasJson.properties.hard_tabs.description',
-  childSchemasJson___properties___hard_tabs___default = 'childSchemasJson.properties.hard_tabs.default',
-  childSchemasJson___properties___hard_tabs___enum = 'childSchemasJson.properties.hard_tabs.enum',
-  childSchemasJson___properties___use_field_init_shorthand___type = 'childSchemasJson.properties.use_field_init_shorthand.type',
-  childSchemasJson___properties___use_field_init_shorthand___description = 'childSchemasJson.properties.use_field_init_shorthand.description',
-  childSchemasJson___properties___use_field_init_shorthand___default = 'childSchemasJson.properties.use_field_init_shorthand.default',
-  childSchemasJson___properties___use_field_init_shorthand___enum = 'childSchemasJson.properties.use_field_init_shorthand.enum',
-  childSchemasJson___properties___max_width___type = 'childSchemasJson.properties.max_width.type',
-  childSchemasJson___properties___max_width___description = 'childSchemasJson.properties.max_width.description',
-  childSchemasJson___properties___max_width___default = 'childSchemasJson.properties.max_width.default',
-  childSchemasJson___properties___reorder_imports___type = 'childSchemasJson.properties.reorder_imports.type',
-  childSchemasJson___properties___reorder_imports___description = 'childSchemasJson.properties.reorder_imports.description',
-  childSchemasJson___properties___reorder_imports___default = 'childSchemasJson.properties.reorder_imports.default',
-  childSchemasJson___properties___reorder_imports___enum = 'childSchemasJson.properties.reorder_imports.enum',
-  childSchemasJson___properties___match_arm_leading_pipes___type = 'childSchemasJson.properties.match_arm_leading_pipes.type',
-  childSchemasJson___properties___match_arm_leading_pipes___description = 'childSchemasJson.properties.match_arm_leading_pipes.description',
-  childSchemasJson___properties___match_arm_leading_pipes___default = 'childSchemasJson.properties.match_arm_leading_pipes.default',
-  childSchemasJson___properties___match_arm_leading_pipes___enum = 'childSchemasJson.properties.match_arm_leading_pipes.enum',
-  childSchemasJson___properties___force_explicit_abi___type = 'childSchemasJson.properties.force_explicit_abi.type',
-  childSchemasJson___properties___force_explicit_abi___description = 'childSchemasJson.properties.force_explicit_abi.description',
-  childSchemasJson___properties___force_explicit_abi___default = 'childSchemasJson.properties.force_explicit_abi.default',
-  childSchemasJson___properties___force_explicit_abi___enum = 'childSchemasJson.properties.force_explicit_abi.enum',
-  childSchemasJson___properties___edition___type = 'childSchemasJson.properties.edition.type',
-  childSchemasJson___properties___edition___description = 'childSchemasJson.properties.edition.description',
-  childSchemasJson___properties___edition___default = 'childSchemasJson.properties.edition.default',
-  childSchemasJson___properties___edition___enum = 'childSchemasJson.properties.edition.enum',
-  childSchemasJson___properties___newline_style___type = 'childSchemasJson.properties.newline_style.type',
-  childSchemasJson___properties___newline_style___description = 'childSchemasJson.properties.newline_style.description',
-  childSchemasJson___properties___newline_style___default = 'childSchemasJson.properties.newline_style.default',
-  childSchemasJson___properties___newline_style___enum = 'childSchemasJson.properties.newline_style.enum',
-  childSchemasJson___properties___badges___description = 'childSchemasJson.properties.badges.description',
-  childSchemasJson___properties___badges___type = 'childSchemasJson.properties.badges.type',
-  childSchemasJson___properties___bench___description = 'childSchemasJson.properties.bench.description',
-  childSchemasJson___properties___bench___type = 'childSchemasJson.properties.bench.type',
-  childSchemasJson___properties___bin___description = 'childSchemasJson.properties.bin.description',
-  childSchemasJson___properties___bin___type = 'childSchemasJson.properties.bin.type',
-  childSchemasJson___properties___build_dependencies___type = 'childSchemasJson.properties.build_dependencies.type',
-  childSchemasJson___properties___cargo_features___type = 'childSchemasJson.properties.cargo_features.type',
-  childSchemasJson___properties___dependencies___description = 'childSchemasJson.properties.dependencies.description',
-  childSchemasJson___properties___dependencies___type = 'childSchemasJson.properties.dependencies.type',
-  childSchemasJson___properties___dev_dependencies___type = 'childSchemasJson.properties.dev_dependencies.type',
-  childSchemasJson___properties___example___description = 'childSchemasJson.properties.example.description',
-  childSchemasJson___properties___example___type = 'childSchemasJson.properties.example.type',
-  childSchemasJson___properties___features___description = 'childSchemasJson.properties.features.description',
-  childSchemasJson___properties___features___type = 'childSchemasJson.properties.features.type',
-  childSchemasJson___properties___lib____ref = 'childSchemasJson.properties.lib._ref',
-  childSchemasJson___properties___package____ref = 'childSchemasJson.properties.package._ref',
-  childSchemasJson___properties___patch___description = 'childSchemasJson.properties.patch.description',
-  childSchemasJson___properties___patch___type = 'childSchemasJson.properties.patch.type',
-  childSchemasJson___properties___profile____ref = 'childSchemasJson.properties.profile._ref',
-  childSchemasJson___properties___project____ref = 'childSchemasJson.properties.project._ref',
-  childSchemasJson___properties___replace___type = 'childSchemasJson.properties.replace.type',
-  childSchemasJson___properties___target___type = 'childSchemasJson.properties.target.type',
-  childSchemasJson___properties___test___description = 'childSchemasJson.properties.test.description',
-  childSchemasJson___properties___test___type = 'childSchemasJson.properties.test.type',
-  childSchemasJson___properties___workspace____ref = 'childSchemasJson.properties.workspace._ref',
-  childSchemasJson___additionalProperties = 'childSchemasJson.additionalProperties',
-  childSchemasJson___description = 'childSchemasJson.description'
+  childSchemasJson___additionalProperties = 'childSchemasJson.additionalProperties'
 }
 
 type FileFilterInput = {
@@ -2084,8 +2084,6 @@ type Query_allDirectoryArgs = {
 type Query_siteArgs = {
   buildTime: Maybe<DateQueryOperatorInput>;
   siteMetadata: Maybe<SiteSiteMetadataFilterInput>;
-  port: Maybe<IntQueryOperatorInput>;
-  host: Maybe<StringQueryOperatorInput>;
   polyfill: Maybe<BooleanQueryOperatorInput>;
   pathPrefix: Maybe<StringQueryOperatorInput>;
   id: Maybe<StringQueryOperatorInput>;
@@ -2109,15 +2107,15 @@ type Query_sitePageArgs = {
   internalComponentName: Maybe<StringQueryOperatorInput>;
   componentChunkName: Maybe<StringQueryOperatorInput>;
   matchPath: Maybe<StringQueryOperatorInput>;
+  id: Maybe<StringQueryOperatorInput>;
+  parent: Maybe<NodeFilterInput>;
+  children: Maybe<NodeFilterListInput>;
+  internal: Maybe<InternalFilterInput>;
   isCreatedByStatefulCreatePages: Maybe<BooleanQueryOperatorInput>;
   context: Maybe<SitePageContextFilterInput>;
   pluginCreator: Maybe<SitePluginFilterInput>;
   pluginCreatorId: Maybe<StringQueryOperatorInput>;
   componentPath: Maybe<StringQueryOperatorInput>;
-  id: Maybe<StringQueryOperatorInput>;
-  parent: Maybe<NodeFilterInput>;
-  children: Maybe<NodeFilterListInput>;
-  internal: Maybe<InternalFilterInput>;
 };
 
 
@@ -2187,12 +2185,12 @@ type Query_schemasJsonArgs = {
   internal: Maybe<InternalFilterInput>;
   _schema: Maybe<StringQueryOperatorInput>;
   title: Maybe<StringQueryOperatorInput>;
-  x_taplo_info: Maybe<SchemasJsonX_taplo_infoFilterInput>;
-  definitions: Maybe<SchemasJsonDefinitionsFilterInput>;
   type: Maybe<StringQueryOperatorInput>;
-  properties: Maybe<SchemasJsonPropertiesFilterInput>;
-  additionalProperties: Maybe<BooleanQueryOperatorInput>;
   description: Maybe<StringQueryOperatorInput>;
+  x_taplo_info: Maybe<SchemasJsonX_taplo_infoFilterInput>;
+  properties: Maybe<SchemasJsonPropertiesFilterInput>;
+  definitions: Maybe<SchemasJsonDefinitionsFilterInput>;
+  additionalProperties: Maybe<BooleanQueryOperatorInput>;
 };
 
 
@@ -2252,12 +2250,12 @@ type SchemasJson = Node & {
   readonly internal: Internal;
   readonly _schema: Maybe<Scalars['String']>;
   readonly title: Maybe<Scalars['String']>;
-  readonly x_taplo_info: Maybe<SchemasJsonX_taplo_info>;
-  readonly definitions: Maybe<SchemasJsonDefinitions>;
   readonly type: Maybe<Scalars['String']>;
-  readonly properties: Maybe<SchemasJsonProperties>;
-  readonly additionalProperties: Maybe<Scalars['Boolean']>;
   readonly description: Maybe<Scalars['String']>;
+  readonly x_taplo_info: Maybe<SchemasJsonX_taplo_info>;
+  readonly properties: Maybe<SchemasJsonProperties>;
+  readonly definitions: Maybe<SchemasJsonDefinitions>;
+  readonly additionalProperties: Maybe<Scalars['Boolean']>;
 };
 
 type SchemasJsonConnection = {
@@ -6578,8 +6576,123 @@ enum SchemasJsonFieldsEnum {
   internal___type = 'internal.type',
   _schema = '_schema',
   title = 'title',
+  type = 'type',
+  description = 'description',
   x_taplo_info___authors = 'x_taplo_info.authors',
   x_taplo_info___patterns = 'x_taplo_info.patterns',
+  properties___tab_spaces___type = 'properties.tab_spaces.type',
+  properties___tab_spaces___description = 'properties.tab_spaces.description',
+  properties___tab_spaces___default = 'properties.tab_spaces.default',
+  properties___fn_args_layout___type = 'properties.fn_args_layout.type',
+  properties___fn_args_layout___description = 'properties.fn_args_layout.description',
+  properties___fn_args_layout___default = 'properties.fn_args_layout.default',
+  properties___fn_args_layout___enum = 'properties.fn_args_layout.enum',
+  properties___merge_derives___type = 'properties.merge_derives.type',
+  properties___merge_derives___description = 'properties.merge_derives.description',
+  properties___merge_derives___default = 'properties.merge_derives.default',
+  properties___merge_derives___enum = 'properties.merge_derives.enum',
+  properties___print_misformatted_file_names___type = 'properties.print_misformatted_file_names.type',
+  properties___print_misformatted_file_names___description = 'properties.print_misformatted_file_names.description',
+  properties___print_misformatted_file_names___default = 'properties.print_misformatted_file_names.default',
+  properties___print_misformatted_file_names___enum = 'properties.print_misformatted_file_names.enum',
+  properties___remove_nested_parens___type = 'properties.remove_nested_parens.type',
+  properties___remove_nested_parens___description = 'properties.remove_nested_parens.description',
+  properties___remove_nested_parens___default = 'properties.remove_nested_parens.default',
+  properties___remove_nested_parens___enum = 'properties.remove_nested_parens.enum',
+  properties___use_small_heuristics___type = 'properties.use_small_heuristics.type',
+  properties___use_small_heuristics___description = 'properties.use_small_heuristics.description',
+  properties___use_small_heuristics___default = 'properties.use_small_heuristics.default',
+  properties___use_small_heuristics___enum = 'properties.use_small_heuristics.enum',
+  properties___use_try_shorthand___type = 'properties.use_try_shorthand.type',
+  properties___use_try_shorthand___description = 'properties.use_try_shorthand.description',
+  properties___use_try_shorthand___default = 'properties.use_try_shorthand.default',
+  properties___use_try_shorthand___enum = 'properties.use_try_shorthand.enum',
+  properties___reorder_modules___type = 'properties.reorder_modules.type',
+  properties___reorder_modules___description = 'properties.reorder_modules.description',
+  properties___reorder_modules___default = 'properties.reorder_modules.default',
+  properties___reorder_modules___enum = 'properties.reorder_modules.enum',
+  properties___hard_tabs___type = 'properties.hard_tabs.type',
+  properties___hard_tabs___description = 'properties.hard_tabs.description',
+  properties___hard_tabs___default = 'properties.hard_tabs.default',
+  properties___hard_tabs___enum = 'properties.hard_tabs.enum',
+  properties___use_field_init_shorthand___type = 'properties.use_field_init_shorthand.type',
+  properties___use_field_init_shorthand___description = 'properties.use_field_init_shorthand.description',
+  properties___use_field_init_shorthand___default = 'properties.use_field_init_shorthand.default',
+  properties___use_field_init_shorthand___enum = 'properties.use_field_init_shorthand.enum',
+  properties___max_width___type = 'properties.max_width.type',
+  properties___max_width___description = 'properties.max_width.description',
+  properties___max_width___default = 'properties.max_width.default',
+  properties___reorder_imports___type = 'properties.reorder_imports.type',
+  properties___reorder_imports___description = 'properties.reorder_imports.description',
+  properties___reorder_imports___default = 'properties.reorder_imports.default',
+  properties___reorder_imports___enum = 'properties.reorder_imports.enum',
+  properties___match_arm_leading_pipes___type = 'properties.match_arm_leading_pipes.type',
+  properties___match_arm_leading_pipes___description = 'properties.match_arm_leading_pipes.description',
+  properties___match_arm_leading_pipes___default = 'properties.match_arm_leading_pipes.default',
+  properties___match_arm_leading_pipes___enum = 'properties.match_arm_leading_pipes.enum',
+  properties___force_explicit_abi___type = 'properties.force_explicit_abi.type',
+  properties___force_explicit_abi___description = 'properties.force_explicit_abi.description',
+  properties___force_explicit_abi___default = 'properties.force_explicit_abi.default',
+  properties___force_explicit_abi___enum = 'properties.force_explicit_abi.enum',
+  properties___edition___type = 'properties.edition.type',
+  properties___edition___description = 'properties.edition.description',
+  properties___edition___default = 'properties.edition.default',
+  properties___edition___enum = 'properties.edition.enum',
+  properties___newline_style___type = 'properties.newline_style.type',
+  properties___newline_style___description = 'properties.newline_style.description',
+  properties___newline_style___default = 'properties.newline_style.default',
+  properties___newline_style___enum = 'properties.newline_style.enum',
+  properties___build_system____ref = 'properties.build_system._ref',
+  properties___tool___type = 'properties.tool.type',
+  properties___tool___description = 'properties.tool.description',
+  properties___tool___additionalProperties = 'properties.tool.additionalProperties',
+  properties___badges___description = 'properties.badges.description',
+  properties___badges___type = 'properties.badges.type',
+  properties___badges___additionalProperties___type = 'properties.badges.additionalProperties.type',
+  properties___bench___description = 'properties.bench.description',
+  properties___bench___type = 'properties.bench.type',
+  properties___bench___items___description = 'properties.bench.items.description',
+  properties___bench___items____ref = 'properties.bench.items._ref',
+  properties___bin___description = 'properties.bin.description',
+  properties___bin___type = 'properties.bin.type',
+  properties___bin___items___description = 'properties.bin.items.description',
+  properties___bin___items____ref = 'properties.bin.items._ref',
+  properties___build_dependencies___type = 'properties.build_dependencies.type',
+  properties___build_dependencies___additionalProperties____ref = 'properties.build_dependencies.additionalProperties._ref',
+  properties___build_dependencies___x_taplo___hidden = 'properties.build_dependencies.x_taplo.hidden',
+  properties___cargo_features___type = 'properties.cargo_features.type',
+  properties___cargo_features___items___type = 'properties.cargo_features.items.type',
+  properties___dependencies___description = 'properties.dependencies.description',
+  properties___dependencies___type = 'properties.dependencies.type',
+  properties___dependencies___additionalProperties____ref = 'properties.dependencies.additionalProperties._ref',
+  properties___dev_dependencies___type = 'properties.dev_dependencies.type',
+  properties___dev_dependencies___additionalProperties____ref = 'properties.dev_dependencies.additionalProperties._ref',
+  properties___dev_dependencies___x_taplo___hidden = 'properties.dev_dependencies.x_taplo.hidden',
+  properties___example___description = 'properties.example.description',
+  properties___example___type = 'properties.example.type',
+  properties___example___items___description = 'properties.example.items.description',
+  properties___example___items____ref = 'properties.example.items._ref',
+  properties___features___description = 'properties.features.description',
+  properties___features___type = 'properties.features.type',
+  properties___features___additionalProperties___type = 'properties.features.additionalProperties.type',
+  properties___lib____ref = 'properties.lib._ref',
+  properties___package____ref = 'properties.package._ref',
+  properties___patch___description = 'properties.patch.description',
+  properties___patch___type = 'properties.patch.type',
+  properties___patch___additionalProperties___type = 'properties.patch.additionalProperties.type',
+  properties___profile____ref = 'properties.profile._ref',
+  properties___project____ref = 'properties.project._ref',
+  properties___project___x_taplo___hidden = 'properties.project.x_taplo.hidden',
+  properties___replace___type = 'properties.replace.type',
+  properties___replace___additionalProperties____ref = 'properties.replace.additionalProperties._ref',
+  properties___replace___x_taplo___hidden = 'properties.replace.x_taplo.hidden',
+  properties___target___type = 'properties.target.type',
+  properties___target___additionalProperties____ref = 'properties.target.additionalProperties._ref',
+  properties___test___description = 'properties.test.description',
+  properties___test___type = 'properties.test.type',
+  properties___test___items___description = 'properties.test.items.description',
+  properties___test___items____ref = 'properties.test.items._ref',
+  properties___workspace____ref = 'properties.workspace._ref',
   definitions___poetry_author_pattern___description = 'definitions.poetry_author_pattern.description',
   definitions___poetry_author_pattern___type = 'definitions.poetry_author_pattern.type',
   definitions___poetry_author_pattern___pattern = 'definitions.poetry_author_pattern.pattern',
@@ -6694,122 +6807,7 @@ enum SchemasJsonFieldsEnum {
   definitions___Workspace___title = 'definitions.Workspace.title',
   definitions___Workspace___description = 'definitions.Workspace.description',
   definitions___Workspace___type = 'definitions.Workspace.type',
-  type = 'type',
-  properties___build_system____ref = 'properties.build_system._ref',
-  properties___tool___type = 'properties.tool.type',
-  properties___tool___description = 'properties.tool.description',
-  properties___tool___additionalProperties = 'properties.tool.additionalProperties',
-  properties___tab_spaces___type = 'properties.tab_spaces.type',
-  properties___tab_spaces___description = 'properties.tab_spaces.description',
-  properties___tab_spaces___default = 'properties.tab_spaces.default',
-  properties___fn_args_layout___type = 'properties.fn_args_layout.type',
-  properties___fn_args_layout___description = 'properties.fn_args_layout.description',
-  properties___fn_args_layout___default = 'properties.fn_args_layout.default',
-  properties___fn_args_layout___enum = 'properties.fn_args_layout.enum',
-  properties___merge_derives___type = 'properties.merge_derives.type',
-  properties___merge_derives___description = 'properties.merge_derives.description',
-  properties___merge_derives___default = 'properties.merge_derives.default',
-  properties___merge_derives___enum = 'properties.merge_derives.enum',
-  properties___print_misformatted_file_names___type = 'properties.print_misformatted_file_names.type',
-  properties___print_misformatted_file_names___description = 'properties.print_misformatted_file_names.description',
-  properties___print_misformatted_file_names___default = 'properties.print_misformatted_file_names.default',
-  properties___print_misformatted_file_names___enum = 'properties.print_misformatted_file_names.enum',
-  properties___remove_nested_parens___type = 'properties.remove_nested_parens.type',
-  properties___remove_nested_parens___description = 'properties.remove_nested_parens.description',
-  properties___remove_nested_parens___default = 'properties.remove_nested_parens.default',
-  properties___remove_nested_parens___enum = 'properties.remove_nested_parens.enum',
-  properties___use_small_heuristics___type = 'properties.use_small_heuristics.type',
-  properties___use_small_heuristics___description = 'properties.use_small_heuristics.description',
-  properties___use_small_heuristics___default = 'properties.use_small_heuristics.default',
-  properties___use_small_heuristics___enum = 'properties.use_small_heuristics.enum',
-  properties___use_try_shorthand___type = 'properties.use_try_shorthand.type',
-  properties___use_try_shorthand___description = 'properties.use_try_shorthand.description',
-  properties___use_try_shorthand___default = 'properties.use_try_shorthand.default',
-  properties___use_try_shorthand___enum = 'properties.use_try_shorthand.enum',
-  properties___reorder_modules___type = 'properties.reorder_modules.type',
-  properties___reorder_modules___description = 'properties.reorder_modules.description',
-  properties___reorder_modules___default = 'properties.reorder_modules.default',
-  properties___reorder_modules___enum = 'properties.reorder_modules.enum',
-  properties___hard_tabs___type = 'properties.hard_tabs.type',
-  properties___hard_tabs___description = 'properties.hard_tabs.description',
-  properties___hard_tabs___default = 'properties.hard_tabs.default',
-  properties___hard_tabs___enum = 'properties.hard_tabs.enum',
-  properties___use_field_init_shorthand___type = 'properties.use_field_init_shorthand.type',
-  properties___use_field_init_shorthand___description = 'properties.use_field_init_shorthand.description',
-  properties___use_field_init_shorthand___default = 'properties.use_field_init_shorthand.default',
-  properties___use_field_init_shorthand___enum = 'properties.use_field_init_shorthand.enum',
-  properties___max_width___type = 'properties.max_width.type',
-  properties___max_width___description = 'properties.max_width.description',
-  properties___max_width___default = 'properties.max_width.default',
-  properties___reorder_imports___type = 'properties.reorder_imports.type',
-  properties___reorder_imports___description = 'properties.reorder_imports.description',
-  properties___reorder_imports___default = 'properties.reorder_imports.default',
-  properties___reorder_imports___enum = 'properties.reorder_imports.enum',
-  properties___match_arm_leading_pipes___type = 'properties.match_arm_leading_pipes.type',
-  properties___match_arm_leading_pipes___description = 'properties.match_arm_leading_pipes.description',
-  properties___match_arm_leading_pipes___default = 'properties.match_arm_leading_pipes.default',
-  properties___match_arm_leading_pipes___enum = 'properties.match_arm_leading_pipes.enum',
-  properties___force_explicit_abi___type = 'properties.force_explicit_abi.type',
-  properties___force_explicit_abi___description = 'properties.force_explicit_abi.description',
-  properties___force_explicit_abi___default = 'properties.force_explicit_abi.default',
-  properties___force_explicit_abi___enum = 'properties.force_explicit_abi.enum',
-  properties___edition___type = 'properties.edition.type',
-  properties___edition___description = 'properties.edition.description',
-  properties___edition___default = 'properties.edition.default',
-  properties___edition___enum = 'properties.edition.enum',
-  properties___newline_style___type = 'properties.newline_style.type',
-  properties___newline_style___description = 'properties.newline_style.description',
-  properties___newline_style___default = 'properties.newline_style.default',
-  properties___newline_style___enum = 'properties.newline_style.enum',
-  properties___badges___description = 'properties.badges.description',
-  properties___badges___type = 'properties.badges.type',
-  properties___badges___additionalProperties___type = 'properties.badges.additionalProperties.type',
-  properties___bench___description = 'properties.bench.description',
-  properties___bench___type = 'properties.bench.type',
-  properties___bench___items___description = 'properties.bench.items.description',
-  properties___bench___items____ref = 'properties.bench.items._ref',
-  properties___bin___description = 'properties.bin.description',
-  properties___bin___type = 'properties.bin.type',
-  properties___bin___items___description = 'properties.bin.items.description',
-  properties___bin___items____ref = 'properties.bin.items._ref',
-  properties___build_dependencies___type = 'properties.build_dependencies.type',
-  properties___build_dependencies___additionalProperties____ref = 'properties.build_dependencies.additionalProperties._ref',
-  properties___build_dependencies___x_taplo___hidden = 'properties.build_dependencies.x_taplo.hidden',
-  properties___cargo_features___type = 'properties.cargo_features.type',
-  properties___cargo_features___items___type = 'properties.cargo_features.items.type',
-  properties___dependencies___description = 'properties.dependencies.description',
-  properties___dependencies___type = 'properties.dependencies.type',
-  properties___dependencies___additionalProperties____ref = 'properties.dependencies.additionalProperties._ref',
-  properties___dev_dependencies___type = 'properties.dev_dependencies.type',
-  properties___dev_dependencies___additionalProperties____ref = 'properties.dev_dependencies.additionalProperties._ref',
-  properties___dev_dependencies___x_taplo___hidden = 'properties.dev_dependencies.x_taplo.hidden',
-  properties___example___description = 'properties.example.description',
-  properties___example___type = 'properties.example.type',
-  properties___example___items___description = 'properties.example.items.description',
-  properties___example___items____ref = 'properties.example.items._ref',
-  properties___features___description = 'properties.features.description',
-  properties___features___type = 'properties.features.type',
-  properties___features___additionalProperties___type = 'properties.features.additionalProperties.type',
-  properties___lib____ref = 'properties.lib._ref',
-  properties___package____ref = 'properties.package._ref',
-  properties___patch___description = 'properties.patch.description',
-  properties___patch___type = 'properties.patch.type',
-  properties___patch___additionalProperties___type = 'properties.patch.additionalProperties.type',
-  properties___profile____ref = 'properties.profile._ref',
-  properties___project____ref = 'properties.project._ref',
-  properties___project___x_taplo___hidden = 'properties.project.x_taplo.hidden',
-  properties___replace___type = 'properties.replace.type',
-  properties___replace___additionalProperties____ref = 'properties.replace.additionalProperties._ref',
-  properties___replace___x_taplo___hidden = 'properties.replace.x_taplo.hidden',
-  properties___target___type = 'properties.target.type',
-  properties___target___additionalProperties____ref = 'properties.target.additionalProperties._ref',
-  properties___test___description = 'properties.test.description',
-  properties___test___type = 'properties.test.type',
-  properties___test___items___description = 'properties.test.items.description',
-  properties___test___items____ref = 'properties.test.items._ref',
-  properties___workspace____ref = 'properties.workspace._ref',
-  additionalProperties = 'additionalProperties',
-  description = 'description'
+  additionalProperties = 'additionalProperties'
 }
 
 type SchemasJsonFilterInput = {
@@ -6819,12 +6817,12 @@ type SchemasJsonFilterInput = {
   readonly internal: Maybe<InternalFilterInput>;
   readonly _schema: Maybe<StringQueryOperatorInput>;
   readonly title: Maybe<StringQueryOperatorInput>;
-  readonly x_taplo_info: Maybe<SchemasJsonX_taplo_infoFilterInput>;
-  readonly definitions: Maybe<SchemasJsonDefinitionsFilterInput>;
   readonly type: Maybe<StringQueryOperatorInput>;
-  readonly properties: Maybe<SchemasJsonPropertiesFilterInput>;
-  readonly additionalProperties: Maybe<BooleanQueryOperatorInput>;
   readonly description: Maybe<StringQueryOperatorInput>;
+  readonly x_taplo_info: Maybe<SchemasJsonX_taplo_infoFilterInput>;
+  readonly properties: Maybe<SchemasJsonPropertiesFilterInput>;
+  readonly definitions: Maybe<SchemasJsonDefinitionsFilterInput>;
+  readonly additionalProperties: Maybe<BooleanQueryOperatorInput>;
 };
 
 type SchemasJsonGroupConnection = {
@@ -6837,8 +6835,6 @@ type SchemasJsonGroupConnection = {
 };
 
 type SchemasJsonProperties = {
-  readonly build_system: Maybe<SchemasJsonPropertiesBuild_system>;
-  readonly tool: Maybe<SchemasJsonPropertiesTool>;
   readonly tab_spaces: Maybe<SchemasJsonPropertiesTab_spaces>;
   readonly fn_args_layout: Maybe<SchemasJsonPropertiesFn_args_layout>;
   readonly merge_derives: Maybe<SchemasJsonPropertiesMerge_derives>;
@@ -6855,6 +6851,8 @@ type SchemasJsonProperties = {
   readonly force_explicit_abi: Maybe<SchemasJsonPropertiesForce_explicit_abi>;
   readonly edition: Maybe<SchemasJsonPropertiesEdition>;
   readonly newline_style: Maybe<SchemasJsonPropertiesNewline_style>;
+  readonly build_system: Maybe<SchemasJsonPropertiesBuild_system>;
+  readonly tool: Maybe<SchemasJsonPropertiesTool>;
   readonly badges: Maybe<SchemasJsonPropertiesBadges>;
   readonly bench: Maybe<SchemasJsonPropertiesBench>;
   readonly bin: Maybe<SchemasJsonPropertiesBin>;
@@ -7296,8 +7294,6 @@ type SchemasJsonPropertiesFeaturesX_taploLinksFilterInput = {
 };
 
 type SchemasJsonPropertiesFilterInput = {
-  readonly build_system: Maybe<SchemasJsonPropertiesBuild_systemFilterInput>;
-  readonly tool: Maybe<SchemasJsonPropertiesToolFilterInput>;
   readonly tab_spaces: Maybe<SchemasJsonPropertiesTab_spacesFilterInput>;
   readonly fn_args_layout: Maybe<SchemasJsonPropertiesFn_args_layoutFilterInput>;
   readonly merge_derives: Maybe<SchemasJsonPropertiesMerge_derivesFilterInput>;
@@ -7314,6 +7310,8 @@ type SchemasJsonPropertiesFilterInput = {
   readonly force_explicit_abi: Maybe<SchemasJsonPropertiesForce_explicit_abiFilterInput>;
   readonly edition: Maybe<SchemasJsonPropertiesEditionFilterInput>;
   readonly newline_style: Maybe<SchemasJsonPropertiesNewline_styleFilterInput>;
+  readonly build_system: Maybe<SchemasJsonPropertiesBuild_systemFilterInput>;
+  readonly tool: Maybe<SchemasJsonPropertiesToolFilterInput>;
   readonly badges: Maybe<SchemasJsonPropertiesBadgesFilterInput>;
   readonly bench: Maybe<SchemasJsonPropertiesBenchFilterInput>;
   readonly bin: Maybe<SchemasJsonPropertiesBinFilterInput>;
@@ -8390,8 +8388,6 @@ type SchemasJsonX_taplo_infoFilterInput = {
 type Site = Node & {
   readonly buildTime: Maybe<Scalars['Date']>;
   readonly siteMetadata: Maybe<SiteSiteMetadata>;
-  readonly port: Maybe<Scalars['Int']>;
-  readonly host: Maybe<Scalars['String']>;
   readonly polyfill: Maybe<Scalars['Boolean']>;
   readonly pathPrefix: Maybe<Scalars['String']>;
   readonly id: Scalars['ID'];
@@ -8595,8 +8591,6 @@ enum SiteFieldsEnum {
   siteMetadata___title = 'siteMetadata.title',
   siteMetadata___description = 'siteMetadata.description',
   siteMetadata___siteUrl = 'siteMetadata.siteUrl',
-  port = 'port',
-  host = 'host',
   polyfill = 'polyfill',
   pathPrefix = 'pathPrefix',
   id = 'id',
@@ -8690,8 +8684,6 @@ enum SiteFieldsEnum {
 type SiteFilterInput = {
   readonly buildTime: Maybe<DateQueryOperatorInput>;
   readonly siteMetadata: Maybe<SiteSiteMetadataFilterInput>;
-  readonly port: Maybe<IntQueryOperatorInput>;
-  readonly host: Maybe<StringQueryOperatorInput>;
   readonly polyfill: Maybe<BooleanQueryOperatorInput>;
   readonly pathPrefix: Maybe<StringQueryOperatorInput>;
   readonly id: Maybe<StringQueryOperatorInput>;
@@ -8715,15 +8707,15 @@ type SitePage = Node & {
   readonly internalComponentName: Scalars['String'];
   readonly componentChunkName: Scalars['String'];
   readonly matchPath: Maybe<Scalars['String']>;
+  readonly id: Scalars['ID'];
+  readonly parent: Maybe<Node>;
+  readonly children: ReadonlyArray<Node>;
+  readonly internal: Internal;
   readonly isCreatedByStatefulCreatePages: Maybe<Scalars['Boolean']>;
   readonly context: Maybe<SitePageContext>;
   readonly pluginCreator: Maybe<SitePlugin>;
   readonly pluginCreatorId: Maybe<Scalars['String']>;
   readonly componentPath: Maybe<Scalars['String']>;
-  readonly id: Scalars['ID'];
-  readonly parent: Maybe<Node>;
-  readonly children: ReadonlyArray<Node>;
-  readonly internal: Internal;
 };
 
 type SitePageConnection = {
@@ -8779,6 +8771,92 @@ enum SitePageFieldsEnum {
   internalComponentName = 'internalComponentName',
   componentChunkName = 'componentChunkName',
   matchPath = 'matchPath',
+  id = 'id',
+  parent___id = 'parent.id',
+  parent___parent___id = 'parent.parent.id',
+  parent___parent___parent___id = 'parent.parent.parent.id',
+  parent___parent___parent___children = 'parent.parent.parent.children',
+  parent___parent___children = 'parent.parent.children',
+  parent___parent___children___id = 'parent.parent.children.id',
+  parent___parent___children___children = 'parent.parent.children.children',
+  parent___parent___internal___content = 'parent.parent.internal.content',
+  parent___parent___internal___contentDigest = 'parent.parent.internal.contentDigest',
+  parent___parent___internal___description = 'parent.parent.internal.description',
+  parent___parent___internal___fieldOwners = 'parent.parent.internal.fieldOwners',
+  parent___parent___internal___ignoreType = 'parent.parent.internal.ignoreType',
+  parent___parent___internal___mediaType = 'parent.parent.internal.mediaType',
+  parent___parent___internal___owner = 'parent.parent.internal.owner',
+  parent___parent___internal___type = 'parent.parent.internal.type',
+  parent___children = 'parent.children',
+  parent___children___id = 'parent.children.id',
+  parent___children___parent___id = 'parent.children.parent.id',
+  parent___children___parent___children = 'parent.children.parent.children',
+  parent___children___children = 'parent.children.children',
+  parent___children___children___id = 'parent.children.children.id',
+  parent___children___children___children = 'parent.children.children.children',
+  parent___children___internal___content = 'parent.children.internal.content',
+  parent___children___internal___contentDigest = 'parent.children.internal.contentDigest',
+  parent___children___internal___description = 'parent.children.internal.description',
+  parent___children___internal___fieldOwners = 'parent.children.internal.fieldOwners',
+  parent___children___internal___ignoreType = 'parent.children.internal.ignoreType',
+  parent___children___internal___mediaType = 'parent.children.internal.mediaType',
+  parent___children___internal___owner = 'parent.children.internal.owner',
+  parent___children___internal___type = 'parent.children.internal.type',
+  parent___internal___content = 'parent.internal.content',
+  parent___internal___contentDigest = 'parent.internal.contentDigest',
+  parent___internal___description = 'parent.internal.description',
+  parent___internal___fieldOwners = 'parent.internal.fieldOwners',
+  parent___internal___ignoreType = 'parent.internal.ignoreType',
+  parent___internal___mediaType = 'parent.internal.mediaType',
+  parent___internal___owner = 'parent.internal.owner',
+  parent___internal___type = 'parent.internal.type',
+  children = 'children',
+  children___id = 'children.id',
+  children___parent___id = 'children.parent.id',
+  children___parent___parent___id = 'children.parent.parent.id',
+  children___parent___parent___children = 'children.parent.parent.children',
+  children___parent___children = 'children.parent.children',
+  children___parent___children___id = 'children.parent.children.id',
+  children___parent___children___children = 'children.parent.children.children',
+  children___parent___internal___content = 'children.parent.internal.content',
+  children___parent___internal___contentDigest = 'children.parent.internal.contentDigest',
+  children___parent___internal___description = 'children.parent.internal.description',
+  children___parent___internal___fieldOwners = 'children.parent.internal.fieldOwners',
+  children___parent___internal___ignoreType = 'children.parent.internal.ignoreType',
+  children___parent___internal___mediaType = 'children.parent.internal.mediaType',
+  children___parent___internal___owner = 'children.parent.internal.owner',
+  children___parent___internal___type = 'children.parent.internal.type',
+  children___children = 'children.children',
+  children___children___id = 'children.children.id',
+  children___children___parent___id = 'children.children.parent.id',
+  children___children___parent___children = 'children.children.parent.children',
+  children___children___children = 'children.children.children',
+  children___children___children___id = 'children.children.children.id',
+  children___children___children___children = 'children.children.children.children',
+  children___children___internal___content = 'children.children.internal.content',
+  children___children___internal___contentDigest = 'children.children.internal.contentDigest',
+  children___children___internal___description = 'children.children.internal.description',
+  children___children___internal___fieldOwners = 'children.children.internal.fieldOwners',
+  children___children___internal___ignoreType = 'children.children.internal.ignoreType',
+  children___children___internal___mediaType = 'children.children.internal.mediaType',
+  children___children___internal___owner = 'children.children.internal.owner',
+  children___children___internal___type = 'children.children.internal.type',
+  children___internal___content = 'children.internal.content',
+  children___internal___contentDigest = 'children.internal.contentDigest',
+  children___internal___description = 'children.internal.description',
+  children___internal___fieldOwners = 'children.internal.fieldOwners',
+  children___internal___ignoreType = 'children.internal.ignoreType',
+  children___internal___mediaType = 'children.internal.mediaType',
+  children___internal___owner = 'children.internal.owner',
+  children___internal___type = 'children.internal.type',
+  internal___content = 'internal.content',
+  internal___contentDigest = 'internal.contentDigest',
+  internal___description = 'internal.description',
+  internal___fieldOwners = 'internal.fieldOwners',
+  internal___ignoreType = 'internal.ignoreType',
+  internal___mediaType = 'internal.mediaType',
+  internal___owner = 'internal.owner',
+  internal___type = 'internal.type',
   isCreatedByStatefulCreatePages = 'isCreatedByStatefulCreatePages',
   context___frontmatter___title = 'context.frontmatter.title',
   context___frontmatter___nav = 'context.frontmatter.nav',
@@ -8879,93 +8957,7 @@ enum SitePageFieldsEnum {
   pluginCreator___packageJson___peerDependencies___version = 'pluginCreator.packageJson.peerDependencies.version',
   pluginCreator___packageJson___keywords = 'pluginCreator.packageJson.keywords',
   pluginCreatorId = 'pluginCreatorId',
-  componentPath = 'componentPath',
-  id = 'id',
-  parent___id = 'parent.id',
-  parent___parent___id = 'parent.parent.id',
-  parent___parent___parent___id = 'parent.parent.parent.id',
-  parent___parent___parent___children = 'parent.parent.parent.children',
-  parent___parent___children = 'parent.parent.children',
-  parent___parent___children___id = 'parent.parent.children.id',
-  parent___parent___children___children = 'parent.parent.children.children',
-  parent___parent___internal___content = 'parent.parent.internal.content',
-  parent___parent___internal___contentDigest = 'parent.parent.internal.contentDigest',
-  parent___parent___internal___description = 'parent.parent.internal.description',
-  parent___parent___internal___fieldOwners = 'parent.parent.internal.fieldOwners',
-  parent___parent___internal___ignoreType = 'parent.parent.internal.ignoreType',
-  parent___parent___internal___mediaType = 'parent.parent.internal.mediaType',
-  parent___parent___internal___owner = 'parent.parent.internal.owner',
-  parent___parent___internal___type = 'parent.parent.internal.type',
-  parent___children = 'parent.children',
-  parent___children___id = 'parent.children.id',
-  parent___children___parent___id = 'parent.children.parent.id',
-  parent___children___parent___children = 'parent.children.parent.children',
-  parent___children___children = 'parent.children.children',
-  parent___children___children___id = 'parent.children.children.id',
-  parent___children___children___children = 'parent.children.children.children',
-  parent___children___internal___content = 'parent.children.internal.content',
-  parent___children___internal___contentDigest = 'parent.children.internal.contentDigest',
-  parent___children___internal___description = 'parent.children.internal.description',
-  parent___children___internal___fieldOwners = 'parent.children.internal.fieldOwners',
-  parent___children___internal___ignoreType = 'parent.children.internal.ignoreType',
-  parent___children___internal___mediaType = 'parent.children.internal.mediaType',
-  parent___children___internal___owner = 'parent.children.internal.owner',
-  parent___children___internal___type = 'parent.children.internal.type',
-  parent___internal___content = 'parent.internal.content',
-  parent___internal___contentDigest = 'parent.internal.contentDigest',
-  parent___internal___description = 'parent.internal.description',
-  parent___internal___fieldOwners = 'parent.internal.fieldOwners',
-  parent___internal___ignoreType = 'parent.internal.ignoreType',
-  parent___internal___mediaType = 'parent.internal.mediaType',
-  parent___internal___owner = 'parent.internal.owner',
-  parent___internal___type = 'parent.internal.type',
-  children = 'children',
-  children___id = 'children.id',
-  children___parent___id = 'children.parent.id',
-  children___parent___parent___id = 'children.parent.parent.id',
-  children___parent___parent___children = 'children.parent.parent.children',
-  children___parent___children = 'children.parent.children',
-  children___parent___children___id = 'children.parent.children.id',
-  children___parent___children___children = 'children.parent.children.children',
-  children___parent___internal___content = 'children.parent.internal.content',
-  children___parent___internal___contentDigest = 'children.parent.internal.contentDigest',
-  children___parent___internal___description = 'children.parent.internal.description',
-  children___parent___internal___fieldOwners = 'children.parent.internal.fieldOwners',
-  children___parent___internal___ignoreType = 'children.parent.internal.ignoreType',
-  children___parent___internal___mediaType = 'children.parent.internal.mediaType',
-  children___parent___internal___owner = 'children.parent.internal.owner',
-  children___parent___internal___type = 'children.parent.internal.type',
-  children___children = 'children.children',
-  children___children___id = 'children.children.id',
-  children___children___parent___id = 'children.children.parent.id',
-  children___children___parent___children = 'children.children.parent.children',
-  children___children___children = 'children.children.children',
-  children___children___children___id = 'children.children.children.id',
-  children___children___children___children = 'children.children.children.children',
-  children___children___internal___content = 'children.children.internal.content',
-  children___children___internal___contentDigest = 'children.children.internal.contentDigest',
-  children___children___internal___description = 'children.children.internal.description',
-  children___children___internal___fieldOwners = 'children.children.internal.fieldOwners',
-  children___children___internal___ignoreType = 'children.children.internal.ignoreType',
-  children___children___internal___mediaType = 'children.children.internal.mediaType',
-  children___children___internal___owner = 'children.children.internal.owner',
-  children___children___internal___type = 'children.children.internal.type',
-  children___internal___content = 'children.internal.content',
-  children___internal___contentDigest = 'children.internal.contentDigest',
-  children___internal___description = 'children.internal.description',
-  children___internal___fieldOwners = 'children.internal.fieldOwners',
-  children___internal___ignoreType = 'children.internal.ignoreType',
-  children___internal___mediaType = 'children.internal.mediaType',
-  children___internal___owner = 'children.internal.owner',
-  children___internal___type = 'children.internal.type',
-  internal___content = 'internal.content',
-  internal___contentDigest = 'internal.contentDigest',
-  internal___description = 'internal.description',
-  internal___fieldOwners = 'internal.fieldOwners',
-  internal___ignoreType = 'internal.ignoreType',
-  internal___mediaType = 'internal.mediaType',
-  internal___owner = 'internal.owner',
-  internal___type = 'internal.type'
+  componentPath = 'componentPath'
 }
 
 type SitePageFilterInput = {
@@ -8974,15 +8966,15 @@ type SitePageFilterInput = {
   readonly internalComponentName: Maybe<StringQueryOperatorInput>;
   readonly componentChunkName: Maybe<StringQueryOperatorInput>;
   readonly matchPath: Maybe<StringQueryOperatorInput>;
+  readonly id: Maybe<StringQueryOperatorInput>;
+  readonly parent: Maybe<NodeFilterInput>;
+  readonly children: Maybe<NodeFilterListInput>;
+  readonly internal: Maybe<InternalFilterInput>;
   readonly isCreatedByStatefulCreatePages: Maybe<BooleanQueryOperatorInput>;
   readonly context: Maybe<SitePageContextFilterInput>;
   readonly pluginCreator: Maybe<SitePluginFilterInput>;
   readonly pluginCreatorId: Maybe<StringQueryOperatorInput>;
   readonly componentPath: Maybe<StringQueryOperatorInput>;
-  readonly id: Maybe<StringQueryOperatorInput>;
-  readonly parent: Maybe<NodeFilterInput>;
-  readonly children: Maybe<NodeFilterListInput>;
-  readonly internal: Maybe<InternalFilterInput>;
 };
 
 type SitePageGroupConnection = {
@@ -9438,11 +9430,6 @@ type TransformOptions = {
 type WebPOptions = {
   readonly quality: Maybe<Scalars['Int']>;
 };
-
-type PagesQueryQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-type PagesQueryQuery = { readonly allSitePage: { readonly nodes: ReadonlyArray<Pick<SitePage, 'path'>> } };
 
 type PageMetaQueryVariables = Exact<{ [key: string]: never; }>;
 

@@ -35,7 +35,6 @@
     "gatsby-source-filesystem": "^2.8.1",
     "gatsby-transformer-json": "^2.8.0",
     "gatsby-transformer-sharp": "^2.9.0",
-    "get-urls": "^10.0.0",
     "mdi-react": "^7.4.0",
     "prism-react-renderer": "^1.1.1",
     "prismjs": "^1.22.0",

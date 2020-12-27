@@ -320,7 +320,9 @@
     "build": "yarn --ignore-engines rollup --silent -c rollup.config.js"
   },
   "dependencies": {
+    "@taplo/lsp": "^0.1.1",
     "deep-equal": "^2.0.4",
+    "encoding": "^0.1.13",
     "node-fetch": "^2.6.1",
     "vscode-languageclient": "^7.0.0-next.15"
   },

@@ -3,6 +3,7 @@ import taploCli from "../../../taplo-cli/Cargo.toml";
 import fs from "fs";
 import fastGlob from "fast-glob";
 import fetch, { Headers, Request, Response } from "node-fetch";
+import path from "path";
 
 // In order to support reqwest
 (global as any).Headers = Headers;
@@ -19,15 +20,7 @@ import fetch, { Headers, Request, Response } from "node-fetch";
   return fs.readFileSync(0, "utf-8");
 };
 
-(global as any).readFile = (p: string) => {
-  return fs.readFileSync(p, "utf-8");
-};
-
-(global as any).writeFile = (p: string, data: Uint8Array) => {
-  return fs.writeFileSync(p, data);
-};
-
-(global as any).fileExists = (p: string) => {
+(global as any).fileExists = (p: string): boolean => {
   return fs.existsSync(p);
 };
 
@@ -42,9 +35,30 @@ import fetch, { Headers, Request, Response } from "node-fetch";
   return process.stdout.isTTY;
 };
 
+(global as any).readFile = (path: string): Promise<Uint8Array> => {
+  return fs.promises.readFile(path);
+};
+
+(global as any).writeFile = (path: string, data: Uint8Array): Promise<void> => {
+  return fs.promises.writeFile(path, data);
+};
+
+(global as any).isAbsolutePath = (p: string): boolean => {
+  return (
+    path.resolve(p) === path.normalize(p).replace(RegExp(path.sep + "$"), "")
+  );
+};
+
+(global as any).mkdir = (p: string) => {
+  fs.mkdirSync(p, { recursive: true });
+};
+
+// For cached schemas.
+(global as any).needsUpdate = (path: string, newDate: number): boolean =>
+  fs.statSync(path).mtimeMs < newDate;
+
 async function runTaplo() {
   const taplo = await taploCli();
-
   taplo.run_node(process.argv.slice(2));
 }
 

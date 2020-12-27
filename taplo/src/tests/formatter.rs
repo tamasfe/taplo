@@ -58,3 +58,18 @@ debug = 0 # Set this to 1 or 2 to get more useful backtraces in debugger.
 
     assert_eq!(src, formatted);
 }
+
+#[test]
+fn comment_before_entry() {
+    let src = r#"
+
+# hello
+[lib]
+# bello
+incremental = true
+"#;
+
+    let formatted = crate::formatter::format(src, formatter::Options::default());
+
+    assert_eq!(src, formatted);
+}

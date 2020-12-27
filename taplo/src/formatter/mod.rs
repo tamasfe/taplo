@@ -410,6 +410,9 @@ fn format_root(
                         format_table_header(n, builder, options.clone(), context)
                     }
                     ENTRY => {
+                        let indent_str = options.indent_string.repeat(indent_level);
+                        add_comments(&indent_str, &mut comments, builder, &options, true);
+
                         let mut entry_b = GreenNodeBuilder::new();
                         format_entry(
                             n,
@@ -426,6 +429,9 @@ fn format_root(
                         skip_newline += 1;
                     }
                     _ => {
+                        let indent_str = options.indent_string.repeat(indent_level);
+                        add_comments(&indent_str, &mut comments, builder, &options, true);
+
                         if options.indent_tables {
                             builder.token(
                                 WHITESPACE.into(),

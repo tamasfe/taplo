@@ -1,0 +1,18 @@
+@import "../style/colors.scss";
+
+.curved-background {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  position: relative;
+  .curved-background-inner {
+    position: absolute;
+    background-color: $bgColor;
+    top: 0;
+    left: 50%;
+    border-radius: 50%;
+    height: 10rem;
+    width: 150%;
+    transform: translateX(-50%);
+  }
+}

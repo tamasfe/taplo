@@ -1,0 +1,102 @@
+---
+title: Library
+nav: Library
+---
+
+# About
+
+Taplo is available as a library for the following languages:
+
+- [Rust](https://www.rust-lang.org/)
+- [JavaScript/Typescript](https://www.javascript.com) (Node.js and modern browsers) 
+
+# Rust
+
+The full API documentation with examples is available [here](https://docs.rs/taplo/).
+
+## Installation
+
+The library is published at [Crates.io](https://crates.io/crates/taplo).
+
+To use the latest version, add it to your dependencies:
+
+`taplo = "*"`
+
+The available features can be found in the [documentation](https://docs.rs/taplo/).
+
+## Features
+
+- **Linting**
+- **Validation (based on JSON schema)** with the help of [Schemars](https://github.com/GREsau/schemars) and [Verify](https://github.com/tamasfe/verify)
+- **Lossless syntax-tree** every token is preserved as-is
+- **JSON-like DOM Tree**
+- **Serialization To Other Formats** with [Serde](https://serde.rs/)
+- **DOM Manipulation** (**WIP**) Rewriting parts of the DOM while not touching anything else
+- **Formatting** With configurable options
+- **Scoped Formatting Options** Formatting options that affect only a part of the document
+
+## Comparison To [toml-rs](https://github.com/alexcrichton/toml-rs)
+
+[toml-rs](https://github.com/alexcrichton/toml-rs) focuses more on the data inside TOML documents, while Taplo cares about the TOML document itself, the position of comments is just as important as the data.
+
+While there is some overlap in functionality, the two tools serve different purposes, in fact [Taplo CLI](/cli) actually uses [toml-rs](https://github.com/alexcrichton/toml-rs) for reading its own configuration file.
+
+All this also means, that Taplo will always be slower by nature, however not by much (*as of Taplo `0.1.0`*):
+
+```
+test bench_taplo_parse          ... bench:     109,804 ns/iter (+/- 1,187)
+test bench_taplo_parse_validate ... bench:     220,236 ns/iter (+/- 6,148)
+test bench_toml_rs              ... bench:     140,089 ns/iter (+/- 1,392)
+```
+
+# JavaScript
+
+Taplo can also be used in Node.js and browsers that support running [WebAssembly](https://webassembly.org),
+it has no additional dependencies and is contained in a single `.js` file.
+
+## Installation
+
+The library is available as a NPM package [here](https://www.npmjs.com/package/@taplo/lib).
+
+Install with Yarn:
+
+`yarn add @taplo/lib`
+
+Or with NPM:
+
+`npm install --save @taplo/lib`
+
+## Features
+
+The features are limited compared to the Rust library. There are plans to expose everything that Taplo can offer, however it is not trivial and requires some effort.
+
+Currently only a high-level API is provided for the following:
+
+- **Linting**
+- **Validation (based on JSON schema)**
+- **Formatting**: With configurable options
+
+## Usage
+
+Only a single [`Taplo`](http://localhost:8080/api/javaScript/classes/_index_.taplo/#class-taplo) class is exported, and every operation can be done through it.
+
+It must be initialized asynchronously with its [`initialize`](/api/javaScript/classes/_index_.taplo/#initialize) method, **any attempts to create it with `new` will throw an error**.
+This is needed because the WebAssembly module has to be compiled before use.
+
+The initialization is rather expensive performance-wise, but it has to be once, and subsequent calls to `initialize` will be basically free.
+
+An example usage:
+
+```js
+import { Taplo } from "taplo";
+
+// Somewhere at the start of your app.
+const taplo = await Taplo.initialize();
+// ...
+// The other methods will not return promises.
+const formatted = taplo.format(tomlDocument);
+```
+
+## API Reference
+
+The auto-generated API reference is available [here](/api/javaScript).

@@ -1,0 +1,32 @@
+.page-content {
+  h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  h2 {
+    font-size: 1.3rem;
+  }
+  h3 {
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+
+  code {
+    padding: 4px;
+    background-color: rgba(123, 161, 192, 0.05) !important;
+    font-weight: bold;
+    font-style: italic;
+  }
+  
+
+  .prism-code {
+    background-color: rgba(123, 161, 192, 0.05) !important;
+    display: inline-block;
+  }
+
+  .cli-output {
+    background-color: rgba(123, 161, 192, 0.05) !important;
+    padding: 1rem;
+    display: inline-block;
+  }
+}

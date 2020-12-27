@@ -1,0 +1,23 @@
+@import "../style/colors.scss";
+
+body {
+  overflow-x: hidden;
+}
+
+.main-bg {
+  background-color: $bgColor;
+}
+
+.card-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+
+  .ant-card {
+    flex-shrink: 0;
+    margin: 0.5rem;
+  }
+}

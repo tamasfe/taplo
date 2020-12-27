@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as client from "vscode-languageclient/node";
 import * as path from "path";
 import { registerCommands } from "./commands";
-import { CachePath, MessageWithOutput } from "./requestExt";
+import { Methods } from "@taplo/lsp";
 
 let output: vscode.OutputChannel;
 
@@ -69,31 +69,31 @@ export async function activate(context: vscode.ExtensionContext) {
   } else {
     await c.onReady();
   }
-  c.sendNotification(CachePath.METHOD, {
+  c.sendNotification(Methods.CachePath.METHOD, {
     path: context.globalStorageUri.path,
   });
-  c.onNotification(MessageWithOutput.METHOD, async params =>
+  c.onNotification(Methods.MessageWithOutput.METHOD, async params =>
     showMessage(params, c)
   );
 }
 
 async function showMessage(
-  params: MessageWithOutput.Params,
+  params: Methods.MessageWithOutput.Params,
   c: client.LanguageClient
 ) {
   let show: string | undefined;
   switch (params.kind) {
-    case MessageWithOutput.MessageKind.Info:
+    case Methods.MessageWithOutput.MessageKind.Info:
       show = await vscode.window.showInformationMessage(
         params.message,
         "Show Details"
       );
-    case MessageWithOutput.MessageKind.Warn:
+    case Methods.MessageWithOutput.MessageKind.Warn:
       show = await vscode.window.showWarningMessage(
         params.message,
         "Show Details"
       );
-    case MessageWithOutput.MessageKind.Error:
+    case Methods.MessageWithOutput.MessageKind.Error:
       show = await vscode.window.showErrorMessage(
         params.message,
         "Show Details"

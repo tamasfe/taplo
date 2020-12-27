@@ -1,6 +1,6 @@
 {
   "name": "@taplo/lsp",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Taplo LSP server library.",
   "private": false,
   "scripts": {

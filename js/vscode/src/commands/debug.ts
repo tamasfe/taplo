@@ -2,7 +2,7 @@
 
 import * as vscode from "vscode";
 import * as client from "vscode-languageclient/node";
-import * as requestExt from "../requestExt";
+import {Methods} from "@taplo/lsp";
 
 export function register(
   ctx: vscode.ExtensionContext,
@@ -21,12 +21,12 @@ function registerShowSyntaxTree(
     vscode.commands.registerTextEditorCommand(
       "evenBetterToml.debug.showSyntaxTree",
       async (editor) => {
-        const params: requestExt.SyntaxTree.Params = {
+        const params: Methods.SyntaxTree.Params = {
           uri: editor.document.uri.toString(),
         };
 
-        const res = await c.sendRequest<requestExt.SyntaxTree.Response>(
-          requestExt.SyntaxTree.METHOD,
+        const res = await c.sendRequest<Methods.SyntaxTree.Response>(
+          Methods.SyntaxTree.METHOD,
           params
         );
 

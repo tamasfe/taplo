@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as client from "vscode-languageclient/node";
-import * as requestExt from "../requestExt";
+import { Methods } from "@taplo/lsp";
 import { getOutput } from "../extension";
 
 export function register(
@@ -24,12 +24,12 @@ export function register(
             return;
           }
 
-          let params: requestExt.TomlToJson.Params = {
+          let params: Methods.TomlToJson.Params = {
             text: selectedText,
           };
 
-          const res = await c.sendRequest<requestExt.TomlToJson.Response>(
-            requestExt.TomlToJson.METHOD,
+          const res = await c.sendRequest<Methods.TomlToJson.Response>(
+            Methods.TomlToJson.METHOD,
             params
           );
 
@@ -98,12 +98,12 @@ export function register(
             return;
           }
 
-          let params: requestExt.JsonToToml.Params = {
+          let params: Methods.JsonToToml.Params = {
             text: selectedText,
           };
 
-          const res = await c.sendRequest<requestExt.JsonToToml.Response>(
-            requestExt.JsonToToml.METHOD,
+          const res = await c.sendRequest<Methods.JsonToToml.Response>(
+            Methods.JsonToToml.METHOD,
             params
           );
 
@@ -173,12 +173,12 @@ export function register(
             return;
           }
 
-          let params: requestExt.TomlToJson.Params = {
+          let params: Methods.TomlToJson.Params = {
             text: input,
           };
 
-          const res = await c.sendRequest<requestExt.TomlToJson.Response>(
-            requestExt.TomlToJson.METHOD,
+          const res = await c.sendRequest<Methods.TomlToJson.Response>(
+            Methods.TomlToJson.METHOD,
             params
           );
 
@@ -225,12 +225,12 @@ export function register(
             return;
           }
 
-          let params: requestExt.JsonToToml.Params = {
+          let params: Methods.JsonToToml.Params = {
             text: input,
           };
 
-          const res = await c.sendRequest<requestExt.JsonToToml.Response>(
-            requestExt.JsonToToml.METHOD,
+          const res = await c.sendRequest<Methods.JsonToToml.Response>(
+            Methods.JsonToToml.METHOD,
             params
           );
 

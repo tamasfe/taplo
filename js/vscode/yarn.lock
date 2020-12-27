@@ -37,9 +37,9 @@
     picomatch "^2.2.2"
 
 "@taplo/lsp@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@taplo/lsp/-/lsp-0.1.1.tgz#c05da9b037297c6a7cb643b748c5df36ac823dd6"
-  integrity sha512-RgnmC4i+6urPek+lvVev6VUCAgJHoUFXzH6RPjWh8Metf+oAnsFPvZz+ixPmwUWYCa0sME9fsAy9F1yyExlFEQ==
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@taplo/lsp/-/lsp-0.1.3.tgz#5f551be27c94fb5d9be1f7b139666494358f4b2b"
+  integrity sha512-wVSgJ/0gLEdlL6Vd9wvJI+hXd7k7/HZk5m6vrKFMtUJDIGHL+Zx8VVD1pTjnnDrhbROvoidDP6RuF3YZmT4C7Q==
 
 "@types/deep-equal@^1.0.1":
   version "1.0.1"

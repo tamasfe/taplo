@@ -157,3 +157,34 @@ pub fn lint(
 
     Ok(JsValue::from_serde(&LintResult::default()).unwrap())
 }
+
+#[wasm_bindgen]
+pub fn from_json(json_source: &str) -> Result<JsValue, JsValue> {
+    let v: serde_json::Value =
+        serde_json::from_str(json_source).map_err(|err| JsValue::from_str(&format!("{}", err)))?;
+    Ok(JsValue::from_str(
+        &toml::to_string_pretty(&v).map_err(|err| JsValue::from_str(&format!("{}", err)))?,
+    ))
+}
+
+#[wasm_bindgen]
+pub fn to_json(toml_source: &str) -> Result<JsValue, JsValue> {
+    let parse = parse(&toml_source);
+
+    if !parse.errors.is_empty() {
+        return Err(JsValue::from_str("invalid TOML"));
+    }
+
+    let dom = parse.into_dom();
+
+    if !dom.errors().is_empty() {
+        return Err(JsValue::from_str("invalid TOML"));
+    }
+
+    let val = Value::try_from(dom).unwrap();
+
+    Ok(JsValue::from_str(
+        &serde_json::to_string_pretty(&val)
+            .map_err(|err| JsValue::from_str(&format!("{}", err)))?,
+    ))
+}

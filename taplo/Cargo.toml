@@ -39,6 +39,7 @@ verify = { version = "0.3", features = ["schemars", "serde"], optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
+toml = "0.5"
 
 [dev-dependencies]
 assert-json-diff = "1"

@@ -236,9 +236,69 @@ export class Taplo {
     }
 
     try {
-      return Taplo.taplo.format(toml, !!(options?.ignoreErrors ?? false), optsJson);
+      return Taplo.taplo.format(
+        toml,
+        !!(options?.ignoreErrors ?? false),
+        optsJson
+      );
     } catch (e) {
       throw new Error(e);
+    }
+  }
+
+  /**
+   * Encode the given JavaScript object to TOML.
+   *
+   * @throws If the given object cannot be serialized to TOML.
+   *
+   * @param data JSON compatible JavaScript object or JSON string.
+   */
+  public encode(data: object | string): string {
+    if (typeof data !== "string") {
+      data = JSON.stringify(data);
+    }
+
+    try {
+      return Taplo.taplo.from_json(data);
+    } catch (e) {
+      throw new Error(e);
+    }
+  }
+
+  /**
+   * Decode the given TOML string to a JavaScript object.
+   *
+   * @throws If data is not valid TOML.
+   *
+   * @param {string} data TOML string.
+   */
+  public decode<T extends object = any>(data: string): T;
+
+  /**
+   * Convert the given TOML string to JSON.
+   *
+   * @throws If data is not valid TOML.
+   *
+   * @param data TOML string.
+   * @param {boolean} [parse] Whether to parse the given JSON string.
+   */
+  public decode(data: string, parse: false): string;
+
+  public decode<T extends object = any>(
+    data: string,
+    parse?: boolean
+  ): T | string {
+    let v: string;
+    try {
+      v = Taplo.taplo.to_json(data);
+    } catch (e) {
+      throw new Error(e);
+    }
+
+    if (parse) {
+      return JSON.parse(v);
+    } else {
+      return v;
     }
   }
 }

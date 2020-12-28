@@ -76,7 +76,7 @@ export const Schemas: React.FunctionComponent = () => {
     )!;
 
     return {
-      key: fileName,
+      key: s.url + s.title ?? "",
       title: s.title ?? "",
       description: s.description ?? "",
       url: s.url,

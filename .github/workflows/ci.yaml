@@ -12,6 +12,8 @@ on:
       - release-js-lib-*
     paths-ignore:
       - "site/**/*"
+      - schemas/**/*
+      - util/**/*
   pull_request:
     branches:
       - master

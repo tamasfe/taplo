@@ -7,6 +7,7 @@ on:
     paths:
       - "schemas/**/*"
       - "site/**/*"
+  workflow_dispatch: {}
 
 jobs:
   deploy:

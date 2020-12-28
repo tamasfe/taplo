@@ -81,8 +81,8 @@ export const Schemas: React.FunctionComponent = () => {
       description: s.description ?? "",
       url: s.url,
       updated: s.updated,
-      authors: extraInfo.x_taplo_info?.authors ?? [],
-      patterns: extraInfo.x_taplo_info?.patterns ?? [],
+      authors: s.authors ?? extraInfo.x_taplo_info?.authors ?? [],
+      patterns: s.patterns ?? extraInfo.x_taplo_info?.patterns ?? [],
     };
   });
 

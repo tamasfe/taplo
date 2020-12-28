@@ -20,3 +20,4 @@ sha2 = "0.9"
 hex = "0.4"
 reqwest = { version = "0.10", features = ["blocking", "json"] }
 globset = "0.4"
+tabwriter = "1.2"

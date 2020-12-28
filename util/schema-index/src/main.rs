@@ -1,12 +1,14 @@
 use anyhow::anyhow;
-use git2::{Repository, Sort, TreeWalkResult};
+use git2::{Delta, Repository, Sort, Tree};
 use globset::Glob;
 use hex::ToHex;
 use path_clean::PathClean;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::io::Write;
 use std::{collections::HashSet, ffi::OsStr, path::PathBuf};
 use structopt::StructOpt;
+use tabwriter::TabWriter;
 use taplo::schema::{SchemaExtraInfo, SchemaIndex, SchemaMeta};
 use time::{Format, OffsetDateTime};
 use walkdir::WalkDir;
@@ -88,6 +90,10 @@ fn main() -> anyhow::Result<()> {
 
     let mut index = SchemaIndex::default();
 
+    let mut new_tree: Option<Tree> = None;
+
+    let mut tw = TabWriter::new(vec![]);
+
     for result in revs {
         let rev = match result {
             Ok(r) => r,
@@ -99,56 +105,70 @@ fn main() -> anyhow::Result<()> {
 
             let time_unix = time.seconds() + (time.offset_minutes() * 60) as i64;
 
-            commit
-                .tree()
-                .unwrap()
-                .walk(git2::TreeWalkMode::PostOrder, |dir, entry| {
-                    if let Some(name) = entry.name() {
-                        let fpath = opt.git.join(dir).join(name).clean();
-                        if files.remove(&fpath) {
-                            let s: SchemaWithExtraInfo =
-                                match serde_json::from_reader(std::fs::File::open(&fpath).unwrap())
-                                {
-                                    Ok(s) => s,
-                                    Err(err) => {
-                                        panic!("invalid schema: {:?}: {}", fpath, err);
-                                    }
-                                };
+            let old_tree = commit.tree().unwrap();
 
-                            let url = format!("{}/{}", &opt.url, name);
+            let diff = repo
+                .diff_tree_to_tree(Some(&old_tree), new_tree.as_ref(), None)
+                .unwrap();
 
-                            let mut hasher = Sha256::new();
-                            hasher.update(url.as_bytes());
-                            let url_hash = hasher.finalize().encode_hex::<String>();
+            let deltas = diff
+                .deltas()
+                .filter(|d| d.status() != Delta::Unmodified && d.status() != Delta::Deleted);
 
-                            index.schemas.push(SchemaMeta {
-                                title: s.title,
-                                description: s.description,
-                                updated: Some(
-                                    OffsetDateTime::from_unix_timestamp(time_unix)
-                                        .format(Format::Rfc3339),
-                                ),
-                                url,
-                                url_hash,
-                                extra: s.extra,
-                            })
-                        }
+            for delta in deltas {
+                let new_file = delta.new_file();
+
+                if let Some(p) = new_file.path() {
+                    if files.remove(p) {
+                        let s: SchemaWithExtraInfo =
+                            match serde_json::from_reader(std::fs::File::open(p).unwrap()) {
+                                Ok(s) => s,
+                                Err(err) => {
+                                    panic!("invalid schema: {:?}: {}", p, err);
+                                }
+                            };
+
+                        let name = p.file_name().unwrap().to_str().unwrap();
+
+                        let url = format!("{}/{}", &opt.url, name);
+
+                        let mut hasher = Sha256::new();
+                        hasher.update(url.as_bytes());
+                        let url_hash = hasher.finalize().encode_hex::<String>();
+
+                        let updated =
+                            OffsetDateTime::from_unix_timestamp(time_unix).format(Format::Rfc3339);
+
+                        write!(&mut tw, "{}\t{:?}\t{}\n", name, delta.status(), &updated).unwrap();
+
+                        index.schemas.push(SchemaMeta {
+                            title: s.title,
+                            description: s.description,
+                            updated: Some(updated),
+                            url,
+                            url_hash,
+                            extra: s.extra,
+                        });
                     }
+                }
+            }
 
-                    if files.is_empty() {
-                        TreeWalkResult::Abort
-                    } else {
-                        TreeWalkResult::Ok
-                    }
-                })?;
+            if files.is_empty() {
+                break;
+            }
+
+            new_tree = Some(old_tree);
         }
     }
+
+    print!("{}", String::from_utf8(tw.into_inner().unwrap()).unwrap());
 
     if !files.is_empty() {
         return Err(anyhow!("all files must be committed"));
     }
 
     if opt.schema_store {
+        println!("Fetching Schema Store...");
         if let Err(err) = fetch_schema_store(&mut index) {
             println!("error fetching schema store: {}", err);
         }
@@ -164,6 +184,7 @@ fn fetch_schema_store(index: &mut SchemaIndex) -> Result<(), anyhow::Error> {
         reqwest::blocking::get("https://www.schemastore.org/api/json/catalog.json")?.json()?;
 
     let now_ts = OffsetDateTime::now_utc().format(Format::Rfc3339);
+    let mut tw = TabWriter::new(vec![]);
 
     for schema in catalog.schemas {
         if !schema.file_match.iter().any(|m| m.ends_with(".toml")) {
@@ -219,8 +240,19 @@ fn fetch_schema_store(index: &mut SchemaIndex) -> Result<(), anyhow::Error> {
             },
         };
 
+        write!(
+            &mut tw,
+            "{}\t{}\n",
+            sm.title.clone().unwrap_or_default(),
+            sm.url
+        )
+        .unwrap();
+
         index.schemas.push(sm);
     }
+
+    println!("\nNew Schema Store schemas:");
+    print!("{}", String::from_utf8(tw.into_inner().unwrap()).unwrap());
 
     Ok(())
 }

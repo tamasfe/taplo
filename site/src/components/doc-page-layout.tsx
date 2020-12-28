@@ -240,7 +240,7 @@ const DocPage: React.FunctionComponent<any> = props => {
           width={230}
           onBreakpoint={setBreakpoint}
           style={{
-            height: "calc(100vh - 64)",
+            height: "calc(100vh - 64px)",
             position: "fixed",
             left: 0,
             zIndex: 1,

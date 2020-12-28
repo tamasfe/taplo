@@ -45,7 +45,8 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
   title,
   hideLogo,
 }) => {
-  const isSmallScreen = useMediaQuery({ query: "(max-width: 1200px)" });
+  const isSmallScreen = useMediaQuery({ query: "(max-width: 992px)" });
+  const showSearch = !useMediaQuery({ query: "(max-width: 1200px)" });
 
   const allNavPages = useStaticQuery<GatsbyTypes.NavPagesQuery>(graphql`
     query NavPages {
@@ -287,7 +288,7 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
   };
 
   const createSearch = () => {
-    if (isSmallScreen) {
+    if (!showSearch) {
       return undefined;
     } else {
       return (

@@ -8,7 +8,7 @@
 
 # Taplo
 
-This is the repository for Taplo, a TOML toolkit, more details on the [website](https://taplo.tamasfe.dev).
+This is the repository for Taplo, a TOML v1.0.0 toolkit, more details on the [website](https://taplo.tamasfe.dev).
 
 
 - [Taplo](#taplo)

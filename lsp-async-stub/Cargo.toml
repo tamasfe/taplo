@@ -1,8 +1,10 @@
 [package]
-authors = ["tamasf97 <tamasf97@outlook.com>"]
+authors = ["tamasfe"]
+description = "An LSP server stub for futures"
 edition = "2018"
 name = "lsp-async-stub"
 version = "0.1.1"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

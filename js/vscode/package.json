@@ -35,7 +35,9 @@
     "onCommand:evenBetterToml.pasteTomlAsJson",
     "onCommand:evenBetterToml.copyTomlAsJson",
     "onCommand:evenBetterToml.pasteJsonAsToml",
-    "onCommand:evenBetterToml.copyJsonAsToml"
+    "onCommand:evenBetterToml.copyJsonAsToml",
+    "onCommand:evenBetterToml.clearCache",
+    "onCommand:evenBetterToml.downloadSchemas"
   ],
   "keywords": [
     "toml",
@@ -85,6 +87,14 @@
           "when": "config.evenBetterToml.commands.pasteJsonAsToml"
         },
         {
+          "command": "evenBetterToml.clearCache",
+          "when": "config.evenBetterToml.commands.clearCache"
+        },
+        {
+          "command": "evenBetterToml.downloadSchemas",
+          "when": "config.evenBetterToml.commands.downloadSchemas"
+        },
+        {
           "command": "evenBetterToml.debug.showSyntaxTree",
           "when": "editorLangId == toml && config.evenBetterToml.debug"
         }
@@ -108,6 +118,14 @@
       {
         "command": "evenBetterToml.pasteJsonAsToml",
         "title": "TOML: Paste JSON as TOML"
+      },
+      {
+        "command": "evenBetterToml.clearCache",
+        "title": "TOML: Clear Cache"
+      },
+      {
+        "command": "evenBetterToml.downloadSchemas",
+        "title": "TOML: Download All Schemas"
       },
       {
         "command": "evenBetterToml.debug.showSyntaxTree",
@@ -188,6 +206,18 @@
           "type": "boolean",
           "scope": "resource",
           "default": true
+        },
+        "evenBetterToml.commands.clearCache": {
+          "description": "Show the \"Clear Cache\" command in the palette.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": false
+        },
+        "evenBetterToml.commands.downloadSchemas": {
+          "description": "Show the \"Download All Schemas\" command in the palette.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": false
         },
         "evenBetterToml.formatter.alignEntries": {
           "description": "Align consecutive entries vertically.",
@@ -284,8 +314,8 @@
           "default": false
         },
         "evenBetterToml.schema.repositoryEnabled": {
-          "description": "Whether to enable the online schema repository.",
-          "type": "bool",
+          "description": "Whether to use schemas from the provided schema repository.",
+          "type": "boolean",
           "scope": "resource",
           "default": true
         },
@@ -304,6 +334,12 @@
             "^(.*(/|\\\\)\\.?taplo\\.toml|\\.?taplo\\.toml)$": "taplo://taplo.toml"
           }
         },
+        "evenBetterToml.actions.ignoreDeprecatedAssociations": {
+          "description": "Whether to ignore deprecated builtin associations.",
+          "type": "string",
+          "scope": "resource",
+          "default": false
+        },
         "evenBetterToml.debug": {
           "description": "Enable features to debug the extension.",
           "type": "boolean",
@@ -320,11 +356,11 @@
     "build": "yarn --ignore-engines rollup --silent -c rollup.config.js"
   },
   "dependencies": {
-    "@taplo/lsp": "^0.1.1",
+    "@taplo/lsp": "^0.1.3",
     "deep-equal": "^2.0.4",
     "encoding": "^0.1.13",
     "node-fetch": "^2.6.1",
-    "vscode-languageclient": "^7.0.0-next.15"
+    "vscode-languageclient": "^7.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^16.0.0",

@@ -1,12 +1,14 @@
 import * as vscode from "vscode";
 import * as client from "vscode-languageclient/node";
-import * as conversion from "./conversion";
+import * as conversionCommands from "./conversion";
 import * as debugCommands from "./debug";
+import * as cacheCommands from "./cache";
 
 export function registerCommands(
   ctx: vscode.ExtensionContext,
   c: client.LanguageClient
 ) {
-  conversion.register(ctx, c);
+  conversionCommands.register(ctx, c);
   debugCommands.register(ctx, c);
+  cacheCommands.register(ctx, c);
 }

@@ -56,6 +56,8 @@ export async function activate(context: vscode.ExtensionContext) {
     .getConfiguration()
     .get("evenBetterToml.activationStatus");
 
+  checkAssociations();
+
   if (showNotification) {
     await vscode.window.withProgress(
       {
@@ -75,6 +77,60 @@ export async function activate(context: vscode.ExtensionContext) {
   c.onNotification(Methods.MessageWithOutput.METHOD, async params =>
     showMessage(params, c)
   );
+}
+
+async function checkAssociations() {
+  const oldBuiltins = [
+    "taplo://taplo@taplo.toml",
+    "taplo://cargo@Cargo.toml",
+    "taplo://python@pyproject.toml",
+    "taplo://rust@rustfmt.toml",
+  ];
+
+  if (
+    vscode.workspace
+      .getConfiguration()
+      .get("evenBetterToml.actions.ignoreDeprecatedAssociations") === true
+  ) {
+    return;
+  }
+
+  const assoc = vscode.workspace
+    .getConfiguration()
+    .get("evenBetterToml.schema.associations");
+
+  if (!assoc) {
+    return;
+  }
+
+  for (const k of Object.keys(assoc)) {
+    const val = assoc[k];
+
+    if (oldBuiltins.indexOf(val) !== -1) {
+      const c = await vscode.window.showWarningMessage(
+        "Your schema associations reference schemas that are not bundled anymore and will not work.",
+        "More Information",
+        "Ignore"
+      );
+
+      if (c === "More Information") {
+        vscode.env.openExternal(
+          vscode.Uri.parse(
+            "https://taplo.tamasfe.dev/configuration/#official-schemas"
+          )
+        );
+      } else if (c === "Ignore") {
+        await vscode.workspace
+          .getConfiguration()
+          .update(
+            "evenBetterToml.actions.ignoreDeprecatedAssociations",
+            true,
+            vscode.ConfigurationTarget.Global
+          );
+      }
+      break;
+    }
+  }
 }
 
 async function showMessage(

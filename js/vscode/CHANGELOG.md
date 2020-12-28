@@ -2,13 +2,13 @@
 
 ### 0.10.0
 
-
 ### Features
 - Conversion commands from JSON to TOML
-- Schema repository for easier schema updates
+- Remote schema repository
 
 ### Fixes
-- Several Formatter fixes
+- Better comment formatting
+- Several schema fixes
 
 ## 0.9.4
 

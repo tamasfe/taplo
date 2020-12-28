@@ -25,9 +25,11 @@ jobs:
         uses: actions/setup-node@v2.1.2
         with:
           node-version: "12.x"
-      - run: (cd site && yarn && yarn build)
+      - name: Build Site
+        run: yarn && yarn build
+        working-directory: site
       - name: Deploy Site
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .site/public
+          publish_dir: ./site/public

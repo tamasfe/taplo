@@ -123,7 +123,9 @@ fn main() -> anyhow::Result<()> {
     }
 
     if !files.is_empty() {
-        return Err(anyhow!("all files must be committed"));
+        for file in files {
+            println!("warning: failed to find commit for file {}", file);
+        }
     }
 
     serde_json::to_writer(std::fs::File::create(opt.out).unwrap(), &index)?;

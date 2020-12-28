@@ -124,7 +124,7 @@ fn main() -> anyhow::Result<()> {
 
     if !files.is_empty() {
         for file in files {
-            println!("warning: failed to find commit for file {}", file);
+            println!("warning: failed to find commit for file {:?}", file);
         }
     }
 

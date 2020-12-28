@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use git2::{Repository, Sort, TreeWalkResult};
+use globset::Glob;
 use hex::ToHex;
 use path_clean::PathClean;
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,23 @@ use structopt::StructOpt;
 use taplo::schema::{SchemaExtraInfo, SchemaIndex, SchemaMeta};
 use time::{Format, OffsetDateTime};
 use walkdir::WalkDir;
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SchemaStoreSchema {
+    name: Option<String>,
+    description: Option<String>,
+    url: String,
+    #[serde(default)]
+    file_match: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SchemaStoreCatalog {
+    #[serde(default)]
+    schemas: Vec<SchemaStoreSchema>,
+}
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -38,6 +56,10 @@ struct Opt {
     /// Relative dir path from the Git repo directory.
     #[structopt(name = "DIR")]
     dir: PathBuf,
+
+    /// Use schemastore.org for additional toml-compatible schemas.
+    #[structopt(long)]
+    schema_store: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -126,7 +148,79 @@ fn main() -> anyhow::Result<()> {
         return Err(anyhow!("all files must be committed"));
     }
 
+    if opt.schema_store {
+        if let Err(err) = fetch_schema_store(&mut index) {
+            println!("error fetching schema store: {}", err);
+        }
+    }
+
     serde_json::to_writer(std::fs::File::create(opt.out).unwrap(), &index)?;
+
+    Ok(())
+}
+
+fn fetch_schema_store(index: &mut SchemaIndex) -> Result<(), anyhow::Error> {
+    let catalog: SchemaStoreCatalog =
+        reqwest::blocking::get("https://www.schemastore.org/api/json/catalog.json")?.json()?;
+
+    let now_ts = OffsetDateTime::now_utc().format(Format::Rfc3339);
+
+    for schema in catalog.schemas {
+        if !schema.file_match.iter().any(|m| m.ends_with(".toml")) {
+            continue;
+        }
+
+        let mut hasher = Sha256::new();
+        hasher.update(schema.url.as_bytes());
+        let url_hash = hasher.finalize().encode_hex::<String>();
+
+        let mut globs: Vec<Glob> = Vec::new();
+
+        for fm in schema.file_match.iter().filter(|s| s.ends_with(".toml")) {
+            match Glob::new(fm.trim_end_matches(".toml")) {
+                Ok(glob) => {
+                    globs.push(glob);
+                }
+                Err(_) => {
+                    continue;
+                }
+            };
+        }
+
+        let sm = SchemaMeta {
+            title: schema.name,
+            description: schema.description,
+            // We don't know.
+            updated: Some(now_ts.clone()),
+            url: schema.url,
+            url_hash,
+            extra: SchemaExtraInfo {
+                authors: vec!["automatically included from https://schemastore.org".into()],
+                patterns: globs
+                    .into_iter()
+                    .map(|g| {
+                        let mut re = g.regex();
+
+                        re = g
+                            .regex()
+                            .strip_suffix("$")
+                            .unwrap_or(re)
+                            .strip_prefix("(?-u)^")
+                            .unwrap_or(re);
+
+                        if g.regex().contains('*') {
+                            format!(r#"{}\.toml$"#, re)
+                        } else {
+                            format!(r#"^(.*(/|\){}\.toml|{}\.toml)$"#, re, re)
+                        }
+                    })
+                    .collect(),
+                ..Default::default()
+            },
+        };
+
+        index.schemas.push(sm);
+    }
 
     Ok(())
 }

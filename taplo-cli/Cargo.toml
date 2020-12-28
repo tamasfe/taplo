@@ -1,10 +1,14 @@
 [package]
 authors = ["tamasfe"]
-description = "A CLI for Taplo"
+description = "A CLI for Taplo TOML toolkit"
 license = "MIT"
 edition = "2018"
 name = "taplo-cli"
-version = "0.3.0"
+version = "0.3.1"
+homepage = "https://taplo.tamasfe.dev"
+repository = "https://github.com/tamasfe/taplo"
+categories = ["development-tools", "command-line-utilities"]
+keywords = ["toml", "linter", "formatter"]
 
 [lib]
 crate-type = ["cdylib", "lib"]

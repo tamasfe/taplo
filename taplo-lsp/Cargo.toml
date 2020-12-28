@@ -1,9 +1,12 @@
 [package]
 authors = ["tamasf97 <tamasf97@outlook.com>"]
+description = "Language server for Taplo"
 edition = "2018"
 name = "taplo-lsp"
 version = "0.1.0"
-publish = false
+license = "MIT"
+homepage = "https://taplo.tamasfe.dev"
+repository = "https://github.com/tamasfe/taplo"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

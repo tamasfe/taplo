@@ -224,6 +224,8 @@ const DocPage: React.FunctionComponent<any> = props => {
 
   const pageTitle = pageMeta?.frontmatter.title;
 
+  const [breakPoint, setBreakpoint] = useState(false);
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Helmet title={pageTitle ? `${pageTitle} — Taplo` : "Taplo"}></Helmet>
@@ -233,14 +235,16 @@ const DocPage: React.FunctionComponent<any> = props => {
       ></AppHeader>
       <Layout>
         <Sider
+          breakpoint="md"
+          collapsedWidth="0"
           theme="light"
           width={230}
+          onBreakpoint={setBreakpoint}
           style={{
-            overflow: "auto",
             height: "100vh",
-            position: "fixed",
-            marginTop: 64,
+            position: breakPoint ? "sticky" : "fixed",
             left: 0,
+            top: 64,
           }}
         >
           <Menu
@@ -271,7 +275,7 @@ const DocPage: React.FunctionComponent<any> = props => {
               padding: 24,
               margin: 0,
               marginTop: 88,
-              marginLeft: 230,
+              marginLeft: breakPoint ? undefined : 230,
               minHeight: 280,
             }}
           >

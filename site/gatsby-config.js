@@ -5,6 +5,7 @@ module.exports = {
     title: "Taplo",
     siteUrl: "http://localhost:9000",
   },
+  // flags: { DEV_SSR: true },
   plugins: [
     {
       resolve: `gatsby-plugin-sass`,

@@ -9444,12 +9444,12 @@ type PagesQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 type PagesQueryQuery = { readonly allSitePage: { readonly nodes: ReadonlyArray<Pick<SitePage, 'path'>> } };
 
-type SchemasQueryVariables = Exact<{ [key: string]: never; }>;
+type PageMetaQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-type SchemasQuery = { readonly allSchemasJson: { readonly nodes: ReadonlyArray<(
-      Pick<SchemasJson, 'description' | 'title'>
-      & { readonly x_taplo_info: Maybe<Pick<SchemasJsonX_taplo_info, 'authors' | 'patterns'>>, readonly parent: Maybe<Pick<File, 'name'>> }
+type PageMetaQuery = { readonly allMdx: { readonly nodes: ReadonlyArray<(
+      Pick<Mdx, 'tableOfContents' | 'slug' | 'timeToRead'>
+      & { readonly frontmatter: Maybe<Pick<MdxFrontmatter, 'title'>> }
     )> } };
 
 type NavPagesQueryVariables = Exact<{ [key: string]: never; }>;
@@ -9460,12 +9460,12 @@ type NavPagesQuery = { readonly allMdx: { readonly nodes: ReadonlyArray<(
       & { readonly frontmatter: Maybe<Pick<MdxFrontmatter, 'nav' | 'navOrder' | 'title'>> }
     )> } };
 
-type PageMetaQueryVariables = Exact<{ [key: string]: never; }>;
+type SchemasQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-type PageMetaQuery = { readonly allMdx: { readonly nodes: ReadonlyArray<(
-      Pick<Mdx, 'tableOfContents' | 'slug' | 'timeToRead'>
-      & { readonly frontmatter: Maybe<Pick<MdxFrontmatter, 'title'>> }
+type SchemasQuery = { readonly allSchemasJson: { readonly nodes: ReadonlyArray<(
+      Pick<SchemasJson, 'description' | 'title'>
+      & { readonly x_taplo_info: Maybe<Pick<SchemasJsonX_taplo_info, 'authors' | 'patterns'>>, readonly parent: Maybe<Pick<File, 'name'>> }
     )> } };
 
 type GatsbyImageSharpFixedFragment = Pick<ImageSharpFixed, 'base64' | 'width' | 'height' | 'src' | 'srcSet'>;

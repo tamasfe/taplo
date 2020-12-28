@@ -54,36 +54,59 @@ const IndexPage = () => {
             </div>
           </div>
 
-          <div>
-            <Space>
-              <Button href="/editor" type="primary" size="large" color="blue-5">
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <CodeIcon
-                    style={{ marginRight: "0.5rem", marginLeft: "-0.5rem" }}
-                  />
-                  Try it!
-                </div>
-              </Button>
-              <Button
-                href="https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml"
-                type="primary"
-                target="_blank"
-                size="large"
-              >
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <OpenInNewIcon
-                    style={{ marginRight: "0.5rem", marginLeft: "-0.5rem" }}
-                  />
-                  Visual Studio Code
-                </div>
-              </Button>
-              <Button href="/cli" type="primary" size="large">
-                Command Line Tool
-              </Button>
-              <Button href="/lib" type="primary" size="large">
-                Library
-              </Button>
-            </Space>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Button
+              href="/editor"
+              type="primary"
+              size="large"
+              color="blue-5"
+              style={{ margin: "0.5rem" }}
+            >
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <CodeIcon
+                  style={{ marginRight: "0.5rem", marginLeft: "-0.5rem" }}
+                />
+                Try it!
+              </div>
+            </Button>
+            <Button
+              href="https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml"
+              type="primary"
+              target="_blank"
+              size="large"
+              style={{ margin: "0.5rem" }}
+            >
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <OpenInNewIcon
+                  style={{ marginRight: "0.5rem", marginLeft: "-0.5rem" }}
+                />
+                Visual Studio Code
+              </div>
+            </Button>
+            <Button
+              href="/cli"
+              type="primary"
+              size="large"
+              style={{ margin: "0.5rem" }}
+            >
+              Command Line Tool
+            </Button>
+            <Button
+              href="/lib"
+              type="primary"
+              size="large"
+              style={{ margin: "0.5rem" }}
+            >
+              Library
+            </Button>
           </div>
         </Layout>
         <CurvedBackground />

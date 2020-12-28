@@ -1,13 +1,24 @@
-import { AutoComplete, Divider, Input, Layout, Menu } from "antd";
+import {
+  AutoComplete,
+  Button,
+  Divider,
+  Input,
+  Layout,
+  Menu,
+  Popover,
+} from "antd";
 import { SelectProps } from "antd/lib/select";
 import { graphql, useStaticQuery } from "gatsby";
 import React, { useState } from "react";
 import taploIcon from "../assets/taplo-icon.svg";
 import CodeIcon from "mdi-react/XmlIcon";
 import "../__generated__/gatsby-types";
-import GithubIcon from "mdi-react/GithubIcon";
 
+import GithubIcon from "mdi-react/GithubIcon";
 import SearchIcon from "mdi-react/SearchIcon";
+import MenuIcon from "mdi-react/MenuIcon";
+
+import { useMediaQuery } from "react-responsive";
 
 interface NavLink {
   title: string;
@@ -34,6 +45,8 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
   title,
   hideLogo,
 }) => {
+  const isSmallScreen = useMediaQuery({ query: "(max-width: 768px)" });
+
   const allNavPages = useStaticQuery<GatsbyTypes.NavPagesQuery>(graphql`
     query NavPages {
       allMdx {
@@ -144,7 +157,7 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
     window.location.href = `/${slug}`;
   };
 
-  const createMenu = (nav: NavLink) => {
+  const createMenuItem = (nav: NavLink) => {
     if (currentPage === nav.link) {
       return (
         <Menu.Item icon={nav.icon} key={nav.link}>
@@ -153,7 +166,7 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
       );
     }
 
-    if (nav.subMenus.length === 0) {
+    if (nav.subMenus.length === 0 || isSmallScreen) {
       return (
         <Menu.Item icon={nav.icon} key={nav.link}>
           <a href={"/" + nav.link}>{nav.title}</a>
@@ -180,8 +193,53 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
     );
   };
 
+  const createMenu = () => {
+    if (isSmallScreen) {
+      return (
+        <Popover
+          placement="bottomRight"
+          content={
+            <Menu selectedKeys={[currentPage]} theme="light" mode="inline">
+              {navLinks.map(createMenuItem)}
+              <Menu.Item key={"githubLink"}>
+                <a href="https://github.com/tamasfe/taplo">
+                  <GithubIcon style={{ marginBottom: "-0.5rem" }} />
+                </a>
+              </Menu.Item>
+            </Menu>
+          }
+          trigger="click"
+        >
+          <Button
+            style={{ marginLeft: "auto", marginRight: "1rem" }}
+            shape="circle"
+            size="large"
+          >
+            <MenuIcon style={{ marginBottom: "-0.4rem" }} />
+          </Button>
+        </Popover>
+      );
+    } else {
+      return (
+        <Menu
+          style={{ flexShrink: 0, marginRight: "1rem" }}
+          selectedKeys={[currentPage]}
+          theme="light"
+          mode="horizontal"
+        >
+          {navLinks.map(createMenuItem)}
+          <Menu.Item key={"githubLink"}>
+            <a href="https://github.com/tamasfe/taplo">
+              <GithubIcon style={{ marginBottom: "-0.5rem" }} />
+            </a>
+          </Menu.Item>
+        </Menu>
+      );
+    }
+  };
+
   const createLogo = () => {
-    if (hideLogo) {
+    if (hideLogo || isSmallScreen) {
       return undefined;
     } else {
       return (
@@ -228,6 +286,45 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
     }
   };
 
+  const createSearch = () => {
+    if (isSmallScreen) {
+      return undefined;
+    } else {
+      return (
+        <div
+          style={{
+            width: "100%",
+            flexShrink: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "end",
+            marginRight: "1rem",
+          }}
+        >
+          <SearchIcon color="#ddddde" />
+          <AutoComplete
+            dropdownClassName="certain-category-search-dropdown"
+            dropdownMatchSelectWidth={500}
+            style={{ width: 250 }}
+            onSearch={handleSearch}
+            onSelect={onSearchSelect}
+            autoClearSearchValue={true}
+            value={searchText}
+            onChange={e => setSearchText(e)}
+            options={searchOptions}
+          >
+            <Input
+              size="large"
+              bordered={false}
+              allowClear={true}
+              placeholder="Search Site"
+            />
+          </AutoComplete>
+        </div>
+      );
+    }
+  };
+
   return (
     <Header
       style={{
@@ -238,54 +335,16 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
         background: "white",
         width: "100vw",
         boxShadow: "rgba(0, 0, 0, 0.05) 0px 0px 5px 2px",
+        overflow: "auto",
         zIndex: 1,
       }}
     >
       {createLogo()}
-      <div
-        style={{
-          width: "100%",
-          flexShrink: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "end",
-          marginRight: "1rem",
-        }}
-      >
-        <SearchIcon color="#ddddde" />
-        <AutoComplete
-          dropdownClassName="certain-category-search-dropdown"
-          dropdownMatchSelectWidth={500}
-          style={{ width: 250 }}
-          onSearch={handleSearch}
-          onSelect={onSearchSelect}
-          autoClearSearchValue={true}
-          value={searchText}
-          onChange={e => setSearchText(e)}
-          options={searchOptions}
-        >
-          <Input
-            size="large"
-            bordered={false}
-            allowClear={true}
-            placeholder="Search Site"
-          />
-        </AutoComplete>
-      </div>
-      <Divider type="vertical" style={{ height: "80%" }}></Divider>
-      <Menu
-        style={{ flexShrink: 0, marginRight: "1rem" }}
-        selectedKeys={[currentPage]}
-        theme="light"
-        mode="horizontal"
-      >
-        {navLinks.map(createMenu)}
-        <Menu.Item key={"githubLink"}>
-          <a href="https://github.com/tamasfe/taplo">
-            <GithubIcon style={{ marginBottom: "-0.5rem" }} />
-          </a>
-        </Menu.Item>
-      </Menu>
+      {createSearch()}
+      {isSmallScreen ? undefined : (
+        <Divider type="vertical" style={{ height: "80%" }}></Divider>
+      )}
+      {createMenu()}
     </Header>
   );
 };

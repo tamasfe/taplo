@@ -44,9 +44,13 @@ The tool has nice usage and error messages thanks to [clap](https://github.com/c
 
 An example usage
 
-`taplo lint --schema taplo://cargo@Cargo.toml Cargo.toml`
+`taplo lint --schema taplo://taplo.toml taplo.toml`
 
-This command will lint the `Cargo.toml` file with a [built-in schema](/configuration/#built-in-schemas) and report errors.
+This command will lint the `taplo.toml` file with a [built-in schema](/configuration/#official-schemas) and report errors.
+
+Or use schemas from the default repository:
+
+`taplo lint -S Cargo.toml`
 
 An example output:
 
@@ -128,7 +132,8 @@ An example output:
     <span style="color:#1c74aa">... </span>
   </b>
   Cargo.toml:10:1
-  <br /> <b>
+  <br />{" "}
+  <b>
     <span style="color:#1c74aa"> | </span>
   </b>
   <br />
@@ -180,14 +185,19 @@ An example output:
     <span style="color:#1c74aa"> - </span>
   </b>
   entries sharing dotted keys cannot fully define intermediate tables and values
-  <br /> <b>
+  <br />{" "}
+  <b>
     <span style="color:#1c74aa"> - </span>
-  </b>make sure that the path consists of equal amount of keys to avoid conflicts
+  </b>
+  make sure that the path consists of equal amount of keys to avoid conflicts
   <br />
   <b>
     <span style="color:#d4462d">failure</span>
-  </b>: <b>processed 1 document with 1 error </b>
+  </b>
+  : <b>processed 1 document with 1 error </b>
 </pre>
+
+The documentation here is non-exhaustive, for more options and settings, use the `help` command.
 
 # Configuration
 

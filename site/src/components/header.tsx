@@ -45,7 +45,7 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
   title,
   hideLogo,
 }) => {
-  const isSmallScreen = useMediaQuery({ query: "(max-width: 768px)" });
+  const isSmallScreen = useMediaQuery({ query: "(max-width: 1200px)" });
 
   const allNavPages = useStaticQuery<GatsbyTypes.NavPagesQuery>(graphql`
     query NavPages {
@@ -239,7 +239,7 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
   };
 
   const createLogo = () => {
-    if (hideLogo || isSmallScreen) {
+    if (hideLogo) {
       return undefined;
     } else {
       return (
@@ -335,7 +335,6 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
         background: "white",
         width: "100vw",
         boxShadow: "rgba(0, 0, 0, 0.05) 0px 0px 5px 2px",
-        overflow: "auto",
         zIndex: 1,
       }}
     >

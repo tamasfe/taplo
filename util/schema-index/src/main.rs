@@ -232,7 +232,7 @@ fn fetch_schema_store(index: &mut SchemaIndex) -> Result<(), anyhow::Error> {
                         if g.regex().contains('*') {
                             format!(r#"{}\.toml$"#, re)
                         } else {
-                            format!(r#"^(.*(/|\){}\.toml|{}\.toml)$"#, re, re)
+                            format!(r#"^(.*(/|\\){}\.toml|{}\.toml)$"#, re, re)
                         }
                     })
                     .collect(),

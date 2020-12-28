@@ -113,29 +113,29 @@ const DocPage: React.FunctionComponent<any> = props => {
   ) => {
     let ref = useRef<HTMLElement>();
 
-      useEffect(() => {
-        const listener = (ev: Event) => {
-          if (!ref.current) {
-            return;
+    useEffect(() => {
+      const listener = (ev: Event) => {
+        if (!ref.current) {
+          return;
+        }
+
+        const rect = ref.current.getBoundingClientRect();
+
+        if (rect.top > 64 && rect.top < 100) {
+          if (!itemClicked.current) {
+            setTimeout(() => {
+              selectMenu("#" + props.id, side);
+            }, 100);
           }
+        }
+      };
 
-          const rect = ref.current.getBoundingClientRect();
+      window.addEventListener("scroll", listener);
 
-          if (rect.top > 64 && rect.top < 100) {
-            if (!itemClicked.current) {
-              setTimeout(() => {
-                selectMenu("#" + props.id, side);
-              }, 100);
-            }
-          }
-        };
-
-        window.addEventListener("scroll", listener);
-
-        return () => {
-          window.removeEventListener("scroll", listener);
-        };
-      }, []);
+      return () => {
+        window.removeEventListener("scroll", listener);
+      };
+    }, []);
 
     let [hashVisible, setHashVisible] = useState(false);
 
@@ -222,9 +222,11 @@ const DocPage: React.FunctionComponent<any> = props => {
     );
   };
 
+  const pageTitle = pageMeta?.frontmatter.title;
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Helmet title={`${pageMeta?.frontmatter.title} — Taplo`}></Helmet>
+      <Helmet title={pageTitle ? `${pageTitle} — Taplo` : "Taplo"}></Helmet>
       <AppHeader
         path={props.uri}
         title={pageMeta?.frontmatter.title}

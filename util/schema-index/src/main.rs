@@ -1,18 +1,14 @@
 use anyhow::anyhow;
 use git2::{Repository, Sort, TreeWalkResult};
+use hex::ToHex;
 use path_clean::PathClean;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashSet,
-    ffi::OsStr,
-    path::{PathBuf},
-};
 use sha2::{Digest, Sha256};
+use std::{collections::HashSet, ffi::OsStr, path::PathBuf};
 use structopt::StructOpt;
 use taplo::schema::{SchemaExtraInfo, SchemaIndex, SchemaMeta};
 use time::{Format, OffsetDateTime};
 use walkdir::WalkDir;
-use hex::ToHex;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -51,9 +47,9 @@ fn main() -> anyhow::Result<()> {
 
     let repo = Repository::discover(&opt.git)?;
 
-    let mut revs = repo.revwalk()?;
-    revs.push_head()?;
-    revs.set_sorting(Sort::TIME)?;
+    let mut revs = repo.revwalk().unwrap();
+    revs.push_head().unwrap();
+    revs.set_sorting(Sort::TIME).unwrap();
 
     let mut files = WalkDir::new(opt.git.join(&opt.dir))
         .into_iter()
@@ -71,7 +67,10 @@ fn main() -> anyhow::Result<()> {
     let mut index = SchemaIndex::default();
 
     for result in revs {
-        let rev = result?;
+        let rev = match result {
+            Ok(r) => r,
+            Err(_) => continue,
+        };
 
         if let Ok(commit) = repo.find_commit(rev) {
             let time = commit.time();
@@ -79,7 +78,8 @@ fn main() -> anyhow::Result<()> {
             let time_unix = time.seconds() + (time.offset_minutes() * 60) as i64;
 
             commit
-                .tree()?
+                .tree()
+                .unwrap()
                 .walk(git2::TreeWalkMode::PostOrder, |dir, entry| {
                     if let Some(name) = entry.name() {
                         let fpath = opt.git.join(dir).join(name).clean();
@@ -102,8 +102,10 @@ fn main() -> anyhow::Result<()> {
                             index.schemas.push(SchemaMeta {
                                 title: s.title,
                                 description: s.description,
-                                updated: Some(OffsetDateTime::from_unix_timestamp(time_unix)
-                                    .format(Format::Rfc3339)),
+                                updated: Some(
+                                    OffsetDateTime::from_unix_timestamp(time_unix)
+                                        .format(Format::Rfc3339),
+                                ),
                                 url,
                                 url_hash,
                                 extra: s.extra,

@@ -10,6 +10,7 @@ function getUrls(text: string): string[] {
 
 import { Table, List } from "antd";
 import { graphql, useStaticQuery } from "gatsby";
+import { Breakpoint } from "antd/lib/_util/responsiveObserve";
 
 const columns = [
   {
@@ -22,6 +23,7 @@ const columns = [
     title: "Description",
     dataIndex: "description",
     key: "description",
+    responsive: ["md"] as Breakpoint[],
     sorter: (a: any, b: any) =>
       (a.description ?? "").localeCompare(b.description ?? ""),
   },
@@ -29,6 +31,7 @@ const columns = [
     title: "Last Updated",
     key: "updated",
     dataIndex: "updated",
+    responsive: ["sm"] as Breakpoint[],
     render: (updated: string) => (
       <span>{new Date(updated).toLocaleDateString()}</span>
     ),

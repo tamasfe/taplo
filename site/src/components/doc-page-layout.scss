@@ -38,3 +38,8 @@
     display: inline-block;
   }
 }
+
+pre {
+  overflow: auto;
+  max-width: 100%;
+}

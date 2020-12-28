@@ -223,7 +223,7 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
     } else {
       return (
         <Menu
-          style={{ flexShrink: 0, marginRight: "1rem" }}
+          style={{ flexShrink: 0, marginRight: "1rem", marginLeft: "auto" }}
           selectedKeys={[currentPage]}
           theme="light"
           mode="horizontal"

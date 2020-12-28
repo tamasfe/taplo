@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "rustfmt schema",
+  "type": "object",
+  "description": "https://rust-lang.github.io/rustfmt",
+  "x-taplo-info": {
+    "authors": ["Aloso (https://github.com/Aloso)"],
+    "patterns": ["^(.*(/|\\\\)rustfmt\\.toml|rustfmt\\.toml)$"]
+  },
+  "properties": {
+    "tab_spaces": {
+      "type": "integer",
+      "description": "Number of spaces per tab",
+      "default": 4
+    },
+    "fn_args_layout": {
+      "type": "string",
+      "description": "Control the layout of arguments in a function",
+      "default": "Tall",
+      "enum": ["Compressed", "Tall", "Vertical"]
+    },
+    "merge_derives": {
+      "type": "boolean",
+      "description": "Merge multiple `#[derive(...)]` into a single one",
+      "default": true,
+      "enum": [true, false]
+    },
+    "print_misformatted_file_names": {
+      "type": "boolean",
+      "description": "Prints the names of mismatched files that were formatted. Prints the names of files that would be formated when used with `--check` mode.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "remove_nested_parens": {
+      "type": "boolean",
+      "description": "Remove nested parens",
+      "default": true,
+      "enum": [true, false]
+    },
+    "use_small_heuristics": {
+      "type": "string",
+      "description": "Whether to use different formatting for items and expressions if they satisfy a heuristic notion of 'small'",
+      "default": "Default",
+      "enum": ["Off", "Max", "Default"]
+    },
+    "use_try_shorthand": {
+      "type": "boolean",
+      "description": "Replace uses of the try! macro by the ? shorthand",
+      "default": false,
+      "enum": [true, false]
+    },
+    "reorder_modules": {
+      "type": "boolean",
+      "description": "Reorder module statements alphabetically in group",
+      "default": true,
+      "enum": [true, false]
+    },
+    "hard_tabs": {
+      "type": "boolean",
+      "description": "Use tab characters for indentation, spaces for alignment",
+      "default": false,
+      "enum": [true, false]
+    },
+    "use_field_init_shorthand": {
+      "type": "boolean",
+      "description": "Use field initialization shorthand if possible",
+      "default": false,
+      "enum": [true, false]
+    },
+    "max_width": {
+      "type": "integer",
+      "description": "Maximum width of each line",
+      "default": 100
+    },
+    "reorder_imports": {
+      "type": "boolean",
+      "description": "Reorder import and extern crate statements alphabetically",
+      "default": true,
+      "enum": [true, false]
+    },
+    "match_arm_leading_pipes": {
+      "type": "string",
+      "description": "Determines whether leading pipes are emitted on match arms",
+      "default": "Never",
+      "enum": ["Always", "Never", "Preserve"]
+    },
+    "force_explicit_abi": {
+      "type": "boolean",
+      "description": "Always print the abi for extern items",
+      "default": true,
+      "enum": [true, false]
+    },
+    "edition": {
+      "type": "string",
+      "description": "The edition of the parser (RFC 2052)",
+      "default": "2015",
+      "enum": ["2015", "2018"]
+    },
+    "newline_style": {
+      "type": "string",
+      "description": "Unix or Windows line endings",
+      "default": "Auto",
+      "enum": ["Auto", "Windows", "Unix", "Native"]
+    }
+  }
+}

@@ -166,7 +166,6 @@ const DocPage: React.FunctionComponent<any> = props => {
                 top: "50%",
                 left: 0,
                 transform: "translate(-150%, -50%)",
-                zIndex: 1,
               }}
               onClick={() => {
                 navigator.clipboard.writeText(
@@ -241,9 +240,10 @@ const DocPage: React.FunctionComponent<any> = props => {
           width={230}
           onBreakpoint={setBreakpoint}
           style={{
-            height: "100vh",
-            position: breakPoint ? "sticky" : "fixed",
+            height: "calc(100vh - 64)",
+            position: "fixed",
             left: 0,
+            zIndex: 1,
             top: 64,
           }}
         >

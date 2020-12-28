@@ -255,17 +255,19 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
             }}
           >
             <img src={taploIcon} style={{ height: "80%" }}></img>
-            <h1
-              style={{
-                fontSize: "1.8rem",
-                display: "block",
-                marginTop: "unset",
-                marginBottom: "unset",
-                marginLeft: "0.5rem",
-              }}
-            >
-              Taplo
-            </h1>
+            {isSmallScreen ? undefined : (
+              <h1
+                style={{
+                  fontSize: "1.8rem",
+                  display: "block",
+                  marginTop: "unset",
+                  marginBottom: "unset",
+                  marginLeft: "0.5rem",
+                }}
+              >
+                Taplo
+              </h1>
+            )}
           </a>
           <Divider
             type="vertical"
@@ -336,7 +338,7 @@ export const AppHeader: React.FunctionComponent<AppHeaderProps> = ({
         background: "white",
         width: "100vw",
         boxShadow: "rgba(0, 0, 0, 0.05) 0px 0px 5px 2px",
-        zIndex: 1,
+        zIndex: 2,
       }}
     >
       {createLogo()}

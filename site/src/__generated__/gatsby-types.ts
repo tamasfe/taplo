@@ -9452,20 +9452,20 @@ type PageMetaQuery = { readonly allMdx: { readonly nodes: ReadonlyArray<(
       & { readonly frontmatter: Maybe<Pick<MdxFrontmatter, 'title'>> }
     )> } };
 
-type NavPagesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-type NavPagesQuery = { readonly allMdx: { readonly nodes: ReadonlyArray<(
-      Pick<Mdx, 'tableOfContents' | 'slug'>
-      & { readonly frontmatter: Maybe<Pick<MdxFrontmatter, 'nav' | 'navOrder' | 'title'>> }
-    )> } };
-
 type SchemasQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 type SchemasQuery = { readonly allSchemasJson: { readonly nodes: ReadonlyArray<(
       Pick<SchemasJson, 'description' | 'title'>
       & { readonly x_taplo_info: Maybe<Pick<SchemasJsonX_taplo_info, 'authors' | 'patterns'>>, readonly parent: Maybe<Pick<File, 'name'>> }
+    )> } };
+
+type NavPagesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+type NavPagesQuery = { readonly allMdx: { readonly nodes: ReadonlyArray<(
+      Pick<Mdx, 'tableOfContents' | 'slug'>
+      & { readonly frontmatter: Maybe<Pick<MdxFrontmatter, 'nav' | 'navOrder' | 'title'>> }
     )> } };
 
 type GatsbyImageSharpFixedFragment = Pick<ImageSharpFixed, 'base64' | 'width' | 'height' | 'src' | 'srcSet'>;

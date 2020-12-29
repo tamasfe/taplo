@@ -3,7 +3,7 @@ const remarkSlug = require("remark-slug");
 module.exports = {
   siteMetadata: {
     title: "Taplo",
-    siteUrl: "http://localhost:9000",
+    siteUrl: "https://taplo.tamasfe.dev",
   },
   // flags: { DEV_SSR: true },
   plugins: [

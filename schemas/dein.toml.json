@@ -1,14 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "dein schema",
+  "title": "dein.nvim",
   "type": "object",
-  "description": "JSON schema for toml, Sample is here(https://github.com/Shougo/dein.vim/blob/master/doc/dein.txt#L963)",
+  "description": "A schema for config of dein.nvim (https://github.com/Shougo/dein.vim/blob/master/doc/dein.txt#L963)",
   "x-taplo-info": {
     "authors": [
       "kkiyama117 (https://github.com/kkiyama117)"
     ],
     "version": "0.1.0",
-    "patterns": ["^(.*(/|\\\\)\\.*dein\\.toml|\\.*taplo\\.toml)$"]
+    "patterns": [
+      "^(.*(/|\\\\)\\.*dein.*\\.toml|\\.*dein.*\\.toml)$"
+    ]
   },
   "required": [
     "plugins"
@@ -57,10 +59,7 @@
       "x-taplo": {
         "links": {
           "key": "https://github.com/Shougo/dein.vim/blob/master/doc/dein.txt#L943"
-        },
-        "initKeys": [
-          "_"
-        ]
+        }
       }
     },
     "hook_add": {
@@ -534,16 +533,21 @@
         ]
       }
     },
-    "Path": {
+    "Url": {
       "title": "path",
       "type": "string",
-      "pattern": "^file:///[0-9a-zA-Z-_\\.]+(?:\\.[0-9a-zA-Z-_\\.]+)+[0-9a-zA-Z-_\\-\\._~:/?#[\\]@!\\$&'\\(\\)\\*\\+,;=.]+$"
+      "pattern": "^https://[0-9a-zA-Z-_\\.]+(?:\\.[0-9a-zA-Z-_\\.]+)+[0-9a-zA-Z-_\\-\\._~:/?#[\\]@!\\$&'\\(\\)\\*\\+,;=.]+$"
     },
     "repo-string-pattern": {
       "title": "repo name pattern",
       "description": "If {repo} starts with github user name (ex:'Shougo/dein.vim'), dein will install github plugins.",
       "type": "string",
       "pattern": "^[a-zA-Z-_0-9]+\/[a-zA-Z-_0-9\\.]+$"
+    },
+    "Path": {
+      "title": "path",
+      "type": "string",
+      "pattern": "^[~|/][a-zA-Z-_0-9/\\.~]+$"
     },
     "vim-mode-key-pattern-string": {
       "type": "string",
@@ -556,10 +560,10 @@
       "type": "string",
       "oneOf": [
         {
-          "$ref": "vim-mode-key-pattern-string"
+          "$ref": "#/definitions/vim-mode-key-pattern-string"
         },
         {
-          "$ref": "vim-mode-key-mapping-string"
+          "$ref": "#/definitions/vim-mode-key-mapping-string"
         }
       ]
     },
@@ -567,14 +571,14 @@
       "type": "array",
       "additionalItems": false,
       "items": {
-        "$ref": "on_map-string"
+        "$ref": "#/definitions/on_map-string"
       }
     },
     "on_map-array2": {
       "type": "array",
       "additionalItems": false,
       "items": {
-        "$ref": "vim-mode-key-mapping-string"
+        "$ref": "#/definitions/vim-mode-key-mapping-string"
       }
     },
     "on_map-array": {

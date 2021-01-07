@@ -1008,7 +1008,52 @@ fn extract_comment_from_entry(node: SyntaxNode) -> SyntaxNode {
                     for val_child in child_n.children_with_tokens() {
                         match val_child {
                             NodeOrToken::Node(n) => {
-                                add_all(n, &mut b);
+                                if let ARRAY | INLINE_TABLE = n.kind() {
+                                    b.start_node(n.kind().into());
+
+                                    // this is to avoid keeping whitespace
+                                    // between the comment and the value,
+                                    // yes, this is a hack, and I know it's ugly.
+                                    let mut after_end = false;
+
+                                    for inner_child in n.children_with_tokens() {
+                                        if let COMMENT = inner_child.kind() {
+                                            comment = inner_child
+                                                .as_token()
+                                                .unwrap()
+                                                .text()
+                                                .clone()
+                                                .into();
+                                        } else {
+                                            match inner_child {
+                                                NodeOrToken::Node(child_n) => {
+                                                    add_all(child_n, &mut b);
+                                                }
+                                                NodeOrToken::Token(t) => match t.kind() {
+                                                    WHITESPACE => {
+                                                        if !after_end {
+                                                            b.token(
+                                                                t.kind().into(),
+                                                                t.text().clone(),
+                                                            );
+                                                        }
+                                                    }
+                                                    BRACE_END | BRACKET_END => {
+                                                        after_end = true;
+                                                        b.token(t.kind().into(), t.text().clone());
+                                                    }
+                                                    _ => {
+                                                        b.token(t.kind().into(), t.text().clone());
+                                                    }
+                                                },
+                                            }
+                                        }
+                                    }
+
+                                    b.finish_node();
+                                } else {
+                                    add_all(n, &mut b);
+                                }
                             }
                             NodeOrToken::Token(t) => match t.kind() {
                                 COMMENT => {

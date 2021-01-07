@@ -73,3 +73,30 @@ incremental = true
 
     assert_eq!(src, formatted);
 }
+
+#[test]
+fn align_composite_entries() {
+    let src = r#"k1 = 1                                                      # 111
+k2 = false                                                  # 222
+k3 = "public"                                               # 333
+k4 = ["/home/www", "/var/lib/www"] # 4444444444444444444444
+k6 = {a="yes", table="yes"} # 4444444444444444444444
+k5 = false                                                  # 555
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            align_entries: true,
+            ..Default::default()
+        },
+    );
+
+    assert_eq!(r#"k1 = 1                             # 111
+k2 = false                         # 222
+k3 = "public"                      # 333
+k4 = ["/home/www", "/var/lib/www"] # 4444444444444444444444
+k6 = { a = "yes", table = "yes" }  # 4444444444444444444444
+k5 = false                         # 555
+"#, formatted);
+}

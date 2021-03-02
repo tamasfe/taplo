@@ -149,9 +149,9 @@ impl Options {
         }
     }
 
-    fn newlines_like(&self, s: &str) -> SmolStr {
+    fn newlines(&self, count: usize) -> SmolStr {
         self.newline()
-            .repeat(usize::min(s.newline_count(), self.allowed_blank_lines + 1))
+            .repeat(usize::min(count, self.allowed_blank_lines + 1))
             .into()
     }
 
@@ -310,6 +310,8 @@ fn format_root(
     // their indentation might depend on the item below them.
     let mut comments: Vec<SyntaxToken> = Vec::new();
 
+    let mut prev_newlines = 0;
+
     fn add_comments(
         indent: &str,
         comments: &mut Vec<SyntaxToken>,
@@ -444,8 +446,30 @@ fn format_root(
             }
             NodeOrToken::Token(t) => match t.kind() {
                 NEWLINE => {
-                    let newline_count = t.text().as_str().newline_count();
+                    let mut newline_count = t.text().as_str().newline_count();
                     let indent_str = options.indent_string.repeat(indent_level);
+
+                    // Special handling of blank lines;
+                    // if the newlines are followed by whitespace, then a
+                    // new line again, we skip handling of those newlines, and instead
+                    // add them to the last batch before a value.
+                    if let Some(nt) = t.next_sibling_or_token() {
+                        if let Some(nnt) = nt.next_sibling_or_token() {
+                            if nt.kind() == WHITESPACE && nnt.kind() == NEWLINE {
+                                prev_newlines += newline_count;
+                                continue;
+                            } else {
+                                newline_count += prev_newlines;
+                                prev_newlines = 0;
+                            }
+                        } else {
+                            newline_count += prev_newlines;
+                            prev_newlines = 0;
+                        }
+                    } else {
+                        newline_count += prev_newlines;
+                        prev_newlines = 0;
+                    }
 
                     if newline_count > 1 && !comments.is_empty() {
                         add_comments(&indent_str, &mut comments, builder, &options, false);
@@ -476,9 +500,9 @@ fn format_root(
                                 if options.align_entries { None } else { Some(1) },
                             );
                         }
-                        builder.token(NEWLINE.into(), options.newlines_like(t.text().as_str()));
+                        builder.token(NEWLINE.into(), options.newlines(newline_count));
                     } else if skip_newline == 0 {
-                        builder.token(NEWLINE.into(), options.newlines_like(t.text().as_str()));
+                        builder.token(NEWLINE.into(), options.newlines(newline_count));
                     }
                     skip_newline = i32::max(0, skip_newline - 1);
                 }

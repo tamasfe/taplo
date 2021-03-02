@@ -44,7 +44,6 @@ fn comment_indentation() {
 
   # asd
 "#;
-
     assert_eq!(formatted, expected);
 }
 
@@ -92,11 +91,55 @@ k5 = false                                                  # 555
         },
     );
 
-    assert_eq!(r#"k1 = 1                             # 111
+    assert_eq!(
+        r#"k1 = 1                             # 111
 k2 = false                         # 222
 k3 = "public"                      # 333
 k4 = ["/home/www", "/var/lib/www"] # 4444444444444444444444
 k6 = { a = "yes", table = "yes" }  # 4444444444444444444444
 k5 = false                         # 555
-"#, formatted);
+"#,
+        formatted
+    );
+}
+
+#[test]
+fn test_space_in_line() {
+    let src = r#" 
+[foo]
+ 
+foo = "bar"
+ 
+bar = "foo"
+ 
+
+ 
+
+ 
+
+[bar]
+foo = "bar"
+"#;
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            align_entries: true,
+            ..Default::default()
+        },
+    );
+
+    assert_eq!(
+        r#"
+[foo]
+
+foo = "bar"
+
+bar = "foo"
+
+
+[bar]
+foo = "bar"
+"#,
+        formatted
+    );
 }

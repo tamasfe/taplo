@@ -4,3 +4,4 @@ target
 **/.local*
 *.tgz
 yarn-error.log
+index.js

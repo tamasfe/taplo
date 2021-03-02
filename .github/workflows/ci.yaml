@@ -313,3 +313,94 @@ jobs:
         working-directory: js/vscode
         env:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+
+  publish_lsp:
+    name: Publish Taplo Crate
+    needs: test
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-lsp-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Retrieve release version
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-lsp-})" >> $GITHUB_ENV
+      - name: Set release version in Cargo.toml
+        run: |
+          awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo-lsp/Cargo.toml > cargo_tmp
+          mv cargo_tmp taplo-lsp/Cargo.toml
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Publish to Crates.io
+        run: cargo publish --allow-dirty --token $CRATES_IO_TOKEN
+        working-directory: taplo-lsp
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  publish_js_lsp:
+    name: Publish Js Lib
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-lsp-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Retrieve release version
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-js-lsp-})" >> $GITHUB_ENV
+      - name: Install Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@taplo"
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2020-10-15
+          override: true
+      - name: Yarn Dependencies
+        run: yarn
+        working-directory: js/lsp
+      - name: Build lib
+        run: yarn build
+        env:
+          RELEASE: "true"
+        working-directory: js/lsp
+      - name: Publish Package
+        run: yarn publish --access public --no-commit-hooks --no-git-tag-version --new-version $RELEASE_VERSION
+        working-directory: js/lsp
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

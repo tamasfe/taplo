@@ -20,7 +20,7 @@ export default {
       inlineWasm: process.env["SEPARATE_WASM"] !== "true",
     }),
     typescript(),
-    commonjs({ include: ["src/*.ts", "node_modules/**"] }),
+    commonjs({ include: ["src/*.ts", "node_modules/**", "../lsp/**"] }),
     resolve({ jsnext: true, preferBuiltins: true }),
   ],
 };

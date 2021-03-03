@@ -300,7 +300,7 @@ jobs:
           toolchain: nightly-2020-10-15
           override: true
       - name: Extension NPM Install
-        run: yarn
+        run: yarn && yarn upgrade
         working-directory: js/vscode
       - name: Install vsce
         run: npm install -g vsce

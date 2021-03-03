@@ -5,7 +5,7 @@ use lsp_async_stub::{rpc::Error, Context, Params};
 use lsp_types::*;
 use rowan::TextRange;
 use taplo::{
-    analytics::NodeRef,
+    analytics::{NodeRef, PositionInfo},
     dom::{ArrayNode, Entries, EntryNode, NodeSyntax, ValueNode},
     formatter,
     syntax::SyntaxKind,
@@ -43,9 +43,35 @@ pub(crate) async fn code_action(
 
     let query = dom.query_position(range.start());
 
-    let mut node_iter = query.after.nodes.into_iter().rev();
-
     let mut actions = Vec::new();
+
+    actions_for_position(
+        query.after,
+        &mut actions,
+        format_opts.clone(),
+        &doc.mapper,
+        &p,
+    );
+
+    if !actions.is_empty() {
+        return Ok(Some(actions));
+    }
+
+    if let Some(pos) = query.before {
+        actions_for_position(pos, &mut actions, format_opts.clone(), &doc.mapper, &p);
+    }
+
+    return Ok(Some(actions));
+}
+
+fn actions_for_position(
+    pos: PositionInfo,
+    actions: &mut Vec<CodeActionOrCommand>,
+    format_opts: formatter::Options,
+    mapper: &Mapper,
+    params: &CodeActionParams,
+) {
+    let mut node_iter = pos.nodes.into_iter().rev();
 
     if let Some(NodeRef::Key(_)) = node_iter.next() {
         if let Some(NodeRef::Entry(entry)) = node_iter.next() {
@@ -57,7 +83,7 @@ pub(crate) async fn code_action(
                             extract_inline_table(
                                 &mut edits,
                                 format_opts.clone(),
-                                &doc.mapper,
+                                mapper,
                                 parent_path
                                     .map(|p| {
                                         format!("{}", p)
@@ -72,7 +98,7 @@ pub(crate) async fn code_action(
 
                             let mut changes = HashMap::new();
 
-                            changes.insert(p.text_document.uri, edits);
+                            changes.insert(params.text_document.uri.clone(), edits);
 
                             let action = CodeAction {
                                 title: format!("Convert to table"),
@@ -102,7 +128,7 @@ pub(crate) async fn code_action(
                                 extract_table_of_arrays(
                                     &mut edits,
                                     format_opts.clone(),
-                                    &doc.mapper,
+                                    mapper,
                                     parent_path
                                         .map(|p| {
                                             format!("{}", p)
@@ -117,7 +143,7 @@ pub(crate) async fn code_action(
 
                                 let mut changes = HashMap::new();
 
-                                changes.insert(p.text_document.uri, edits);
+                                changes.insert(params.text_document.uri.clone(), edits);
 
                                 let action = CodeAction {
                                     title: format!("Convert to array of tables"),
@@ -138,8 +164,6 @@ pub(crate) async fn code_action(
             }
         }
     }
-
-    return Ok(Some(actions));
 }
 
 fn extract_inline_table(
@@ -279,10 +303,6 @@ fn parent_table<'n, T: Iterator<Item = NodeRef<'n>>>(
                         return None;
                     }
                 }
-            }
-
-            if pt.is_inline() {
-                return None;
             }
 
             Some((pt.key().map(|k| format!("{}", k)), pt.entries()))

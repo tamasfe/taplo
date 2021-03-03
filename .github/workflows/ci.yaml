@@ -311,7 +311,7 @@ jobs:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
 
   publish_lsp:
-    name: Publish Taplo Crate
+    name: Publish Taplo LSP
     needs: test
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-lsp-')
     runs-on: ubuntu-latest
@@ -353,7 +353,7 @@ jobs:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
   publish_js_lsp:
-    name: Publish Js Lib
+    name: Publish Js LSP
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-lsp-')
     runs-on: ubuntu-latest
     steps:

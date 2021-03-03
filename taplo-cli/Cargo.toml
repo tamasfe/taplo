@@ -4,7 +4,7 @@ description = "A CLI for Taplo TOML toolkit"
 license = "MIT"
 edition = "2018"
 name = "taplo-cli"
-version = "0.3.1"
+version = "0.3.2"
 homepage = "https://taplo.tamasfe.dev"
 repository = "https://github.com/tamasfe/taplo"
 categories = ["development-tools", "command-line-utilities"]
@@ -34,7 +34,7 @@ schemars = "0.8"
 serde = "1"
 serde_json = "1"
 sha2 = "0.9"
-taplo = { version = "*", path = "../taplo", features = ["serde", "verify", "schema"] }
+taplo = { version = "0.5.2", path = "../taplo", features = ["serde", "verify", "schema"] }
 time = "0.2"
 toml = "0.5"
 verify = { version = "0.3", features = ["schemars"] }

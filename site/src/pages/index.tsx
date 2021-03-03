@@ -124,7 +124,7 @@ const IndexPage = () => {
           <div className="card-row">
             <Card
               title="Latest TOML Version"
-              extra={<a href="https://toml.io/en/v1.0.0-rc.3">v1.0.0-rc.3</a>}
+              extra={<a href="https://toml.io/en/v1.0.0">v1.0.0</a>}
               hoverable
               style={{ width: 300, height: 160 }}
             >

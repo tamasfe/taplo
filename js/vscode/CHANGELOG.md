@@ -1,6 +1,17 @@
 # Change Log
 
-### 0.10.0
+## 0.11.0
+
+### Features
+- Basic refactoring actions
+  - inline array of tables -> array of tables
+  - inline table -> table
+
+### Fixes
+- Formatting fixes
+- Fixed semantic highlights
+
+## 0.10.0
 
 ### Features
 - Conversion commands from JSON to TOML

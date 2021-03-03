@@ -34,7 +34,7 @@ serde_json = "1.0"
 serde_yaml = "0.8"
 sha2 = "0.9"
 smallvec = "1.5"
-taplo = { version = "0.5.1", path = "../taplo", features = ["serde", "verify", "schema"] }
+taplo = { version = "0.5.2", path = "../taplo", features = ["serde", "verify", "schema"] }
 taplo-cli = { version = "0.3.0", path = "../taplo-cli" }
 time = "0.2"
 toml = "0.5"

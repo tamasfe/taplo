@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.11.1
+
+### Fixes
+- Fixed previous broken release
+
 ## 0.11.0
 
 ### Features

@@ -5,11 +5,7 @@ on:
     branches:
       - master
     tags:
-      - release-lib-*
-      - release-cli-*
-      - release-js-vscode-*
-      - release-js-cli-*
-      - release-js-lib-*
+      - release-*
     paths-ignore:
       - "site/**/*"
       - schemas/**/*

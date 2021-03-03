@@ -21,11 +21,14 @@ use taplo::{
     value::Value,
 };
 
+mod code_action;
 mod completion;
 mod diagnostics;
 mod document_symbols;
 mod folding_ranges;
 mod semantic_tokens;
+
+pub(crate) use code_action::code_action;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -73,6 +76,11 @@ pub(crate) async fn initialize(
                     range: Some(false),
                 }),
             ),
+            code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
+                code_action_kinds: Some(vec![CodeActionKind::REFACTOR]),
+                resolve_provider: None,
+                work_done_progress_options: Default::default(),
+            })),
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             document_symbol_provider: Some(OneOf::Left(true)),
             document_formatting_provider: Some(OneOf::Left(true)),

@@ -307,6 +307,7 @@ pub fn create_server() -> Server<World> {
         .on_request::<request::HoverRequest, _>(handlers::hover)
         .on_request::<request::DocumentLinkRequest, _>(handlers::links)
         .on_request::<request::SemanticTokensFullRequest, _>(handlers::semantic_tokens)
+        .on_request::<request::CodeActionRequest, _>(handlers::code_action)
         .on_request::<msg_ext::TomlToJsonRequest, _>(handlers::toml_to_json)
         .on_request::<msg_ext::JsonToTomlRequest, _>(handlers::json_to_toml)
         .on_request::<msg_ext::SyntaxTreeRequest, _>(handlers::syntax_tree)

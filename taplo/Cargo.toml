@@ -9,7 +9,7 @@ license = "MIT"
 name = "taplo"
 readme = "../README.md"
 repository = "https://github.com/tamasfe/taplo"
-version = "0.5.2"
+version = "0.5.3"
 
 [lib]
 crate-type = ["cdylib", "lib"]

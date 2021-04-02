@@ -6,7 +6,7 @@ use lsp_types::*;
 use rowan::TextRange;
 use taplo::{
     analytics::{NodeRef, PositionInfo},
-    dom::{ArrayNode, Entries, EntryNode, NodeSyntax, ValueNode},
+    dom::{ArrayNode, Entries, EntryNode, KeyNode, NodeSyntax, TableNode, ValueNode},
     formatter,
     syntax::SyntaxKind,
     util::{coords::Mapper, syntax::join_ranges},
@@ -78,7 +78,7 @@ fn actions_for_position(
             match entry.value() {
                 ValueNode::Table(table) => {
                     if table.is_inline() {
-                        if let Some((parent_path, parent_entries)) = parent_table(node_iter) {
+                        if let Some((parent_path, _, parent_entries)) = parent_table(node_iter) {
                             let mut edits = Vec::new();
                             extract_inline_table(
                                 &mut edits,
@@ -123,7 +123,8 @@ fn actions_for_position(
                             });
 
                         if array_of_inline_tables {
-                            if let Some((parent_path, parent_entries)) = parent_table(node_iter) {
+                            if let Some((parent_path, _, parent_entries)) = parent_table(node_iter)
+                            {
                                 let mut edits = Vec::new();
                                 extract_table_of_arrays(
                                     &mut edits,
@@ -162,6 +163,107 @@ fn actions_for_position(
                 }
                 _ => {}
             }
+        } else if let Some(NodeRef::Value(value)) = node_iter.next() {
+            if has_array_of_tables(value) {
+                return;
+            }
+            if let ValueNode::Table(table) = value {
+                let next = node_iter.next();
+                if let Some(NodeRef::Array(arr)) = next {
+                    node_iter.next();
+                    let entry = match node_iter.next() {
+                        Some(NodeRef::Entry(entry)) => entry,
+                        _ => return,
+                    };
+                    if let Some((_, parent_range, parent_entries)) = parent_table(node_iter) {
+                        let mut edits = Vec::new();
+                        inline_array_of_tables(
+                            &mut edits,
+                            format_opts,
+                            mapper,
+                            parent_range,
+                            parent_entries,
+                            entry.key(),
+                            arr,
+                        );
+
+                        let mut changes = HashMap::new();
+                        changes.insert(params.text_document.uri.clone(), edits);
+
+                        let action = CodeAction {
+                            title: format!("Convert to array"),
+                            kind: Some(CodeActionKind::REFACTOR),
+                            edit: Some(WorkspaceEdit {
+                                changes: Some(changes),
+                                ..Default::default()
+                            }),
+                            ..Default::default()
+                        };
+
+                        actions.push(CodeActionOrCommand::CodeAction(action));
+                    }
+                } else if let Some(NodeRef::Entry(entry)) = next {
+                    if let Some((_, parent_range, parent_entries)) = parent_table(node_iter) {
+                        let mut edits = Vec::new();
+                        inline_table(
+                            &mut edits,
+                            format_opts,
+                            mapper,
+                            parent_range,
+                            parent_entries,
+                            entry.key(),
+                            table,
+                        );
+
+                        let mut changes = HashMap::new();
+                        changes.insert(params.text_document.uri.clone(), edits);
+
+                        let action = CodeAction {
+                            title: format!("Convert to inline table"),
+                            kind: Some(CodeActionKind::REFACTOR),
+                            edit: Some(WorkspaceEdit {
+                                changes: Some(changes),
+                                ..Default::default()
+                            }),
+                            ..Default::default()
+                        };
+
+                        actions.push(CodeActionOrCommand::CodeAction(action));
+                    }
+                }
+            } else if let ValueNode::Array(arr) = value {
+                if arr.is_array_of_tables() {
+                    if let (Some(NodeRef::Entry(entry)), Some((_, parent_range, parent_entries))) =
+                        (node_iter.next(), parent_table(node_iter))
+                    {
+                        let mut edits = Vec::new();
+                        inline_array_of_tables(
+                            &mut edits,
+                            format_opts,
+                            mapper,
+                            parent_range,
+                            parent_entries,
+                            entry.key(),
+                            arr,
+                        );
+
+                        let mut changes = HashMap::new();
+                        changes.insert(params.text_document.uri.clone(), edits);
+
+                        let action = CodeAction {
+                            title: format!("Convert to inline table"),
+                            kind: Some(CodeActionKind::REFACTOR),
+                            edit: Some(WorkspaceEdit {
+                                changes: Some(changes),
+                                ..Default::default()
+                            }),
+                            ..Default::default()
+                        };
+
+                        actions.push(CodeActionOrCommand::CodeAction(action));
+                    }
+                }
+            }
         }
     }
 }
@@ -176,9 +278,11 @@ fn extract_inline_table(
     entries: &Entries,
 ) {
     let mut formatted = format_extracted_table(path.trim(), entries, false);
-    formatted = formatter::format(&formatted, format_opts);
+    formatted = formatter::format(&formatted, format_opts)
+        .trim_end()
+        .to_string();
 
-    if let (range_before, Some(last_range)) = replace_ranges(entry, parent_entries) {
+    if let (range_before, Some(last_range)) = extract_replace_ranges(entry, parent_entries) {
         let insert_pos = mapper.position(last_range.end()).unwrap().into_lsp();
 
         let insert_range = Range {
@@ -238,13 +342,15 @@ fn extract_table_of_arrays(
                 formatted += &format_extracted_table(path.trim(), t.entries(), true);
                 formatted += "\n";
             }
-            _ => unreachable!(),
+            _ => return,
         }
     }
 
-    formatted = formatter::format(&formatted, format_opts);
+    formatted = formatter::format(&formatted, format_opts)
+        .trim_end()
+        .to_string();
 
-    if let (range_before, Some(last_range)) = replace_ranges(entry, parent_entries) {
+    if let (range_before, Some(last_range)) = extract_replace_ranges(entry, parent_entries) {
         let insert_pos = mapper.position(last_range.end()).unwrap().into_lsp();
 
         let insert_range = Range {
@@ -287,34 +393,243 @@ fn extract_table_of_arrays(
     }
 }
 
+fn inline_table(
+    edits: &mut Vec<TextEdit>,
+    format_opts: formatter::Options,
+    mapper: &Mapper,
+    parent_range: Option<TextRange>,
+    parent_entries: &Entries,
+    key: &KeyNode,
+    table: &TableNode,
+) {
+    let s = format!("{}={}\n", key.full_key_string(), create_inline_table(table));
+    let s = formatter::format(&s, format_opts);
+
+    for range in table.text_ranges().into_iter().skip(1).rev() {
+        edits.push(TextEdit {
+            range: mapper.range(range).unwrap().into_lsp(),
+            new_text: "".into(),
+        });
+    }
+
+    edits.push(TextEdit {
+        range: mapper
+            .range(table.syntax().text_range())
+            .unwrap()
+            .into_lsp(),
+        new_text: "".into(),
+    });
+
+    let insert_position = mapper
+        .position(
+            parent_entries
+                .iter()
+                .filter(|(_, e)| match e.value() {
+                    ValueNode::Table(t) => t.is_inline(),
+                    ValueNode::Array(arr) => !arr.is_array_of_tables(),
+                    _ => true,
+                })
+                .last()
+                .map(|e| e.1.text_ranges()[0].end())
+                .unwrap_or_else(|| parent_range.map(|pr| pr.end()).unwrap_or_default()),
+        )
+        .unwrap();
+
+    let insert_position = Position {
+        line: insert_position.line as u32 + 1,
+        character: 0,
+    };
+
+    let insert_range = Range {
+        start: insert_position,
+        end: insert_position,
+    };
+
+    edits.push(TextEdit {
+        range: insert_range,
+        new_text: s,
+    });
+}
+
+fn has_array_of_tables(val: &ValueNode) -> bool {
+    match val {
+        ValueNode::Array(arr) => {
+            if arr.is_array_of_tables() {
+                return true;
+            }
+
+            for item in arr.items() {
+                if has_array_of_tables(item) {
+                    return true;
+                }
+            }
+        }
+        ValueNode::Table(table) => {
+            for (_, entry) in table.entries().iter() {
+                if has_array_of_tables(entry.value()) {
+                    return true;
+                }
+            }
+        }
+        _ => {}
+    }
+
+    false
+}
+
+fn inline_array_of_tables(
+    edits: &mut Vec<TextEdit>,
+    format_opts: formatter::Options,
+    mapper: &Mapper,
+    parent_range: Option<TextRange>,
+    parent_entries: &Entries,
+    key: &KeyNode,
+    arr: &ArrayNode,
+) {
+    let s = format!(
+        "{}=[{}]\n",
+        key.full_key_string(),
+        arr.items()
+            .iter()
+            .map(|v| match v {
+                ValueNode::Table(table) => create_inline_table(table) + ",",
+                _ => unreachable!(),
+            })
+            .collect::<String>()
+    );
+    let s = formatter::format(&s, format_opts);
+
+    for item in arr.items().iter().rev() {
+        match item {
+            ValueNode::Table(table) => {
+                for range in table.text_ranges().into_iter().skip(1).rev() {
+                    edits.push(TextEdit {
+                        range: mapper.range(range).unwrap().into_lsp(),
+                        new_text: "".into(),
+                    });
+                }
+                edits.push(TextEdit {
+                    range: mapper
+                        .range(table.syntax().text_range())
+                        .unwrap()
+                        .into_lsp(),
+                    new_text: "".into(),
+                });
+            }
+            _ => {}
+        }
+    }
+
+    let insert_position = mapper
+        .position(
+            parent_entries
+                .iter()
+                .filter(|(_, e)| match e.value() {
+                    ValueNode::Table(t) => t.is_inline(),
+                    ValueNode::Array(arr) => !arr.is_array_of_tables(),
+                    _ => true,
+                })
+                .last()
+                .map(|e| e.1.text_ranges()[0].end())
+                .unwrap_or_else(|| parent_range.map(|pr| pr.end()).unwrap_or_default()),
+        )
+        .unwrap();
+
+    let insert_position = Position {
+        line: insert_position.line as u32 + 1,
+        character: 0,
+    };
+
+    let insert_range = Range {
+        start: insert_position,
+        end: insert_position,
+    };
+
+    edits.push(TextEdit {
+        range: insert_range,
+        new_text: s,
+    });
+}
+
+fn create_inline_table(table: &TableNode) -> String {
+    let mut s = "{".to_string();
+
+    let mut first = true;
+    for (k, entry) in table.entries().iter() {
+        if !first {
+            s += ",";
+        } else {
+            first = false;
+        }
+
+        s += &format!(
+            "{}={}",
+            k.full_key_string(),
+            create_inline_value(entry.value())
+        )
+    }
+
+    s += "}";
+
+    s
+}
+
+fn create_inline_value(v: &ValueNode) -> String {
+    match v {
+        ValueNode::Array(arr) => {
+            let mut s = "[".to_string();
+            for item in arr.items() {
+                s += &create_inline_value(item);
+                s += ",";
+            }
+            s += "]";
+            s
+        }
+        ValueNode::Table(t) => create_inline_table(t),
+        v => {
+            format!("{}", v.syntax())
+        }
+    }
+}
+
 fn parent_table<'n, T: Iterator<Item = NodeRef<'n>>>(
     mut nodes: T,
-) -> Option<(Option<String>, &'n Entries)> {
+) -> Option<(Option<String>, Option<TextRange>, &'n Entries)> {
     match nodes.next() {
         Some(NodeRef::Table(mut pt)) => {
-            if pt.is_pseudo() && pt.entries().len() > 1 {
+            if (pt.is_pseudo() && pt.entries().len() > 1) || pt.is_part_of_array() {
                 return None;
             }
-            while let Some(n) = nodes.next() {
-                if let NodeRef::Table(t) = n {
-                    if !t.is_pseudo() {
-                        pt = t;
-                    } else if t.entries().len() > 1 {
-                        return None;
+
+            if pt.is_pseudo() {
+                while let Some(n) = nodes.next() {
+                    if let NodeRef::Table(t) = n {
+                        if !t.is_pseudo() {
+                            pt = t;
+                        } else if t.entries().len() > 1 {
+                            return None;
+                        }
                     }
                 }
             }
 
-            Some((pt.key().map(|k| format!("{}", k)), pt.entries()))
+            Some((
+                pt.key().map(|k| format!("{}", k)),
+                pt.key().unwrap().syntax().text_range().into(),
+                pt.entries(),
+            ))
         }
-        Some(NodeRef::Root(root)) => Some((None, root.entries())),
+        Some(NodeRef::Root(root)) => Some((None, None, root.entries())),
         _ => None,
     }
 }
 
 // The range of the entry right before the given one,
 // and the last entry of the parent if any.
-fn replace_ranges(entry: &EntryNode, entries: &Entries) -> (Option<TextRange>, Option<TextRange>) {
+fn extract_replace_ranges(
+    entry: &EntryNode,
+    entries: &Entries,
+) -> (Option<TextRange>, Option<TextRange>) {
     let entry_range = entry.text_ranges()[0];
 
     let mut tr_before = None;

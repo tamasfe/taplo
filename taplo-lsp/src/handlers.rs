@@ -134,7 +134,7 @@ async fn update_configuration(mut context: Context<World>, configuration: Option
 
             let mut config_vals = match res {
                 Ok(v) => v,
-                Err(e) => panic!(e),
+                Err(e) => panic!("{}", e),
             };
 
             serde_json::from_value(config_vals.remove(0)).unwrap_or_default()

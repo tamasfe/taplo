@@ -352,7 +352,7 @@ impl TableNode {
         };
 
         ranges.push(self_range);
-        ranges.extend(self.entries.iter().map(|(_, e)| e.syntax().text_range()));
+        ranges.extend(self.entries.iter().map(|(_, e)| e.text_ranges()).flatten());
 
         ranges
     }
@@ -1062,12 +1062,12 @@ impl EntryNode {
         match &self.value {
             ValueNode::Array(arr) => {
                 let mut ranges = smallvec![self.syntax.text_range()];
-                ranges.extend(arr.text_ranges());
+                ranges.extend(arr.text_ranges().into_iter().skip(1));
                 ranges
             }
             ValueNode::Table(t) => {
                 let mut ranges = smallvec![self.syntax.text_range()];
-                ranges.extend(t.text_ranges());
+                ranges.extend(t.text_ranges().into_iter().skip(1));
                 ranges
             }
             _ => smallvec![self.syntax().text_range()],

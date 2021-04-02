@@ -304,15 +304,23 @@ jobs:
         working-directory: js/vscode
       - name: Install vsce
         run: npm install -g vsce
-      - name: Publish Extension
-        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/js/vscode/images -p $VSCE_TOKEN $RELEASE_VERSION
+      - name: Set package.json version
+        working-directory: js/vscode
+        run: sed -i "s/\"0.0.0\"/\"$RELEASE_VERSION\"/g" package.json
+      - name: Package Extension
+        run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/js/vscode/images
         working-directory: js/vscode
         env:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+      - name: Publish extension to microsoft marketplace
+        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/js/vscode/images -p $VSCE_TOKEN
+        working-directory: js/vscode
+        env:
+          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}          
       - name: Install ovsx
         run: npm install -g ovsx
       - name: Publish Open VSX Extension 
-        run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/js/vscode/images -p $OPEN_VSX_TOKEN $RELEASE_VERSION
+        run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/js/vscode/images -p $OPEN_VSX_TOKEN "even-better-toml-$RELEASE_VERSION.vsix"
         working-directory: js/vscode
         env:
           OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}          

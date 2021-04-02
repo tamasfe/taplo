@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, hash::Hash, path::Path, path::PathBuf, sync::Arc};
 use taplo::{
+    analytics::Directive,
     parser::Parse,
     schema::{CachedSchema, BUILTIN_SCHEME},
     util::coords::Mapper,
@@ -120,6 +121,22 @@ impl WorldState {
     }
 
     fn get_schema_name(&self, uri: &Url) -> Option<String> {
+        match self.documents.get(uri) {
+            Some(doc) => {
+                for directive in Directive::collect_from_syntax(doc.parse.clone().into_syntax()) {
+                    if directive.value.starts_with("schema") {
+                        return directive
+                            .value
+                            .split_whitespace()
+                            .skip(1)
+                            .next()
+                            .map(|s| s.to_string());
+                    }
+                }
+            }
+            None => {}
+        }
+
         if let Some(c) = &self.taplo_config {
             if let Some(ws) = &self.workspace_uri {
                 if let Some(p) = pathdiff::diff_paths(Path::new(uri.path()), ws.path()) {

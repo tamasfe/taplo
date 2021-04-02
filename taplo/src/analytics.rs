@@ -8,6 +8,7 @@ use crate::{
     syntax::{
         SyntaxElement,
         SyntaxKind::{self, *},
+        SyntaxNode,
     },
     util::StrExt,
 };
@@ -559,5 +560,35 @@ mod collect {
         for (i, value) in node.items().iter().enumerate() {
             collect_value(path.clone().join(i), value, nodes)
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Directive {
+    pub syntax: SyntaxToken,
+    pub value: String,
+}
+
+impl Directive {
+    pub fn collect_from_syntax(toml: SyntaxNode) -> Vec<Directive> {
+        toml.descendants_with_tokens()
+            .filter_map(|n| {
+                n.as_token().and_then(|token| {
+                    if token.kind() == SyntaxKind::COMMENT {
+                        let value = token.to_string();
+                        if value.starts_with("#:") {
+                            Some(Directive {
+                                syntax: token.clone(),
+                                value: value.trim_start_matches("#:").trim_start().to_string(),
+                            })
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                })
+            })
+            .collect()
     }
 }

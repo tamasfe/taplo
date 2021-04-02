@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.12.0
+
+### Features
+- Improved refactoring code actions
+- Schema directive support
+
 ## 0.11.1
 
 ### Fixes

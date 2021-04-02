@@ -309,6 +309,13 @@ jobs:
         working-directory: js/vscode
         env:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+      - name: Install ovsx
+        run: npm install -g ovsx
+      - name: Publish Open VSX Extension 
+        run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/js/vscode/images -p $OPEN_VSX_TOKEN $RELEASE_VERSION
+        working-directory: js/vscode
+        env:
+          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}          
 
   publish_lsp:
     name: Publish Taplo LSP

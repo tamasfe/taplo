@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.12.1
+
+### Fixes
+- Fixed LSP crash when editing table keys
+
 ## 0.12.0
 
 ### Features

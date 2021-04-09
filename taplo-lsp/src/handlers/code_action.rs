@@ -175,7 +175,21 @@ fn actions_for_position(
                         Some(NodeRef::Entry(entry)) => entry,
                         _ => return,
                     };
-                    if let Some((_, parent_range, parent_entries)) = parent_table(node_iter) {
+                    if let Some((parent_key, parent_range, parent_entries)) =
+                        parent_table(node_iter)
+                    {
+                        let table_key = parent_key
+                            .map(|pk| {
+                                entry
+                                    .key()
+                                    .syntax()
+                                    .to_string()
+                                    .trim_start_matches(&pk)
+                                    .trim_start_matches('.')
+                                    .to_string()
+                            })
+                            .unwrap_or_else(|| entry.key().syntax().to_string());
+
                         let mut edits = Vec::new();
                         inline_array_of_tables(
                             &mut edits,
@@ -183,7 +197,7 @@ fn actions_for_position(
                             mapper,
                             parent_range,
                             parent_entries,
-                            entry.key(),
+                            table_key,
                             arr,
                         );
 
@@ -203,15 +217,28 @@ fn actions_for_position(
                         actions.push(CodeActionOrCommand::CodeAction(action));
                     }
                 } else if let Some(NodeRef::Entry(entry)) = next {
-                    if let Some((_, parent_range, parent_entries)) = parent_table(node_iter) {
+                    if let Some((parent_key, parent_range, parent_entries)) =
+                        parent_table(node_iter)
+                    {
                         let mut edits = Vec::new();
+                        let table_key = parent_key
+                            .map(|pk| {
+                                entry
+                                    .key()
+                                    .syntax()
+                                    .to_string()
+                                    .trim_start_matches(&pk)
+                                    .trim_start_matches('.')
+                                    .to_string()
+                            })
+                            .unwrap_or_else(|| entry.key().syntax().to_string());
                         inline_table(
                             &mut edits,
                             format_opts,
                             mapper,
                             parent_range,
                             parent_entries,
-                            entry.key(),
+                            table_key,
                             table,
                         );
 
@@ -233,17 +260,30 @@ fn actions_for_position(
                 }
             } else if let ValueNode::Array(arr) = value {
                 if arr.is_array_of_tables() {
-                    if let (Some(NodeRef::Entry(entry)), Some((_, parent_range, parent_entries))) =
-                        (node_iter.next(), parent_table(node_iter))
+                    if let (
+                        Some(NodeRef::Entry(entry)),
+                        Some((parent_key, parent_range, parent_entries)),
+                    ) = (node_iter.next(), parent_table(node_iter))
                     {
                         let mut edits = Vec::new();
+                        let table_key = parent_key
+                            .map(|pk| {
+                                entry
+                                    .key()
+                                    .syntax()
+                                    .to_string()
+                                    .trim_start_matches(&pk)
+                                    .trim_start_matches('.')
+                                    .to_string()
+                            })
+                            .unwrap_or_else(|| entry.key().syntax().to_string());
                         inline_array_of_tables(
                             &mut edits,
                             format_opts,
                             mapper,
                             parent_range,
                             parent_entries,
-                            entry.key(),
+                            table_key,
                             arr,
                         );
 
@@ -399,10 +439,10 @@ fn inline_table(
     mapper: &Mapper,
     parent_range: Option<TextRange>,
     parent_entries: &Entries,
-    key: &KeyNode,
+    key: impl AsRef<str>,
     table: &TableNode,
 ) {
-    let s = format!("{}={}\n", key.full_key_string(), create_inline_table(table));
+    let s = format!("{}={}\n", key.as_ref(), create_inline_table(table));
     let s = formatter::format(&s, format_opts);
 
     for range in table.text_ranges().into_iter().skip(1).rev() {
@@ -483,12 +523,12 @@ fn inline_array_of_tables(
     mapper: &Mapper,
     parent_range: Option<TextRange>,
     parent_entries: &Entries,
-    key: &KeyNode,
+    key: impl AsRef<str>,
     arr: &ArrayNode,
 ) {
     let s = format!(
         "{}=[{}]\n",
-        key.full_key_string(),
+        key.as_ref(),
         arr.items()
             .iter()
             .map(|v| match v {
@@ -615,7 +655,7 @@ fn parent_table<'n, T: Iterator<Item = NodeRef<'n>>>(
 
             Some((
                 pt.key().map(|k| format!("{}", k)),
-                pt.key().unwrap().syntax().text_range().into(),
+                pt.key().map(|k| k.syntax().text_range()),
                 pt.entries(),
             ))
         }

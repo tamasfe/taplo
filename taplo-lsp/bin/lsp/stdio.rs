@@ -26,7 +26,7 @@ pub(crate) fn run(rt: Arc<Runtime>, server: Server<World>, world: World) -> i32 
                     if let Err(e) = server.handle_message(
                         world.clone(),
                         shutdown_msg.unwrap(),
-                        output.clone().sink_map_err(|e| panic!(e))
+                        output.clone().sink_map_err(|e| panic!("{}", e))
                     ).await {
                         log_error!("{}", e);
                     };
@@ -47,7 +47,7 @@ pub(crate) fn run(rt: Arc<Runtime>, server: Server<World>, world: World) -> i32 
                             let task_fut = server.handle_message(
                                 world.clone(),
                                 msg,
-                                output.clone().sink_map_err(|e| panic!(e)),
+                                output.clone().sink_map_err(|e| panic!("{}", e)),
                             );
 
                             tokio::spawn(async move {

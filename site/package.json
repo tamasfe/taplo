@@ -19,7 +19,7 @@
     "typescript": "^4.0.5",
     "vue2-ace-editor": "^0.0.15",
     "vuepress": "^1.5.3",
-    "vuepress-theme-hope": "^1.4.7"
+    "vuepress-theme-hope": "^1.13.0"
   },
   "dependencies": {
     "@mdi/font": "^5.8.55",

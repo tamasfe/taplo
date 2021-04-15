@@ -316,7 +316,7 @@
   "dependencies": {
     "deep-equal": "^2.0.4",
     "node-fetch": "^2.6.1",
-    "vscode-languageclient": "^7.0.0-next.15"
+    "vscode-languageclient": "^7.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^16.0.0",

@@ -9,7 +9,7 @@ license = "MIT"
 name = "taplo"
 readme = "../README.md"
 repository = "https://github.com/tamasfe/taplo"
-version = "0.5.3"
+version = "0.5.4"
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -33,7 +33,7 @@ time = { version = "0.2", optional = true }
 
 once_cell = { version = "1", optional = true }
 schemars = { version = "0.8", optional = true }
-serde_crate = { package = "serde", version = "1", optional = true }
+serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_json = { version = "1", optional = true }
 verify = { version = "0.3", features = ["schemars", "serde"], optional = true }
 

@@ -31,6 +31,9 @@ pub mod external;
 #[macro_use]
 pub mod external;
 
+#[cfg(target_arch = "wasm32")]
+use external::UrlExt;
+
 mod handlers;
 mod msg_ext;
 mod utils;
@@ -88,31 +91,22 @@ impl WorldState {
         let mut incomplete = Vec::new();
 
         if let Some(c) = &self.taplo_config {
-            if let Some(ws) = &self.workspace_uri {
-                if let Some(p) = pathdiff::diff_paths(Path::new(uri.path()), ws.path()) {
-                    if let Some(p) = p.to_str() {
-                        match c.get_formatter_options(Some(p), Some(default_opts.clone())) {
-                            Ok((opts, inc)) => {
-                                default_opts = opts;
-                                incomplete.extend(inc);
-                            }
-                            Err(err) => {
-                                log_warn!("invalid config: {}", err);
-                            }
-                        }
+            if let Some(p) = uri.to_file_path().ok() {
+                let p = self
+                    .workspace_uri
+                    .as_ref()
+                    .and_then(|ws| ws.to_file_path().ok())
+                    .and_then(|ws| pathdiff::diff_paths(Path::new(&p), ws))
+                    .unwrap_or(p);
+
+                match c.get_formatter_options(p.to_str(), Some(default_opts.clone())) {
+                    Ok((opts, inc)) => {
+                        default_opts = opts;
+                        incomplete.extend(inc);
                     }
-                }
-            }
-
-            let p = uri.path();
-
-            match c.get_formatter_options(Some(p), Some(default_opts.clone())) {
-                Ok((opts, inc)) => {
-                    default_opts = opts;
-                    incomplete.extend(inc);
-                }
-                Err(err) => {
-                    log_warn!("invalid config: {}", err);
+                    Err(err) => {
+                        log_warn!("invalid config: {}", err);
+                    }
                 }
             }
         }
@@ -138,33 +132,25 @@ impl WorldState {
         }
 
         if let Some(c) = &self.taplo_config {
-            if let Some(ws) = &self.workspace_uri {
-                if let Some(p) = pathdiff::diff_paths(Path::new(uri.path()), ws.path()) {
-                    if let Some(p) = p.to_str() {
-                        match c.get_schema_path(p) {
-                            Ok(p) => {
-                                if p.is_some() {
-                                    return p;
-                                }
-                            }
-                            Err(err) => {
-                                log_warn!("invalid config: {}", err);
+            if let Some(p) = uri.to_file_path().ok() {
+                let p = self
+                    .workspace_uri
+                    .as_ref()
+                    .and_then(|ws| ws.to_file_path().ok())
+                    .and_then(|ws| pathdiff::diff_paths(Path::new(&p), ws))
+                    .unwrap_or(p);
+
+                if let Some(p) = p.to_str() {
+                    match c.get_schema_path(p) {
+                        Ok(p) => {
+                            if p.is_some() {
+                                return p;
                             }
                         }
+                        Err(err) => {
+                            log_warn!("invalid config: {}", err);
+                        }
                     }
-                }
-            }
-
-            let p = uri.path();
-
-            match c.get_schema_path(p) {
-                Ok(p) => {
-                    if p.is_some() {
-                        return p;
-                    }
-                }
-                Err(err) => {
-                    log_warn!("invalid config: {}", err);
                 }
             }
         }
@@ -188,7 +174,7 @@ impl WorldState {
 
     fn workspace_path(&self) -> Option<PathBuf> {
         match &self.workspace_uri {
-            Some(uri) => Some(PathBuf::from(uri.path())),
+            Some(uri) => uri.to_file_path().ok(),
             None => None,
         }
     }
@@ -197,7 +183,7 @@ impl WorldState {
         let workspace = &self.workspace_uri;
 
         match workspace {
-            Some(uri) => Some(Path::new(uri.path()).join(path)),
+            Some(uri) => uri.to_file_path().map(|p| Path::new(&p).join(path)).ok(),
             None => None,
         }
     }

@@ -292,11 +292,18 @@ async fn update_configuration(mut context: Context<World>, configuration: Option
 
                                 spawn(async move {
                                     let res = client.get(&path).send().await.unwrap();
-                                    let schema: RootSchema = res
+
+                                    let schema: RootSchema = match res
                                         .json()
                                         .await
                                         .map_err::<anyhow::Error, _>(Into::into)
-                                        .unwrap();
+                                    {
+                                        Ok(s) => s,
+                                        Err(e) => {
+                                            log_error!("failed to retrieve schema from {}: {}", &path, e);
+                                            return;
+                                        }
+                                    };
 
                                     let s = schema.clone();
 

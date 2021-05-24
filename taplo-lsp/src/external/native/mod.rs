@@ -37,6 +37,10 @@ pub(crate) fn is_absolute_path(p: &str) -> bool {
     Path::new(p).is_absolute()
 }
 
+pub(crate) fn is_windows() -> bool {
+    cfg!(windows)
+}
+
 pub(crate) async fn read_file(p: &str) -> Result<Vec<u8>, anyhow::Error> {
     Ok(tokio::fs::read(p).await?)
 }

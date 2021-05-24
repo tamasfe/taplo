@@ -72,7 +72,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await c.onReady();
   }
   c.sendNotification(Methods.CachePath.METHOD, {
-    path: context.globalStorageUri.path,
+    path: context.globalStorageUri.fsPath,
   });
   c.onNotification(Methods.MessageWithOutput.METHOD, async params =>
     showMessage(params, c)

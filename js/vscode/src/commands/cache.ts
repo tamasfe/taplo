@@ -13,14 +13,14 @@ export function register(
       "evenBetterToml.clearCache",
       async () => {
         try {
-          await fs.promises.rmdir(ctx.globalStorageUri.path, {
+          await fs.promises.rmdir(ctx.globalStorageUri.fsPath, {
             recursive: true,
           });
         } catch (e) {
           // It might not exist.
           console.warn(e);
         }
-        await fs.promises.mkdir(ctx.globalStorageUri.path, {
+        await fs.promises.mkdir(ctx.globalStorageUri.fsPath, {
           recursive: true,
         });
 
@@ -73,7 +73,7 @@ export function register(
               }
 
               await fs.promises.writeFile(
-                path.join(ctx.globalStorageUri.path, "schema_index.json"),
+                path.join(ctx.globalStorageUri.fsPath, "schema_index.json"),
                 JSON.stringify(index)
               );
 
@@ -83,7 +83,7 @@ export function register(
               const schemaStep = schemaCount === 0 ? 0 : 100 / schemaCount;
 
               const schemasPath = path.join(
-                ctx.globalStorageUri.path,
+                ctx.globalStorageUri.fsPath,
                 "schemas"
               );
 

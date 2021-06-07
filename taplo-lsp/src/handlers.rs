@@ -549,7 +549,11 @@ pub(crate) async fn completion(
 
     drop(w);
 
-    let schema: RootSchema = match WorldState::get_schema(&schema_path, context.clone()).await {
+    let schema: RootSchema = match WorldState::get_schema(
+        &uri,
+        &schema_path,
+        context.clone(),
+    ).await {
         Ok(s) => s,
         Err(err) => {
             log_error!("failed to load schema ({}): {}", &schema_path, err);
@@ -590,7 +594,11 @@ pub(crate) async fn hover(
 
     drop(w);
 
-    let schema: RootSchema = match WorldState::get_schema(&schema_path, context.clone()).await {
+    let schema: RootSchema = match WorldState::get_schema(
+        &uri,
+        &schema_path,
+        context.clone()
+    ).await {
         Ok(s) => s,
         Err(err) => {
             log_error!("failed to load schema ({}): {}", &schema_path, err);
@@ -827,7 +835,11 @@ pub(crate) async fn links(
 
     drop(w);
 
-    let schema: RootSchema = match WorldState::get_schema(&schema_path, context.clone()).await {
+    let schema: RootSchema = match WorldState::get_schema(
+        &uri,
+        &schema_path,
+        context.clone()
+    ).await {
         Ok(s) => s,
         Err(err) => {
             log_error!("failed to load schema: {}", err);

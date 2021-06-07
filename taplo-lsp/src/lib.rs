@@ -114,6 +114,22 @@ impl WorldState {
         (default_opts, incomplete)
     }
 
+    /// For the given `Url`, if it exists in the map of known documents,
+    /// try to parse the schema path from a toml comment.
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// #:schema ./foo/bar
+    /// <rest of toml file>
+    /// ```
+    ///
+    /// returns `"/.foo/bar"`.
+    ///
+    /// If the file does not contain such a schema comment, we look into the taplo config,
+    /// which assigns file regexes (relative to the `workspace_uri`) to schema files.
+    ///
+    /// If nothing is found, returns `None`.
     fn get_schema_name(&self, uri: &Url) -> Option<String> {
         match self.documents.get(uri) {
             Some(doc) => {
@@ -179,25 +195,29 @@ impl WorldState {
         }
     }
 
-    fn workspace_absolute<P: AsRef<Path>>(&self, path: P) -> Option<PathBuf> {
-        let workspace = &self.workspace_uri;
-
-        match workspace {
-            Some(uri) => uri.to_file_path().map(|p| Path::new(&p).join(path)).ok(),
-            None => None,
-        }
-    }
-
+    /// Get the schema for a given file and schema path/url.
     async fn get_schema(
+        // File to get the schema for.
+        for_url: &Url,
+        // Path of the schema file, as either
+        //
+        // - a `taplo://` url
+        // - an absolute `file://` path
+        // - an absolute path (same as `file://`)
+        // - a `http://` or `https://`
+        // - or a relative path, which is resolved relative to the `for_url` (this should work for both local files and remote files)
         mut path: &str,
         mut context: Context<World>,
     ) -> Result<RootSchema, anyhow::Error> {
+
+        // resolve taplo://
         if path.starts_with(&format!("{}://", BUILTIN_SCHEME)) {
             if path == "taplo://taplo.toml" {
                 Ok(schema_for!(taplo_cli::config::Config))
             } else {
                 Err(anyhow!("invalid builtin schema: {}", path))
             }
+        // resolve http://, https://
         } else if path.starts_with("http://") || path.starts_with("https://") {
             let w = context.world().lock().await;
 
@@ -261,19 +281,47 @@ impl WorldState {
             }
 
             Ok(schema)
+        // resolve file://
         } else if path.starts_with("file://") {
             path = path.trim_start_matches("file://");
             serde_json::from_slice(&read_file(path).await?).map_err(Into::into)
+        // same as file:// for absolute paths
         } else if is_absolute_path(path) {
             serde_json::from_slice(&read_file(path).await?).map_err(Into::into)
+        // resolve relative paths, relative to the `for_url`.
         } else {
-            match context.world().lock().await.workspace_absolute(path) {
-                Some(p) => serde_json::from_slice(&read_file(p.to_str().unwrap()).await?)
-                    .map_err(Into::into),
-                None => Err(anyhow!("cannot determine workspace root for relative path")),
+            // This should in theory work for any type of url, so if `for_url` is
+            // `http://foo.bar/baz.toml`
+            // then `./schema.json` ould resolve to
+            // `http://foo.bar/schema.json`
+            // which sounds like something one would want.
+            // However, implementing this will take some more refactoring, so for now we error out.
+            if for_url.scheme() != "file" {
+                return Err(anyhow!(
+                    "File {} is trying to load relative schema {}, but we only support loading relative schemas from local files right now, not {}",
+                    for_url,
+                    path,
+                    for_url.scheme()
+                ))
+            }
+            match for_url.join(path) {
+                Ok(schema) => serde_json::from_slice(
+                    &read_file(
+                        schema.to_file_path().expect(&format!("{} has to be a file path here", schema))
+                            // this should be utf-8 safe since it came from an URL
+                            .to_str().unwrap()
+                    ).await?
+                ).map_err(Into::into),
+                Err(err) => Err(anyhow!(
+                    "Cannot resolve relative schema {}, coming from file {}. Error: {}",
+                    path,
+                    for_url,
+                    err
+                ))
             }
         }
     }
+
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

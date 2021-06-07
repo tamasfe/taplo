@@ -54,7 +54,11 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
     match w.get_schema_name(&uri) {
         Some(schema_path) => {
             drop(w);
-            match WorldState::get_schema(&schema_path, context.clone()).await {
+            match WorldState::get_schema(
+                &uri,
+                &schema_path,
+                context.clone()
+            ).await {
                 Ok(s) => {
                     schema_diag = collect_schema_diagnostics(&s, &doc.parse, &uri, &doc.mapper);
                 }

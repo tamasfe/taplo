@@ -797,7 +797,21 @@ fn format_array(
                             }
                             was_value = false;
                         }
-                        WHITESPACE | NEWLINE | COMMA => {}
+                        WHITESPACE | COMMA => {}
+                        NEWLINE => {
+                            if multiline {
+                                builder.token(
+                                    NEWLINE.into(),
+                                    options.newlines(
+                                        t.text()
+                                            .chars()
+                                            .filter(|c| *c == '\n')
+                                            .count()
+                                            .saturating_sub(1),
+                                    ),
+                                );
+                            }
+                        }
                         _ => builder.token(t.kind().into(), t.text().clone()),
                     }
                     if t.kind() != WHITESPACE {
@@ -824,7 +838,6 @@ fn format_entry(
             NodeOrToken::Node(n) => match n.kind() {
                 KEY => {
                     format_key(n, builder, options.clone(), context);
-                    builder.token(WHITESPACE.into(), " ".into())
                 }
                 VALUE => format_value(n, builder, options.clone(), context),
                 _ => add_all(n, builder),
@@ -833,7 +846,6 @@ fn format_entry(
                 EQ => {
                     context.line_char_count += 1;
                     builder.token(EQ.into(), "=".into());
-                    builder.token(WHITESPACE.into(), " ".into());
                 }
                 WHITESPACE | NEWLINE => {}
                 _ => {
@@ -977,7 +989,15 @@ fn add_aligned(
         {
             let ws_count = match &exact_tabs {
                 Some(t) => *t,
-                None => (max_lengths[i] - u32::from(c.text_range().len()) + 1) as usize,
+                None => usize::max(
+                    1,
+                    max_lengths
+                        .get(i)
+                        .copied()
+                        .unwrap_or(1)
+                        .saturating_sub(u32::from(c.text_range().len()) + 1)
+                        as usize,
+                ),
             };
 
             match c {
@@ -987,9 +1007,9 @@ fn add_aligned(
                 }
             }
 
-            if i != child_count - 1
+            if i != child_count.saturating_sub(1)
                 && ws_count > 0
-                && i != max_lengths.len().checked_sub(1).unwrap_or_default()
+                && i != max_lengths.len().saturating_sub(1)
             {
                 builder.token(WHITESPACE.into(), " ".repeat(ws_count).into())
             }
@@ -1041,36 +1061,32 @@ fn extract_comment_from_entry(node: SyntaxNode) -> SyntaxNode {
                                     let mut after_end = false;
 
                                     for inner_child in n.children_with_tokens() {
-                                        if let COMMENT = inner_child.kind() {
-                                            comment = inner_child
-                                                .as_token()
-                                                .unwrap()
-                                                .text()
-                                                .clone()
-                                                .into();
-                                        } else {
-                                            match inner_child {
-                                                NodeOrToken::Node(child_n) => {
-                                                    add_all(child_n, &mut b);
-                                                }
-                                                NodeOrToken::Token(t) => match t.kind() {
-                                                    WHITESPACE => {
-                                                        if !after_end {
-                                                            b.token(
-                                                                t.kind().into(),
-                                                                t.text().clone(),
-                                                            );
-                                                        }
-                                                    }
-                                                    BRACE_END | BRACKET_END => {
-                                                        after_end = true;
-                                                        b.token(t.kind().into(), t.text().clone());
-                                                    }
-                                                    _ => {
-                                                        b.token(t.kind().into(), t.text().clone());
-                                                    }
-                                                },
+                                        match inner_child {
+                                            NodeOrToken::Node(child_n) => {
+                                                add_all(child_n, &mut b);
                                             }
+                                            NodeOrToken::Token(t) => match t.kind() {
+                                                WHITESPACE => {
+                                                    if !after_end {
+                                                        b.token(t.kind().into(), t.text().clone());
+                                                    }
+                                                }
+                                                BRACE_END | BRACKET_END => {
+                                                    after_end = true;
+                                                    b.token(t.kind().into(), t.text().clone());
+                                                }
+
+                                                COMMENT => {
+                                                    if after_end {
+                                                        comment = Some(t.text().clone());
+                                                    } else {
+                                                        b.token(t.kind().into(), t.text().clone());
+                                                    }
+                                                }
+                                                _ => {
+                                                    b.token(t.kind().into(), t.text().clone());
+                                                }
+                                            },
                                         }
                                     }
 

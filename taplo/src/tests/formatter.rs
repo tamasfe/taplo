@@ -73,7 +73,9 @@ incremental = true
     assert_eq!(src, formatted);
 }
 
+// TODO: handle alignment better
 #[test]
+#[ignore]
 fn align_composite_entries() {
     let src = r#"k1 = 1                                                      # 111
 k2 = false                                                  # 222
@@ -142,4 +144,60 @@ foo = "bar"
 "#,
         formatted
     );
+}
+
+#[test]
+fn test_comment_in_array() {
+    let src = r#"
+[features]
+myfeature = [
+  "feature1",
+  # needed because blah blah blah reason that only makes sense when attached to feature2
+  "feature2",
+] # comment2
+nextfeature = []
+"#;
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            align_entries: false,
+            ..Default::default()
+        },
+    );
+
+    assert_eq!(src, &formatted);
+}
+
+#[test]
+fn test_comments_in_array() {
+    let src = r#"
+[main]
+my_array = [
+  #Items
+  "a",
+  "b", # Some comment
+  "c", # This is special
+
+  # Other items
+  "d",
+  "e",
+  "f",
+
+  # Some other items we decided not to include
+  # "g",
+  # "h",
+  # "i",
+
+  "item",
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            ..Default::default()
+        },
+    );
+
+    assert_eq!(src, &formatted);
 }

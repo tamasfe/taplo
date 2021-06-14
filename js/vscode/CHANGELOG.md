@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.12.3
+
+### Fixes
+
+- Fixed formatting comments inside arrays
+- Relative paths inside comments are relative to the document ([#119](https://github.com/tamasfe/taplo/pull/119))
+
 ## 0.12.2
 
 ### Fixes

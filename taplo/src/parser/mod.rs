@@ -7,7 +7,7 @@ use crate::{
 };
 use dom::Cast;
 use logos::{Lexer, Logos};
-use rowan::{GreenNode, GreenNodeBuilder, SmolStr, TextRange, TextSize};
+use rowan::{GreenNode, GreenNodeBuilder, TextRange, TextSize};
 use std::convert::TryInto;
 
 #[macro_use]
@@ -157,7 +157,7 @@ impl<'p> Parser<'p> {
         self.error_whitelist & token as u16 != 0
     }
 
-    fn insert_token(&mut self, kind: SyntaxKind, s: SmolStr) {
+    fn insert_token(&mut self, kind: SyntaxKind, s: &str) {
         self.builder.token(kind.into(), s)
     }
 

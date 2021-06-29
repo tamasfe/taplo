@@ -1179,7 +1179,7 @@ impl KeyNode {
     }
 
     pub fn keys_str(&self) -> impl Iterator<Item = &str> {
-        self.idents().map(|t| t.text().as_str())
+        self.idents().map(|t| t.text())
     }
 
     /// Quotes are removed from the keys.
@@ -1582,7 +1582,6 @@ impl Cast for StringNode {
                         .as_token()
                         .unwrap()
                         .text()
-                        .as_str()
                         .strip_prefix(r#"""#)
                         .unwrap()
                         .strip_suffix(r#"""#)
@@ -1600,7 +1599,6 @@ impl Cast for StringNode {
                         .as_token()
                         .unwrap()
                         .text()
-                        .as_str()
                         .strip_prefix(r#"""""#)
                         .unwrap()
                         .strip_suffix(r#"""""#)
@@ -1623,7 +1621,6 @@ impl Cast for StringNode {
                     .as_token()
                     .unwrap()
                     .text()
-                    .as_str()
                     .strip_prefix(r#"'"#)
                     .unwrap()
                     .strip_suffix(r#"'"#)
@@ -1638,7 +1635,6 @@ impl Cast for StringNode {
                         .as_token()
                         .unwrap()
                         .text()
-                        .as_str()
                         .strip_prefix(r#"'''"#)
                         .unwrap()
                         .strip_suffix(r#"'''"#)

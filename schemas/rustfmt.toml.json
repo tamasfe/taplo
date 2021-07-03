@@ -8,16 +8,16 @@
     "patterns": ["^(.*(/|\\\\)rustfmt\\.toml|rustfmt\\.toml)$"]
   },
   "properties": {
-    "tab_spaces": {
+    "comment_width": {
       "type": "integer",
-      "description": "Number of spaces per tab",
-      "default": 4
+      "description": "Maximum length of comments. No effect unless wrap_comments = true\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": 80
     },
-    "fn_args_layout": {
-      "type": "string",
-      "description": "Control the layout of arguments in a function",
-      "default": "Tall",
-      "enum": ["Compressed", "Tall", "Vertical"]
+    "trailing_semicolon": {
+      "type": "boolean",
+      "description": "Add trailing semicolon after break, continue and return\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": true,
+      "enum": [true, false]
     },
     "merge_derives": {
       "type": "boolean",
@@ -25,16 +25,211 @@
       "default": true,
       "enum": [true, false]
     },
-    "print_misformatted_file_names": {
+    "normalize_doc_attributes": {
       "type": "boolean",
-      "description": "Prints the names of mismatched files that were formatted. Prints the names of files that would be formated when used with `--check` mode.",
+      "description": "Normalize doc attributes as doc comments\n\n### Unstable\nThis option requires Nightly Rust.",
       "default": false,
       "enum": [true, false]
     },
-    "remove_nested_parens": {
+    "control_brace_style": {
+      "type": "string",
+      "description": "Brace style for control flow constructs\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "AlwaysSameLine",
+      "enum": ["AlwaysSameLine", "ClosingNextLine", "AlwaysNextLine"]
+    },
+    "binop_separator": {
+      "type": "string",
+      "description": "Where to put a binary operator when a binary expression goes multiline\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Front",
+      "enum": ["Front", "Back"]
+    },
+    "reorder_impl_items": {
       "type": "boolean",
-      "description": "Remove nested parens",
+      "description": "Reorder impl items\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "space_after_colon": {
+      "type": "boolean",
+      "description": "Leave a space after the colon\n\n### Unstable\nThis option requires Nightly Rust.",
       "default": true,
+      "enum": [true, false]
+    },
+    "match_arm_blocks": {
+      "type": "boolean",
+      "description": "Wrap the body of arms in blocks when it does not fit on the same line with the pattern of arms\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": true,
+      "enum": [true, false]
+    },
+    "space_before_colon": {
+      "type": "boolean",
+      "description": "Leave a space before the colon\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "max_width": {
+      "type": "integer",
+      "description": "Maximum width of each line",
+      "default": 100
+    },
+    "empty_item_single_line": {
+      "type": "boolean",
+      "description": "Put empty-body functions and impls on a single line\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": true,
+      "enum": [true, false]
+    },
+    "force_explicit_abi": {
+      "type": "boolean",
+      "description": "Always print the abi for extern items",
+      "default": true,
+      "enum": [true, false]
+    },
+    "hard_tabs": {
+      "type": "boolean",
+      "description": "Use tab characters for indentation, spaces for alignment",
+      "default": false,
+      "enum": [true, false]
+    },
+    "imports_indent": {
+      "type": "string",
+      "description": "Indent of imports\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Block",
+      "enum": ["Visual", "Block"]
+    },
+    "struct_lit_single_line": {
+      "type": "boolean",
+      "description": "Put small struct literals on a single line\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": true,
+      "enum": [true, false]
+    },
+    "skip_children": {
+      "type": "boolean",
+      "description": "Don't reformat out of line modules\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "reorder_imports": {
+      "type": "boolean",
+      "description": "Reorder import and extern crate statements alphabetically",
+      "default": true,
+      "enum": [true, false]
+    },
+    "imports_layout": {
+      "type": "string",
+      "description": "Item layout inside a import block\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Mixed",
+      "enum": ["Vertical", "Horizontal", "HorizontalVertical", "LimitedHorizontalVertical", "Mixed"]
+    },
+    "trailing_comma": {
+      "type": "string",
+      "description": "How to handle trailing commas for lists\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Vertical",
+      "enum": ["Always", "Never", "Vertical"]
+    },
+    "use_field_init_shorthand": {
+      "type": "boolean",
+      "description": "Use field initialization shorthand if possible",
+      "default": false,
+      "enum": [true, false]
+    },
+    "wrap_comments": {
+      "type": "boolean",
+      "description": "Break comments to fit on the line\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "imports_granularity": {
+      "type": "string",
+      "description": "Merge or split imports to the provided granularity\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Preserve",
+      "enum": ["Preserve", "Crate", "Module", "Item"]
+    },
+    "blank_lines_upper_bound": {
+      "type": "integer",
+      "description": "Maximum number of blank lines which can be put between items\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": 1
+    },
+    "format_code_in_doc_comments": {
+      "type": "boolean",
+      "description": "Format the code snippet in doc comments.\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "error_on_unformatted": {
+      "type": "boolean",
+      "description": "Error if unable to get comments or string literals within max_width, or they are left with trailing whitespaces\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "force_multiline_blocks": {
+      "type": "boolean",
+      "description": "Force multiline closure bodies and match arms to be wrapped in a block\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "disable_all_formatting": {
+      "type": "boolean",
+      "description": "Don't reformat anything\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "group_imports": {
+      "type": "string",
+      "description": "Controls the strategy for how imports are grouped together\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Preserve",
+      "enum": ["Preserve", "StdExternalCrate"]
+    },
+    "indent_style": {
+      "type": "string",
+      "description": "How do we indent expressions or items\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Block",
+      "enum": ["Visual", "Block"]
+    },
+    "format_strings": {
+      "type": "boolean",
+      "description": "Format string literals where necessary\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "unstable_features": {
+      "type": "boolean",
+      "description": "Enables unstable features. Only available on nightly channel\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "report_fixme": {
+      "type": "string",
+      "description": "Report all, none or unnumbered occurrences of FIXME in source file comments\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Never",
+      "enum": ["Always", "Unnumbered", "Never"]
+    },
+    "brace_style": {
+      "type": "string",
+      "description": "Brace style for items\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "SameLineWhere",
+      "enum": ["AlwaysNextLine", "PreferSameLine", "SameLineWhere"]
+    },
+    "inline_attribute_width": {
+      "type": "integer",
+      "description": "Write an item and its attribute on the same line if their combined width is below a threshold\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": 0
+    },
+    "fn_single_line": {
+      "type": "boolean",
+      "description": "Put single-expression functions on a single line\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of formatting rules\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "One",
+      "enum": ["One", "Two"]
+    },
+    "condense_wildcard_suffixes": {
+      "type": "boolean",
+      "description": "Replace strings of _ wildcards by a single .. in tuple patterns\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
       "enum": [true, false]
     },
     "use_small_heuristics": {
@@ -49,32 +244,152 @@
       "default": false,
       "enum": [true, false]
     },
+    "emit_mode": {
+      "type": "string",
+      "description": "What emit Mode to use when none is supplied\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Files",
+      "enum": ["Files", "Stdout", "Coverage", "Checkstyle", "Json", "ModifiedLines", "Diff"]
+    },
+    "type_punctuation_density": {
+      "type": "string",
+      "description": "Determines if '+' or '=' are wrapped in spaces in the punctuation of types\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Wide",
+      "enum": ["Compressed", "Wide"]
+    },
+    "color": {
+      "type": "string",
+      "description": "What Color option to use when none is supplied: Always, Never, Auto\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Auto",
+      "enum": ["Always", "Never", "Auto"]
+    },
+    "make_backup": {
+      "type": "boolean",
+      "description": "Backup changed files\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "tab_spaces": {
+      "type": "integer",
+      "description": "Number of spaces per tab",
+      "default": 4
+    },
+    "normalize_comments": {
+      "type": "boolean",
+      "description": "Convert /* */ comments to // comments where possible\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "overflow_delimited_expr": {
+      "type": "boolean",
+      "description": "Allow trailing bracket/brace delimited expressions to overflow\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "enum_discrim_align_threshold": {
+      "type": "integer",
+      "description": "Align enum variants discrims, if their diffs fit within threshold\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": 0
+    },
+    "required_version": {
+      "type": "string",
+      "description": "Require a specific version of rustfmt\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "1.4.34"
+    },
+    "hide_parse_errors": {
+      "type": "boolean",
+      "description": "Hide errors from the parser\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "print_misformatted_file_names": {
+      "type": "boolean",
+      "description": "Prints the names of mismatched files that were formatted. Prints the names of files that would be formated when used with `--check` mode.",
+      "default": false,
+      "enum": [true, false]
+    },
     "reorder_modules": {
       "type": "boolean",
       "description": "Reorder module statements alphabetically in group",
       "default": true,
       "enum": [true, false]
     },
-    "hard_tabs": {
+    "license_template_path": {
+      "type": "string",
+      "description": "Beginning of file must match license template\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "\"\""
+    },
+    "error_on_line_overflow": {
       "type": "boolean",
-      "description": "Use tab characters for indentation, spaces for alignment",
+      "description": "Error if unable to get all lines within max_width\n\n### Unstable\nThis option requires Nightly Rust.",
       "default": false,
       "enum": [true, false]
     },
-    "use_field_init_shorthand": {
+    "newline_style": {
+      "type": "string",
+      "description": "Unix or Windows line endings",
+      "default": "Auto",
+      "enum": ["Auto", "Windows", "Unix", "Native"]
+    },
+    "format_macro_matchers": {
       "type": "boolean",
-      "description": "Use field initialization shorthand if possible",
+      "description": "Format the metavariable matching patterns in macros\n\n### Unstable\nThis option requires Nightly Rust.",
       "default": false,
       "enum": [true, false]
     },
-    "max_width": {
+    "combine_control_expr": {
+      "type": "boolean",
+      "description": "Combine control expressions with function calls\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": true,
+      "enum": [true, false]
+    },
+    "ignore": {
+      "type": "array",
+      "description": "Skip formatting the specified files and directories\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": []
+    },
+    "remove_nested_parens": {
+      "type": "boolean",
+      "description": "Remove nested parens",
+      "default": true,
+      "enum": [true, false]
+    },
+    "match_block_trailing_comma": {
+      "type": "boolean",
+      "description": "Put a trailing comma after a block based match arm (non-block arms are not affected)\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "blank_lines_lower_bound": {
       "type": "integer",
-      "description": "Maximum width of each line",
-      "default": 100
+      "description": "Minimum number of blank lines which must be put between items\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": 0
     },
-    "reorder_imports": {
+    "report_todo": {
+      "type": "string",
+      "description": "Report all, none or unnumbered occurrences of TODO in source file comments\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": "Never",
+      "enum": ["Always", "Unnumbered", "Never"]
+    },
+    "spaces_around_ranges": {
       "type": "boolean",
-      "description": "Reorder import and extern crate statements alphabetically",
+      "description": "Put spaces around the  .. and ..= range operators\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
+    },
+    "struct_field_align_threshold": {
+      "type": "integer",
+      "description": "Align struct fields if their diffs fits within threshold\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": 0
+    },
+    "fn_args_layout": {
+      "type": "string",
+      "description": "Control the layout of arguments in a function",
+      "default": "Tall",
+      "enum": ["Compressed", "Tall", "Vertical"]
+    },
+    "format_macro_bodies": {
+      "type": "boolean",
+      "description": "Format the bodies of macros\n\n### Unstable\nThis option requires Nightly Rust.",
       "default": true,
       "enum": [true, false]
     },
@@ -84,23 +399,17 @@
       "default": "Never",
       "enum": ["Always", "Never", "Preserve"]
     },
-    "force_explicit_abi": {
-      "type": "boolean",
-      "description": "Always print the abi for extern items",
-      "default": true,
-      "enum": [true, false]
-    },
     "edition": {
       "type": "string",
       "description": "The edition of the parser (RFC 2052)",
       "default": "2015",
-      "enum": ["2015", "2018"]
+      "enum": ["2015", "2018", "2021"]
     },
-    "newline_style": {
-      "type": "string",
-      "description": "Unix or Windows line endings",
-      "default": "Auto",
-      "enum": ["Auto", "Windows", "Unix", "Native"]
+    "where_single_line": {
+      "type": "boolean",
+      "description": "Force where-clauses to be on a single line\n\n### Unstable\nThis option requires Nightly Rust.",
+      "default": false,
+      "enum": [true, false]
     }
   }
 }

@@ -87,7 +87,7 @@ pub use rowan;
 #[cfg(test)]
 mod tests;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "wasm_bindgen"))]
 pub mod wasm;
 
 #[cfg(all(feature = "chrono", feature = "time"))]

@@ -15,9 +15,11 @@ version = "0.5.4"
 crate-type = ["cdylib", "lib"]
 
 [features]
+default = ["wasm_bindgen"]
 serde = ["serde_crate", "serde_json"]
 schema = ["once_cell", "schemars", "serde"]
 rewrite = []
+wasm_bindgen = ["wasm-bindgen", "toml"]
 
 [dependencies]
 glob = "0.3"
@@ -38,8 +40,8 @@ serde_json = { version = "1", optional = true }
 verify = { version = "0.3", features = ["schemars", "serde"], optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
-toml = "0.5"
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"], optional = true }
+toml = { version = "0.5", optional = true }
 
 [dev-dependencies]
 assert-json-diff = "2"

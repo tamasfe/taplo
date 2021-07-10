@@ -19,7 +19,6 @@ use std::{
 };
 use taplo::schema::{CachedSchema, SchemaIndex, BUILTIN_SCHEME};
 use tokio::task::JoinHandle;
-use tokio_compat_02::FutureExt;
 
 static HTTP_CLIENT: Lazy<Client> = Lazy::new(|| {
     let mut headers = header::HeaderMap::new();
@@ -72,7 +71,7 @@ pub(crate) async fn get_schema(
             }
         }
 
-        let res = HTTP_CLIENT.get(path).send().compat().await?;
+        let res = HTTP_CLIENT.get(path).send().await?;
         let schema: RootSchema = res.json().await.map_err::<anyhow::Error, _>(Into::into)?;
 
         let p = path.to_string();
@@ -111,7 +110,7 @@ pub(crate) async fn get_schema(
 }
 
 pub(crate) async fn download_schema_index(index_url: &str) -> Result<SchemaIndex, anyhow::Error> {
-    match HTTP_CLIENT.get(index_url).send().compat().await {
+    match HTTP_CLIENT.get(index_url).send().await {
         Ok(res) => match res.json::<SchemaIndex>().await {
             Ok(idx) => Ok(idx),
             Err(err) => Err(anyhow!("invalid schema index: {}", err)),
@@ -170,7 +169,7 @@ pub(crate) async fn update_schemas(
                         let cache_path = PathBuf::from(cache_path.as_ref());
 
                         schema_downloads.push(tokio::spawn(async move {
-                            let res = HTTP_CLIENT.get(&path).send().compat().await.unwrap();
+                            let res = HTTP_CLIENT.get(&path).send().await.unwrap();
                             let schema: RootSchema = res
                                 .json()
                                 .await

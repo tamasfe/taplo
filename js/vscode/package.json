@@ -225,6 +225,12 @@
           "scope": "resource",
           "default": false
         },
+        "evenBetterToml.formatter.alignComments": {
+          "description": "Align comments vertically after entries and array values.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": true
+        },
         "evenBetterToml.formatter.arrayTrailingComma": {
           "description": "Append trailing commas for multi-line arrays.",
           "type": "boolean",
@@ -251,6 +257,12 @@
         },
         "evenBetterToml.formatter.compactInlineTables": {
           "description": "Omit white space padding from the start and end of inline tables.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": false
+        },
+        "evenBetterToml.formatter.compactEntries": {
+          "description": "Omit white space padding around `=` for entries.",
           "type": "boolean",
           "scope": "resource",
           "default": false
@@ -356,7 +368,7 @@
     "build": "yarn --ignore-engines rollup --silent -c rollup.config.js"
   },
   "dependencies": {
-    "@taplo/lsp": "^0.1.3",
+    "@taplo/lsp": "^0.2.0",
     "deep-equal": "^2.0.4",
     "encoding": "^0.1.13",
     "node-fetch": "^2.6.1",

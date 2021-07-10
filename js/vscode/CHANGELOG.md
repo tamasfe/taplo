@@ -1,5 +1,17 @@
 # Change Log
 
+## 0.13.0
+
+### Features
+
+- New formatting options: `alignComments` and `compactEntries`
+
+### Fixes
+
+- Completely reworked formatting code
+- Fixed various false errors
+- The `columnWidth` formatter option is more closely enforced
+
 ## 0.12.3
 
 ### Fixes

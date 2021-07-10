@@ -1,0 +1,14 @@
+[hello.world]
+swag = true
+
+[hello.friends]
+asdf = "jkl;"
+
+[hello.a]
+asdf = "jkl;"
+
+[hello.b]
+asdf = "jkl;"
+
+[hello]
+marked_as_duplicate = true

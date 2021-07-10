@@ -577,18 +577,26 @@ impl Entries {
 
             if existing_key == key {
                 match entry.syntax().kind() {
-                    TABLE_HEADER => {
-                        errors.push(Error::DuplicateKey {
-                            first: existing_key,
-                            second: key,
+                    TABLE_HEADER => match &entry.value {
+                        ValueNode::Table(t) => {
+                            if !t.is_pseudo() {
+                                errors.push(Error::DuplicateKey {
+                                    first: existing_key,
+                                    second: key,
+                                });
+                                return;
+                            }
+                        }
+                        _ => {}
+                    },
+                    _ => {
+                        errors.push(Error::ExpectedTable {
+                            target: existing_key,
+                            key,
                         });
+                        return;
                     }
-                    _ => errors.push(Error::ExpectedTable {
-                        target: existing_key,
-                        key,
-                    }),
                 }
-                return;
             }
 
             if existing_key.is_part_of(&key) {

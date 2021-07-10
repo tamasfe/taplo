@@ -3150,3 +3150,25 @@ fn taplo_bool_key() {
             .collect::<String>()
     );
 }
+#[test]
+fn taplo_out_of_order_dotted_tables() {
+    let src = "[hello.world]\nswag = true\n\n[hello.friends]\nasdf = \"jkl;\"\n\n[hello]\nmarked_as_duplicate = true\n" ;
+    let p = crate::parser::parse(&src);
+    assert!(
+        p.errors.is_empty(),
+        "Parse errors:\n{}",
+        p.errors
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+    let dom = p.into_dom();
+    assert!(
+        dom.errors().is_empty(),
+        "Semantic errors:\n{}",
+        dom.errors()
+            .iter()
+            .map(|e| { format!("{}\n", e) })
+            .collect::<String>()
+    );
+}

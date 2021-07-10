@@ -2,15 +2,18 @@
 //!
 //! The formatting can be done on documents that might
 //! contain invalid syntax. In that case the invalid part is skipped.
-// TODO This is fine for now, but will need a refactor
-// if more features are added either to the toml spec.
 
 use crate::{
-    dom::{Cast, EntryNode, KeyNode, NodeSyntax, RootNode},
-    syntax::{SyntaxKind, SyntaxKind::*, SyntaxNode, SyntaxToken},
+    dom::{Cast, KeyNode, NodeSyntax, RootNode},
+    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
 };
-use rowan::{GreenNode, GreenNodeBuilder, NodeOrToken, SmolStr, TextRange};
-use std::{iter::FromIterator, mem, rc::Rc};
+use rowan::{GreenNode, NodeOrToken, TextRange};
+use std::{
+    cmp,
+    iter::{repeat, FromIterator},
+    ops::Range,
+    rc::Rc,
+};
 
 #[cfg(feature = "serde")]
 use serde_crate::{Deserialize, Serialize};
@@ -43,11 +46,16 @@ create_options!(
         /// or blank lines between them are not aligned.
         pub align_entries: bool,
 
+        /// Align consecutive comments after entries and items vertically.
+        ///
+        /// This applies to comments that are after entries or array items.
+        pub align_comments: bool,
+
         /// Put trailing commas for multiline
-        /// arrays
+        /// arrays.
         pub array_trailing_comma: bool,
 
-        /// Automatically expand arrays to multi lines
+        /// Automatically expand arrays to multiple lines
         /// if they're too long.
         pub array_auto_expand: bool,
 
@@ -64,11 +72,13 @@ create_options!(
         /// Omit whitespace padding inside inline tables.
         pub compact_inline_tables: bool,
 
+        /// Omit whitespace around `=`.
+        pub compact_entries: bool,
+
         /// Target maximum column width after which
         /// arrays are expanded into new lines.
         ///
-        /// This is best-effort, and currently doesn't
-        /// take whitespace into account.
+        /// This is best-effort and might not be accurate.
         pub column_width: usize,
 
         /// Indent subtables if they come in order.
@@ -124,11 +134,13 @@ impl Default for Options {
     fn default() -> Self {
         Options {
             align_entries: false,
+            align_comments: true,
             array_trailing_comma: true,
             array_auto_expand: true,
             array_auto_collapse: true,
             compact_arrays: true,
             compact_inline_tables: false,
+            compact_entries: false,
             column_width: 80,
             indent_tables: false,
             trailing_newline: true,
@@ -141,7 +153,7 @@ impl Default for Options {
 }
 
 impl Options {
-    fn newline(&self) -> SmolStr {
+    fn newline(&self) -> &'static str {
         if self.crlf {
             "\r\n".into()
         } else {
@@ -149,31 +161,30 @@ impl Options {
         }
     }
 
-    fn newlines(&self, count: usize) -> SmolStr {
-        self.newline()
-            .repeat(usize::min(count, self.allowed_blank_lines + 1))
-            .into()
-    }
-
-    fn indent_chars(&self, level: usize) -> usize {
-        self.indent_string.repeat(level).chars().count()
+    fn newlines(&self, count: usize) -> impl Iterator<Item = &'static str> {
+        repeat(self.newline()).take(usize::min(count, self.allowed_blank_lines + 1))
     }
 }
 
 #[derive(Debug, Clone, Default)]
 struct Context {
     indent_level: usize,
-    line_char_count: usize,
+    force_multiline: bool,
     scopes: Rc<ScopedOptions>,
 }
 
 impl Context {
+    /// Update options based on the text range.
     fn update_options(&self, opts: &mut Options, range: TextRange) {
         for (r, s) in &self.scopes.0 {
             if r.contains_range(range) {
                 opts.update(s.clone());
             }
         }
+    }
+
+    fn indent<'o>(&self, opts: &'o Options) -> impl Iterator<Item = &'o str> {
+        repeat(opts.indent_string.as_ref()).take(self.indent_level)
     }
 }
 
@@ -194,7 +205,7 @@ pub fn format_syntax(node: SyntaxNode, options: Options) -> String {
     s = s.trim_end().into();
 
     if options.trailing_newline {
-        s += options.newline().as_str();
+        s += options.newline();
     }
 
     s
@@ -217,7 +228,7 @@ pub fn format_with_scopes(dom: RootNode, options: Options, scopes: ScopedOptions
     s = s.trim_end().into();
 
     if options.trailing_newline {
-        s += options.newline().as_str();
+        s += options.newline();
     }
 
     s
@@ -254,927 +265,755 @@ pub fn format_with_path_scopes<I: IntoIterator<Item = (String, OptionsIncomplete
     s = s.trim_end().into();
 
     if options.trailing_newline {
-        s += options.newline().as_str();
+        s += options.newline();
     }
 
     s
 }
 
-// This is private because the layout of the formatted tree will
-// not be compatible with the tree given as input.
-fn format_impl(node: SyntaxNode, options: Options, mut context: Context) -> SyntaxNode {
-    let kind: SyntaxKind = node.kind();
+fn format_impl(node: SyntaxNode, options: Options, context: Context) -> String {
+    assert!(node.kind() == ROOT);
+    let mut formatted = format_root(node, &options, &context);
 
-    let mut builder = GreenNodeBuilder::new();
+    if formatted.ends_with("\r\n") {
+        formatted.truncate(formatted.len() - 2);
+    } else if formatted.ends_with('\n') {
+        formatted.truncate(formatted.len() - 1);
+    }
 
-    match kind {
-        KEY => format_key(node, &mut builder, options, &mut context),
-        VALUE => format_value(node, &mut builder, options, &mut context),
-        TABLE_HEADER | TABLE_ARRAY_HEADER => {
-            format_table_header(node, &mut builder, options, &mut context)
-        }
-        ENTRY => format_entry(node, &mut builder, options, &mut context),
-        ARRAY => format_array(node, &mut builder, options, &mut context),
-        INLINE_TABLE => format_inline_table(node, &mut builder, options, &mut context),
-        ROOT => format_root(node, &mut builder, options, &mut context),
-        _ => return node,
-    };
+    if options.trailing_newline {
+        formatted += options.newline();
+    }
 
-    SyntaxNode::new_root(builder.finish())
+    formatted
 }
 
-// TODO(refactor)
-#[allow(clippy::cognitive_complexity)]
-fn format_root(
-    node: SyntaxNode,
-    builder: &mut GreenNodeBuilder,
-    options: Options,
-    context: &mut Context,
-) {
-    builder.start_node(ROOT.into());
+struct FormattedEntry {
+    syntax: SyntaxElement,
+    key: String,
+    value: String,
+    comment: Option<String>,
+}
 
-    // Entries without a blank line between them
-    let mut entry_group: Vec<SyntaxNode> = Vec::new();
+impl PartialEq for FormattedEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.key
+            .replace('\'', "")
+            .replace('"', "")
+            .eq(&other.key.replace('\'', "").replace('"', ""))
+    }
+}
 
-    let mut indent_level: usize = 0;
+impl Eq for FormattedEntry {}
 
-    // Header keys with the indent level.
-    // These are tracked for correct indentation.
-    let mut indent_levels: Vec<(KeyNode, usize)> = Vec::new();
+impl PartialOrd for FormattedEntry {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        self.key
+            .replace('\'', "")
+            .replace('"', "")
+            .partial_cmp(&other.key.replace('\'', "").replace('"', ""))
+    }
+}
 
-    // New line after each entry should be skipped,
-    // because it is manually added if needed.
-    let mut skip_newline = 0;
+impl Ord for FormattedEntry {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        self.key
+            .replace('\'', "")
+            .replace('"', "")
+            .cmp(&other.key.replace('\'', "").replace('"', ""))
+    }
+}
 
-    // Comments are not immediately inserted because
-    // their indentation might depend on the item below them.
-    let mut comments: Vec<SyntaxToken> = Vec::new();
+impl FormattedItem for FormattedEntry {
+    fn write_to(&self, formatted: &mut String, options: &Options) {
+        *formatted += &self.key;
+        if options.compact_entries {
+            *formatted += "=";
+        } else {
+            *formatted += " = ";
+        }
+        *formatted += &self.value;
+    }
 
-    let mut prev_newlines = 0;
+    fn trailing_comment(&self) -> Option<String> {
+        self.comment.clone()
+    }
+
+    fn syntax(&self) -> SyntaxElement {
+        self.syntax.clone()
+    }
+}
+
+fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String {
+    assert!(node.kind() == ROOT);
+    let mut formatted = String::new();
+
+    let mut entry_group: Vec<FormattedEntry> = Vec::new();
+
+    // We defer printing the entries so that we can align them vertically.
+    // Whenever an entry is added to the group, we skip its trailing newline,
+    // otherwise the inserted new line would end up before the actual entries.
+    let mut skip_newlines = 0;
+
+    // We defer printing comments as well because we need to know
+    // what comes after them for correct indentation.
+    let mut comment_group: Vec<String> = Vec::new();
+
+    let mut context = context.clone();
+
+    // Table key for determining indents
+    let mut last_table_key = None;
 
     fn add_comments(
-        indent: &str,
-        comments: &mut Vec<SyntaxToken>,
-        builder: &mut GreenNodeBuilder,
+        comments: &mut Vec<String>,
+        formatted: &mut String,
+        context: &Context,
         options: &Options,
-        trailing_newline: bool,
-    ) {
-        for (i, comment) in comments.iter().enumerate() {
-            builder.token(WHITESPACE.into(), indent.into());
-            if i != 0 {
-                builder.token(NEWLINE.into(), options.newline());
+    ) -> bool {
+        let were_comments = !comments.is_empty();
+
+        for (idx, comment) in comments.drain(0..).enumerate() {
+            if idx != 0 {
+                *formatted += &options.newline();
             }
-            builder.token(comment.kind().into(), comment.text().clone());
+            formatted.extend(context.indent(&options));
+            *formatted += &comment;
         }
 
-        if trailing_newline && !comments.is_empty() {
-            builder.token(NEWLINE.into(), options.newline());
-        }
-
-        comments.clear();
+        were_comments
     }
+
+    let mut dangling_newline_count = 0;
 
     for c in node.children_with_tokens() {
         let mut options = options.clone();
         context.update_options(&mut options, c.text_range());
 
-        match c.clone() {
-            NodeOrToken::Node(n) => {
-                if n.descendants_with_tokens().any(|e| e.kind() == ERROR) {
-                    add_all(n, builder);
-                    continue;
+        match c {
+            NodeOrToken::Node(node) => match node.kind() {
+                TABLE_ARRAY_HEADER | TABLE_HEADER => {
+                    if let Some(key) = node.first_child().map(Into::into).and_then(KeyNode::cast) {
+                        if let Some(last_key) = last_table_key {
+                            context.indent_level =
+                                table_indent_level(&last_key, &key, context.indent_level);
+                        }
+
+                        last_table_key = Some(key);
+                    }
+
+                    if add_comments(&mut comment_group, &mut formatted, &context, &options) {
+                        formatted += &options.newline();
+                        skip_newlines = 0;
+                    }
+
+                    let header = format_table_header(node, &options, &context);
+                    let comment = header.trailing_comment();
+
+                    if options.indent_tables {
+                        formatted.extend(context.indent(&options));
+                    }
+
+                    header.write_to(&mut formatted, &options);
+                    if let Some(c) = comment {
+                        formatted += " ";
+                        formatted += &c;
+                    }
                 }
-
-                match n.kind() {
-                    TABLE_HEADER | TABLE_ARRAY_HEADER => {
-                        let indent_str = options.indent_string.repeat(indent_level);
-                        if options.reorder_keys {
-                            entry_group.sort_by(|a, b| {
-                                let ea = EntryNode::cast(NodeOrToken::Node(a.clone())).unwrap();
-                                let eb = EntryNode::cast(NodeOrToken::Node(b.clone())).unwrap();
-
-                                ea.key()
-                                    .full_key_string()
-                                    .partial_cmp(&eb.key().full_key_string())
-                                    .unwrap()
-                            });
-                        }
-                        if !entry_group.is_empty() {
-                            add_aligned(
-                                mem::take(&mut entry_group),
-                                builder,
-                                &options.newline(),
-                                if options.indent_tables {
-                                    Some(&indent_str)
-                                } else {
-                                    None
-                                },
-                                if options.align_entries { None } else { Some(1) },
-                            );
-                            builder.token(NEWLINE.into(), options.newline());
-                        }
-
-                        if options.indent_tables {
-                            // We surely have some...
-                            if let Some(key_syntax) = n.first_child() {
-                                if let Some(key) = KeyNode::cast(NodeOrToken::Node(key_syntax)) {
-                                    // Search the previous tables for a common prefix
-                                    // and indent based on that.
-                                    indent_level = indent_levels
-                                        .iter()
-                                        .filter_map(|(k, level)| {
-                                            if k.common_prefix_count(&key) > 0
-                                                && k.key_count() <= key.key_count()
-                                            {
-                                                if k.key_count() == key.key_count() {
-                                                    Some(*level)
-                                                } else {
-                                                    Some(k.common_prefix_count(&key))
-                                                }
-                                            } else {
-                                                None
-                                            }
-                                        })
-                                        .max()
-                                        .unwrap_or(0);
-
-                                    indent_levels.push((key.clone(), indent_level));
-                                }
-                            }
-                        }
-
-                        let indent_str = options.indent_string.repeat(indent_level);
-                        add_comments(&indent_str, &mut comments, builder, &options, true);
-
-                        if options.indent_tables {
-                            builder.token(WHITESPACE.into(), indent_str.into());
-                        }
-                        format_table_header(n, builder, options.clone(), context)
+                ENTRY => {
+                    if add_comments(&mut comment_group, &mut formatted, &context, &options) {
+                        formatted += &options.newline();
+                        skip_newlines = 0;
                     }
-                    ENTRY => {
-                        let indent_str = options.indent_string.repeat(indent_level);
-                        add_comments(&indent_str, &mut comments, builder, &options, true);
 
-                        let mut entry_b = GreenNodeBuilder::new();
-                        format_entry(
-                            n,
-                            &mut entry_b,
-                            options.clone(),
-                            &mut Context {
-                                indent_level,
-                                ..Default::default()
-                            },
-                        );
-                        entry_group.push(extract_comment_from_entry(SyntaxNode::new_root(
-                            entry_b.finish(),
-                        )));
-                        skip_newline += 1;
-                    }
-                    _ => {
-                        let indent_str = options.indent_string.repeat(indent_level);
-                        add_comments(&indent_str, &mut comments, builder, &options, true);
-
-                        if options.indent_tables {
-                            builder.token(
-                                WHITESPACE.into(),
-                                options.indent_string.repeat(indent_level).into(),
-                            );
-                        }
-                        add_all(n, builder);
-                    }
-                };
-            }
-            NodeOrToken::Token(t) => match t.kind() {
+                    entry_group.push(format_entry(node, &options, &context));
+                    skip_newlines += 1;
+                }
+                _ => unreachable!(),
+            },
+            NodeOrToken::Token(token) => match token.kind() {
                 NEWLINE => {
-                    let mut newline_count = t.text().as_str().newline_count();
-                    let indent_str = options.indent_string.repeat(indent_level);
+                    let mut newline_count = token.text().newline_count();
 
-                    // Special handling of blank lines;
-                    // if the newlines are followed by whitespace, then a
-                    // new line again, we skip handling of those newlines, and instead
-                    // add them to the last batch before a value.
-                    if let Some(nt) = t.next_sibling_or_token() {
-                        if let Some(nnt) = nt.next_sibling_or_token() {
-                            if nt.kind() == WHITESPACE && nnt.kind() == NEWLINE {
-                                prev_newlines += newline_count;
-                                continue;
-                            } else {
-                                newline_count += prev_newlines;
-                                prev_newlines = 0;
-                            }
-                        } else {
-                            newline_count += prev_newlines;
-                            prev_newlines = 0;
+                    match dangling_newlines(token.clone()) {
+                        Some(dnl) => {
+                            dangling_newline_count += dnl;
+                            continue;
                         }
-                    } else {
-                        newline_count += prev_newlines;
-                        prev_newlines = 0;
-                    }
-
-                    if newline_count > 1 && !comments.is_empty() {
-                        add_comments(&indent_str, &mut comments, builder, &options, false);
-                    }
-
-                    if newline_count > 1 && options.allowed_blank_lines != 0 {
-                        if !entry_group.is_empty() {
-                            if options.reorder_keys {
-                                entry_group.sort_by(|a, b| {
-                                    let ea = EntryNode::cast(NodeOrToken::Node(a.clone())).unwrap();
-                                    let eb = EntryNode::cast(NodeOrToken::Node(b.clone())).unwrap();
-
-                                    ea.key()
-                                        .full_key_string()
-                                        .partial_cmp(&eb.key().full_key_string())
-                                        .unwrap()
-                                });
-                            }
-                            add_aligned(
-                                mem::take(&mut entry_group),
-                                builder,
-                                &options.newline(),
-                                if options.indent_tables {
-                                    Some(&indent_str)
-                                } else {
-                                    None
-                                },
-                                if options.align_entries { None } else { Some(1) },
-                            );
+                        None => {
+                            newline_count += dangling_newline_count;
+                            dangling_newline_count = 0;
                         }
-                        builder.token(NEWLINE.into(), options.newlines(newline_count));
-                    } else if skip_newline == 0 {
-                        builder.token(NEWLINE.into(), options.newlines(newline_count));
                     }
-                    skip_newline = i32::max(0, skip_newline - 1);
+
+                    if newline_count > 1 {
+                        add_comments(&mut comment_group, &mut formatted, &context, &options);
+                        add_entries(&mut entry_group, &mut formatted, &options, &context);
+                        skip_newlines = 0;
+                    }
+
+                    formatted.extend(options.newlines(newline_count.saturating_sub(skip_newlines)));
                 }
                 COMMENT => {
-                    if options.reorder_keys {
-                        entry_group.sort_by(|a, b| {
-                            let ea = EntryNode::cast(NodeOrToken::Node(a.clone())).unwrap();
-                            let eb = EntryNode::cast(NodeOrToken::Node(b.clone())).unwrap();
-
-                            ea.key()
-                                .full_key_string()
-                                .partial_cmp(&eb.key().full_key_string())
-                                .unwrap()
-                        });
-                    }
-                    if !entry_group.is_empty() {
-                        let indent_str = options.indent_string.repeat(indent_level);
-                        add_aligned(
-                            mem::take(&mut entry_group),
-                            builder,
-                            &options.newline(),
-                            if options.indent_tables {
-                                Some(&indent_str)
-                            } else {
-                                None
-                            },
-                            if options.align_entries { None } else { Some(1) },
-                        );
-                        builder.token(NEWLINE.into(), options.newline());
-                    }
-                    comments.push(t);
-                    skip_newline += 1;
+                    add_entries(&mut entry_group, &mut formatted, &options, &context);
+                    comment_group.push(token.text().to_string());
+                    skip_newlines += 1;
                 }
                 WHITESPACE => {}
-                _ => {
-                    if options.indent_tables {
-                        builder.token(
-                            WHITESPACE.into(),
-                            options.indent_string.repeat(indent_level).into(),
-                        );
-                    }
-                    builder.token(t.kind().into(), t.text().clone())
-                }
+                _ => unreachable!(),
             },
         }
     }
 
-    let indent_str = options.indent_string.repeat(indent_level);
+    add_comments(&mut comment_group, &mut formatted, &context, options);
+    add_entries(&mut entry_group, &mut formatted, options, &context);
 
+    formatted
+}
+
+/// Determine the indentation level based on 2 consecutive table keys.
+fn table_indent_level(key1: &KeyNode, key2: &KeyNode, indent: usize) -> usize {
+    if key1 == key2 {
+        return indent;
+    }
+
+    if key1.common_prefix_count(key2) > 0 && key2.contains(key1) {
+        return indent + 1;
+    } else if key1.common_prefix_count(key2) > 0 && key2.key_count() >= key1.key_count() {
+        return indent;
+    }
+
+    if !key1.is_part_of(key2) && !key1.contains(key2) {
+        return 0;
+    }
+
+    indent.saturating_sub(1)
+}
+
+/// Add entries to the formatted string.
+fn add_entries(
+    entry_group: &mut Vec<FormattedEntry>,
+    formatted: &mut String,
+    options: &Options,
+    context: &Context,
+) {
     if options.reorder_keys {
-        entry_group.sort_by(|a, b| {
-            let ea = EntryNode::cast(NodeOrToken::Node(a.clone())).unwrap();
-            let eb = EntryNode::cast(NodeOrToken::Node(b.clone())).unwrap();
-
-            ea.key()
-                .full_key_string()
-                .partial_cmp(&eb.key().full_key_string())
-                .unwrap()
-        });
+        entry_group.sort();
     }
-    add_aligned(
-        mem::take(&mut entry_group),
-        builder,
-        &options.newline(),
-        if options.indent_tables {
-            Some(&indent_str)
-        } else {
-            None
-        },
-        if options.align_entries { None } else { Some(1) },
-    );
 
-    add_comments(&indent_str, &mut comments, builder, &options, false);
+    let indent_chars_count = context.indent_level * options.indent_string.chars().count();
 
-    builder.finish_node();
-}
+    // We check for too long lines, and try to expand them if possible.
+    // We don't take vertical alignment into account for simplicity.
+    if options.array_auto_expand {
+        for entry in entry_group.iter_mut() {
+            let comment_chars_count = entry
+                .comment
+                .as_ref()
+                .map(
+                    |c| c.chars().count() + 1, // account for the separator ' ' as well
+                )
+                .unwrap_or(0);
 
-fn format_inline_table(
-    node: SyntaxNode,
-    builder: &mut GreenNodeBuilder,
-    options: Options,
-    context: &mut Context,
-) {
-    builder.start_node(INLINE_TABLE.into());
+            let line_count = entry.value.split("\n").count();
 
-    if node.children().count() == 0 {
-        builder.token(BRACE_START.into(), "{".into());
-        builder.token(BRACE_END.into(), "}".into());
-    } else {
-        let mut has_previous = false;
-        for c in node.children_with_tokens() {
-            match c {
-                NodeOrToken::Node(n) => {
-                    if has_previous {
-                        builder.token(COMMA.into(), ",".into());
-                        builder.token(WHITESPACE.into(), " ".into());
-                    }
-                    format_entry(n, builder, options.clone(), context);
-                    has_previous = true;
+            // check each line of the value
+            // for the first line we include the actual indent, key, and the eq parts as well
+            for (idx, line) in entry.value.split("\n").enumerate() {
+                let mut chars_count = line.chars().count();
+                if idx == 0 {
+                    chars_count += indent_chars_count;
+                    chars_count += entry.key.chars().count();
+                    chars_count += if options.compact_entries { 1 } else { 3 }; // " = "
                 }
-                NodeOrToken::Token(t) => match t.kind() {
-                    BRACE_START => {
-                        builder.token(t.kind().into(), t.text().clone());
-                        if !options.compact_inline_tables {
-                            builder.token(WHITESPACE.into(), " ".into());
-                        }
-                    }
-                    BRACE_END => {
-                        if !options.compact_inline_tables {
-                            builder.token(WHITESPACE.into(), " ".into());
-                        }
-                        builder.token(t.kind().into(), t.text().clone());
-                    }
-                    WHITESPACE | NEWLINE | COMMA => {}
-                    _ => builder.token(t.kind().into(), t.text().clone()),
-                },
-            }
-        }
-    }
 
-    builder.finish_node();
-}
+                // Include comment in the last line.
+                if idx == line_count - 1 {
+                    chars_count += comment_chars_count;
+                }
 
-fn format_array(
-    node: SyntaxNode,
-    builder: &mut GreenNodeBuilder,
-    options: Options,
-    context: &mut Context,
-) {
-    builder.start_node(ARRAY.into());
+                if chars_count > options.column_width {
+                    let mut context = context.clone();
+                    context.force_multiline = true;
 
-    let (token_count, char_count, has_newline) = node
-        .descendants_with_tokens()
-        .filter(|t| match t {
-            NodeOrToken::Node(_) => false,
-            NodeOrToken::Token(t) => t.kind() != WHITESPACE,
-        })
-        .fold((0, 0, false), |(mut count, mut len, mut has_newline), e| {
-            len += u32::from(e.text_range().len());
-            count += 1;
-
-            if e.kind() == NEWLINE {
-                count -= 1;
-                has_newline = true;
-            }
-
-            (count, len, has_newline)
-        });
-
-    let child_count = node.children().count();
-    let all_token_count = node.children_with_tokens().count();
-
-    let has_comment_inside = node
-        .children_with_tokens()
-        .enumerate()
-        .map(|(i, c)| match c {
-            NodeOrToken::Node(n) => n.descendants_with_tokens().any(|d| d.kind() == COMMENT),
-            NodeOrToken::Token(t) => i != all_token_count - 1 && t.kind() == COMMENT,
-        })
-        .any(|h| h);
-
-    // Not counting newlines, and start and end brackets
-    if token_count - 2 == 0 {
-        builder.token(BRACKET_START.into(), "[".into());
-        builder.token(BRACKET_END.into(), "]".into());
-    } else {
-        let too_long = char_count
-            + context.line_char_count as u32
-            + options.indent_chars(context.indent_level) as u32
-            > options.column_width as u32;
-
-        let multiline: bool =
-            (has_comment_inside || has_newline || (options.array_auto_expand && too_long))
-                && !(options.array_auto_collapse && !has_comment_inside && !too_long);
-
-        let mut was_value = false;
-        let mut was_comment = false;
-        let mut node_index = 0;
-        let mut prev_token: Option<SyntaxToken> = None;
-        for (i, c) in node.children_with_tokens().enumerate() {
-            match c {
-                NodeOrToken::Node(n) => {
-                    if node_index != 0 || was_comment {
-                        if multiline {
-                            builder.token(NEWLINE.into(), options.newline());
-                        } else {
-                            builder.token(WHITESPACE.into(), " ".into());
-                        }
-                    }
-
-                    if multiline {
-                        builder.token(
-                            WHITESPACE.into(),
-                            options
-                                .indent_string
-                                .repeat(context.indent_level + 1)
-                                .into(),
-                        );
-                    }
-
-                    let mut b = GreenNodeBuilder::new();
-
-                    format_value(
-                        n,
-                        &mut b,
-                        options.clone(),
-                        &mut Context {
-                            indent_level: context.indent_level + 1,
-                            ..context.clone()
-                        },
+                    // too long, reformat the value of the entry
+                    let value = format_value(
+                        entry
+                            .syntax
+                            .as_node()
+                            .unwrap()
+                            .children()
+                            .find(|n| n.kind() == VALUE)
+                            .unwrap(),
+                        options,
+                        &context,
                     );
 
-                    let (val, comment) =
-                        extract_comment_from_value(SyntaxNode::new_root(b.finish()));
+                    entry.value.clear();
 
-                    add_all(val, builder);
-
-                    if node_index != child_count - 1 || (multiline && options.array_trailing_comma)
-                    {
-                        builder.token(COMMA.into(), ",".into());
-                    }
-
-                    if let Some(comm) = comment {
-                        builder.token(WHITESPACE.into(), " ".into());
-                        builder.token(COMMENT.into(), comm.into());
-                    } else {
-                        was_value = true;
-                    }
-
-                    node_index += 1;
-                }
-                NodeOrToken::Token(t) => {
-                    match t.kind() {
-                        BRACKET_START => {
-                            builder.token(t.kind().into(), t.text().clone());
-
-                            if multiline {
-                                builder.token(NEWLINE.into(), options.newline());
-                            } else if !options.compact_arrays {
-                                builder.token(WHITESPACE.into(), " ".into());
-                            }
-                        }
-                        BRACKET_END => {
-                            if multiline {
-                                builder.token(NEWLINE.into(), options.newline());
-                                builder.token(
-                                    WHITESPACE.into(),
-                                    options.indent_string.repeat(context.indent_level).into(),
-                                );
-                            } else if !options.compact_arrays {
-                                builder.token(WHITESPACE.into(), " ".into());
-                            }
-                            builder.token(t.kind().into(), t.text().clone());
-                        }
-                        COMMENT => {
-                            // Comment after the array
-                            if i == all_token_count - 1 {
-                                builder.token(WHITESPACE.into(), " ".into());
-                                builder.token(t.kind().into(), t.text().clone());
-                            // Comment after a value
-                            } else {
-                                if was_comment || was_value {
-                                    if prev_token
-                                        .take()
-                                        .map(|t| t.kind() == NEWLINE)
-                                        .unwrap_or(false)
-                                    {
-                                        builder.token(NEWLINE.into(), options.newline());
-                                        builder.token(
-                                            WHITESPACE.into(),
-                                            options
-                                                .indent_string
-                                                .repeat(context.indent_level + 1)
-                                                .into(),
-                                        );
-                                    } else {
-                                        builder.token(WHITESPACE.into(), " ".into());
-                                    }
-                                // First line of the array
-                                } else {
-                                    builder.token(
-                                        WHITESPACE.into(),
-                                        options
-                                            .indent_string
-                                            .repeat(context.indent_level + 1)
-                                            .into(),
-                                    );
-                                }
-
-                                builder.token(t.kind().into(), t.text().clone());
-                                was_comment = true;
-                            }
-                            was_value = false;
-                        }
-                        WHITESPACE | COMMA => {}
-                        NEWLINE => {
-                            if multiline {
-                                builder.token(
-                                    NEWLINE.into(),
-                                    options.newlines(
-                                        t.text()
-                                            .chars()
-                                            .filter(|c| *c == '\n')
-                                            .count()
-                                            .saturating_sub(1),
-                                    ),
-                                );
-                            }
-                        }
-                        _ => builder.token(t.kind().into(), t.text().clone()),
-                    }
-                    if t.kind() != WHITESPACE {
-                        prev_token = Some(t.clone());
-                    }
+                    entry.comment = value.trailing_comment();
+                    value.write_to(&mut entry.value, options);
+                    break;
                 }
             }
         }
     }
 
-    builder.finish_node();
+    // Transform the entries into generic rows that can be aligned.
+    let rows = entry_group
+        .drain(0..)
+        .map(|e| {
+            let mut row = Vec::with_capacity(5);
+
+            row.push(context.indent(options).collect::<String>());
+            row.push(e.key);
+            row.push("=".to_string());
+            row.push(e.value);
+            if let Some(c) = e.comment {
+                row.push(c);
+            }
+
+            row
+        })
+        .collect::<Vec<_>>();
+
+    *formatted += &format_rows(
+        if !options.align_entries && !options.align_comments {
+            0..0
+        } else if !options.align_entries && options.align_comments {
+            3..usize::MAX
+        } else if options.align_entries && !options.align_comments {
+            0..3
+        } else {
+            0..usize::MAX
+        },
+        if options.compact_entries {
+            3..usize::MAX
+        } else {
+            1..usize::MAX
+        },
+        &rows,
+        options.newline(),
+        " ",
+    );
 }
 
-fn format_entry(
-    node: SyntaxNode,
-    builder: &mut GreenNodeBuilder,
-    options: Options,
-    context: &mut Context,
-) {
-    builder.start_node(ENTRY.into());
+fn format_entry(node: SyntaxNode, options: &Options, context: &Context) -> FormattedEntry {
+    let mut key = String::new();
+    let mut value = String::new();
+    let mut comment = None;
 
     for c in node.children_with_tokens() {
         match c {
             NodeOrToken::Node(n) => match n.kind() {
                 KEY => {
-                    format_key(n, builder, options.clone(), context);
+                    format_key(n, &mut key, options, context);
                 }
-                VALUE => format_value(n, builder, options.clone(), context),
-                _ => add_all(n, builder),
+                VALUE => {
+                    let val = format_value(n, options, context);
+                    let c = val.trailing_comment();
+
+                    if c.is_some() {
+                        debug_assert!(comment.is_none());
+                        comment = c;
+                    }
+
+                    val.write_to(&mut value, options);
+                }
+                _ => unreachable!(),
             },
-            NodeOrToken::Token(t) => match t.kind() {
-                EQ => {
-                    context.line_char_count += 1;
-                    builder.token(EQ.into(), "=".into());
+            NodeOrToken::Token(t) => {
+                if let COMMENT = t.kind() {
+                    debug_assert!(comment.is_none());
+                    comment = Some(t.text().into())
                 }
-                WHITESPACE | NEWLINE => {}
-                _ => {
-                    context.line_char_count += u32::from(t.text_range().len()) as usize;
-                    builder.token(t.kind().into(), t.text().clone())
-                }
-            },
+            }
         }
     }
-    builder.finish_node();
+
+    FormattedEntry {
+        syntax: node.into(),
+        key,
+        value,
+        comment,
+    }
 }
 
-fn format_key(
-    node: SyntaxNode,
-    builder: &mut GreenNodeBuilder,
-    _options: Options,
-    context: &mut Context,
-) {
-    builder.start_node(KEY.into());
+fn format_key(node: SyntaxNode, formatted: &mut String, _options: &Options, _context: &Context) {
     // Idents and periods without whitespace
     for c in node.children_with_tokens() {
         match c {
             NodeOrToken::Node(_) => {}
             NodeOrToken::Token(t) => match t.kind() {
-                IDENT => {
-                    context.line_char_count += u32::from(t.text_range().len()) as usize;
-                    builder.token(IDENT.into(), t.text().clone())
-                }
-                PERIOD => {
-                    context.line_char_count += u32::from(t.text_range().len()) as usize;
-                    builder.token(PERIOD.into(), ".".into())
-                }
                 WHITESPACE | NEWLINE => {}
                 _ => {
-                    context.line_char_count += u32::from(t.text_range().len()) as usize;
-                    builder.token(t.kind().into(), t.text().clone())
+                    *formatted += &t.text();
                 }
             },
         }
     }
-
-    builder.finish_node();
 }
 
-fn format_value(
-    node: SyntaxNode,
-    builder: &mut GreenNodeBuilder,
-    options: Options,
-    context: &mut Context,
-) {
-    builder.start_node(VALUE.into());
-
+fn format_value(node: SyntaxNode, options: &Options, context: &Context) -> impl FormattedItem {
+    let mut value = String::new();
+    let mut comment = None;
     for c in node.children_with_tokens() {
         match c {
             NodeOrToken::Node(n) => match n.kind() {
-                ARRAY => format_array(n, builder, options.clone(), context),
-                INLINE_TABLE => format_inline_table(n, builder, options.clone(), context),
-                _ => add_all(n, builder),
+                ARRAY => {
+                    let formatted = format_array(n, options, context);
+
+                    let c = formatted.trailing_comment();
+
+                    if let Some(c) = c {
+                        debug_assert!(comment.is_none());
+                        comment = Some(c)
+                    }
+
+                    debug_assert!(value.is_empty());
+                    formatted.write_to(&mut value, options);
+                }
+                INLINE_TABLE => {
+                    let formatted = format_inline_table(n, options, context);
+
+                    let c = formatted.trailing_comment();
+
+                    if let Some(c) = c {
+                        debug_assert!(comment.is_none());
+                        comment = Some(c)
+                    }
+
+                    debug_assert!(value.is_empty());
+
+                    formatted.write_to(&mut value, options);
+                }
+                _ => unreachable!(),
             },
             NodeOrToken::Token(t) => match t.kind() {
                 NEWLINE | WHITESPACE => {}
-                _ => builder.token(t.kind().into(), t.text().clone()),
+                COMMENT => {
+                    debug_assert!(comment.is_none());
+                    comment = Some(t.text().into());
+                }
+                _ => {
+                    value = t.text().into();
+                }
             },
         }
     }
 
-    builder.finish_node();
+    (node.into(), value, comment)
+}
+
+fn format_inline_table(
+    node: SyntaxNode,
+    options: &Options,
+    context: &Context,
+) -> impl FormattedItem {
+    let mut formatted = String::new();
+    let mut comment = None;
+
+    let child_count = node.children().count();
+
+    if node.children().count() == 0 {
+        formatted = "{}".into();
+    }
+
+    let mut node_index = 0;
+    for c in node.children_with_tokens() {
+        match c {
+            NodeOrToken::Node(n) => {
+                if node_index != 0 {
+                    formatted += ", ";
+                }
+
+                let entry = format_entry(n, options, context);
+                debug_assert!(entry.comment.is_none());
+                entry.write_to(&mut formatted, options);
+
+                node_index += 1;
+            }
+            NodeOrToken::Token(t) => match t.kind() {
+                BRACE_START => {
+                    if child_count == 0 {
+                        // We're only interested in trailing comments.
+                        continue;
+                    }
+
+                    formatted += "{";
+                    if !options.compact_inline_tables {
+                        formatted += " ";
+                    }
+                }
+                BRACE_END => {
+                    if child_count == 0 {
+                        // We're only interested in trailing comments.
+                        continue;
+                    }
+
+                    if !options.compact_inline_tables {
+                        formatted += " ";
+                    }
+                    formatted += "}";
+                }
+                WHITESPACE | COMMA => {}
+                COMMENT => {
+                    debug_assert!(comment.is_none());
+                    comment = Some(t.text().into());
+                }
+                _ => unreachable!(),
+            },
+        }
+    }
+
+    (node.into(), formatted, comment)
+}
+
+// Check whether the array spans multiple lines in its current form.
+fn is_array_multiline(node: &SyntaxNode) -> bool {
+    node.descendants_with_tokens().any(|n| n.kind() == NEWLINE)
+}
+
+fn can_collapse_array(node: &SyntaxNode) -> bool {
+    !node.descendants_with_tokens().any(|n| n.kind() == COMMENT)
+}
+
+fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl FormattedItem {
+    let mut multiline = is_array_multiline(&node) || context.force_multiline;
+
+    let mut formatted = String::new();
+    let mut trailing_comment = None;
+
+    // We always try to collapse it if possible.
+    if can_collapse_array(&node) && options.array_auto_collapse && !context.force_multiline {
+        multiline = false;
+    }
+
+    // We use the same strategy as for entries, refer to [`format_root`].
+    let mut skip_newlines = 0;
+
+    // Formatted value, and optional trailing comment.
+    // The value should also include the comma at the end if needed.
+    let mut value_group: Vec<(String, Option<String>)> = Vec::new();
+
+    let add_values = |value_group: &mut Vec<(String, Option<String>)>,
+                      formatted: &mut String,
+                      context: &Context|
+     -> bool {
+        let were_values = !value_group.is_empty();
+
+        if !multiline {
+            for (idx, (val, comment)) in value_group.drain(0..).enumerate() {
+                debug_assert!(comment.is_none());
+                if idx != 0 {
+                    *formatted += " "
+                }
+
+                *formatted += &val;
+            }
+
+            return were_values;
+        }
+
+        let rows = value_group
+            .drain(0..)
+            .map(|(value, comment)| {
+                let mut row = Vec::with_capacity(5);
+
+                row.push(context.indent(options).collect::<String>());
+                row.push(value);
+                if let Some(c) = comment {
+                    row.push(c);
+                }
+
+                row
+            })
+            .collect::<Vec<_>>();
+
+        *formatted += &format_rows(
+            if options.align_comments {
+                0..usize::MAX
+            } else {
+                0..0
+            },
+            1..usize::MAX,
+            &rows,
+            options.newline(),
+            " ",
+        );
+
+        were_values
+    };
+
+    let node_count = node.children().count();
+
+    let mut inner_context = context.clone();
+
+    if multiline {
+        inner_context.indent_level += 1;
+    }
+
+    let mut dangling_newline_count = 0;
+
+    let mut node_index = 0;
+    for c in node.children_with_tokens() {
+        match c {
+            NodeOrToken::Node(n) => match n.kind() {
+                VALUE => {
+                    if multiline && formatted.ends_with("[") {
+                        formatted += options.newline();
+                    }
+
+                    let val = format_value(n, options, &inner_context);
+                    let mut val_string = String::new();
+
+                    val.write_to(&mut val_string, options);
+
+                    if node_index < node_count - 1 || (multiline && options.array_trailing_comma) {
+                        val_string += ",";
+                    }
+
+                    value_group.push((val_string, val.trailing_comment()));
+                    skip_newlines += 1;
+
+                    node_index += 1;
+                }
+                _ => unreachable!(),
+            },
+            NodeOrToken::Token(t) => match t.kind() {
+                BRACKET_START => {
+                    formatted += "[";
+                    if !options.compact_arrays && !multiline {
+                        formatted += " ";
+                    }
+                }
+                BRACKET_END => {
+                    add_values(&mut value_group, &mut formatted, &inner_context);
+
+                    if multiline {
+                        if !formatted.ends_with('\n') {
+                            formatted += options.newline();
+                        }
+
+                        formatted.extend(context.indent(options));
+                    } else if !options.compact_arrays {
+                        formatted += " ";
+                    }
+                    formatted += "]";
+                }
+                NEWLINE => {
+                    if !multiline {
+                        continue;
+                    }
+
+                    let mut newline_count = t.text().newline_count();
+
+                    match dangling_newlines(t.clone()) {
+                        Some(dnl) => {
+                            dangling_newline_count += dnl;
+                            continue;
+                        }
+                        None => {
+                            newline_count += dangling_newline_count;
+                            dangling_newline_count = 0;
+                        }
+                    }
+
+                    if newline_count > 1 {
+                        add_values(&mut value_group, &mut formatted, &inner_context);
+                        skip_newlines = 0;
+                    }
+
+                    if !formatted.ends_with("]") {
+                        formatted
+                            .extend(options.newlines(newline_count.saturating_sub(skip_newlines)));
+                    }
+                }
+                COMMENT => {
+                    let newline_before = t
+                        .siblings_with_tokens(rowan::Direction::Prev)
+                        .skip(1) // skip is needed because the iterator includes the actual token
+                        .filter(|s| s.kind() != WHITESPACE)
+                        .next()
+                        .map(|s| s.kind() == NEWLINE)
+                        .unwrap_or(false);
+
+                    if !newline_before && !value_group.is_empty() {
+                        // It's actually trailing comment, so we add it to the last value.
+                        value_group.last_mut().unwrap().1 = Some(t.text().to_string());
+                        continue;
+                    }
+
+                    if add_values(&mut value_group, &mut formatted, &inner_context) {
+                        formatted += options.newline();
+                        skip_newlines = 0;
+                    }
+
+                    if formatted.ends_with(']') {
+                        trailing_comment = Some(t.text().into());
+                    } else {
+                        formatted.extend(inner_context.indent(options));
+                        formatted += t.text();
+                    }
+                }
+                _ => {}
+            },
+        }
+    }
+
+    if node.children().count() == 0 {
+        formatted = "[]".into();
+    }
+
+    (node.into(), formatted, trailing_comment)
 }
 
 fn format_table_header(
     node: SyntaxNode,
-    builder: &mut GreenNodeBuilder,
-    options: Options,
-    context: &mut Context,
-) {
-    builder.start_node(node.kind().into());
+    options: &Options,
+    context: &Context,
+) -> impl FormattedItem {
+    let mut formatted = String::new();
+    let mut comment = None;
 
     for c in node.children_with_tokens() {
         match c {
             NodeOrToken::Node(n) => {
-                format_key(n, builder, options.clone(), context);
+                format_key(n, &mut &mut formatted, options, context);
             }
             NodeOrToken::Token(t) => match t.kind() {
-                BRACKET_START | BRACKET_END => builder.token(t.kind().into(), t.text().clone()),
+                BRACKET_START | BRACKET_END => formatted += t.text(),
                 WHITESPACE | NEWLINE => {}
                 COMMENT => {
-                    builder.token(WHITESPACE.into(), " ".into());
-                    builder.token(t.kind().into(), t.text().clone());
+                    debug_assert!(comment.is_none());
+                    comment = Some(t.text().to_string());
                 }
-                _ => builder.token(t.kind().into(), t.text().clone()),
+                _ => unreachable!(),
             },
         }
     }
 
-    builder.finish_node()
+    (node.into(), formatted, comment)
 }
 
-fn add_aligned(
-    nodes: Vec<SyntaxNode>,
-    builder: &mut GreenNodeBuilder,
-    newline: &str,
-    indent: Option<&str>,
-    exact_tabs: Option<usize>,
-) {
-    let mut max_lengths: Vec<u32> = Vec::new();
-
-    for node in &nodes {
-        for (i, c) in node
-            .children_with_tokens()
-            .filter(|c| c.kind() != WHITESPACE)
-            .enumerate()
-        {
-            let ts = c.text_range().len();
-
-            if let Some(l) = max_lengths.get_mut(i) {
-                *l = u32::max(*l, ts.into())
-            } else {
-                max_lengths.push(ts.into())
-            }
-        }
+// Simply a tuple of the formatted item and an optional trailing comment.
+impl<T: AsRef<str>> FormattedItem for (SyntaxElement, T, Option<T>) {
+    fn write_to(&self, formatted: &mut String, _options: &Options) {
+        *formatted += self.1.as_ref()
     }
 
-    let node_count = nodes.len();
+    fn trailing_comment(&self) -> Option<String> {
+        self.2.as_ref().map(|s| s.as_ref().to_string())
+    }
 
-    for (i, node) in nodes.into_iter().enumerate() {
-        builder.start_node(node.kind().into());
-
-        if let Some(ind) = indent {
-            builder.token(WHITESPACE.into(), ind.into());
-        }
-
-        let child_count = node
-            .children_with_tokens()
-            .filter(|c| c.kind() != WHITESPACE)
-            .count();
-
-        for (i, c) in node
-            .children_with_tokens()
-            .filter(|c| c.kind() != WHITESPACE)
-            .enumerate()
-        {
-            let ws_count = match &exact_tabs {
-                Some(t) => *t,
-                None => usize::max(
-                    1,
-                    max_lengths
-                        .get(i)
-                        .copied()
-                        .unwrap_or(1)
-                        .saturating_sub(u32::from(c.text_range().len()) + 1)
-                        as usize,
-                ),
-            };
-
-            match c {
-                NodeOrToken::Node(n) => add_all(n, builder),
-                NodeOrToken::Token(t) => {
-                    builder.token(t.kind().into(), t.text().clone());
-                }
-            }
-
-            if i != child_count.saturating_sub(1)
-                && ws_count > 0
-                && i != max_lengths.len().saturating_sub(1)
-            {
-                builder.token(WHITESPACE.into(), " ".repeat(ws_count).into())
-            }
-        }
-
-        builder.finish_node();
-
-        if i != node_count - 1 {
-            builder.token(NEWLINE.into(), newline.into());
-        }
+    fn syntax(&self) -> SyntaxElement {
+        self.0.clone()
     }
 }
 
-fn add_all(node: SyntaxNode, builder: &mut GreenNodeBuilder) {
-    builder.start_node(node.kind().into());
-
-    for c in node.children_with_tokens() {
-        match c {
-            NodeOrToken::Node(n) => add_all(n, builder),
-            NodeOrToken::Token(t) => builder.token(t.kind().into(), t.text().clone()),
-        }
-    }
-
-    builder.finish_node()
-}
-
-// Moves the comment from the value into the entry
-fn extract_comment_from_entry(node: SyntaxNode) -> SyntaxNode {
-    let mut b = GreenNodeBuilder::new();
-    b.start_node(node.kind().into());
-
-    let mut comment = None;
-
-    for c in node.children_with_tokens() {
-        match c {
-            NodeOrToken::Node(child_n) => match child_n.kind() {
-                VALUE => {
-                    b.start_node(VALUE.into());
-
-                    for val_child in child_n.children_with_tokens() {
-                        match val_child {
-                            NodeOrToken::Node(n) => {
-                                if let ARRAY | INLINE_TABLE = n.kind() {
-                                    b.start_node(n.kind().into());
-
-                                    // this is to avoid keeping whitespace
-                                    // between the comment and the value,
-                                    // yes, this is a hack, and I know it's ugly.
-                                    let mut after_end = false;
-
-                                    for inner_child in n.children_with_tokens() {
-                                        match inner_child {
-                                            NodeOrToken::Node(child_n) => {
-                                                add_all(child_n, &mut b);
-                                            }
-                                            NodeOrToken::Token(t) => match t.kind() {
-                                                WHITESPACE => {
-                                                    if !after_end {
-                                                        b.token(t.kind().into(), t.text().clone());
-                                                    }
-                                                }
-                                                BRACE_END | BRACKET_END => {
-                                                    after_end = true;
-                                                    b.token(t.kind().into(), t.text().clone());
-                                                }
-
-                                                COMMENT => {
-                                                    if after_end {
-                                                        comment = Some(t.text().clone());
-                                                    } else {
-                                                        b.token(t.kind().into(), t.text().clone());
-                                                    }
-                                                }
-                                                _ => {
-                                                    b.token(t.kind().into(), t.text().clone());
-                                                }
-                                            },
-                                        }
-                                    }
-
-                                    b.finish_node();
-                                } else {
-                                    add_all(n, &mut b);
-                                }
-                            }
-                            NodeOrToken::Token(t) => match t.kind() {
-                                COMMENT => {
-                                    comment = t.text().clone().into();
-                                }
-                                _ => {
-                                    b.token(t.kind().into(), t.text().clone());
-                                }
-                            },
-                        }
-                    }
-
-                    b.finish_node();
-                }
-                _ => {
-                    add_all(child_n, &mut b);
-                }
-            },
-            NodeOrToken::Token(child_t) => b.token(child_t.kind().into(), child_t.text().clone()),
-        }
-    }
-
-    if let Some(c) = comment {
-        b.token(COMMENT.into(), c)
-    }
-
-    b.finish_node();
-
-    SyntaxNode::new_root(b.finish())
-}
-
-fn extract_comment_from_value(node: SyntaxNode) -> (SyntaxNode, Option<String>) {
-    let mut b = GreenNodeBuilder::new();
-    b.start_node(node.kind().into());
-
-    let mut comment = None;
-
-    for c in node.children_with_tokens() {
-        match c {
-            NodeOrToken::Node(n) => match n.kind() {
-                ARRAY | INLINE_TABLE => {
-                    let has_comment = n
-                        .children_with_tokens()
-                        .last()
-                        .map(|t| t.kind() == COMMENT)
-                        .unwrap_or(false);
-
-                    b.start_node(n.kind().into());
-                    let child_count = n.children_with_tokens().count();
-                    for (i, c2) in n.children_with_tokens().enumerate() {
-                        match c2 {
-                            NodeOrToken::Node(n2) => {
-                                add_all(n2, &mut b);
-                            }
-                            NodeOrToken::Token(t2) => match t2.kind() {
-                                COMMENT => comment = Some(t2.text().to_string()),
-                                WHITESPACE => {
-                                    if !has_comment || i < child_count - 2 {
-                                        b.token(t2.kind().into(), t2.text().clone())
-                                    }
-                                }
-                                _ => b.token(t2.kind().into(), t2.text().clone()),
-                            },
-                        }
-                    }
-                    b.finish_node();
-                }
-                _ => {
-                    add_all(n, &mut b);
-                }
-            },
-            NodeOrToken::Token(c) => match c.kind() {
-                COMMENT => comment = Some(c.text().to_string()),
-                _ => b.token(c.kind().into(), c.text().clone()),
-            },
-        }
-    }
-
-    b.finish_node();
-
-    (SyntaxNode::new_root(b.finish()), comment)
+trait FormattedItem {
+    fn syntax(&self) -> SyntaxElement;
+    fn write_to(&self, formatted: &mut String, options: &Options);
+    fn trailing_comment(&self) -> Option<String>;
 }
 
 trait NewlineCount {
@@ -1185,4 +1024,109 @@ impl NewlineCount for &str {
     fn newline_count(&self) -> usize {
         self.chars().filter(|c| c == &'\n').count()
     }
+}
+
+// FIXME(docs)
+fn format_rows<'r, R, S>(
+    align_range: Range<usize>,
+    separator_range: Range<usize>,
+    rows: &[R],
+    newline: &str,
+    separator: &str,
+) -> String
+where
+    R: AsRef<[S]>,
+    S: AsRef<str>,
+{
+    let mut out = String::new();
+
+    // We currently don't support vertical alignment of complex data.
+    let can_align = rows
+        .iter()
+        .map(|r| r.as_ref().iter())
+        .flatten()
+        .all(|s| !s.as_ref().contains("\n"));
+
+    let diff_widths = |range: Range<usize>, row: &R| -> usize {
+        let mut max_width = 0_usize;
+
+        for row in rows {
+            let row_len = row.as_ref().len();
+
+            let range =
+                cmp::min(range.start, row_len.saturating_sub(1))..cmp::min(range.end, row_len);
+
+            max_width = cmp::max(
+                max_width,
+                row.as_ref()[range]
+                    .iter()
+                    .map(|s| s.as_ref().chars().count())
+                    .sum(),
+            );
+        }
+
+        let row_width = row.as_ref()[range]
+            .iter()
+            .map(|s| s.as_ref().chars().count())
+            .sum::<usize>();
+
+        max_width - row_width
+    };
+
+    for (row_idx, row) in rows.iter().enumerate() {
+        if row_idx != 0 {
+            out += newline;
+        }
+
+        let mut last_align_idx = 0_usize;
+
+        for (item_idx, item) in row.as_ref().iter().enumerate() {
+            if item_idx > separator_range.start
+                && item_idx <= separator_range.end.saturating_add(1)
+                && item_idx < row.as_ref().len()
+            {
+                out += separator;
+            }
+
+            out += item.as_ref();
+
+            if can_align
+                && align_range.start <= item_idx
+                && align_range.end > item_idx
+                && item_idx < row.as_ref().len() - 1
+            {
+                let diff = diff_widths(last_align_idx..item_idx + 1, row);
+                out.extend(repeat(" ").take(diff));
+                last_align_idx = item_idx + 1;
+            }
+        }
+    }
+
+    out
+}
+
+/// Special handling of blank lines.
+/// 
+/// A design decision was made in the parser that newline (LF) characters
+/// and whitespace (" ", and \t) are part of separate tokens.
+/// 
+/// In this code we count the amount of blank lines by counting LF characters in a token,
+/// however if any of the consecutive blank lines contain empty characters,
+/// this way of counting becomes unreliable.
+/// 
+/// So we check if the newlines are followed by whitespace,
+/// then newlines again, and return the count here,
+/// and we can add these values up.
+fn dangling_newlines(t: SyntaxToken) -> Option<usize> {
+    let newline_count = t.text().newline_count();
+
+    if let Some(nt) = t.next_sibling_or_token() {
+        if let Some(nnt) = nt.next_sibling_or_token() {
+            if nt.kind() == WHITESPACE && nnt.kind() == NEWLINE {
+                return Some(newline_count);
+            }
+        }
+    }
+
+    None
 }

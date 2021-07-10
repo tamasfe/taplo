@@ -55,6 +55,23 @@
         "language": "toml",
         "scopeName": "source.toml",
         "path": "./toml.tmLanguage.json"
+      },
+      {
+        "scopeName": "markdown.toml.frontmatter.codeblock",
+        "path": "./toml.frontmatter.tmLanguage.json",
+        "injectTo": [
+          "text.html.markdown"
+        ]
+      },
+      {
+        "scopeName": "markdown.toml.codeblock",
+        "path": "./toml.markdown.tmLanguage.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.toml": "toml"
+        }
       }
     ],
     "languages": [

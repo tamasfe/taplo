@@ -1,6 +1,6 @@
 import * as path from "path";
 import { writeFileSync } from "fs";
-import { comment } from "./comment";
+import { comment, commentDirective } from "./comment";
 import { table, entryBegin } from "./composite";
 import { value } from "./composite/value";
 
@@ -12,6 +12,9 @@ const syntax = {
     "Originally was maintained by aster (galaster@foxmail.com). This notice is only kept here for the record, please don't send e-mails about problems and issues.",
   ],
   patterns: [
+    {
+      include: "#commentDirective",
+    },
     {
       include: "#comment",
     },
@@ -27,6 +30,7 @@ const syntax = {
   ],
   repository: {
     comment,
+    commentDirective,
     table,
     entryBegin,
     value,

@@ -10,3 +10,17 @@ export const comment = {
     comment: 'Comments',
     match: '\\s*((#).*)$',
 }
+
+export const commentDirective = {
+    captures: {
+        1: {
+            name: 'comment.line.number-sign.toml',
+        },
+        2: {
+            name: 'meta.preprocessor.toml',
+        },
+    },
+    comment: 'Comments',
+    match: '\\s*((#).*)$',
+}
+

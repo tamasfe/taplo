@@ -7,6 +7,9 @@
   ],
   "patterns": [
     {
+      "include": "#commentDirective"
+    },
+    {
       "include": "#comment"
     },
     {
@@ -31,6 +34,18 @@
       },
       "comment": "Comments",
       "match": "\\s*((#).*)$"
+    },
+    "commentDirective": {
+      "captures": {
+        "1": {
+          "name": "meta.preprocessor.toml"
+        },
+        "2": {
+          "name": "punctuation.definition.meta.preprocessor.toml"
+        }
+      },
+      "comment": "Comments",
+      "match": "\\s*((#):.*)$"
     },
     "table": {
       "patterns": [

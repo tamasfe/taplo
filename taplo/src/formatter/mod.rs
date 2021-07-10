@@ -5,12 +5,13 @@
 
 use crate::{
     dom::{Cast, KeyNode, NodeSyntax, RootNode},
-    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode},
+    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
 };
 use rowan::{GreenNode, NodeOrToken, TextRange};
 use std::{
     cmp,
     iter::{repeat, FromIterator},
+    ops::Range,
     rc::Rc,
 };
 
@@ -51,10 +52,10 @@ create_options!(
         pub align_comments: bool,
 
         /// Put trailing commas for multiline
-        /// arrays
+        /// arrays.
         pub array_trailing_comma: bool,
 
-        /// Automatically expand arrays to multi lines
+        /// Automatically expand arrays to multiple lines
         /// if they're too long.
         pub array_auto_expand: bool,
 
@@ -74,8 +75,7 @@ create_options!(
         /// Target maximum column width after which
         /// arrays are expanded into new lines.
         ///
-        /// This is best-effort, and currently doesn't
-        /// take whitespace into account.
+        /// This is best-effort and might not be accurate.
         pub column_width: usize,
 
         /// Indent subtables if they come in order.
@@ -338,19 +338,62 @@ impl FormattedItem for FormattedEntry {
 
 fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String {
     assert!(node.kind() == ROOT);
-    let mut entry_group: Vec<FormattedEntry> = Vec::new();
-
     let mut formatted = String::new();
+
+    let mut entry_group: Vec<FormattedEntry> = Vec::new();
 
     // We defer printing the entries so that we can align them vertically.
     // Whenever an entry is added to the group, we skip its trailing newline,
-    // otherwise it would be inserted before the entries.
+    // otherwise the inserted new line would end up before the actual entries.
     let mut skip_newlines = 0;
+
+    // We defer printing comments as well because we need to know
+    // what comes after them for correct indentation.
+    let mut comment_group: Vec<String> = Vec::new();
 
     let mut context = context.clone();
 
     // Table key for determining indents
     let mut last_table_key = None;
+
+    fn add_comments(
+        comments: &mut Vec<String>,
+        formatted: &mut String,
+        context: &Context,
+        options: &Options,
+    ) -> bool {
+        let were_comments = !comments.is_empty();
+
+        for (idx, comment) in comments.drain(0..).enumerate() {
+            if idx != 0 {
+                *formatted += &options.newline();
+            }
+            formatted.extend(context.indent(&options));
+            *formatted += &comment;
+        }
+
+        were_comments
+    }
+
+    /// Special handling of blank lines;
+    /// if the newlines are followed by whitespace, then a
+    /// new line again, we skip handling of those newlines, and instead
+    /// add them to the last batch before a value.
+    fn dangling_newlines(t: SyntaxToken) -> Option<usize> {
+        let newline_count = t.text().newline_count();
+
+        if let Some(nt) = t.next_sibling_or_token() {
+            if let Some(nnt) = nt.next_sibling_or_token() {
+                if nt.kind() == WHITESPACE && nnt.kind() == NEWLINE {
+                    return Some(newline_count);
+                }
+            }
+        }
+
+        None
+    }
+
+    let mut dangling_newline_count = 0;
 
     for c in node.children_with_tokens() {
         let mut options = options.clone();
@@ -368,6 +411,11 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                         last_table_key = Some(key);
                     }
 
+                    if add_comments(&mut comment_group, &mut formatted, &context, &options) {
+                        formatted += &options.newline();
+                        skip_newlines = 0;
+                    }
+
                     let header = format_table_header(node, &options, &context);
                     let comment = header.trailing_comment();
 
@@ -382,6 +430,11 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                     }
                 }
                 ENTRY => {
+                    if add_comments(&mut comment_group, &mut formatted, &context, &options) {
+                        formatted += &options.newline();
+                        skip_newlines = 0;
+                    }
+
                     entry_group.push(format_entry(node, &options, &context));
                     skip_newlines += 1;
                 }
@@ -389,9 +442,21 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
             },
             NodeOrToken::Token(token) => match token.kind() {
                 NEWLINE => {
-                    let newline_count = token.text().newline_count();
+                    let mut newline_count = token.text().newline_count();
+
+                    match dangling_newlines(token.clone()) {
+                        Some(dnl) => {
+                            dangling_newline_count += dnl;
+                            continue;
+                        }
+                        None => {
+                            newline_count += dangling_newline_count;
+                            dangling_newline_count = 0;
+                        }
+                    }
 
                     if newline_count > 1 {
+                        add_comments(&mut comment_group, &mut formatted, &context, &options);
                         add_entries(&mut entry_group, &mut formatted, &options, &context);
                         skip_newlines = 0;
                     }
@@ -399,7 +464,9 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                     formatted.extend(options.newlines(newline_count.saturating_sub(skip_newlines)));
                 }
                 COMMENT => {
-                    formatted += token.text();
+                    add_entries(&mut entry_group, &mut formatted, &options, &context);
+                    comment_group.push(token.text().to_string());
+                    skip_newlines += 1;
                 }
                 WHITESPACE => {}
                 _ => unreachable!(),
@@ -407,6 +474,7 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
         }
     }
 
+    add_comments(&mut comment_group, &mut formatted, &context, options);
     add_entries(&mut entry_group, &mut formatted, options, &context);
 
     formatted
@@ -442,37 +510,97 @@ fn add_entries(
         entry_group.sort();
     }
 
-    // Maximum characters entry/value for alignment.
-    let max_widths = if options.align_entries {
-        let mut w = (0, 0);
+    let indent_chars_count = context.indent_level * options.indent_string.chars().count();
 
-        for entry in entry_group.iter() {
-            w.0 = cmp::max(entry.key.chars().count(), w.0);
-            w.1 = cmp::max(entry.value.chars().count(), w.1);
-        }
+    // We check for too long lines, and try to expand them
+    // if possible.
+    // We don't take vertical alignment into account for simplicity.
+    if options.array_auto_expand {
+        for entry in entry_group.iter_mut() {
+            let comment_chars_count = entry
+                .comment
+                .as_ref()
+                .map(
+                    |c| c.chars().count() + 1, // account for the separator ' ' as well
+                )
+                .unwrap_or(0);
 
-        w
-    } else {
-        (0, 0)
-    };
+            let line_count = entry.value.split("\n").count();
 
-    for (i, entry) in entry_group.drain(0..).enumerate() {
-        if i != 0 {
-            *formatted += options.newline();
-        }
-        formatted.extend(context.indent(options));
-        *formatted += &entry.key;
-        formatted.extend(repeat(' ').take(max_widths.0 - entry.key.chars().count()));
+            // check each line of the value
+            // for the first line we include the actual indent, key, and the eq parts as well
+            for (idx, line) in entry.value.split("\n").enumerate() {
+                let mut chars_count = line.chars().count();
+                if idx == 0 {
+                    chars_count += indent_chars_count;
+                    chars_count += entry.key.chars().count();
+                    chars_count += 3; // " = "
+                }
 
-        *formatted += " = ";
-        *formatted += &entry.value;
+                // Include comment in the last line.
+                if idx == line_count - 1 {
+                    chars_count += comment_chars_count;
+                }
 
-        if let Some(c) = entry.comment {
-            formatted.extend(repeat(' ').take(max_widths.1 - entry.value.chars().count()));
-            *formatted += " ";
-            *formatted += &c;
+                if chars_count > options.column_width {
+                    let mut context = context.clone();
+                    context.force_multiline = true;
+
+                    // too long, reformat the value of the entry
+                    let value = format_value(
+                        entry
+                            .syntax
+                            .as_node()
+                            .unwrap()
+                            .children()
+                            .find(|n| n.kind() == VALUE)
+                            .unwrap(),
+                        options,
+                        &context,
+                    );
+
+                    entry.value.clear();
+
+                    entry.comment = value.trailing_comment();
+                    value.write_to(&mut entry.value);
+                    break;
+                }
+            }
         }
     }
+
+    // Transform the entries into generic rows that can be aligned.
+    let rows = entry_group
+        .drain(0..)
+        .map(|e| {
+            let mut row = Vec::with_capacity(5);
+
+            row.push(context.indent(options).collect::<String>());
+            row.push(e.key);
+            row.push("=".to_string());
+            row.push(e.value);
+            if let Some(c) = e.comment {
+                row.push(c);
+            }
+
+            row
+        })
+        .collect::<Vec<_>>();
+
+    *formatted += &format_rows(
+        if !options.align_entries && !options.align_comments {
+            0..0
+        } else if !options.align_entries && options.align_comments {
+            3..usize::MAX
+        } else if options.align_entries && !options.align_comments {
+            0..3
+        } else {
+            0..usize::MAX
+        },
+        &rows,
+        options.newline(),
+        " ",
+    );
 }
 
 fn format_entry(node: SyntaxNode, options: &Options, context: &Context) -> FormattedEntry {
@@ -538,7 +666,17 @@ fn format_value(node: SyntaxNode, options: &Options, context: &Context) -> impl 
         match c {
             NodeOrToken::Node(n) => match n.kind() {
                 ARRAY => {
-                    format_array(n, options, context);
+                    let formatted = format_array(n, options, context);
+
+                    let c = formatted.trailing_comment();
+
+                    if let Some(c) = c {
+                        debug_assert!(comment.is_none());
+                        comment = Some(c)
+                    }
+
+                    debug_assert!(value.is_empty());
+                    formatted.write_to(&mut value);
                 }
                 INLINE_TABLE => {
                     let formatted = format_inline_table(n, options, context);
@@ -626,8 +764,11 @@ fn format_inline_table(
 
 // Check whether the array spans multiple lines in its current form.
 fn is_array_multiline(node: &SyntaxNode) -> bool {
-    node.descendants_with_tokens()
-        .any(|n| n.kind() == NEWLINE || n.kind() == COMMENT)
+    node.descendants_with_tokens().any(|n| n.kind() == NEWLINE)
+}
+
+fn can_collapse_array(node: &SyntaxNode) -> bool {
+    !node.descendants_with_tokens().any(|n| n.kind() == COMMENT)
 }
 
 fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl FormattedItem {
@@ -636,12 +777,72 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
     let mut formatted = String::new();
     let mut trailing_comment = None;
 
-    if options.array_auto_collapse && !context.force_multiline {
+    // We always try to collapse it if possible.
+    if can_collapse_array(&node) && options.array_auto_collapse && !context.force_multiline {
         multiline = false;
     }
 
-    if node.children().count() == 0 {
-        formatted = "[]".into();
+    // We use the same strategy as for entries, refer to [`format_root`].
+    let mut skip_newlines = 0;
+
+    // Formatted value, and optional trailing comment.
+    // The value should also include the comma at the end if needed.
+    let mut value_group: Vec<(String, Option<String>)> = Vec::new();
+
+    let add_values = |value_group: &mut Vec<(String, Option<String>)>,
+                      formatted: &mut String,
+                      context: &Context|
+     -> bool {
+        let were_values = !value_group.is_empty();
+
+        if !multiline {
+            for (idx, (val, comment)) in value_group.drain(0..).enumerate() {
+                debug_assert!(comment.is_none());
+                if idx != 0 {
+                    *formatted += " "
+                }
+
+                *formatted += &val;
+            }
+
+            return were_values;
+        }
+
+        let rows = value_group
+            .drain(0..)
+            .map(|(value, comment)| {
+                let mut row = Vec::with_capacity(5);
+
+                row.push(context.indent(options).collect::<String>());
+                row.push(value);
+                if let Some(c) = comment {
+                    row.push(c);
+                }
+
+                row
+            })
+            .collect::<Vec<_>>();
+
+        *formatted += &format_rows(
+            if options.align_comments {
+                0..usize::MAX
+            } else {
+                0..0
+            },
+            &rows,
+            options.newline(),
+            " ",
+        );
+
+        were_values
+    };
+
+    let node_count = node.children().count();
+
+    let mut inner_context = context.clone();
+
+    if multiline {
+        inner_context.indent_level += 1;
     }
 
     let mut node_index = 0;
@@ -649,10 +850,17 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
         match c {
             NodeOrToken::Node(n) => match n.kind() {
                 VALUE => {
-                    // let val = 
-                    if node_index != 0 {
+                    let val = format_value(n, options, &inner_context);
+                    let mut val_string = String::new();
 
+                    val.write_to(&mut val_string);
+
+                    if node_index < node_count - 1 || (multiline && options.array_trailing_comma) {
+                        val_string += ",";
                     }
+
+                    value_group.push((val_string, val.trailing_comment()));
+                    skip_newlines += 1;
 
                     node_index += 1;
                 }
@@ -661,29 +869,61 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
             NodeOrToken::Token(t) => match t.kind() {
                 BRACKET_START => {
                     formatted += "[";
-                    if !options.compact_arrays {
+                    if !options.compact_arrays && !multiline {
                         formatted += " ";
                     }
                 }
                 BRACKET_END => {
-                    if !options.compact_arrays {
+                    add_values(&mut value_group, &mut formatted, &inner_context);
+
+                    if multiline {
+                        if !formatted.ends_with('\n') {
+                            formatted += options.newline();
+                        }
+
+                        formatted.extend(context.indent(options));
+                    } else if !options.compact_arrays {
                         formatted += " ";
                     }
                     formatted += "]";
                 }
                 NEWLINE => {
+                    let newline_count = t.text().newline_count();
+
+                    if newline_count > 1 {
+                        add_values(&mut value_group, &mut formatted, &inner_context);
+                        skip_newlines = 0;
+                    }
+
                     if !formatted.ends_with("]") {
-                        formatted.extend(options.newlines(t.text().newline_count()));
+                        formatted
+                            .extend(options.newlines(newline_count.saturating_sub(skip_newlines)));
                     }
                 }
                 COMMENT => {
-                    if formatted.ends_with('[') {
-                        formatted += " ";
-                        formatted += t.text();
-                    } else if formatted.ends_with(']') {
+                    let newline_before = t
+                        .siblings_with_tokens(rowan::Direction::Prev)
+                        .skip(1) // skip is needed because the iterator includes the actual token
+                        .filter(|s| s.kind() != WHITESPACE)
+                        .next()
+                        .map(|s| s.kind() == NEWLINE)
+                        .unwrap_or(false);
+
+                    if !newline_before && !value_group.is_empty() {
+                        // It's actually trailing comment, so we add it to the last value.
+                        value_group.last_mut().unwrap().1 = Some(t.text().to_string());
+                        continue;
+                    }
+
+                    if add_values(&mut value_group, &mut formatted, &inner_context) {
+                        formatted += options.newline();
+                        skip_newlines = 0;
+                    }
+
+                    if formatted.ends_with(']') {
                         trailing_comment = Some(t.text().into());
                     } else {
-                        formatted.extend(context.indent(options));
+                        formatted.extend(inner_context.indent(options));
                         formatted += t.text();
                     }
                 }
@@ -692,12 +932,9 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
         }
     }
 
-    formatted.extend(context.indent(options));
-
-    if !options.compact_arrays {
-        formatted += " ";
+    if node.children().count() == 0 {
+        formatted = "[]".into();
     }
-    formatted += "]";
 
     (node.into(), formatted, trailing_comment)
 }
@@ -759,4 +996,72 @@ impl NewlineCount for &str {
     fn newline_count(&self) -> usize {
         self.chars().filter(|c| c == &'\n').count()
     }
+}
+
+// FIXME(docs)
+fn format_rows<'r, R, S>(
+    align_range: Range<usize>,
+    rows: &[R],
+    newline: &str,
+    separator: &str,
+) -> String
+where
+    R: AsRef<[S]>,
+    S: AsRef<str>,
+{
+    let mut out = String::new();
+
+    let diff_widths = |range: Range<usize>, row: &R| -> usize {
+        let mut max_width = 0_usize;
+
+        for row in rows {
+            let row_len = row.as_ref().len();
+
+            let range =
+                cmp::min(range.start, row_len.saturating_sub(1))..cmp::min(range.end, row_len);
+
+            max_width = cmp::max(
+                max_width,
+                row.as_ref()[range]
+                    .iter()
+                    .map(|s| s.as_ref().chars().count())
+                    .sum(),
+            );
+        }
+
+        let row_width = row.as_ref()[range]
+            .iter()
+            .map(|s| s.as_ref().chars().count())
+            .sum::<usize>();
+
+        max_width - row_width
+    };
+
+    for (row_idx, row) in rows.iter().enumerate() {
+        if row_idx != 0 {
+            out += newline;
+        }
+
+        let mut last_align_idx = 0_usize;
+
+        for (item_idx, item) in row.as_ref().iter().enumerate() {
+            // The first item is always indentation.
+            if item_idx > 1 {
+                out += separator;
+            }
+
+            out += item.as_ref();
+
+            if align_range.start <= item_idx
+                && align_range.end > item_idx
+                && item_idx < row.as_ref().len() - 1
+            {
+                let diff = diff_widths(last_align_idx..item_idx + 1, row);
+                out.extend(repeat(" ").take(diff));
+                last_align_idx = item_idx + 1;
+            }
+        }
+    }
+
+    out
 }

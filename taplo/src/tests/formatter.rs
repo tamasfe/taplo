@@ -734,3 +734,110 @@ fn indent_entries() {
 
     assert_format!(src, &formatted);
 }
+
+#[test]
+fn multiple_comments() {
+    let src = r#"
+# comments at the start
+# comments at the start
+# comments at the start
+
+[table1] # comment after table
+
+# comment before table
+[table2] # comment after table
+# comment under table
+
+# multiple
+# comment
+# lines
+entry = "value"
+
+entry_2 = true # comment
+# comment
+# comment
+
+# free-standing comments
+# free-standing comments
+# free-standing comments
+
+# table comment
+# table comment
+[table3]
+# comment after table
+# comment after table
+another_entry = 2
+
+# free-standing comments
+# free-standing comments
+# free-standing comments
+
+array = [ # comment at start
+    "value",
+    # multiple comments in array
+    # multiple comments in array
+    # multiple comments in array
+    # multiple comments in array
+
+    # multiple comments in array
+    # multiple comments in array
+
+    "value",
+
+    # multiple comments in array
+    # multiple comments in array
+    "value",
+] # trailing comment
+# trailing comment under
+
+# trailing comments
+# trailing comments
+# trailing comments
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}
+
+#[test]
+fn multiple_comments_indented() {
+    let src = r#"
+#General settings
+[general]
+    #Is Enabled?
+    enabled = true
+    #Cost
+    #Range: > -2147483648
+    cost = 10
+    #Is Starter Glyph?
+    starter = false
+    #The maximum number of times this glyph may appear in a single spell
+    #Range: > 1
+    per_spell_limit = 2147483647
+
+# table comments
+# table comments
+# table comments
+[another_table]
+    # comment under table
+    # comment under table
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            indent_entries: true,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}

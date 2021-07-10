@@ -480,7 +480,10 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                     formatted.extend(options.newlines(newline_count.saturating_sub(skip_newlines)));
                 }
                 COMMENT => {
-                    add_entries(&mut entry_group, &mut formatted, &options, &context);
+                    if add_entries(&mut entry_group, &mut formatted, &options, &context) {
+                        formatted += &options.newline();
+                        skip_newlines = 0;
+                    }
                     comment_group.push(token.text().to_string());
                     skip_newlines += 1;
                 }
@@ -526,7 +529,9 @@ fn add_entries(
     formatted: &mut String,
     options: &Options,
     context: &Context,
-) {
+) -> bool {
+    let were_entries = !entry_group.is_empty();
+
     if options.reorder_keys {
         entry_group.sort();
     }
@@ -626,6 +631,8 @@ fn add_entries(
         options.newline(),
         " ",
     );
+
+    were_entries
 }
 
 fn format_entry(node: SyntaxNode, options: &Options, context: &Context) -> FormattedEntry {
@@ -981,6 +988,9 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
 
                     if formatted.ends_with(']') {
                         trailing_comment = Some(t.text().into());
+                    } else if formatted.ends_with('[') {
+                        formatted += " ";
+                        formatted += t.text();
                     } else {
                         formatted.extend(inner_context.indent(options));
                         formatted += t.text();

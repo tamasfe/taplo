@@ -596,3 +596,95 @@ inline_table={ key="value" }
 
     assert_format!(expected, &formatted);
 }
+
+#[test]
+fn array_no_trailing_comma() {
+    let src = r#"
+my_array = [
+    [
+        [
+            [
+                "my_value",
+            ]
+        ]
+    ]
+]
+"#;
+
+let expected = r#"
+my_array = [
+    [
+        [
+            [
+                "my_value"
+            ]
+        ]
+    ]
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: false,
+            array_trailing_comma: false,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+
+#[test]
+fn array_max_new_lines() {
+    let src = r#"
+my_array = [
+    [
+        [
+            [
+                "my_value"
+
+
+
+
+
+
+
+
+
+
+
+            ]
+        ]
+    ]
+]
+"#;
+
+let expected = r#"
+my_array = [
+    [
+        [
+            [
+                "my_value"
+
+
+            ]
+        ]
+    ]
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: false,
+            array_trailing_comma: false,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}

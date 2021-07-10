@@ -383,24 +383,6 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
         were_comments
     }
 
-    /// Special handling of blank lines;
-    /// if the newlines are followed by whitespace, then a
-    /// new line again, we skip handling of those newlines, and instead
-    /// add them to the last batch before a value.
-    fn dangling_newlines(t: SyntaxToken) -> Option<usize> {
-        let newline_count = t.text().newline_count();
-
-        if let Some(nt) = t.next_sibling_or_token() {
-            if let Some(nnt) = nt.next_sibling_or_token() {
-                if nt.kind() == WHITESPACE && nnt.kind() == NEWLINE {
-                    return Some(newline_count);
-                }
-            }
-        }
-
-        None
-    }
-
     let mut dangling_newline_count = 0;
 
     for c in node.children_with_tokens() {
@@ -870,6 +852,8 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
         inner_context.indent_level += 1;
     }
 
+    let mut dangling_newline_count = 0;
+
     let mut node_index = 0;
     for c in node.children_with_tokens() {
         match c {
@@ -921,7 +905,18 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                         continue;
                     }
 
-                    let newline_count = t.text().newline_count();
+                    let mut newline_count = t.text().newline_count();
+
+                    match dangling_newlines(t.clone()) {
+                        Some(dnl) => {
+                            dangling_newline_count += dnl;
+                            continue;
+                        }
+                        None => {
+                            newline_count += dangling_newline_count;
+                            dangling_newline_count = 0;
+                        }
+                    }
 
                     if newline_count > 1 {
                         add_values(&mut value_group, &mut formatted, &inner_context);
@@ -1108,4 +1103,30 @@ where
     }
 
     out
+}
+
+/// Special handling of blank lines.
+/// 
+/// A design decision was made in the parser that newline (LF) characters
+/// and whitespace (" ", and \t) are part of separate tokens.
+/// 
+/// In this code we count the amount of blank lines by counting LF characters in a token,
+/// however if any of the consecutive blank lines contain empty characters,
+/// this way of counting becomes unreliable.
+/// 
+/// So we check if the newlines are followed by whitespace,
+/// then newlines again, and return the count here,
+/// and we can add these values up.
+fn dangling_newlines(t: SyntaxToken) -> Option<usize> {
+    let newline_count = t.text().newline_count();
+
+    if let Some(nt) = t.next_sibling_or_token() {
+        if let Some(nnt) = nt.next_sibling_or_token() {
+            if nt.kind() == WHITESPACE && nnt.kind() == NEWLINE {
+                return Some(newline_count);
+            }
+        }
+    }
+
+    None
 }

@@ -306,3 +306,293 @@ a            = "longer_string_hm" # trailing comment
 
     assert_format!(expected, &formatted);
 }
+
+#[test]
+fn test_nested_arrays() {
+    let src = r#"
+my_array = [
+    [
+        "my_value",
+    ]
+]
+"#;
+
+    let expected = r#"
+my_array = [
+    [
+        "my_value",
+    ],
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            align_comments: false,
+            align_entries: true,
+            array_auto_collapse: false,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn test_too_long_array() {
+    let src = r#"
+array_is_just_right = ["this_line_is_exactly_80_characters_long", "filler_data"]
+"#;
+
+    let expected = r#"
+array_is_just_right = ["this_line_is_exactly_80_characters_long", "filler_data"]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: false,
+            array_auto_expand: true,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+
+    let src = r#"
+array_is_a_bit_too_long = ["this_line_is_exactly_80_characters_long", "filler_data"]
+"#;
+
+    let expected = r#"
+array_is_a_bit_too_long = [
+    "this_line_is_exactly_80_characters_long",
+    "filler_data",
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: false,
+            array_auto_expand: true,
+            column_width: 80,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn test_cargo_toml() {
+    let src = r#"
+[package]
+authors = ["tamasfe"]
+categories = ["parser-implementations", "parsing"]
+description = "A TOML parser, analyzer and formatter library"
+edition = "2018"
+homepage = "https://taplo.tamasfe.dev"
+keywords = ["toml", "parser", "formatter", "linter"]
+license = "MIT"
+name = "taplo"
+readme = "../README.md"
+repository = "https://github.com/tamasfe/taplo"
+version = "0.5.4"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+serde = ["serde_crate", "serde_json"]
+schema = ["once_cell", "schemars", "serde"]
+rewrite = []
+
+[dependencies]
+glob = "0.3"
+indexmap = "1.6.2"
+logos = "0.12.0"
+regex = "1.5.4"
+rowan = "0.12.6"
+semver = { version = "1.0.3", features = ["serde"] }
+smallvec = "1.6.1"
+
+chrono = { version = "0.4", optional = true }
+time = { version = "0.2", optional = true }
+
+once_cell = { version = "1.8.0", optional = true }
+schemars = { version = "0.8.3", optional = true }
+serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
+serde_json = { version = "1", optional = true }
+verify = { version = "0.3", features = ["schemars", "serde"], optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
+toml = "0.5"
+
+[dev-dependencies]
+assert-json-diff = "2"
+serde_json = "1"
+toml = "0.5"
+difference = "2.0.0"
+
+[package.metadata.docs.rs]
+features = ["serde", "schema", "chrono", "rewrite"]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: false,
+            array_auto_expand: true,
+            column_width: 90,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}
+
+#[test]
+fn test_very_nested_arrays() {
+    let src = r#"
+my_array = [
+    [
+        [
+            [
+                "my_value",
+            ],
+        ],
+    ],
+    [
+        [
+            [
+                "my_value",
+            ],
+        ],
+    ],
+    [
+        [
+            [
+                [{ even = { more = ["nested"] } }],
+            ],
+        ],
+    ],
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: false,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}
+
+#[test]
+fn array_collapse() {
+    let src = r#"
+my_array = [
+    [
+        [
+            [
+                "my_value",
+            ],
+        ],
+    ],
+]
+"#;
+
+    let expected = r#"
+my_array = [[[["my_value"]]]]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: true,
+            compact_arrays: true,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn trailing_newline() {
+    let src = r#"trailing_new_line = {}"#;
+
+    let expected = r#"trailing_new_line = {}
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: true,
+            compact_arrays: true,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn no_trailing_newline() {
+    let src = r#"no_new_line = {}
+"#;
+
+    let expected = r#"no_new_line = {}"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: true,
+            compact_arrays: true,
+            trailing_newline: false,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn test_compact_entries() {
+    let src = r#"
+entry1asdasd =  "string"     # trailing comment
+entry2asd   = "longer_string"        # trailing comment
+a         = "longer_string_hm" # trailing comment
+inline_table = { key = "value" }
+"#;
+
+    let expected = r#"
+entry1asdasd="string"        # trailing comment
+entry2asd="longer_string"    # trailing comment
+a="longer_string_hm"         # trailing comment
+inline_table={ key="value" }
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            align_comments: true,
+            align_entries: false,
+            compact_entries: true,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}

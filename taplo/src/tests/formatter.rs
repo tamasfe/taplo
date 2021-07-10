@@ -717,7 +717,7 @@ fn indent_entries() {
 
 [not_sub_table]
 
-another_entry = 3
+  another_entry = 3
 "#;
 
     let formatted = crate::formatter::format(
@@ -732,7 +732,5 @@ another_entry = 3
         },
     );
 
-    println!("{}", &formatted);
-
-    // assert_format!(src, &formatted);
+    assert_format!(src, &formatted);
 }

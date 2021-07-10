@@ -3,7 +3,7 @@ authors = ["tamasf97 <tamasf97@outlook.com>"]
 description = "Language server for Taplo"
 edition = "2018"
 name = "taplo-lsp"
-version = "0.2.0"
+version = "0.2.1"
 license = "MIT"
 homepage = "https://taplo.tamasfe.dev"
 repository = "https://github.com/tamasfe/taplo"
@@ -35,7 +35,7 @@ serde_json = "1.0"
 serde_yaml = "0.8"
 sha2 = "0.9"
 smallvec = "1.5"
-taplo = { version = "0.6.0", path = "../taplo", features = ["serde", "verify", "schema"] }
+taplo = { version = "0.6.2", path = "../taplo", features = ["serde", "verify", "schema"] }
 taplo-cli = { version = "0.4.0", path = "../taplo-cli" }
 time = "0.2"
 toml = "0.5"

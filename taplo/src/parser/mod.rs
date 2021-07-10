@@ -480,6 +480,9 @@ impl<'p> Parser<'p> {
                     Ok(())
                 }
             }
+            BOOL => {
+                self.token_as(IDENT)
+            }
             _ => self.error("expected identifier"),
         }
     }

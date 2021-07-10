@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.13.1
+
+### Features
+
+- Added `indentEntries` formatter option that was supposed to be in `0.13.0`
+
+### Fixes
+
+- Formatter indentation fixes
+
 ## 0.13.0
 
 ### Features

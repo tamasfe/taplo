@@ -279,6 +279,12 @@
           "scope": "resource",
           "default": false
         },
+        "evenBetterToml.formatter.indentEntries": {
+          "description": "Indent entries under tables.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": false
+        },
         "evenBetterToml.formatter.indentString": {
           "description": "The substring that is used for indentation, should be tabs or spaces, but technically can be anything. Uses the IDE setting if not set.",
           "type": [
@@ -368,7 +374,7 @@
     "build": "yarn --ignore-engines rollup --silent -c rollup.config.js"
   },
   "dependencies": {
-    "@taplo/lsp": "^0.2.0",
+    "@taplo/lsp": "^0.2.1",
     "deep-equal": "^2.0.4",
     "encoding": "^0.1.13",
     "node-fetch": "^2.6.1",

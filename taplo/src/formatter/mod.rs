@@ -84,6 +84,9 @@ create_options!(
         /// Indent subtables if they come in order.
         pub indent_tables: bool,
 
+        /// Indent entries under tables.
+        pub indent_entries: bool,
+
         /// Indentation to use, should be tabs or spaces
         /// but technically could be anything.
         pub indent_string: String,
@@ -143,6 +146,7 @@ impl Default for Options {
             compact_entries: false,
             column_width: 80,
             indent_tables: false,
+            indent_entries: false,
             trailing_newline: true,
             allowed_blank_lines: 2,
             indent_string: "  ".into(),
@@ -392,25 +396,47 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
         match c {
             NodeOrToken::Node(node) => match node.kind() {
                 TABLE_ARRAY_HEADER | TABLE_HEADER => {
+                    // We treat everything as indented other than table headers from now on.
+                    if options.indent_entries && context.indent_level == 0 {
+                        context.indent_level = 1;
+                    }
+
                     if let Some(key) = node.first_child().map(Into::into).and_then(KeyNode::cast) {
                         if let Some(last_key) = last_table_key {
-                            context.indent_level =
-                                table_indent_level(&last_key, &key, context.indent_level);
+                            if options.indent_tables {
+                                context.indent_level = table_indent_level(
+                                    &last_key,
+                                    &key,
+                                    context.indent_level,
+                                    if options.indent_entries { 1 } else { 0 },
+                                );
+                            }
                         }
 
                         last_table_key = Some(key);
                     }
 
-                    if add_comments(&mut comment_group, &mut formatted, &context, &options) {
+                    let mut header_context = context.clone();
+
+                    if options.indent_entries {
+                        header_context.indent_level = header_context.indent_level.saturating_sub(1);
+                    }
+
+                    if add_comments(
+                        &mut comment_group,
+                        &mut formatted,
+                        &header_context,
+                        &options,
+                    ) {
                         formatted += &options.newline();
                         skip_newlines = 0;
                     }
 
-                    let header = format_table_header(node, &options, &context);
+                    let header = format_table_header(node, &options, &header_context);
                     let comment = header.trailing_comment();
 
                     if options.indent_tables {
-                        formatted.extend(context.indent(&options));
+                        formatted.extend(header_context.indent(&options));
                     }
 
                     header.write_to(&mut formatted, &options);
@@ -471,7 +497,12 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
 }
 
 /// Determine the indentation level based on 2 consecutive table keys.
-fn table_indent_level(key1: &KeyNode, key2: &KeyNode, indent: usize) -> usize {
+fn table_indent_level(
+    key1: &KeyNode,
+    key2: &KeyNode,
+    indent: usize,
+    default_indent: usize,
+) -> usize {
     if key1 == key2 {
         return indent;
     }
@@ -483,7 +514,7 @@ fn table_indent_level(key1: &KeyNode, key2: &KeyNode, indent: usize) -> usize {
     }
 
     if !key1.is_part_of(key2) && !key1.contains(key2) {
-        return 0;
+        return default_indent;
     }
 
     indent.saturating_sub(1)
@@ -1106,14 +1137,14 @@ where
 }
 
 /// Special handling of blank lines.
-/// 
+///
 /// A design decision was made in the parser that newline (LF) characters
 /// and whitespace (" ", and \t) are part of separate tokens.
-/// 
+///
 /// In this code we count the amount of blank lines by counting LF characters in a token,
 /// however if any of the consecutive blank lines contain empty characters,
 /// this way of counting becomes unreliable.
-/// 
+///
 /// So we check if the newlines are followed by whitespace,
 /// then newlines again, and return the count here,
 /// and we can add these values up.

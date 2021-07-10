@@ -688,3 +688,51 @@ my_array = [
 
     assert_format!(expected, &formatted);
 }
+
+#[test]
+fn indent_entries() {
+    let src = r#"
+[table]
+
+  entry = "stuff"
+
+  [table.subtable]
+    nested_entry = 2
+
+    [[table.subtable.array]]
+      entry_array = [
+        "value",
+        [
+          "nested_value"
+        ]
+      ]
+
+    [[table.subtable.array]]
+      entry_array = [
+        "value",
+        [
+          "nested_value"
+        ]
+      ]
+
+[not_sub_table]
+
+another_entry = 3
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: false,
+            array_trailing_comma: false,
+            indent_entries: true,
+            indent_tables: true,
+            indent_string: "  ".into(),
+            ..Default::default()
+        },
+    );
+
+    println!("{}", &formatted);
+
+    // assert_format!(src, &formatted);
+}

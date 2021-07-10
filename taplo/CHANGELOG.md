@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.6.2
+
+### Fixes
+
+- Several comment formatting fixes
+
 ## 0.6.1
 
 This is a quick followup version containing a feature that was forgotten in `0.6.0`.

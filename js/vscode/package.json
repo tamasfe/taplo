@@ -391,7 +391,7 @@
     "build": "yarn --ignore-engines rollup --silent -c rollup.config.js"
   },
   "dependencies": {
-    "@taplo/lsp": "^0.2.1",
+    "@taplo/lsp": "^0.2.2",
     "deep-equal": "^2.0.4",
     "encoding": "^0.1.13",
     "node-fetch": "^2.6.1",

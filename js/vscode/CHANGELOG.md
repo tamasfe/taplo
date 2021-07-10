@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.14.0
+
+### Features
+
+- Syntax highlight for comment directives (comments starting with `#:`)
+- Syntax highlight in markdown 
+
+### Fixes
+
+- Formatter fixes regarding comments
+
 ## 0.13.1
 
 ### Features

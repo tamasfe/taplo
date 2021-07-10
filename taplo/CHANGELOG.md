@@ -1,5 +1,17 @@
 # Change Log
 
+## 0.6.1
+
+This is a quick followup version containing a feature that was forgotten in `0.6.0`.
+
+### Features
+
+- Indent entries formatter option
+
+### Fixes
+
+- Formatter indentation fixes
+
 ## 0.6.0
 
 ### Breaking Changes

@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.6.3
+
+### Fixes
+
+- Formatter fixes
+
 ## 0.6.2
 
 ### Fixes

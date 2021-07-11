@@ -841,3 +841,23 @@ fn multiple_comments_indented() {
 
     assert_format!(src, &formatted);
 }
+
+#[test]
+fn table_entries_no_blank_space() {
+    let src = r#"
+[a]
+hello = "world"
+[b]
+foo = ["bar"]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}

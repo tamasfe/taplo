@@ -396,6 +396,11 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
         match c {
             NodeOrToken::Node(node) => match node.kind() {
                 TABLE_ARRAY_HEADER | TABLE_HEADER => {
+                    if add_entries(&mut entry_group, &mut formatted, &options, &context) {
+                        formatted += &options.newline();
+                        skip_newlines = 0;
+                    }
+
                     // We treat everything as indented other than table headers from now on.
                     if options.indent_entries && context.indent_level == 0 {
                         context.indent_level = 1;

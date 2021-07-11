@@ -861,3 +861,46 @@ foo = ["bar"]
 
     assert_format!(src, &formatted);
 }
+
+#[test]
+fn table_entries_no_blank_space_indent_entries() {
+    let src = r#"
+[a]
+    hello = "world"
+[b]
+    foo = ["bar"]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            indent_entries: true,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}
+
+#[test]
+fn table_entries_no_blank_space_indent_entries_and_tables() {
+    let src = r#"
+[a]
+    hello = "world"
+    [a.b]
+        foo = ["bar"]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            indent_entries: true,
+            indent_tables: true,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}

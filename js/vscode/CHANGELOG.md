@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.14.1
+
+### Fixes
+
+- Formatter fixes
+
 ## 0.14.0
 
 ### Features

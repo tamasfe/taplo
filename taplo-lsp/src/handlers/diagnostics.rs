@@ -13,6 +13,9 @@ use verify::{
     Verifier,
 };
 
+#[cfg(target_arch = "wasm32")]
+use crate::external::UrlExt;
+
 pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
     let w = context.world().lock().await;
 
@@ -23,6 +26,42 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
             return;
         }
     };
+
+    let excluded = w
+        .taplo_config
+        .as_ref()
+        .map(|c| {
+            c.is_excluded(uri.to_file_path().unwrap().to_str().unwrap())
+                .ok()
+                .unwrap_or(false)
+        })
+        .unwrap_or(false);
+
+    if excluded {
+        drop(w);
+        context
+            .write_notification::<notification::PublishDiagnostics, _>(Some(
+                PublishDiagnosticsParams {
+                    uri: uri.clone(),
+                    diagnostics: vec![Diagnostic {
+                        range: Default::default(),
+                        severity: Some(DiagnosticSeverity::Hint),
+                        code: None,
+                        code_description: None,
+                        source: Some("Even Better TOML".into()),
+                        message: "this file was excluded based on Taplo config".to_string(),
+                        tags: None,
+                        data: None,
+                        ..Default::default()
+                    }],
+                    version: None,
+                },
+            ))
+            .await
+            .unwrap_or_else(|err| log_error!("{}", err));
+
+        return;
+    }
 
     let mut diags = collect_toml_diagnostics(&uri, &doc.parse, &doc.mapper);
     drop(w);
@@ -54,11 +93,7 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
     match w.get_schema_name(&uri) {
         Some(schema_path) => {
             drop(w);
-            match WorldState::get_schema(
-                &uri,
-                &schema_path,
-                context.clone()
-            ).await {
+            match WorldState::get_schema(&uri, &schema_path, context.clone()).await {
                 Ok(s) => {
                     schema_diag = collect_schema_diagnostics(&s, &doc.parse, &uri, &doc.mapper);
                 }

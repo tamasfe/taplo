@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.14.2
+
+### Fixes
+
+- Respect exclude rules in Taplo config.
+
 ## 0.14.1
 
 ### Fixes

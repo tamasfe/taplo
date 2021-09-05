@@ -208,7 +208,7 @@ async fn read_message<R: AsyncBufRead + Unpin>(
         };
         if header_name == "Content-Length" {
             size = match header_value.parse::<usize>() {
-                Ok(s) => s + 2, // For "\r\n" at the end
+                Ok(s) => s,
                 Err(err) => {
                     return Err(anyhow!("invalid content-length: {}", err));
                 }

@@ -126,24 +126,46 @@ jobs:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
   publish_taplo_cli:
-    name: Publish Taplo CLI
+    name: Publish and release Taplo CLI
     needs: test
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-cli-')
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
+          - x86_64-apple-darwin
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            base: taplo
+            name: taplo-x86_64-unknown-linux-gnu.tar.gz
+          - target: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+            base: taplo.exe
+            name: taplo-x86_64-pc-windows-gnu.zip
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            base: taplo
+            name: taplo-x86_64-apple-darwin-gnu.tar.gz
+    runs-on: ${{matrix.os}}
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
+ 
       - name: Cache cargo registry
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.cargo/registry
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: Cache cargo index
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
       - name: Cache cargo build
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
@@ -154,13 +176,57 @@ jobs:
         run: |
           awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo-cli/Cargo.toml > cargo_tmp
           mv cargo_tmp taplo-cli/Cargo.toml
+
+      - name: Install dependencies
+        if: ${{ matrix.target == 'x86_64-pc-windows-gnu' }}
+        run: |
+          sudo apt update && sudo apt install mingw-w64
+
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
+          target: ${{ matrix.target }}
           override: true
+
+      - name: Build binary 
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target=${{ matrix.target }}
+ 
+      - name: Package
+        shell: bash
+        run: |
+          strip target/${{ matrix.target }}/release/${{ matrix.base }}
+          cd target/${{ matrix.target }}/release
+          if [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]
+          then
+            zip ../../../${{ matrix.name }} ${{ matrix.base }}
+          else
+            tar czvf ../../../${{ matrix.name }} ${{ matrix.base }}
+          fi
+          cd -
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ github.ref }}
+          name: CLI ${{ env.RELEASE_VERSION }}
+          # Only for merging three releases
+          draft: true
+          prerelease: false
+          files: |
+            taplo-*.tar.gz
+            taplo-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish to Crates.io
+        if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
         run: cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         working-directory: taplo-cli
         env:
@@ -329,22 +395,42 @@ jobs:
     name: Publish Taplo LSP
     needs: test
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-lsp-')
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
+          - x86_64-apple-darwin
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            base: taplo-lsp
+            name: taplo-lsp-x86_64-unknown-linux-gnu.tar.gz
+          - target: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+            base: taplo-lsp.exe
+            name: taplo-lsp-windows-x86_64.zip
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            base: taplo-lsp
+            name: taplo-lsp-x86_64-apple-darwin-gnu.tar.gz
+    runs-on: ${{matrix.os}}
+
     steps:
       - uses: actions/checkout@v2
 
       - name: Cache cargo registry
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.cargo/registry
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: Cache cargo index
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
       - name: Cache cargo build
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
@@ -355,13 +441,57 @@ jobs:
         run: |
           awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo-lsp/Cargo.toml > cargo_tmp
           mv cargo_tmp taplo-lsp/Cargo.toml
+
+      - name: Install dependencies
+        if: ${{ matrix.target == 'x86_64-pc-windows-gnu' }}
+        run: |
+          sudo apt update && sudo apt install mingw-w64
+
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
+          target: ${{ matrix.target }}
           override: true
+
+      - name: Build binary 
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target=${{ matrix.target }}
+
+      - name: Package
+        shell: bash
+        run: |
+          strip target/${{ matrix.target }}/release/${{ matrix.base }}
+          cd target/${{ matrix.target }}/release
+          if [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]
+          then
+            zip ../../../${{ matrix.name }} ${{ matrix.base }}
+          else
+            tar czvf ../../../${{ matrix.name }} ${{ matrix.base }}
+          fi
+          cd -
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ github.ref }}
+          name: LSP ${{ env.RELEASE_VERSION }}
+          # Only for merging three releases
+          draft: true
+          prerelease: false
+          files: |
+            taplo-lsp-*.tar.gz
+            taplo-lsp-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish to Crates.io
+        if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
         run: cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         working-directory: taplo-lsp
         env:

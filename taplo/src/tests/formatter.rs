@@ -924,3 +924,33 @@ runtime-benchmarks = [
 
     assert_format!(src, &formatted);
 }
+
+#[test]
+fn table_indents() {
+    let src = r#"
+[[table]]
+    name = "Root Table 1"
+    [table.nestedtable]
+        name = "Nested parent"
+        [[table.nestedtable.subtable]]
+            name = "Subtable 1"
+        [[table.nestedtable.subtable]]
+            name = "Subtable 2"
+
+[[table]]
+    name = "Root Table 2"
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            indent_entries: true,
+            indent_tables: true,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}
+

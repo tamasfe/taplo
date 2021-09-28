@@ -367,6 +367,7 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
 
     // Table key for determining indents
     let mut last_table_key = None;
+    let mut table_key_indent_history: Vec<(KeyNode, usize)> = Vec::new();
 
     fn add_comments(
         comments: &mut Vec<String>,
@@ -410,6 +411,7 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                         if let Some(last_key) = last_table_key {
                             if options.indent_tables {
                                 context.indent_level = table_indent_level(
+                                    &table_key_indent_history,
                                     &last_key,
                                     &key,
                                     context.indent_level,
@@ -417,6 +419,8 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                                 );
                             }
                         }
+
+                        table_key_indent_history.push((key.clone(), context.indent_level));
 
                         last_table_key = Some(key);
                     }
@@ -506,23 +510,31 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
 
 /// Determine the indentation level based on 2 consecutive table keys.
 fn table_indent_level(
-    key1: &KeyNode,
-    key2: &KeyNode,
+    history: &[(KeyNode, usize)],
+    previous_key: &KeyNode,
+    current_key: &KeyNode,
     indent: usize,
     default_indent: usize,
 ) -> usize {
-    if key1 == key2 {
+    if previous_key == current_key {
         return indent;
     }
 
-    if key1.common_prefix_count(key2) > 0 && key2.contains(key1) {
+    if previous_key.common_prefix_count(current_key) > 0 && current_key.contains(previous_key) {
         return indent + 1;
-    } else if key1.common_prefix_count(key2) > 0 && key2.key_count() >= key1.key_count() {
+    } else if previous_key.common_prefix_count(current_key) > 0
+        && current_key.key_count() >= previous_key.key_count()
+    {
         return indent;
     }
 
-    if !key1.is_part_of(key2) && !key1.contains(key2) {
+    if !previous_key.is_part_of(current_key) && !previous_key.contains(current_key) {
         return default_indent;
+    }
+
+    // Find a table with the same name, likely to be on the same level.
+    if let Some((_, indent)) = history.iter().rev().find(|(key, _)| key == current_key) {
+        return *indent;
     }
 
     indent.saturating_sub(1)

@@ -611,7 +611,7 @@ my_array = [
 ]
 "#;
 
-let expected = r#"
+    let expected = r#"
 my_array = [
     [
         [
@@ -635,7 +635,6 @@ my_array = [
 
     assert_format!(expected, &formatted);
 }
-
 
 #[test]
 fn array_max_new_lines() {
@@ -662,7 +661,7 @@ my_array = [
 ]
 "#;
 
-let expected = r#"
+    let expected = r#"
 my_array = [
     [
         [
@@ -890,6 +889,27 @@ fn table_entries_no_blank_space_indent_entries_and_tables() {
     hello = "world"
     [a.b]
         foo = ["bar"]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            indent_entries: true,
+            indent_tables: true,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}
+
+#[test]
+fn single_comment_in_array() {
+    let src = r#"
+runtime-benchmarks = [
+    # a comment
+]
 "#;
 
     let formatted = crate::formatter::format(

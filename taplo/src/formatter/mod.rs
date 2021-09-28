@@ -1006,7 +1006,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
         }
     }
 
-    if node.children().count() == 0 {
+    if formatted.len() == 0 {
         formatted = "[]".into();
     }
 
@@ -1156,7 +1156,7 @@ where
 /// A design decision was made in the parser that newline (LF) characters
 /// and whitespace (" ", and \t) are part of separate tokens.
 ///
-/// In this code we count the amount of blank lines by counting LF characters in a token,
+/// Generally we count the amount of blank lines by counting LF characters in a token,
 /// however if any of the consecutive blank lines contain empty characters,
 /// this way of counting becomes unreliable.
 ///

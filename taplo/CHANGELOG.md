@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.7.0
+
+### Breaking Changes
+
+- Bumped Rowan version to `0.14.1`
+
+### Fixes
+
+- Formatter fixes
+
 ## 0.6.3
 
 ### Fixes

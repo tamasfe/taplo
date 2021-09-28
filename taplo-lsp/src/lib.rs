@@ -119,9 +119,9 @@ impl WorldState {
     ///
     /// Example:
     ///
-    /// ```
+    /// ```toml
     /// #:schema ./foo/bar
-    /// <rest of toml file>
+    /// # ...rest of toml file
     /// ```
     ///
     /// returns `"/.foo/bar"`.

@@ -105,8 +105,9 @@ pub(crate) async fn initialize(
         },
         server_info: Some(ServerInfo {
             name: "ebToml".into(),
-            version: Some("1.0.0".into()),
+            version: Some(env!("CARGO_PKG_VERSION").into()),
         }),
+        offset_encoding: None,
     })
 }
 
@@ -272,7 +273,10 @@ async fn update_configuration(mut context: Context<World>, configuration: Option
             let client = w.http_client.clone();
 
             if let Some(updated) = schema.updated {
-                match time::OffsetDateTime::parse(updated, time::Format::Rfc3339) {
+                match time::OffsetDateTime::parse(
+                    &updated,
+                    &time::format_description::well_known::Rfc3339,
+                ) {
                     Ok(updated) => {
                         if let Some(cache_path) = w.cache_path.clone() {
                             let mut hasher = Sha256::new();
@@ -300,7 +304,11 @@ async fn update_configuration(mut context: Context<World>, configuration: Option
                                     {
                                         Ok(s) => s,
                                         Err(e) => {
-                                            log_error!("failed to retrieve schema from {}: {}", &path, e);
+                                            log_error!(
+                                                "failed to retrieve schema from {}: {}",
+                                                &path,
+                                                e
+                                            );
                                             return;
                                         }
                                     };
@@ -549,11 +557,8 @@ pub(crate) async fn completion(
 
     drop(w);
 
-    let schema: RootSchema = match WorldState::get_schema(
-        &uri,
-        &schema_path,
-        context.clone(),
-    ).await {
+    let schema: RootSchema = match WorldState::get_schema(&uri, &schema_path, context.clone()).await
+    {
         Ok(s) => s,
         Err(err) => {
             log_error!("failed to load schema ({}): {}", &schema_path, err);
@@ -594,11 +599,8 @@ pub(crate) async fn hover(
 
     drop(w);
 
-    let schema: RootSchema = match WorldState::get_schema(
-        &uri,
-        &schema_path,
-        context.clone()
-    ).await {
+    let schema: RootSchema = match WorldState::get_schema(&uri, &schema_path, context.clone()).await
+    {
         Ok(s) => s,
         Err(err) => {
             log_error!("failed to load schema ({}): {}", &schema_path, err);
@@ -835,11 +837,8 @@ pub(crate) async fn links(
 
     drop(w);
 
-    let schema: RootSchema = match WorldState::get_schema(
-        &uri,
-        &schema_path,
-        context.clone()
-    ).await {
+    let schema: RootSchema = match WorldState::get_schema(&uri, &schema_path, context.clone()).await
+    {
         Ok(s) => s,
         Err(err) => {
             log_error!("failed to load schema: {}", err);

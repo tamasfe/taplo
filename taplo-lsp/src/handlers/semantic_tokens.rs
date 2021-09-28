@@ -43,7 +43,7 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                     // look for an inline table value
                     let is_table_key = token
                         .parent()
-                        .next_sibling()
+                        .and_then(|p| p.next_sibling())
                         .and_then(|t| t.first_child())
                         .map(|t| t.kind() == INLINE_TABLE)
                         .unwrap_or(false);
@@ -56,7 +56,7 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                     // look for an array
                     let is_array_key = token
                         .parent()
-                        .next_sibling()
+                        .and_then(|p| p.next_sibling())
                         .and_then(|t| t.first_child())
                         .map(|t| t.kind() == ARRAY)
                         .unwrap_or(false);

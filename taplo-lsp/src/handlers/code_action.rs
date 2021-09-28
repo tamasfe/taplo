@@ -6,7 +6,7 @@ use lsp_types::*;
 use rowan::TextRange;
 use taplo::{
     analytics::{NodeRef, PositionInfo},
-    dom::{ArrayNode, Entries, EntryNode, KeyNode, NodeSyntax, TableNode, ValueNode},
+    dom::{ArrayNode, Entries, EntryNode, NodeSyntax, TableNode, ValueNode},
     formatter,
     syntax::SyntaxKind,
     util::{coords::Mapper, syntax::join_ranges},

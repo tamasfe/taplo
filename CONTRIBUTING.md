@@ -20,7 +20,7 @@ When contributing to this repository, please first discuss the change you wish t
 ## Pull Request Process
 
 1. Ensure any local files are removed from the PR, including secrets and temporary files.
-2. Update the relevant README.md, and/or the [site](site/docs) if any of the public API, interface was affected by the change.
+2. Update the relevant README.md, and/or the [site](site) if any of the public API, interface was affected by the change.
 3. Feel free to ping a maintainer if your PR seems to be ignored.
 
 ## Repository Overview

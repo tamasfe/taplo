@@ -23,8 +23,12 @@ use std::{
     },
     task::{Poll, Waker},
 };
+use tracing::Instrument;
 
 mod handler;
+
+#[cfg(any(feature = "tokio-stdio", feature = "tokio-tcp"))]
+pub mod listen;
 
 #[derive(Debug, Clone, Default)]
 struct Cancellation {
@@ -124,14 +128,17 @@ pub trait ResponseWriter: Sized {
 
 #[async_trait]
 pub trait RequestWriter {
-    async fn write_request<R: Request<Params = P>, P: Serialize + DeserializeOwned + Send + Sync>(
+    async fn write_request<
+        R: Request<Params = P>,
+        P: Serialize + DeserializeOwned + Send + Sync + core::fmt::Debug,
+    >(
         &mut self,
         params: Option<R::Params>,
     ) -> Result<rpc::Response<R::Result>, io::Error>;
 
     async fn write_notification<
         N: Notification<Params = P>,
-        P: Serialize + DeserializeOwned + Send + Sync,
+        P: Serialize + DeserializeOwned + Send + Sync + core::fmt::Debug,
     >(
         &mut self,
         params: Option<N::Params>,
@@ -140,6 +147,8 @@ pub trait RequestWriter {
     async fn cancel(&mut self) -> Result<(), io::Error>;
 }
 
+type DeferredTasks = Arc<AsyncMutex<Vec<Pin<Box<dyn Future<Output = ()> + Send>>>>>;
+
 #[derive(Clone)]
 pub struct Context<W: Clone + Send + Sync> {
     inner: Arc<AsyncMutex<Inner<W>>>,
@@ -147,7 +156,7 @@ pub struct Context<W: Clone + Send + Sync> {
     last_req_id: Option<rpc::RequestId>, // For cancellation
     rw: Arc<AsyncMutex<Box<dyn MessageWriter>>>,
     world: W,
-    deferred: Arc<AsyncMutex<Vec<Pin<Box<dyn Future<Output = ()> + Send>>>>>,
+    deferred: DeferredTasks,
 }
 
 impl<W: Clone + Send + Sync> Context<W> {
@@ -179,9 +188,10 @@ impl<W: Clone + Send + Sync> Context<W> {
 
 #[async_trait]
 impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
+    #[tracing::instrument(level = tracing::Level::TRACE, skip(self))]
     async fn write_request<
         R: Request<Params = P>,
-        P: Serialize + DeserializeOwned + Send + Sync,
+        P: Serialize + DeserializeOwned + Send + Sync + core::fmt::Debug,
     >(
         &mut self,
         params: Option<R::Params>,
@@ -194,14 +204,14 @@ impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
 
         let id = NumberOrString::Number(req_id);
 
-        rw.send(
-            rpc::Request::new()
-                .with_id(id.clone().into())
-                .with_method(R::METHOD)
-                .with_params(params)
-                .into_message(),
-        )
-        .await?;
+        let request = rpc::Request::new()
+            .with_id(id.clone().into())
+            .with_method(R::METHOD)
+            .with_params(params);
+
+        let span = tracing::debug_span!("sending request", ?request);
+
+        rw.send(request.into_message()).instrument(span).await?;
 
         self.last_req_id = Some(id.clone());
 
@@ -211,14 +221,18 @@ impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
         drop(inner);
 
         let res = recv.await.unwrap();
+
+        tracing::trace!(response = ?res, "received response");
+
         self.last_req_id = None;
 
         Ok(res.into_params())
     }
 
+    #[tracing::instrument(level = tracing::Level::TRACE, skip(self))]
     async fn write_notification<
         N: Notification<Params = P>,
-        P: Serialize + DeserializeOwned + Send + Sync,
+        P: Serialize + DeserializeOwned + Send + Sync + core::fmt::Debug,
     >(
         &mut self,
         params: Option<N::Params>,
@@ -259,6 +273,7 @@ impl<W: Clone + Send + Sync> Inner<W> {
     fn task_done(&mut self, id: &rpc::RequestId) {
         if let Some(mut t) = self.tasks.remove(id) {
             t.cancel();
+            tracing::trace!(?id, "task completed");
         }
     }
 }
@@ -289,6 +304,7 @@ impl<W: Clone + Send + Sync> Server<W> {
         writer: impl MessageWriter + Clone + 'static,
     ) -> impl Future<Output = Result<(), io::Error>> {
         let inner = self.inner.clone();
+
         async move {
             if message.is_response() {
                 Server::handle_response(inner, message.into_response()).await;
@@ -303,15 +319,19 @@ impl<W: Clone + Send + Sync> Server<W> {
         self.inner.lock().await.shutting_down
     }
 
+    #[tracing::instrument(level = tracing::Level::TRACE)]
     async fn handle_response(
         inner: Arc<AsyncMutex<Inner<W>>>,
         response: rpc::Response<serde_json::Value>,
     ) {
         if let Some(sender) = inner.lock().await.requests.remove(&response.id) {
             sender.send(response).ok();
+        } else {
+            tracing::error!(?response, "unexpected response")
         }
     }
 
+    #[tracing::instrument(level = tracing::Level::TRACE, skip(data, writer))]
     async fn handle_request(
         inner: Arc<AsyncMutex<Inner<W>>>,
         data: W,
@@ -319,6 +339,7 @@ impl<W: Clone + Send + Sync> Server<W> {
         mut writer: impl MessageWriter + Clone + 'static,
     ) -> Result<(), io::Error> {
         if &request.jsonrpc != "2.0" {
+            tracing::error!("JSON-RPC message version is not 2.0");
             return writer
                 .send(
                     rpc::Response::error(
@@ -331,9 +352,20 @@ impl<W: Clone + Send + Sync> Server<W> {
         }
 
         if request.id.is_some() {
+            tracing::debug!(
+                id = ?request.id.as_ref().unwrap(),
+                method = %request.method,
+                "request received"
+            );
             let mut s = inner.lock().await;
 
             if s.shutting_down {
+                tracing::warn!(
+                    id = ?request.id.as_ref().unwrap(),
+                    method = %request.method,
+                    "received request while shutting down"
+                );
+
                 writer
                     .send(
                         rpc::Response::error(
@@ -346,12 +378,24 @@ impl<W: Clone + Send + Sync> Server<W> {
             }
 
             if request.method == req::Shutdown::METHOD {
+                tracing::info!(
+                    id = ?request.id.as_ref().unwrap(),
+                    method = %request.method,
+                    "received shutdown request"
+                );
+
                 s.shutting_down = true;
             }
 
             let is_initialize = request.method == req::Initialize::METHOD;
 
             if !s.initialized && !is_initialize {
+                tracing::error!(
+                    id = ?request.id.as_ref().unwrap(),
+                    method = %request.method,
+                    "server not yet initialized"
+                );
+
                 writer
                     .send(rpc::Response::error(rpc::Error::server_not_initialized()).into_message())
                     .await?;
@@ -373,14 +417,28 @@ impl<W: Clone + Send + Sync> Server<W> {
                     &request,
                 )
                 .await;
+
+                let handler_span = tracing::trace_span!(
+                    "request handler",
+                    method = %request.method,
+                );
+
+                let method = request.method.clone();
+
                 handler
                     .handle(ctx.clone(), request, Some(&mut writer))
+                    .instrument(handler_span)
                     .await;
 
                 let deferred = mem::take(&mut (*ctx.deferred.lock().await));
 
                 for d in deferred {
-                    d.await
+                    let deferred_span = tracing::trace_span!(
+                        "deferred task",
+                        %method,
+                    );
+
+                    d.instrument(deferred_span).await
                 }
 
                 let mut s = inner.lock().await;
@@ -392,27 +450,35 @@ impl<W: Clone + Send + Sync> Server<W> {
                 drop(s);
 
                 Ok(())
+            } else if request.method == req::Shutdown::METHOD {
+                // Shutting down without handler, everything should be OK.
+                writer
+                    .send(
+                        rpc::Response::success(())
+                            .with_request_id(request.id.unwrap())
+                            .into_message(),
+                    )
+                    .await
             } else {
-                if request.method == req::Shutdown::METHOD {
-                    // Shutting down without handler, everything should be OK.
-                    writer
-                        .send(
-                            rpc::Response::success(())
-                                .with_request_id(request.id.unwrap())
-                                .into_message(),
-                        )
-                        .await
-                } else {
-                    writer
-                        .send(
-                            rpc::Response::error(rpc::Error::method_not_found())
-                                .with_request_id(request.id.unwrap())
-                                .into_message(),
-                        )
-                        .await
-                }
+                tracing::error!(
+                    method = %request.method,
+                    "no request handler registered"
+                );
+
+                writer
+                    .send(
+                        rpc::Response::error(rpc::Error::method_not_found())
+                            .with_request_id(request.id.unwrap())
+                            .into_message(),
+                    )
+                    .await
             }
         } else {
+            tracing::debug!(
+                method = %request.method,
+                "notification received"
+            );
+
             if request.method == lsp_types::notification::Cancel::METHOD {
                 if let Some(p) = request.params {
                     if let Ok(c) = serde_json::from_value::<lsp_types::CancelParams>(p) {
@@ -435,13 +501,34 @@ impl<W: Clone + Send + Sync> Server<W> {
                     &request,
                 )
                 .await;
-                handler.handle(ctx.clone(), request, None).await;
+
+                let handler_span = tracing::trace_span!(
+                    "notification handler",
+                    method = %request.method,
+                );
+
+                let method = request.method.clone();
+
+                handler
+                    .handle(ctx.clone(), request, None)
+                    .instrument(handler_span)
+                    .await;
 
                 let deferred = mem::take(&mut (*ctx.deferred.lock().await));
 
                 for d in deferred {
-                    d.await
+                    let deferred_span = tracing::trace_span!(
+                        "deferred task",
+                        %method,
+                    );
+
+                    d.instrument(deferred_span).await
                 }
+            } else {
+                tracing::warn!(
+                    method = %request.method,
+                    "no notification handler registered"
+                );
             }
 
             Ok(())
@@ -487,6 +574,7 @@ impl<W: Clone + Send + Sync + 'static> ServerBuilder<W> {
             N::METHOD.into(),
             Box::new(handler::NotificationHandler::<N, _, _>::new(handler)),
         );
+        tracing::info!(method = N::METHOD, "registered notification handler");
         self
     }
 
@@ -501,6 +589,7 @@ impl<W: Clone + Send + Sync + 'static> ServerBuilder<W> {
             R::METHOD.into(),
             Box::new(handler::RequestHandler::<R, _, _>::new(handler)),
         );
+        tracing::info!(method = R::METHOD, "registered request handler");
         self
     }
 

@@ -87,10 +87,7 @@ impl<T: Serialize + DeserializeOwned> Request<T> {
             jsonrpc: self.jsonrpc,
             method: Some(self.method),
             id: self.id,
-            params: match self.params {
-                None => None,
-                Some(p) => Some(serde_json::to_value(p).unwrap()),
-            },
+            params: self.params.map(|p| serde_json::to_value(p).unwrap()),
             result: None,
             error: None,
         }
@@ -162,10 +159,7 @@ impl<R: Serialize + DeserializeOwned> Response<R> {
             method: None,
             id: Some(self.id),
             params: None,
-            result: match self.result {
-                None => None,
-                Some(p) => Some(serde_json::to_value(p).unwrap()),
-            },
+            result: self.result.map(|p| serde_json::to_value(p).unwrap()),
             error: self.error,
         }
     }
@@ -176,10 +170,7 @@ impl Response<serde_json::Value> {
         Response {
             jsonrpc: self.jsonrpc,
             id: self.id,
-            result: match self.result {
-                None => None,
-                Some(v) => Some(serde_json::from_value(v).unwrap()),
-            },
+            result: self.result.map(|v| serde_json::from_value(v).unwrap()),
             error: self.error,
         }
     }

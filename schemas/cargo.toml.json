@@ -42,10 +42,10 @@
       }
     },
     "bin": {
-      "description": "Binary targets are executables programs that can be run after being compiled.\nThe default binary filename is `src/main.rs`, which defaults to the name of\nthe package. Additional binaries are stored in the [`src/bin/`\ndirectory](https://doc.rust-lang.org/cargo/guide/project-layout.html). The settings for each binary can be [customized](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#configuring-a-target) in the `[[bin]]` tables in `Cargo.toml`.\n\nBinaries can use the public API of the package's library. They are also linked\nwith the [`[dependencies]`](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html) defined in `Cargo.toml`.\n\nYou can run individual binaries with the [`cargo run`](https://doc.rust-lang.org/cargo/commands/cargo-run.html) command with the `--bin\n<bin-name>` option. [`cargo install`](https://doc.rust-lang.org/cargo/commands/cargo-install.html) can be used to copy the executable to a\ncommon location.\n\n```toml\n# Example of customizing binaries in Cargo.toml.\n[[bin]]\nname = \"cool-tool\"\ntest = false\nbench = false\n\n[[bin]]\nname = \"frobnicator\"\nrequired-features = [\"frobnicate\"]\n```",
+      "description": "Binary targets are executable programs that can be run after being compiled.\nThe default binary filename is `src/main.rs`, which defaults to the name of\nthe package. Additional binaries are stored in the [`src/bin/`\ndirectory](https://doc.rust-lang.org/cargo/guide/project-layout.html). The settings for each binary can be [customized](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#configuring-a-target) in the `[[bin]]` tables in `Cargo.toml`.\n\nBinaries can use the public API of the package's library. They are also linked\nwith the [`[dependencies]`](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html) defined in `Cargo.toml`.\n\nYou can run individual binaries with the [`cargo run`](https://doc.rust-lang.org/cargo/commands/cargo-run.html) command with the `--bin\n<bin-name>` option. [`cargo install`](https://doc.rust-lang.org/cargo/commands/cargo-install.html) can be used to copy the executable to a\ncommon location.\n\n```toml\n# Example of customizing binaries in Cargo.toml.\n[[bin]]\nname = \"cool-tool\"\ntest = false\nbench = false\n\n[[bin]]\nname = \"frobnicator\"\nrequired-features = [\"frobnicate\"]\n```",
       "type": "array",
       "items": {
-        "description": "Binary targets are executables programs that can be run after being compiled.\nThe default binary filename is `src/main.rs`, which defaults to the name of\nthe package. Additional binaries are stored in the [`src/bin/`\ndirectory](https://doc.rust-lang.org/cargo/guide/project-layout.html). The settings for each binary can be [customized](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#configuring-a-target) in the `[[bin]]` tables in `Cargo.toml`.\n\nBinaries can use the public API of the package's library. They are also linked\nwith the [`[dependencies]`](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html) defined in `Cargo.toml`.\n\nYou can run individual binaries with the [`cargo run`](https://doc.rust-lang.org/cargo/commands/cargo-run.html) command with the `--bin\n<bin-name>` option. [`cargo install`](https://doc.rust-lang.org/cargo/commands/cargo-install.html) can be used to copy the executable to a\ncommon location.\n\n```toml\n# Example of customizing binaries in Cargo.toml.\n[[bin]]\nname = \"cool-tool\"\ntest = false\nbench = false\n\n[[bin]]\nname = \"frobnicator\"\nrequired-features = [\"frobnicate\"]\n```",
+        "description": "Binary targets are executable programs that can be run after being compiled.\nThe default binary filename is `src/main.rs`, which defaults to the name of\nthe package. Additional binaries are stored in the [`src/bin/`\ndirectory](https://doc.rust-lang.org/cargo/guide/project-layout.html). The settings for each binary can be [customized](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#configuring-a-target) in the `[[bin]]` tables in `Cargo.toml`.\n\nBinaries can use the public API of the package's library. They are also linked\nwith the [`[dependencies]`](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html) defined in `Cargo.toml`.\n\nYou can run individual binaries with the [`cargo run`](https://doc.rust-lang.org/cargo/commands/cargo-run.html) command with the `--bin\n<bin-name>` option. [`cargo install`](https://doc.rust-lang.org/cargo/commands/cargo-install.html) can be used to copy the executable to a\ncommon location.\n\n```toml\n# Example of customizing binaries in Cargo.toml.\n[[bin]]\nname = \"cool-tool\"\ntest = false\nbench = false\n\n[[bin]]\nname = \"frobnicator\"\nrequired-features = [\"frobnicate\"]\n```",
         "$ref": "#/definitions/Target",
         "x-taplo": {
           "links": {
@@ -459,6 +459,17 @@
         "type": "string"
       }
     },
+    "Resolver": {
+      "title": "Resolver",
+      "description": "A different feature resolver algorithm can be used by specifying the resolver version in Cargo.toml like this:\n\n[package]\nname = \"my-package\"\nversion = \"1.0.0\"\nresolver = \"2\"\n\nThe version \"1\" resolver is the original resolver that shipped with Cargo up to version 1.50. The default is \"2\" if the root package specifies edition = \"2021\" or a newer edition. Otherwise the default is \"1\".\n\nThe version \"2\" resolver introduces changes in feature unification. See the features chapter for more details.\n\nThe resolver is a global option that affects the entire workspace. The resolver version in dependencies is ignored, only the value in the top-level package will be used. If using a virtual workspace, the version should be specified in the [workspace] table, for example:\n\n[workspace]\nmembers = [\"member1\", \"member2\"]\nresolver = \"2\"",
+      "type": "string",
+      "enum": ["1", "2"],
+      "x-taplo": {
+        "links": {
+          "key": "https://doc.rust-lang.org/cargo/reference/resolver.html#resolver-versions"
+        }
+      }
+    },
     "OptLevel": {
       "title": "Optimization Level",
       "description": "The `opt-level` setting controls the [`-C opt-level` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#opt-level) which controls the level\nof optimization. Higher optimization levels may produce faster runtime code at\nthe expense of longer compiler times. Higher levels may also change and\nrearrange the compiled code which may make it harder to use with a debugger.\n\nIt is recommended to experiment with different levels to find the right\nbalance for your project. There may be surprising results, such as level `3`\nbeing slower than `2`, or the `\"s\"` and `\"z\"` levels not being necessarily\nsmaller. You may also want to reevaluate your settings over time as newer\nversions of `rustc` changes optimization behavior.\n\nSee also [Profile Guided Optimization](https://doc.rust-lang.org/rustc/profile-guided-optimization.html) for more advanced optimization\ntechniques.",
@@ -751,6 +762,18 @@
           "x-taplo": {
             "links": {
               "key": "https://doc.rust-lang.org/cargo/reference/manifest.html#the-repository-field"
+            }
+          }
+        },
+        "resolver": {
+          "$ref": "#/definitions/Resolver"
+        },
+        "rust-version": {
+          "description": "The `rust-version` field is an optional key that tells cargo what version of the\nRust language and compiler your package can be compiled with. If the currently\nselected version of the Rust compiler is older than the stated version, cargo\nwill exit with an error, telling the user what version is required.\n\nThe first version of Cargo that supports this field was released with Rust 1.56.0.\nIn older releases, the field will be ignored, and Cargo will display a warning.\n\n```toml\n[package]\n# ...\nrust-version = \"1.56\"\n```\n\nThe Rust version must be a bare version number with two or three components; it\ncannot include semver operators or pre-release identifiers. Compiler pre-release\nidentifiers such as -nightly will be ignored while checking the Rust version.\nThe `rust-version` must be equal to or newer than the version that first\nintroduced the configured `edition`.\n\nThe `rust-version` may be ignored using the `--ignore-rust-version` option.\n\nSetting the `rust-version` key in `[package]` will affect all targets/crates in\nthe package, including test suites, benchmarks, binaries, examples, etc.",
+          "type": "string",
+          "x-taplo": {
+            "links": {
+              "key": "https://doc.rust-lang.org/nightly/cargo/reference/manifest.html#the-rust-version-field"
             }
           }
         },
@@ -1300,6 +1323,9 @@
               "key": "https://doc.rust-lang.org/cargo/reference/workspaces.html#the-workspace-section"
             }
           }
+        },
+        "resolver": {
+          "$ref": "#/definitions/Resolver"
         }
       },
       "x-taplo": {

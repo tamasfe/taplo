@@ -1,6 +1,7 @@
 use crate::{utils::LspExt, Document};
 use itertools::Itertools;
 use lsp_types::*;
+use rowan::TextSize;
 use schemars::{
     schema::{InstanceType, RootSchema, Schema, SingleOrVec},
     Map,
@@ -16,17 +17,11 @@ use taplo::{
 
 pub(crate) fn get_completions(
     doc: Document,
-    position: Position,
+    offset: TextSize,
     root_schema: RootSchema,
 ) -> Vec<CompletionItem> {
     let dom = doc.parse.clone().into_dom();
     let paths: HashSet<dom::Path> = dom.iter().map(|(p, _)| p).collect();
-
-    let offset = doc
-        .mapper
-        .offset(taplo::util::coords::Position::from_lsp(position))
-        .unwrap();
-
     let query = dom.query_position(offset);
 
     if !query.is_completable() {

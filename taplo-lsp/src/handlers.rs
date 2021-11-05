@@ -566,9 +566,17 @@ pub(crate) async fn completion(
         }
     };
 
+    let offset = match doc
+        .mapper
+        .offset(taplo::util::coords::Position::from_lsp(pos))
+    {
+        Some(x) => x,
+        None => return Ok(None),
+    };
+
     Ok(Some(CompletionResponse::List(CompletionList {
         is_incomplete: false,
-        items: completion::get_completions(doc, pos, schema),
+        items: completion::get_completions(doc, offset, schema),
     })))
 }
 
@@ -612,11 +620,14 @@ pub(crate) async fn hover(
 
     let dom = doc.parse.clone().into_dom();
 
-    let query = dom.query_position(
-        doc.mapper
-            .offset(taplo::util::coords::Position::from_lsp(pos))
-            .unwrap(),
-    );
+    let offset = match doc
+        .mapper
+        .offset(taplo::util::coords::Position::from_lsp(pos))
+    {
+        Some(x) => x,
+        None => return Ok(None),
+    };
+    let query = dom.query_position(offset);
 
     let schemas = get_schema_objects(query.after.path, &schema, true);
     let syntax_range = query.after.syntax.range;

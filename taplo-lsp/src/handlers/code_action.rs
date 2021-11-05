@@ -34,10 +34,13 @@ pub(crate) async fn code_action(
         return Ok(Some(Vec::new()));
     }
 
-    let range = doc
+    let range = match doc
         .mapper
         .text_range(taplo::util::coords::Range::from_lsp(p.range))
-        .unwrap();
+    {
+        Some(x) => x,
+        None => return Ok(None),
+    };
 
     let dom = doc.parse.into_dom();
 

@@ -99,7 +99,7 @@ pub fn lint(
         return Ok(JsValue::from_serde(&LintResult {
             errors: dom
                 .errors()
-                .into_iter()
+                .iter()
                 .map(|err| LintError {
                     range: None,
                     error: err.to_string(),
@@ -136,22 +136,20 @@ pub fn lint(
                 })
                 .unwrap());
             }
-        } else {
-            if let Err(errors) = schema.verify_value(&dom) {
-                return Ok(JsValue::from_serde(&LintResult {
-                    errors: errors
-                        .iter()
-                        .map(|err| LintError {
-                            range: err.span.map(|s| Range {
-                                start: s.0.start().into(),
-                                end: s.0.end().into(),
-                            }),
-                            error: err.value.to_string(),
-                        })
-                        .collect(),
-                })
-                .unwrap());
-            }
+        } else if let Err(errors) = schema.verify_value(&dom) {
+            return Ok(JsValue::from_serde(&LintResult {
+                errors: errors
+                    .iter()
+                    .map(|err| LintError {
+                        range: err.span.map(|s| Range {
+                            start: s.0.start().into(),
+                            end: s.0.end().into(),
+                        }),
+                        error: err.value.to_string(),
+                    })
+                    .collect(),
+            })
+            .unwrap());
         }
     }
 
@@ -179,7 +177,7 @@ pub fn from_json(json_source: &str) -> Result<JsValue, JsValue> {
 
 #[wasm_bindgen]
 pub fn to_json(toml_source: &str) -> Result<JsValue, JsValue> {
-    let parse = parse(&toml_source);
+    let parse = parse(toml_source);
 
     if !parse.errors.is_empty() {
         return Err(JsValue::from_str("invalid TOML"));

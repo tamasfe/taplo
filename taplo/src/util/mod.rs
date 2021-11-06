@@ -30,8 +30,8 @@ pub(crate) mod allowed_chars {
 
         for (i, c) in s.chars().enumerate() {
             if c != '\t'
-                && (c >= '\u{0000}' && c <= '\u{0008}'
-                    || c >= '\u{000A}' && c <= '\u{001F}'
+                && (('\u{0000}'..='\u{0008}').contains(&c)
+                    || ('\u{000A}'..='\u{001F}').contains(&c)
                     || c == '\u{007F}')
             {
                 err_indices.push(i);
@@ -52,8 +52,8 @@ pub(crate) mod allowed_chars {
             if c != '\t'
                 && c != '\n'
                 && c != '\r'
-                && (c >= '\u{0000}' && c <= '\u{0008}'
-                    || c >= '\u{000A}' && c <= '\u{001F}'
+                && (('\u{0000}'..='\u{0008}').contains(&c)
+                    || ('\u{000A}'..='\u{001F}').contains(&c)
                     || c == '\u{007F}')
             {
                 err_indices.push(i);

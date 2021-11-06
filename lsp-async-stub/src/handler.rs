@@ -1,13 +1,14 @@
 use super::{Context, MessageWriter, Params};
-use crate::rpc;
+use crate::{SendBound, rpc};
 use async_trait::async_trait;
 use futures::{Future, SinkExt};
 use lsp_types::{notification::Notification, request::Request};
 use serde::{de::DeserializeOwned, Serialize};
 use std::marker::PhantomData;
 
-#[async_trait]
-pub(crate) trait Handler<W: Clone + Send + Sync>: Send {
+#[cfg_attr(feature = "send", async_trait)]
+#[cfg_attr(not(feature = "send"), async_trait(?Send))]
+pub(crate) trait Handler<W: Clone + SendBound>: SendBound {
     fn method(&self) -> &'static str;
 
     async fn handle(
@@ -20,7 +21,7 @@ pub(crate) trait Handler<W: Clone + Send + Sync>: Send {
     fn box_clone(&self) -> Box<dyn Handler<W>>;
 }
 
-impl<W: Clone + Send + Sync> Clone for Box<dyn Handler<W>> {
+impl<W: Clone + SendBound> Clone for Box<dyn Handler<W>> {
     fn clone(&self) -> Self {
         self.box_clone()
     }
@@ -29,8 +30,8 @@ impl<W: Clone + Send + Sync> Clone for Box<dyn Handler<W>> {
 pub struct RequestHandler<R, F, W>
 where
     R: Request,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send,
-    W: Clone + Send + Sync,
+    F: Future<Output = Result<R::Result, rpc::Error>> + SendBound,
+    W: Clone + SendBound,
 {
     f: fn(Context<W>, Params<R::Params>) -> F,
     t: PhantomData<W>,
@@ -39,8 +40,8 @@ where
 impl<R, F, W> Clone for RequestHandler<R, F, W>
 where
     R: Request,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send,
-    W: Clone + Send + Sync,
+    F: Future<Output = Result<R::Result, rpc::Error>> + SendBound,
+    W: Clone + SendBound,
 {
     fn clone(&self) -> Self {
         Self {
@@ -53,8 +54,8 @@ where
 impl<R, F, W> RequestHandler<R, F, W>
 where
     R: Request,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send,
-    W: Clone + Send + Sync,
+    F: Future<Output = Result<R::Result, rpc::Error>> + SendBound,
+    W: Clone + SendBound,
 {
     pub fn new(f: fn(Context<W>, Params<R::Params>) -> F) -> Self {
         Self {
@@ -64,14 +65,15 @@ where
     }
 }
 
-#[async_trait]
+#[cfg_attr(feature = "send", async_trait)]
+#[cfg_attr(not(feature = "send"), async_trait(?Send))]
 impl<R, F, P, W> Handler<W> for RequestHandler<R, F, W>
 where
     R: Request<Params = P> + 'static,
-    R::Result: Send,
-    P: Send + Serialize + DeserializeOwned + 'static,
-    F: Future<Output = Result<R::Result, rpc::Error>> + Send + 'static,
-    W: Clone + Send + Sync + 'static,
+    R::Result: SendBound,
+    P: SendBound + Serialize + DeserializeOwned + 'static,
+    F: Future<Output = Result<R::Result, rpc::Error>> + SendBound + 'static,
+    W: Clone + SendBound + 'static,
 {
     fn method(&self) -> &'static str {
         R::METHOD
@@ -118,8 +120,8 @@ where
 pub struct NotificationHandler<N, F, W>
 where
     N: Notification,
-    F: Future + Send,
-    W: Clone + Send + Sync,
+    F: Future + SendBound,
+    W: Clone + SendBound,
 {
     f: fn(Context<W>, Params<N::Params>) -> F,
     t: PhantomData<W>,
@@ -128,8 +130,8 @@ where
 impl<N, F, W> NotificationHandler<N, F, W>
 where
     N: Notification,
-    F: Future + Send,
-    W: Clone + Send + Sync,
+    F: Future + SendBound,
+    W: Clone + SendBound,
 {
     pub fn new(f: fn(Context<W>, Params<N::Params>) -> F) -> Self {
         Self {
@@ -142,8 +144,8 @@ where
 impl<N, F, W> NotificationHandler<N, F, W>
 where
     N: Notification,
-    F: Future + Send,
-    W: Clone + Send + Sync,
+    F: Future + SendBound,
+    W: Clone + SendBound,
 {
     fn clone(&self) -> Self {
         Self {
@@ -153,13 +155,14 @@ where
     }
 }
 
-#[async_trait]
+#[cfg_attr(feature = "send", async_trait)]
+#[cfg_attr(not(feature = "send"), async_trait(?Send))]
 impl<N, F, P, W> Handler<W> for NotificationHandler<N, F, W>
 where
     N: Notification<Params = P> + 'static,
-    P: Send + Serialize + DeserializeOwned + 'static,
-    F: Future + Send + 'static,
-    W: Clone + Send + Sync + 'static,
+    P: SendBound + Serialize + DeserializeOwned + 'static,
+    F: Future + SendBound + 'static,
+    W: Clone + SendBound + 'static,
 {
     fn method(&self) -> &'static str {
         N::METHOD

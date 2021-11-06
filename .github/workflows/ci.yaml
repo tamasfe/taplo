@@ -266,7 +266,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2020-10-15
+          toolchain: nightly-2021-03-12
           override: true
       - name: Yarn Dependencies
         run: yarn
@@ -316,7 +316,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2020-10-15
+          toolchain: nightly-2021-03-12
           override: true
       - name: Yarn Dependencies
         run: yarn
@@ -363,7 +363,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2020-10-15
+          toolchain: nightly-2021-03-12
           override: true
       - name: Extension NPM Install
         run: yarn && yarn upgrade
@@ -530,7 +530,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2020-10-15
+          toolchain: nightly-2021-03-12
           override: true
       - name: Yarn Dependencies
         run: yarn

@@ -442,7 +442,7 @@ async fn execute(matches: ArgMatches) -> bool {
                 match &schema_index {
                     Some(idx) => {
                         print_message(Severity::Info, "info", "checking for schema updates");
-                        let (updated, errors) = update_schemas(&idx, cache_path).await;
+                        let (updated, errors) = update_schemas(idx, cache_path).await;
                         if updated > 0 {
                             print_message(
                                 Severity::Info,

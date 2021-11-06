@@ -5,11 +5,11 @@
 
 use anyhow::anyhow;
 use external::{file_exists, is_absolute_path, mkdir, read_file, spawn, write_file};
-use futures::lock::Mutex as AsyncMutex;
 use hex::ToHex;
 use indexmap::IndexMap;
 use lsp_async_stub::{Context, Server};
 use lsp_types::{notification, request, Url};
+use parking_lot::RwLock;
 use schemars::{schema::RootSchema, schema_for};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -219,7 +219,7 @@ impl WorldState {
             }
         // resolve http://, https://
         } else if path.starts_with("http://") || path.starts_with("https://") {
-            let w = context.world().lock().await;
+            let w = context.world().read();
 
             let mut hasher = Sha256::new();
             hasher.update(path.as_bytes());
@@ -245,7 +245,7 @@ impl WorldState {
             let res = client.get(path).send().await?;
             let schema: RootSchema = res.json().await.map_err::<anyhow::Error, _>(Into::into)?;
 
-            let w = context.world().lock().await;
+            let w = context.world().read();
 
             let p = path.to_string();
             let s = schema.clone();
@@ -346,7 +346,7 @@ pub struct Configuration {
     formatter: taplo::formatter::OptionsIncompleteCamel,
 }
 
-pub type World = Arc<AsyncMutex<WorldState>>;
+pub type World = Arc<RwLock<WorldState>>;
 
 pub fn create_server() -> Server<World> {
     Server::new()
@@ -371,5 +371,5 @@ pub fn create_server() -> Server<World> {
 }
 
 pub fn create_world() -> World {
-    Arc::new(AsyncMutex::new(WorldState::default()))
+    Arc::new(RwLock::new(WorldState::default()))
 }

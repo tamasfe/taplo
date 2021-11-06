@@ -17,7 +17,7 @@ use verify::{
 use crate::external::UrlExt;
 
 pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
-    let w = context.world().lock().await;
+    let w = context.world().read();
 
     let doc = match w.documents.get(&uri) {
         Some(d) => d.clone(),
@@ -83,7 +83,7 @@ pub async fn publish_diagnostics(mut context: Context<World>, uri: Url) {
         return;
     }
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
 
     if !w.configuration.schema.enabled.unwrap_or_default() {
         return;

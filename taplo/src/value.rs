@@ -282,34 +282,34 @@ impl TryFrom<dom::IntegerNode> for Value {
         let node_str = node.syntax().to_string().replace("_", "");
 
         Ok(match node.repr() {
-            dom::IntegerRepr::Dec => match i64::from_str_radix(&node_str, 10) {
+            dom::IntegerRepr::Dec => match node_str.parse::<i64>() {
                 Ok(i) => Value::Integer(i),
-                Err(_) => Value::UnsizedInteger(u64::from_str_radix(&node_str, 10)?),
+                Err(_) => Value::UnsizedInteger(node_str.parse::<u64>()?),
             },
 
             dom::IntegerRepr::Bin => {
-                match i64::from_str_radix(&node_str.trim_start_matches("0b"), 2) {
+                match i64::from_str_radix(node_str.trim_start_matches("0b"), 2) {
                     Ok(i) => Value::Integer(i),
                     Err(_) => Value::UnsizedInteger(u64::from_str_radix(
-                        &node_str.trim_start_matches("0b"),
+                        node_str.trim_start_matches("0b"),
                         2,
                     )?),
                 }
             }
             dom::IntegerRepr::Oct => {
-                match i64::from_str_radix(&node_str.trim_start_matches("0o"), 8) {
+                match i64::from_str_radix(node_str.trim_start_matches("0o"), 8) {
                     Ok(i) => Value::Integer(i),
                     Err(_) => Value::UnsizedInteger(u64::from_str_radix(
-                        &node_str.trim_start_matches("0o"),
+                        node_str.trim_start_matches("0o"),
                         8,
                     )?),
                 }
             }
             dom::IntegerRepr::Hex => {
-                match i64::from_str_radix(&node_str.trim_start_matches("0x"), 16) {
+                match i64::from_str_radix(node_str.trim_start_matches("0x"), 16) {
                     Ok(i) => Value::Integer(i),
                     Err(_) => Value::UnsizedInteger(u64::from_str_radix(
-                        &node_str.trim_start_matches("0x"),
+                        node_str.trim_start_matches("0x"),
                         16,
                     )?),
                 }

@@ -195,11 +195,11 @@ pub mod util {
         }
     }
 
-    pub fn get_schema_objects<'s>(
+    pub fn get_schema_objects(
         path: dom::Path,
-        schema: &'s RootSchema,
+        schema: &RootSchema,
         subschemas: bool,
-    ) -> SmallVec<[ExtendedSchema<'s>; 10]> {
+    ) -> SmallVec<[ExtendedSchema; 10]> {
         get_schema_objects_impl(
             path,
             &schema.definitions,

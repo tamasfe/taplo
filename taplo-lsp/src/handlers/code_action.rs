@@ -18,7 +18,7 @@ pub(crate) async fn code_action(
 ) -> Result<Option<CodeActionResponse>, Error> {
     let p = params.required()?;
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
     let doc = w
         .documents
         .get(&p.text_document.uri)

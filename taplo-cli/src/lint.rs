@@ -248,10 +248,7 @@ fn lint_source(path: Option<&str>, schema: Option<&RootSchema>, src: &str, res: 
     // So that same range lint aren't applied twice.
     let mut ranges: HashSet<TextRange> = HashSet::new();
 
-    let fpath = match path {
-        Some(p) => p,
-        None => "",
-    };
+    let fpath = path.unwrap_or("");
 
     if !parse.errors.is_empty() {
         for err in &parse.errors {

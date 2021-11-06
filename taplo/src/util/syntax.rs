@@ -8,7 +8,7 @@ pub fn add_all(node: SyntaxNode, builder: &mut GreenNodeBuilder) {
     for c in node.children_with_tokens() {
         match c {
             NodeOrToken::Node(n) => add_all(n, builder),
-            NodeOrToken::Token(t) => builder.token(t.kind().into(), t.text().clone()),
+            NodeOrToken::Token(t) => builder.token(t.kind().into(), t.text()),
         }
     }
 

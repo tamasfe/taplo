@@ -185,14 +185,9 @@ impl Config {
                             r.iter()
                                 .filter(|r| r.include.is_none())
                                 .filter_map::<Vec<_>, _>(|r| match &r.options.formatting {
-                                    Some(format_opts) => match &r.keys {
-                                        Some(k) => Some(
-                                            k.iter()
-                                                .map(|s| (s.clone(), format_opts.clone()))
-                                                .collect(),
-                                        ),
-                                        None => None,
-                                    },
+                                    Some(format_opts) => r.keys.as_ref().map(|k| {
+                                        k.iter().map(|s| (s.clone(), format_opts.clone())).collect()
+                                    }),
                                     None => None,
                                 })
                                 .flatten()
@@ -220,13 +215,9 @@ impl Config {
                     })
                     .filter_map(|result| match result {
                         Ok(r) => match &r.options.formatting {
-                            Some(format_opts) => match &r.keys {
-                                Some(k) => Some(Ok(k
-                                    .iter()
-                                    .map(|s| (s.clone(), format_opts.clone()))
-                                    .collect())),
-                                None => None,
-                            },
+                            Some(format_opts) => r.keys.as_ref().map(|k| {
+                                Ok(k.iter().map(|s| (s.clone(), format_opts.clone())).collect())
+                            }),
                             None => None,
                         },
                         Err(err) => Some(Err(err)),

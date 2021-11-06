@@ -42,7 +42,7 @@ pub(crate) async fn initialize(
 ) -> Result<InitializeResult, Error> {
     let p = params.required()?;
 
-    let mut w = context.world().lock().await;
+    let mut w = context.world().write();
 
     w.workspace_uri = p.root_uri.map(|mut uri| {
         uri.set_path(&(uri.path().to_string() + "/"));
@@ -113,7 +113,7 @@ pub(crate) async fn initialize(
 
 pub(crate) async fn cache_path(mut context: Context<World>, params: Params<CachePathParams>) {
     if let Some(params) = params.optional() {
-        let mut w = context.world().lock().await;
+        let mut w = context.world().write();
         w.cache_path = Some(params.path.into());
     }
 }
@@ -142,7 +142,7 @@ async fn update_configuration(mut context: Context<World>, configuration: Option
         }
     };
 
-    let mut w = context.world().lock().await;
+    let mut w = context.world().write();
 
     w.configuration = config;
 
@@ -185,7 +185,7 @@ async fn update_configuration(mut context: Context<World>, configuration: Option
         });
     }
 
-    let mut w = context.world().lock().await;
+    let mut w = context.world().write();
 
     let mut index = None;
 
@@ -376,8 +376,7 @@ pub(crate) async fn document_open(
 
     context
         .world()
-        .lock()
-        .await
+        .write()
         .documents
         .insert(p.text_document.uri, Document { parse, mapper });
 
@@ -405,8 +404,7 @@ pub(crate) async fn document_change(
 
     context
         .world()
-        .lock()
-        .await
+        .write()
         .documents
         .insert(p.text_document.uri, Document { parse, mapper });
 
@@ -424,8 +422,7 @@ pub(crate) async fn document_close(
 
     context
         .world()
-        .lock()
-        .await
+        .write()
         .documents
         .remove(&p.text_document.uri);
 
@@ -438,7 +435,7 @@ pub(crate) async fn semantic_tokens(
 ) -> Result<Option<SemanticTokensResult>, Error> {
     let p = params.required()?;
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
     let doc = w
         .documents
         .get(&p.text_document.uri)
@@ -460,7 +457,7 @@ pub(crate) async fn folding_ranges(
 ) -> Result<Option<Vec<FoldingRange>>, Error> {
     let p = params.required()?;
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
 
     let doc = w
         .documents
@@ -479,7 +476,7 @@ pub(crate) async fn document_symbols(
 ) -> Result<Option<DocumentSymbolResponse>, Error> {
     let p = params.required()?;
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
 
     let doc = w
         .documents
@@ -497,7 +494,7 @@ pub(crate) async fn format(
 ) -> Result<Option<Vec<TextEdit>>, Error> {
     let p = params.required()?;
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
 
     let doc = w
         .documents
@@ -539,7 +536,7 @@ pub(crate) async fn completion(
     let uri = p.text_document_position.text_document.uri;
     let pos = p.text_document_position.position;
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
 
     if !w.configuration.schema.enabled.unwrap_or_default() {
         return Ok(None);
@@ -589,7 +586,7 @@ pub(crate) async fn hover(
     let uri = p.text_document_position_params.text_document.uri;
     let pos = p.text_document_position_params.position;
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
 
     if !w.configuration.schema.enabled.unwrap_or_default() {
         return Ok(None);
@@ -616,7 +613,7 @@ pub(crate) async fn hover(
         }
     };
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
 
     let dom = doc.parse.clone().into_dom();
 
@@ -828,7 +825,7 @@ pub(crate) async fn links(
 
     let uri = p.text_document.uri;
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
 
     if !w.configuration.schema.enabled.unwrap_or(false)
         || !w.configuration.schema.links.unwrap_or(false)
@@ -1063,7 +1060,7 @@ pub(crate) async fn syntax_tree(
 ) -> Result<msg_ext::SyntaxTreeResponse, Error> {
     let p = params.required()?;
 
-    let w = context.world().lock().await;
+    let w = context.world().read();
 
     let doc = w.documents.get(&p.uri).ok_or_else(Error::invalid_params)?;
 
@@ -1073,7 +1070,7 @@ pub(crate) async fn syntax_tree(
 }
 
 async fn load_config_file(mut context: Context<World>) -> Result<(), anyhow::Error> {
-    let mut w = context.world().lock().await;
+    let mut w = context.world().write();
     w.taplo_config = None;
 
     if !w.configuration.taplo_config_enabled.unwrap_or(false) {

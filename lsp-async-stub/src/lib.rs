@@ -30,17 +30,17 @@ mod handler;
 #[cfg(any(feature = "tokio-stdio", feature = "tokio-tcp"))]
 pub mod listen;
 
-#[cfg(not(feature = "send"))]
+#[cfg(feature = "unsend")]
 pub trait SendBound {}
 
-#[cfg(not(feature = "send"))]
+#[cfg(feature = "unsend")]
 impl<T> SendBound for T {}
 
-#[cfg(feature = "send")]
-pub trait SendBound: Send + Sync {}
+#[cfg(not(feature = "unsend"))]
+pub trait SendBound: Send {}
 
-#[cfg(feature = "send")]
-impl<T> SendBound for T where T: Send + Sync {}
+#[cfg(not(feature = "unsend"))]
+impl<T> SendBound for T where T: Send {}
 
 #[derive(Debug, Clone, Default)]
 struct Cancellation {
@@ -133,7 +133,7 @@ impl FusedFuture for CancelTokenErr<'_> {
 #[cfg_attr(feature = "send", async_trait)]
 #[cfg_attr(not(feature = "send"), async_trait(?Send))]
 pub trait ResponseWriter: Sized {
-    async fn write_response<R: Serialize + SendBound>(
+    async fn write_response<R: Serialize + Send + Sync>(
         mut self,
         response: &rpc::Response<R>,
     ) -> Result<(), io::Error>;
@@ -144,7 +144,7 @@ pub trait ResponseWriter: Sized {
 pub trait RequestWriter {
     async fn write_request<
         R: Request<Params = P>,
-        P: Serialize + DeserializeOwned + SendBound + core::fmt::Debug,
+        P: Serialize + DeserializeOwned + Send + Sync + core::fmt::Debug,
     >(
         &mut self,
         params: Option<R::Params>,
@@ -152,7 +152,7 @@ pub trait RequestWriter {
 
     async fn write_notification<
         N: Notification<Params = P>,
-        P: Serialize + DeserializeOwned + SendBound + core::fmt::Debug,
+        P: Serialize + DeserializeOwned + Send + Sync + core::fmt::Debug,
     >(
         &mut self,
         params: Option<N::Params>,
@@ -167,7 +167,7 @@ impl<T> NewTrait for T where T: Future<Output = ()> + SendBound {}
 type DeferredTasks = Arc<AsyncMutex<Vec<Pin<Box<dyn NewTrait>>>>>;
 
 #[derive(Clone)]
-pub struct Context<W: Clone + SendBound> {
+pub struct Context<W: Clone + Send + Sync> {
     inner: Arc<AsyncMutex<Inner<W>>>,
     cancel_token: CancelToken,
     last_req_id: Option<rpc::RequestId>, // For cancellation
@@ -176,7 +176,7 @@ pub struct Context<W: Clone + SendBound> {
     deferred: DeferredTasks,
 }
 
-impl<W: Clone + SendBound> Context<W> {
+impl<W: Clone + Send + Sync> Context<W> {
     pub async fn is_initialized(&self) -> bool {
         self.inner.lock().await.initialized
     }
@@ -205,7 +205,7 @@ impl<W: Clone + SendBound> Context<W> {
 
 #[cfg_attr(feature = "send", async_trait)]
 #[cfg_attr(not(feature = "send"), async_trait(?Send))]
-impl<W: Clone + SendBound> RequestWriter for Context<W> {
+impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
     #[tracing::instrument(level = tracing::Level::TRACE, skip(self))]
     async fn write_request<
         R: Request<Params = P>,
@@ -278,7 +278,7 @@ impl<W: Clone + SendBound> RequestWriter for Context<W> {
 pub trait MessageWriter: Sink<rpc::Message, Error = io::Error> + SendBound + Unpin {}
 impl<T: Sink<rpc::Message, Error = io::Error> + SendBound + Unpin> MessageWriter for T {}
 
-struct Inner<W: Clone + SendBound> {
+struct Inner<W: Clone + Send + Sync> {
     next_request_id: i32,
     initialized: bool,
     shutting_down: bool,
@@ -287,7 +287,7 @@ struct Inner<W: Clone + SendBound> {
     requests: HashMap<rpc::RequestId, oneshot::Sender<rpc::Response<serde_json::Value>>>,
 }
 
-impl<W: Clone + SendBound> Inner<W> {
+impl<W: Clone + Send + Sync> Inner<W> {
     fn task_done(&mut self, id: &rpc::RequestId) {
         if let Some(mut t) = self.tasks.remove(id) {
             t.cancel();
@@ -296,11 +296,11 @@ impl<W: Clone + SendBound> Inner<W> {
     }
 }
 
-pub struct Server<W: Clone + SendBound> {
+pub struct Server<W: Clone + Send + Sync> {
     inner: Arc<AsyncMutex<Inner<W>>>,
 }
 
-impl<W: Clone + SendBound> Server<W> {
+impl<W: Clone + Send + Sync> Server<W> {
     #[allow(clippy::new_ret_no_self)]
     pub fn new() -> ServerBuilder<W> {
         ServerBuilder {
@@ -577,11 +577,11 @@ impl<W: Clone + SendBound> Server<W> {
     }
 }
 
-pub struct ServerBuilder<W: Clone + SendBound + 'static> {
+pub struct ServerBuilder<W: Clone + Send + Sync + 'static> {
     inner: Inner<W>,
 }
 
-impl<W: Clone + SendBound + 'static> ServerBuilder<W> {
+impl<W: Clone + Send + Sync + 'static> ServerBuilder<W> {
     pub fn on_notification<N, F>(mut self, handler: fn(Context<W>, Params<N::Params>) -> F) -> Self
     where
         N: Notification + 'static,

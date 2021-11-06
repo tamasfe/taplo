@@ -13,6 +13,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = []
+wasm = ["lsp-async-stub/unsend"]
 
 [dependencies]
 anyhow = "1"
@@ -44,7 +45,7 @@ taplo-cli = { version = "0.4.1", path = "../taplo-cli" }
 time = { version = "0.3", features = ["formatting", "parsing"] }
 toml = "0.5"
 verify = { version = "0.3", features = ["schemars"] }
-lsp-async-stub = { version = "0.3.1", path = "../lsp-async-stub" }
+lsp-async-stub = { version = "0.3.2", path = "../lsp-async-stub" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1", features = [
@@ -67,7 +68,6 @@ wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4"
 console_error_panic_hook = { version = "0.1" }
 js-sys = "0.3"
-lsp-async-stub = { version = "0.3.1", path = "../lsp-async-stub", default-features = false }
 
 [dev-dependencies]
 pretty_assertions = "1.0.0"

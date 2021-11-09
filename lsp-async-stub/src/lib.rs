@@ -130,8 +130,8 @@ impl FusedFuture for CancelTokenErr<'_> {
     }
 }
 
-#[cfg_attr(feature = "send", async_trait)]
-#[cfg_attr(not(feature = "send"), async_trait(?Send))]
+#[cfg_attr(not(feature = "unsend"), async_trait)]
+#[cfg_attr(feature = "unsend", async_trait(?Send))]
 pub trait ResponseWriter: Sized {
     async fn write_response<R: Serialize + Send + Sync>(
         mut self,
@@ -139,8 +139,8 @@ pub trait ResponseWriter: Sized {
     ) -> Result<(), io::Error>;
 }
 
-#[cfg_attr(feature = "send", async_trait)]
-#[cfg_attr(not(feature = "send"), async_trait(?Send))]
+#[cfg_attr(not(feature = "unsend"), async_trait)]
+#[cfg_attr(feature = "unsend", async_trait(?Send))]
 pub trait RequestWriter {
     async fn write_request<
         R: Request<Params = P>,
@@ -203,8 +203,8 @@ impl<W: Clone + Send + Sync> Context<W> {
     }
 }
 
-#[cfg_attr(feature = "send", async_trait)]
-#[cfg_attr(not(feature = "send"), async_trait(?Send))]
+#[cfg_attr(not(feature = "unsend"), async_trait)]
+#[cfg_attr(feature = "unsend", async_trait(?Send))]
 impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
     #[tracing::instrument(level = tracing::Level::TRACE, skip(self))]
     async fn write_request<

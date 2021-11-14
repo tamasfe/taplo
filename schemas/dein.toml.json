@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "dein.nvim",
+  "title": "dein.vim",
   "type": "object",
-  "description": "A schema for config of dein.nvim (https://github.com/Shougo/dein.vim/blob/master/doc/dein.txt#L963)",
+  "description": "A schema for config of dein.vim (https://github.com/Shougo/dein.vim/blob/master/doc/dein.txt#L963)",
   "x-taplo-info": {
     "authors": [
       "kkiyama117 (https://github.com/kkiyama117)"
@@ -69,6 +69,21 @@
       "x-taplo": {
         "links": {
           "key": "https://github.com/Shougo/dein.vim/blob/master/doc/dein.txt#L950"
+        }
+      }
+    },
+    "multiple_plugins": {
+      "title": "It is converted to |dein-toml-hook_add|",
+      "description": "It is converted to |dein-toml-hook_add|\n\"plugins\" key is needed.",
+      "type": "array",
+      "uniqueness": true,
+      "additionalItems": false,
+      "items": {
+        "$ref": "#/definitions/MultiplePlugin"
+      },
+      "x-taplo": {
+        "links": {
+          "key": "https://github.com/Shougo/dein.vim/blob/master/doc/dein.txt#L1017"
         }
       }
     }
@@ -531,6 +546,28 @@
         "initKeys": [
           "repo"
         ]
+      }
+    },
+    "MultiplePlugins": {
+      "title": "Pattern for multiple definition of vim plugin",
+      "type": "object",
+      "required": [
+        "plugins"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "plugins": {
+          "title": "plugins",
+          "description": "The repository URI or local repository directory path.",
+          "items": {
+            "$ref": "#/definitions/repo-string-pattern"
+          },
+          "x-taplo": {
+            "links": {
+              "key": "https://github.com/Shougo/dein.vim/blob/master/doc/dein.txt#L1017"
+            }
+          }
+        }
       }
     },
     "Url": {

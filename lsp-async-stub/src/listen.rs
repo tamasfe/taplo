@@ -16,7 +16,7 @@ mod stdio;
 #[cfg(feature = "tokio-tcp")]
 mod tcp;
 
-impl<W: Clone + Send + Sync + 'static> Server<W> {
+impl<W: Clone + 'static> Server<W> {
     pub(crate) async fn listen_loop(
         self,
         world: W,

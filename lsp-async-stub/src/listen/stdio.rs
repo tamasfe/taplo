@@ -4,7 +4,7 @@ use crate::{
 };
 use futures::Stream;
 
-impl<W: Clone + Send + Sync + 'static> Server<W> {
+impl<W: Clone + 'static> Server<W> {
     pub async fn listen_stdio(
         self,
         world: W,

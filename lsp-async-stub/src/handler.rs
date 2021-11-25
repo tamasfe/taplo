@@ -7,7 +7,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::marker::PhantomData;
 
 #[async_trait(?Send)]
-pub(crate) trait Handler<W: Clone + Send + Sync> {
+pub(crate) trait Handler<W: Clone> {
     fn method(&self) -> &'static str;
 
     async fn handle(
@@ -20,7 +20,7 @@ pub(crate) trait Handler<W: Clone + Send + Sync> {
     fn box_clone(&self) -> Box<dyn Handler<W>>;
 }
 
-impl<W: Clone + Send + Sync> Clone for Box<dyn Handler<W>> {
+impl<W: Clone> Clone for Box<dyn Handler<W>> {
     fn clone(&self) -> Self {
         self.box_clone()
     }
@@ -30,7 +30,7 @@ pub struct RequestHandler<R, F, W>
 where
     R: Request,
     F: Future<Output = Result<R::Result, rpc::Error>>,
-    W: Clone + Send + Sync,
+    W: Clone,
 {
     f: fn(Context<W>, Params<R::Params>) -> F,
     t: PhantomData<W>,
@@ -40,7 +40,7 @@ impl<R, F, W> Clone for RequestHandler<R, F, W>
 where
     R: Request,
     F: Future<Output = Result<R::Result, rpc::Error>>,
-    W: Clone + Send + Sync,
+    W: Clone,
 {
     fn clone(&self) -> Self {
         Self {
@@ -54,7 +54,7 @@ impl<R, F, W> RequestHandler<R, F, W>
 where
     R: Request,
     F: Future<Output = Result<R::Result, rpc::Error>>,
-    W: Clone + Send + Sync,
+    W: Clone,
 {
     pub fn new(f: fn(Context<W>, Params<R::Params>) -> F) -> Self {
         Self {
@@ -70,7 +70,7 @@ where
     R: Request<Params = P> + 'static,
     P: Serialize + DeserializeOwned + 'static,
     F: Future<Output = Result<R::Result, rpc::Error>> + 'static,
-    W: Clone + Send + Sync + 'static,
+    W: Clone + 'static,
 {
     fn method(&self) -> &'static str {
         R::METHOD
@@ -118,7 +118,7 @@ pub struct NotificationHandler<N, F, W>
 where
     N: Notification,
     F: Future,
-    W: Clone + Send + Sync,
+    W: Clone,
 {
     f: fn(Context<W>, Params<N::Params>) -> F,
     t: PhantomData<W>,
@@ -128,7 +128,7 @@ impl<N, F, W> NotificationHandler<N, F, W>
 where
     N: Notification,
     F: Future,
-    W: Clone + Send + Sync,
+    W: Clone,
 {
     pub fn new(f: fn(Context<W>, Params<N::Params>) -> F) -> Self {
         Self {
@@ -142,7 +142,7 @@ impl<N, F, W> NotificationHandler<N, F, W>
 where
     N: Notification,
     F: Future,
-    W: Clone + Send + Sync,
+    W: Clone,
 {
     fn clone(&self) -> Self {
         Self {
@@ -158,7 +158,7 @@ where
     N: Notification<Params = P> + 'static,
     P: Serialize + DeserializeOwned + 'static,
     F: Future + 'static,
-    W: Clone + Send + Sync + 'static,
+    W: Clone + 'static,
 {
     fn method(&self) -> &'static str {
         N::METHOD

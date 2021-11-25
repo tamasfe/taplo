@@ -30,18 +30,6 @@ mod handler;
 #[cfg(any(feature = "tokio-stdio", feature = "tokio-tcp"))]
 pub mod listen;
 
-#[cfg(feature = "unsend")]
-pub trait SendBound {}
-
-#[cfg(feature = "unsend")]
-impl<T> SendBound for T {}
-
-#[cfg(not(feature = "unsend"))]
-pub trait SendBound: Send {}
-
-#[cfg(not(feature = "unsend"))]
-impl<T> SendBound for T where T: Send {}
-
 #[derive(Debug, Clone, Default)]
 struct Cancellation {
     cancelled: Arc<AtomicBool>,
@@ -130,8 +118,7 @@ impl FusedFuture for CancelTokenErr<'_> {
     }
 }
 
-#[cfg_attr(feature = "send", async_trait)]
-#[cfg_attr(not(feature = "send"), async_trait(?Send))]
+#[async_trait(?Send)]
 pub trait ResponseWriter: Sized {
     async fn write_response<R: Serialize + Send + Sync>(
         mut self,
@@ -139,8 +126,7 @@ pub trait ResponseWriter: Sized {
     ) -> Result<(), io::Error>;
 }
 
-#[cfg_attr(feature = "send", async_trait)]
-#[cfg_attr(not(feature = "send"), async_trait(?Send))]
+#[async_trait(?Send)]
 pub trait RequestWriter {
     async fn write_request<
         R: Request<Params = P>,
@@ -161,8 +147,8 @@ pub trait RequestWriter {
     async fn cancel(&mut self) -> Result<(), io::Error>;
 }
 
-trait NewTrait: Future<Output = ()> + SendBound {}
-impl<T> NewTrait for T where T: Future<Output = ()> + SendBound {}
+trait NewTrait: Future<Output = ()> {}
+impl<T> NewTrait for T where T: Future<Output = ()> {}
 
 type DeferredTasks = Arc<AsyncMutex<Vec<Pin<Box<dyn NewTrait>>>>>;
 
@@ -198,18 +184,17 @@ impl<W: Clone + Send + Sync> Context<W> {
     ///
     /// If sending a response fails, deferred futures
     /// won't be executed.
-    pub async fn defer<F: Future<Output = ()> + SendBound + 'static>(&self, fut: F) {
+    pub async fn defer<F: Future<Output = ()> + 'static>(&self, fut: F) {
         self.deferred.lock().await.push(Box::pin(fut));
     }
 }
 
-#[cfg_attr(feature = "send", async_trait)]
-#[cfg_attr(not(feature = "send"), async_trait(?Send))]
+#[async_trait(?Send)]
 impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
     #[tracing::instrument(level = tracing::Level::TRACE, skip(self))]
     async fn write_request<
         R: Request<Params = P>,
-        P: Serialize + DeserializeOwned + SendBound + core::fmt::Debug,
+        P: Serialize + DeserializeOwned + core::fmt::Debug,
     >(
         &mut self,
         params: Option<R::Params>,
@@ -250,7 +235,7 @@ impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
     #[tracing::instrument(level = tracing::Level::TRACE, skip(self))]
     async fn write_notification<
         N: Notification<Params = P>,
-        P: Serialize + DeserializeOwned + SendBound + core::fmt::Debug,
+        P: Serialize + DeserializeOwned + core::fmt::Debug,
     >(
         &mut self,
         params: Option<N::Params>,
@@ -275,8 +260,8 @@ impl<W: Clone + Send + Sync> RequestWriter for Context<W> {
     }
 }
 
-pub trait MessageWriter: Sink<rpc::Message, Error = io::Error> + SendBound + Unpin {}
-impl<T: Sink<rpc::Message, Error = io::Error> + SendBound + Unpin> MessageWriter for T {}
+pub trait MessageWriter: Sink<rpc::Message, Error = io::Error> + Unpin {}
+impl<T: Sink<rpc::Message, Error = io::Error> + Unpin> MessageWriter for T {}
 
 struct Inner<W: Clone + Send + Sync> {
     next_request_id: i32,
@@ -585,8 +570,7 @@ impl<W: Clone + Send + Sync + 'static> ServerBuilder<W> {
     pub fn on_notification<N, F>(mut self, handler: fn(Context<W>, Params<N::Params>) -> F) -> Self
     where
         N: Notification + 'static,
-        N::Params: SendBound,
-        F: Future<Output = ()> + SendBound + 'static,
+        F: Future<Output = ()> + 'static,
     {
         self.inner.handlers.insert(
             N::METHOD.into(),
@@ -599,9 +583,7 @@ impl<W: Clone + Send + Sync + 'static> ServerBuilder<W> {
     pub fn on_request<R, F>(mut self, handler: fn(Context<W>, Params<R::Params>) -> F) -> Self
     where
         R: Request + 'static,
-        R::Params: SendBound,
-        R::Result: SendBound,
-        F: Future<Output = Result<R::Result, rpc::Error>> + SendBound + 'static,
+        F: Future<Output = Result<R::Result, rpc::Error>> + 'static,
     {
         self.inner.handlers.insert(
             R::METHOD.into(),

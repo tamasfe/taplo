@@ -22,7 +22,6 @@ tracing = "0.1.29"
 
 [features]
 default = []
-unsend = []
 tokio-stdio = [
     "tokio",
     "tokio/io-util",

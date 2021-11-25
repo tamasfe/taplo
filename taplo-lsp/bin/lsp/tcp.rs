@@ -24,8 +24,9 @@ pub(crate) fn run(
     port: usize,
 ) -> i32 {
     let address = format!("{}:{}", addr, port);
+    let local = tokio::task::LocalSet::new();
 
-    rt.block_on(async {
+    local.block_on(&rt, async {
         let listener = match TcpListener::bind(&address).await {
             Ok(l) => l,
             Err(err) => {
@@ -84,12 +85,11 @@ pub(crate) fn run(
                                 output.clone().sink_map_err(|e| panic!("{}", e)),
                             );
 
-                            tokio::spawn(async move {
+                            tokio::task::spawn_local(async move {
                                 if let Err(e) = task_fut.await {
                                     log_error!("{}", e);
                                 }
                             });
-
                         }
                         None => break,
                     }

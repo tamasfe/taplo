@@ -14,8 +14,9 @@ use crate::{common::write_message, is_shutting_down, shutdown, SHUTDOWN_CHAN};
 pub(crate) fn run(rt: Arc<Runtime>, server: Server<World>, world: World) -> i32 {
     let mut input = create_input(rt.clone());
     let (output, output_handle) = create_output(rt.clone());
+    let local = tokio::task::LocalSet::new();
 
-    let exit_code = rt.block_on(async move {
+    let exit_code = local.block_on(&rt, async move {
         let mut shutdown_chan = SHUTDOWN_CHAN.get().unwrap().subscribe();
 
         log_info!("processing messages from stdin...");
@@ -50,12 +51,11 @@ pub(crate) fn run(rt: Arc<Runtime>, server: Server<World>, world: World) -> i32 
                                 output.clone().sink_map_err(|e| panic!("{}", e)),
                             );
 
-                            tokio::spawn(async move {
+                            tokio::task::spawn_local(async move {
                                 if let Err(e) = task_fut.await {
                                     log_error!("{}", e);
                                 }
                             });
-
                         }
                         None => break,
                     }

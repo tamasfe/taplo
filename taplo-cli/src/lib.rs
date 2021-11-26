@@ -193,7 +193,7 @@ where
                 ).arg(
                     Arg::new("check")
                         .long("check")
-                        .about("Return NonZero exit code if there are any syntax errors")
+                        .about("Return NonZero exit code if there are any format issues")
                 )
         )
         .subcommand(

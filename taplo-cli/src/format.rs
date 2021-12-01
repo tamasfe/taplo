@@ -12,6 +12,7 @@ use taplo::formatter::{self, Options};
 pub(crate) struct FormatResult {
     pub matched_document_count: usize,
     pub excluded_document_count: usize,
+    pub different_document_count: usize,
     pub error_count: usize,
     pub forced: usize,
 }
@@ -19,18 +20,21 @@ pub(crate) struct FormatResult {
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct CliOptions {
     pub force: bool,
+    pub check: bool,
 }
 
 pub(crate) async fn format(config: Config, m: &ArgMatches) -> FormatResult {
     let mut res = FormatResult {
         matched_document_count: 0,
-        error_count: 0,
         excluded_document_count: 0,
+        different_document_count: 0,
+        error_count: 0,
         forced: 0,
     };
 
     let opts = CliOptions {
         force: m.is_present("force"),
+        check: m.is_present("check"),
     };
 
     let mut cli_opts = None;
@@ -144,6 +148,10 @@ async fn format_paths<'i, F: Iterator<Item = &'i str>>(
             res.matched_document_count += 1;
             match format_source(&src, opts, format_opts, res) {
                 Ok(s) => {
+                    if src != s {
+                        res.different_document_count += 1;
+                    }
+
                     print!("{}", &s);
                 }
                 Err(_) => {
@@ -223,16 +231,20 @@ async fn format_paths<'i, F: Iterator<Item = &'i str>>(
                             match format_source(&src, opts, format_opts, res) {
                                 Ok(s) => {
                                     if src != s {
-                                        match write_file(path.to_str().unwrap(), s.as_bytes()).await
-                                        {
-                                            Ok(_) => {}
-                                            Err(err) => {
-                                                res.error_count += 1;
-                                                print_message(
-                                                    Severity::Error,
-                                                    "error",
-                                                    &err.to_string(),
-                                                );
+                                        res.different_document_count += 1;
+                                        if !opts.check {
+                                            match write_file(path.to_str().unwrap(), s.as_bytes())
+                                                .await
+                                            {
+                                                Ok(_) => {}
+                                                Err(err) => {
+                                                    res.error_count += 1;
+                                                    print_message(
+                                                        Severity::Error,
+                                                        "error",
+                                                        &err.to_string(),
+                                                    );
+                                                }
                                             }
                                         }
                                     }

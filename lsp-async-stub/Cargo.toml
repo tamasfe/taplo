@@ -22,15 +22,16 @@ tracing = "0.1.29"
 
 [features]
 default = []
-unsend = []
 tokio-stdio = [
     "tokio",
+    "tokio/rt",
     "tokio/io-util",
     "tokio/io-std",
     "tokio/macros",
 ]
 tokio-tcp = [
     "tokio",
+    "tokio/rt",
     "tokio/io-util",
     "tokio/net",
     "tokio/macros",

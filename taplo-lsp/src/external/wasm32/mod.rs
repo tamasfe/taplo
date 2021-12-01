@@ -73,14 +73,8 @@ extern {
     fn js_is_windows() -> bool;
 }
 
-struct ImplSend<T>(pub T);
-
-// safety: we're in a WASM context with a single thread.
-unsafe impl<T> Send for ImplSend<T> {} 
-unsafe impl<T> Sync for ImplSend<T> {} 
-
-static SERVER: Lazy<ImplSend<Server<World>>> = Lazy::new(|| ImplSend(create_server()));
-static WORLD: Lazy<ImplSend<World>> = Lazy::new(|| ImplSend(create_world()));
+static SERVER: Lazy<Server<World>> = Lazy::new(create_server);
+static WORLD: Lazy<World> = Lazy::new(create_world);
 
 #[wasm_bindgen]
 pub async fn initialize() {

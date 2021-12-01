@@ -16,7 +16,7 @@ mod stdio;
 #[cfg(feature = "tokio-tcp")]
 mod tcp;
 
-impl<W: Clone + Send + Sync + 'static> Server<W> {
+impl<W: Clone + 'static> Server<W> {
     pub(crate) async fn listen_loop(
         self,
         world: W,
@@ -40,7 +40,7 @@ impl<W: Clone + Send + Sync + 'static> Server<W> {
                         output.clone().sink_map_err(|e| panic!("{}", e)),
                     );
 
-                    tokio::spawn(async move {
+                    tokio::task::spawn_local(async move {
                         if let Err(e) = task_fut.await {
                             tracing::error!(error = %e, "handler returned error");
                         }
@@ -69,7 +69,7 @@ impl<W: Clone + Send + Sync + 'static> Server<W> {
                                 output.clone().sink_map_err(|e| panic!("{}", e)),
                             );
 
-                            tokio::spawn(async move {
+                            tokio::task::spawn_local(async move {
                                 if let Err(e) = task_fut.await {
                                     tracing::error!(error = %e, "handler returned error");
                                 }

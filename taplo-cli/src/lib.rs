@@ -171,7 +171,7 @@ where
                 .arg(
                     Arg::new("force")
                         .short('f')
-                        .long("force")   
+                        .long("force")
                         .about("Ignore syntax errors and format anyway (potentially destructive)"),
                 )
                 .arg(
@@ -190,6 +190,10 @@ where
                         .about("Path to the Taplo configuration file")
                         .value_name("PATH")
                         .takes_value(true)
+                ).arg(
+                    Arg::new("check")
+                        .long("check")
+                        .about("Return NonZero exit code if there are any format issues")
                 )
         )
         .subcommand(
@@ -355,29 +359,52 @@ async fn execute(matches: ArgMatches) -> bool {
                         }
                     ),
                 );
-                false
-            } else {
+                return false;
+            }
+
+            if format_matches.is_present("check") && format_result.different_document_count > 0 {
                 print_message(
-                    Severity::Success,
-                    "success",
+                    Severity::Error,
+                    "failure",
                     &format!(
-                        "processed {} {docs} with no errors {excluded}",
+                        "processed {} {docs} with {} different {docs} {excluded}",
                         format_result.matched_document_count
                             - format_result.excluded_document_count,
+                        format_result.different_document_count,
                         docs = if format_result.matched_document_count != 1 {
                             "documents"
                         } else {
                             "document"
                         },
-                        excluded = if format_result.excluded_document_count > 0 {
-                            format!(" (excluded {})", format_result.excluded_document_count)
+                        excluded = if format_result.matched_document_count != 1 {
+                            "documents"
                         } else {
-                            format!("")
-                        }
+                            "document"
+                        },
                     ),
                 );
-                !is_error()
+                return false;
             }
+
+            print_message(
+                Severity::Success,
+                "success",
+                &format!(
+                    "processed {} {docs} with no errors {excluded}",
+                    format_result.matched_document_count - format_result.excluded_document_count,
+                    docs = if format_result.matched_document_count != 1 {
+                        "documents"
+                    } else {
+                        "document"
+                    },
+                    excluded = if format_result.excluded_document_count > 0 {
+                        format!(" (excluded {})", format_result.excluded_document_count)
+                    } else {
+                        format!("")
+                    }
+                ),
+            );
+            !is_error()
         }
         Some(("lint", lint_matches)) => {
             let config = match load_config(lint_matches.value_of("config")).await {

@@ -5,7 +5,7 @@ use crate::{
 use futures::Stream;
 use tokio::net::{TcpListener, ToSocketAddrs};
 
-impl<W: Clone + Send + Sync + 'static> Server<W> {
+impl<W: Clone + 'static> Server<W> {
     pub async fn listen_tcp<A>(
         self,
         world: W,

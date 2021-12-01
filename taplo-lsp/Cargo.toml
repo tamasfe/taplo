@@ -13,7 +13,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = []
-wasm = ["lsp-async-stub/unsend"]
+wasm = []
 
 [dependencies]
 anyhow = "1"

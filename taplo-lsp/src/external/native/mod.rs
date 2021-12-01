@@ -29,8 +29,8 @@ macro_rules! log_debug {
     };
 }
 
-pub(crate) fn spawn<F: Future<Output = ()> + Send + 'static>(fut: F) {
-    tokio::spawn(fut);
+pub(crate) fn spawn<F: Future<Output = ()> + 'static>(fut: F) {
+    tokio::task::spawn_local(fut);
 }
 
 pub(crate) fn is_absolute_path(p: &str) -> bool {

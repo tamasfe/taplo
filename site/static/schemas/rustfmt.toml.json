@@ -94,7 +94,7 @@
       "type": "string",
       "description": "The edition of the parser (RFC 2052)",
       "default": "2015",
-      "enum": ["2015", "2018"]
+      "enum": ["2015", "2018", "2021"]
     },
     "newline_style": {
       "type": "string",

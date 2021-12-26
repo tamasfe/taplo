@@ -59,7 +59,7 @@ tokio = { version = "1", features = [
     "time",
     "process",
 ] }
-clap = "3.0.0-beta.2"
+clap = "=3.0.0-beta.2"
 ctrlc = "3"
 notify = "4"
 

@@ -151,7 +151,7 @@ pub(crate) async fn update_schemas(
 
     for schema in &index.schemas {
         if let Some(updated) = &schema.updated {
-            match time::OffsetDateTime::parse(updated, time::Format::Rfc3339) {
+            match time::OffsetDateTime::parse(updated, &time::format_description::well_known::Rfc3339) {
                 Ok(updated) => {
                     let mut hasher = Sha256::new();
                     hasher.update(schema.url.as_bytes());

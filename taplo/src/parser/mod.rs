@@ -194,7 +194,7 @@ impl<'p> Parser<'p> {
         match self.get_token() {
             Err(_) => return Err(()),
             Ok(_) => {
-                self.builder.token(kind.into(), self.lexer.slice().into());
+                self.builder.token(kind.into(), self.lexer.slice());
             }
         }
 
@@ -222,18 +222,18 @@ impl<'p> Parser<'p> {
                         }
                     };
 
-                    self.insert_token(token, self.lexer.slice().into());
+                    self.insert_token(token, self.lexer.slice());
                 }
                 WHITESPACE => {
                     if self.skip_whitespace {
-                        self.insert_token(token, self.lexer.slice().into());
+                        self.insert_token(token, self.lexer.slice());
                     } else {
                         self.current_token = Some(token);
                         break;
                     }
                 }
                 ERROR => {
-                    self.insert_token(token, self.lexer.slice().into());
+                    self.insert_token(token, self.lexer.slice());
                     let span = self.lexer.span();
                     self.add_error(&Error {
                         range: TextRange::new(
@@ -471,10 +471,10 @@ impl<'p> Parser<'p> {
                 } else {
                     for (i, s) in self.lexer.slice().split('.').enumerate() {
                         if i != 0 {
-                            self.insert_token(PERIOD, ".".into());
+                            self.insert_token(PERIOD, ".");
                         }
 
-                        self.insert_token(IDENT, s.into());
+                        self.insert_token(IDENT, s);
                     }
                     self.step();
                     Ok(())

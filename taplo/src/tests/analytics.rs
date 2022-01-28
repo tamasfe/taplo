@@ -45,10 +45,7 @@ fn query_package_field() {
 
     let first_query_node = pos.after.nodes.last().copied().unwrap();
 
-    let is_table = match first_query_node {
-        NodeRef::Table(_) => true,
-        _ => false,
-    };
+    let is_table = matches!(first_query_node, NodeRef::Table(_));
 
     assert!(is_table);
 
@@ -76,19 +73,13 @@ fn query_lib_table() {
 
     let first_query_node = pos.after.nodes.last().copied().unwrap();
 
-    let is_table = match first_query_node {
-        NodeRef::Table(_) => true,
-        _ => false,
-    };
+    let is_table = matches!(first_query_node, NodeRef::Table(_));
 
     assert!(is_table);
 
     let before_node = pos.before.unwrap().nodes.last().copied().unwrap();
 
-    let is_key = match before_node {
-        NodeRef::Key(_) => true,
-        _ => false,
-    };
+    let is_key = matches!(before_node, NodeRef::Key(_));
 
     assert!(is_key);
 }

@@ -159,9 +159,9 @@ impl Default for Options {
 impl Options {
     fn newline(&self) -> &'static str {
         if self.crlf {
-            "\r\n".into()
+            "\r\n"
         } else {
-            "\n".into()
+            "\n"
         }
     }
 
@@ -204,7 +204,7 @@ pub fn format(src: &str, options: Options) -> String {
 
 /// Formats a parsed TOML syntax tree.
 pub fn format_syntax(node: SyntaxNode, options: Options) -> String {
-    let mut s = format_impl(node, options.clone(), Context::default()).to_string();
+    let mut s = format_impl(node, options.clone(), Context::default());
 
     s = s.trim_end().into();
 
@@ -219,15 +219,16 @@ pub fn format_syntax(node: SyntaxNode, options: Options) -> String {
 ///
 /// **This doesn't check errors of the DOM.**
 pub fn format_with_scopes(dom: RootNode, options: Options, scopes: ScopedOptions) -> String {
-    let mut c = Context::default();
-    c.scopes = Rc::new(scopes);
+    let c = Context {
+        scopes: Rc::new(scopes),
+        ..Context::default()
+    };
 
     let mut s = format_impl(
         dom.syntax().into_node().unwrap(),
         options.clone(),
-        Context::default(),
-    )
-    .to_string();
+        c,
+    );
 
     s = s.trim_end().into();
 
@@ -264,7 +265,7 @@ pub fn format_with_path_scopes<I: IntoIterator<Item = (String, OptionsIncomplete
 
     c.scopes = Rc::new(ScopedOptions::from_iter(s));
 
-    let mut s = format_impl(dom.syntax().into_node().unwrap(), options.clone(), c).to_string();
+    let mut s = format_impl(dom.syntax().into_node().unwrap(), options.clone(), c);
 
     s = s.trim_end().into();
 
@@ -379,9 +380,9 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
 
         for (idx, comment) in comments.drain(0..).enumerate() {
             if idx != 0 {
-                *formatted += &options.newline();
+                *formatted += options.newline();
             }
-            formatted.extend(context.indent(&options));
+            formatted.extend(context.indent(options));
             *formatted += &comment;
         }
 
@@ -398,7 +399,7 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
             NodeOrToken::Node(node) => match node.kind() {
                 TABLE_ARRAY_HEADER | TABLE_HEADER => {
                     if add_entries(&mut entry_group, &mut formatted, &options, &context) {
-                        formatted += &options.newline();
+                        formatted += options.newline();
                         skip_newlines = 0;
                     }
 
@@ -437,7 +438,7 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                         &header_context,
                         &options,
                     ) {
-                        formatted += &options.newline();
+                        formatted += options.newline();
                         skip_newlines = 0;
                     }
 
@@ -456,7 +457,7 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                 }
                 ENTRY => {
                     if add_comments(&mut comment_group, &mut formatted, &context, &options) {
-                        formatted += &options.newline();
+                        formatted += options.newline();
                         skip_newlines = 0;
                     }
 
@@ -490,7 +491,7 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                 }
                 COMMENT => {
                     if add_entries(&mut entry_group, &mut formatted, &options, &context) {
-                        formatted += &options.newline();
+                        formatted += options.newline();
                         skip_newlines = 0;
                     }
                     comment_group.push(token.text().to_string());
@@ -567,11 +568,11 @@ fn add_entries(
                 )
                 .unwrap_or(0);
 
-            let line_count = entry.value.split("\n").count();
+            let line_count = entry.value.split('\n').count();
 
             // check each line of the value
             // for the first line we include the actual indent, key, and the eq parts as well
-            for (idx, line) in entry.value.split("\n").enumerate() {
+            for (idx, line) in entry.value.split('\n').enumerate() {
                 let mut chars_count = line.chars().count();
                 if idx == 0 {
                     chars_count += indent_chars_count;
@@ -701,7 +702,7 @@ fn format_key(node: SyntaxNode, formatted: &mut String, _options: &Options, _con
             NodeOrToken::Token(t) => match t.kind() {
                 WHITESPACE | NEWLINE => {}
                 _ => {
-                    *formatted += &t.text();
+                    *formatted += t.text();
                 }
             },
         }
@@ -914,7 +915,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
         match c {
             NodeOrToken::Node(n) => match n.kind() {
                 VALUE => {
-                    if multiline && formatted.ends_with("[") {
+                    if multiline && formatted.ends_with('[') {
                         formatted += options.newline();
                     }
 
@@ -978,7 +979,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                         skip_newlines = 0;
                     }
 
-                    if !formatted.ends_with("]") {
+                    if !formatted.ends_with(']') {
                         formatted
                             .extend(options.newlines(newline_count.saturating_sub(skip_newlines)));
                     }
@@ -986,9 +987,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                 COMMENT => {
                     let newline_before = t
                         .siblings_with_tokens(rowan::Direction::Prev)
-                        .skip(1) // skip is needed because the iterator includes the actual token
-                        .filter(|s| s.kind() != WHITESPACE)
-                        .next()
+                        .skip(1).find(|s| s.kind() != WHITESPACE)
                         .map(|s| s.kind() == NEWLINE)
                         .unwrap_or(false);
 
@@ -1018,7 +1017,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
         }
     }
 
-    if formatted.len() == 0 {
+    if formatted.is_empty() {
         formatted = "[]".into();
     }
 
@@ -1036,7 +1035,7 @@ fn format_table_header(
     for c in node.children_with_tokens() {
         match c {
             NodeOrToken::Node(n) => {
-                format_key(n, &mut &mut formatted, options, context);
+                format_key(n, &mut formatted, options, context);
             }
             NodeOrToken::Token(t) => match t.kind() {
                 BRACKET_START | BRACKET_END => formatted += t.text(),
@@ -1085,7 +1084,7 @@ impl NewlineCount for &str {
 }
 
 // FIXME(docs)
-fn format_rows<'r, R, S>(
+fn format_rows<R, S>(
     align_range: Range<usize>,
     separator_range: Range<usize>,
     rows: &[R],
@@ -1103,7 +1102,7 @@ where
         .iter()
         .map(|r| r.as_ref().iter())
         .flatten()
-        .all(|s| !s.as_ref().contains("\n"));
+        .all(|s| !s.as_ref().contains('\n'));
 
     let diff_widths = |range: Range<usize>, row: &R| -> usize {
         let mut max_width = 0_usize;

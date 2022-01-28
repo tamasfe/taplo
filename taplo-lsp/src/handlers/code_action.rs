@@ -64,7 +64,7 @@ pub(crate) async fn code_action(
         actions_for_position(pos, &mut actions, format_opts.clone(), &doc.mapper, &p);
     }
 
-    return Ok(Some(actions));
+    Ok(Some(actions))
 }
 
 fn actions_for_position(
@@ -85,11 +85,11 @@ fn actions_for_position(
                             let mut edits = Vec::new();
                             extract_inline_table(
                                 &mut edits,
-                                format_opts.clone(),
+                                format_opts,
                                 mapper,
                                 parent_path
                                     .map(|p| {
-                                        format!("{}", p)
+                                        p
                                             + "."
                                             + &format!("{}", entry.key().syntax())
                                     })
@@ -104,7 +104,7 @@ fn actions_for_position(
                             changes.insert(params.text_document.uri.clone(), edits);
 
                             let action = CodeAction {
-                                title: format!("Convert to table"),
+                                title: "Convert to table".to_string(),
                                 kind: Some(CodeActionKind::REFACTOR),
                                 edit: Some(WorkspaceEdit {
                                     changes: Some(changes),
@@ -131,11 +131,11 @@ fn actions_for_position(
                                 let mut edits = Vec::new();
                                 extract_table_of_arrays(
                                     &mut edits,
-                                    format_opts.clone(),
+                                    format_opts,
                                     mapper,
                                     parent_path
                                         .map(|p| {
-                                            format!("{}", p)
+                                            p
                                                 + "."
                                                 + &format!("{}", entry.key().syntax())
                                         })
@@ -150,7 +150,7 @@ fn actions_for_position(
                                 changes.insert(params.text_document.uri.clone(), edits);
 
                                 let action = CodeAction {
-                                    title: format!("Convert to array of tables"),
+                                    title: "Convert to array of tables".to_string(),
                                     kind: Some(CodeActionKind::REFACTOR),
                                     edit: Some(WorkspaceEdit {
                                         changes: Some(changes),
@@ -208,7 +208,7 @@ fn actions_for_position(
                         changes.insert(params.text_document.uri.clone(), edits);
 
                         let action = CodeAction {
-                            title: format!("Convert to array"),
+                            title: "Convert to array".to_string(),
                             kind: Some(CodeActionKind::REFACTOR),
                             edit: Some(WorkspaceEdit {
                                 changes: Some(changes),
@@ -249,7 +249,7 @@ fn actions_for_position(
                         changes.insert(params.text_document.uri.clone(), edits);
 
                         let action = CodeAction {
-                            title: format!("Convert to inline table"),
+                            title: "Convert to inline table".to_string(),
                             kind: Some(CodeActionKind::REFACTOR),
                             edit: Some(WorkspaceEdit {
                                 changes: Some(changes),
@@ -294,7 +294,7 @@ fn actions_for_position(
                         changes.insert(params.text_document.uri.clone(), edits);
 
                         let action = CodeAction {
-                            title: format!("Convert to inline table"),
+                            title: "Convert to inline table".to_string(),
                             kind: Some(CodeActionKind::REFACTOR),
                             edit: Some(WorkspaceEdit {
                                 changes: Some(changes),
@@ -543,23 +543,20 @@ fn inline_array_of_tables(
     let s = formatter::format(&s, format_opts);
 
     for item in arr.items().iter().rev() {
-        match item {
-            ValueNode::Table(table) => {
-                for range in table.text_ranges().into_iter().skip(1).rev() {
-                    edits.push(TextEdit {
-                        range: mapper.range(range).unwrap().into_lsp(),
-                        new_text: "".into(),
-                    });
-                }
+        if let ValueNode::Table(table) = item {
+            for range in table.text_ranges().into_iter().skip(1).rev() {
                 edits.push(TextEdit {
-                    range: mapper
-                        .range(table.syntax().text_range())
-                        .unwrap()
-                        .into_lsp(),
+                    range: mapper.range(range).unwrap().into_lsp(),
                     new_text: "".into(),
                 });
             }
-            _ => {}
+            edits.push(TextEdit {
+                range: mapper
+                    .range(table.syntax().text_range())
+                    .unwrap()
+                    .into_lsp(),
+                new_text: "".into(),
+            });
         }
     }
 
@@ -645,7 +642,7 @@ fn parent_table<'n, T: Iterator<Item = NodeRef<'n>>>(
             }
 
             if pt.is_pseudo() {
-                while let Some(n) = nodes.next() {
+                for n in nodes {
                     if let NodeRef::Table(t) = n {
                         if !t.is_pseudo() {
                             pt = t;

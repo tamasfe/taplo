@@ -227,7 +227,7 @@ line-3"#;
 
     assert!(
         mapper
-            .position(TextSize::from(s1.len() as u32 - 1 as u32))
+            .position(TextSize::from(s1.len() as u32 - 1))
             .unwrap()
             == Position {
                 line: 2,

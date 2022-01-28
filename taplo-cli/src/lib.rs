@@ -133,7 +133,7 @@ where
         .arg(
             Arg::new("colors")
                 .long("colors")
-                .about("Set when to colorize output")
+                .help("Set when to colorize output")
                 .takes_value(true)
                 .possible_values(&["auto", "always", "never"])
                 .default_value("auto")
@@ -142,13 +142,13 @@ where
         .arg(
             Arg::new("silent")
                 .long("silent")
-                .about("Disable non-error output")
+                .help("Disable non-error output")
                 .global(true)
         )
         .arg(
             Arg::new("warn-as-error")
                 .long("warn-as-error")
-                .about("Treat warnings as errors")
+                .help("Treat warnings as errors")
                 .global(true)
         )
         .subcommand(
@@ -158,13 +158,13 @@ where
                 .long_about("Format TOML documents. Files are modified in-place unless the input comes from the standard input, in which case the formatted result is printed to the standard output")
                 .arg(
                     Arg::new("files")
-                        .about("Paths or glob patterns to TOML documents")
-                        .long_about("Paths or glob patterns to TOML documents, can be omitted if a configuration file is provided or found that provides document paths")
+                        .help("Paths or glob patterns to TOML documents")
+                        .long_help("Paths or glob patterns to TOML documents, can be omitted if a configuration file is provided or found that provides document paths")
                 )
                 .arg(
                     Arg::new("stdin")
-                    .about("Provide a TOML document from the standard input")
-                    .long_about("Provide a TOML document from the standard input. If this is supplied, the formatted document will be written to the standard output")
+                    .help("Provide a TOML document from the standard input")
+                    .long_help("Provide a TOML document from the standard input. If this is supplied, the formatted document will be written to the standard output")
                     .possible_value("-")
                     .conflicts_with("files"),
                 )
@@ -172,14 +172,14 @@ where
                     Arg::new("force")
                         .short('f')
                         .long("force")
-                        .about("Ignore syntax errors and format anyway (potentially destructive)"),
+                        .help("Ignore syntax errors and format anyway (potentially destructive)"),
                 )
                 .arg(
                     Arg::new("options")
                         .short('o')
                         .long("options")
-                        .about("A comma-separated list of key=value pairs to pass to the formatter")
-                        .long_about("A comma-separated list of key=value pairs to pass to the formatter. The valid options and values are available here: https://taplo.tamasfe.dev/configuration/#formatting-options")
+                        .help("A comma-separated list of key=value pairs to pass to the formatter")
+                        .long_help("A comma-separated list of key=value pairs to pass to the formatter. The valid options and values are available here: https://taplo.tamasfe.dev/configuration/#formatting-options")
                         .takes_value(true)
                         .multiple_occurrences(true)
                 )
@@ -187,13 +187,13 @@ where
                     Arg::new("config")
                         .short('c')
                         .long("config")
-                        .about("Path to the Taplo configuration file")
+                        .help("Path to the Taplo configuration file")
                         .value_name("PATH")
                         .takes_value(true)
                 ).arg(
                     Arg::new("check")
                         .long("check")
-                        .about("Return NonZero exit code if there are any format issues")
+                        .help("Return NonZero exit code if there are any format issues")
                 )
         )
         .subcommand(
@@ -202,8 +202,8 @@ where
             .about("Lint TOML documents")
             .arg(
                 Arg::new("schema")
-                .about("Provide a JSON Schema for validation")
-                .long_about("Provide a Schema for validation. This schema will be used for all documents. Only JSON format is accepted.")
+                .help("Provide a JSON Schema for validation")
+                .long_help("Provide a Schema for validation. This schema will be used for all documents. Only JSON format is accepted.")
                 .short('s')
                 .long("schema")
                 .takes_value(true)
@@ -212,34 +212,34 @@ where
                 Arg::new("config")
                     .short('c')
                     .long("config")
-                    .about("Path to the Taplo configuration file")
+                    .help("Path to the Taplo configuration file")
                     .value_name("PATH")
                     .takes_value(true)
             )
             .arg(
                 Arg::new("files")
-                    .about(r#"Paths or glob patterns to TOML documents, or "-" for standard input"#)
-                    .long_about("Paths or glob patterns to TOML documents, can be omitted if a configuration file is provided or found that provides document paths.")
-                    .multiple(true)
+                    .help(r#"Paths or glob patterns to TOML documents, or "-" for standard input"#)
+                    .long_help("Paths or glob patterns to TOML documents, can be omitted if a configuration file is provided or found that provides document paths.")
+                    .multiple_occurrences(true)
             )
             .arg(
                 Arg::new("cache-path")
                     .long("cache-path")
-                    .about("Path to a cache folder, if omitted no caching will be done")
+                    .help("Path to a cache folder, if omitted no caching will be done")
                     .takes_value(true)
             )
             .arg(
                 Arg::new("default-schema-repository")
                     .short('S')
                     .long("default-schema-repository")
-                    .about("Use the default remote schema repository")
+                    .help("Use the default remote schema repository")
                     .conflicts_with("schema-repository")
                     .takes_value(false)
             )
             .arg(
                 Arg::new("schema-repository")
                     .long("schema-repository")
-                    .about("Use a remote schema repository")
+                    .help("Use a remote schema repository")
                     .takes_value(true)
             )
         )
@@ -355,7 +355,7 @@ async fn execute(matches: ArgMatches) -> bool {
                         excluded = if format_result.excluded_document_count > 0 {
                             format!(" (excluded {})", format_result.excluded_document_count)
                         } else {
-                            format!("")
+                            String::new()
                         }
                     ),
                 );
@@ -400,7 +400,7 @@ async fn execute(matches: ArgMatches) -> bool {
                     excluded = if format_result.excluded_document_count > 0 {
                         format!(" (excluded {})", format_result.excluded_document_count)
                     } else {
-                        format!("")
+                        String::new()
                     }
                 ),
             );
@@ -534,7 +534,7 @@ async fn execute(matches: ArgMatches) -> bool {
                         excluded = if lint_result.excluded_document_count > 0 {
                             format!(" (excluded {})", lint_result.excluded_document_count)
                         } else {
-                            format!("")
+                            String::new()
                         }
                     ),
                 );
@@ -554,7 +554,7 @@ async fn execute(matches: ArgMatches) -> bool {
                         excluded = if lint_result.excluded_document_count > 0 {
                             format!(" (excluded {})", lint_result.excluded_document_count)
                         } else {
-                            format!("")
+                            String::new()
                         }
                     ),
                 );

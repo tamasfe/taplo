@@ -262,7 +262,7 @@ async fn update_configuration(mut context: Context<World>, configuration: Option
                     Err(err) => {
                         log_error!(
                             r#"invalid pattern for schema "{}" ({}): {}"#,
-                            schema.title.as_ref().map(|s| s.as_str()).unwrap_or(""),
+                            schema.title.as_deref().unwrap_or(""),
                             schema.url,
                             err
                         );
@@ -313,7 +313,7 @@ async fn update_configuration(mut context: Context<World>, configuration: Option
                                         }
                                     };
 
-                                    let s = schema.clone();
+                                    let s = schema;
 
                                     match mkdir(cache_path.join("schemas").to_str().unwrap()) {
                                         Ok(_) => {
@@ -484,7 +484,7 @@ pub(crate) async fn document_symbols(
         .ok_or_else(Error::invalid_params)?;
 
     Ok(Some(DocumentSymbolResponse::Nested(
-        document_symbols::create_symbols(&doc),
+        document_symbols::create_symbols(doc),
     )))
 }
 
@@ -656,10 +656,7 @@ pub(crate) async fn hover(
                                 .and_then(|m| m.description.clone())
                         });
 
-                        match docs {
-                            Some(d) => Some((d, link)),
-                            None => None,
-                        }
+                        docs.map(|d| (d, link))
                     })
                     .map(|(mut docs, link)| {
                         if !w.configuration.schema.enabled.unwrap_or(false)
@@ -939,10 +936,7 @@ pub(crate) async fn links(
                                             })
                                         })
                                 })
-                                .filter_map(|doc| match doc {
-                                    Some(doc) => Some(doc),
-                                    None => None,
-                                })
+                                .flatten()
                                 .unique()
                                 .map(move |link| (link, node))
                                 .filter_map(|(link, node)| {
@@ -1079,8 +1073,8 @@ async fn load_config_file(mut context: Context<World>) -> Result<(), anyhow::Err
 
     if let Some(config_path) = &w.configuration.taplo_config {
         if !config_path.is_empty() {
-            if is_absolute_path(&config_path) {
-                let f = read_file(&config_path).await?;
+            if is_absolute_path(config_path) {
+                let f = read_file(config_path).await?;
 
                 w.taplo_config = Some(toml::from_slice(&f)?);
 

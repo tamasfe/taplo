@@ -506,7 +506,7 @@ impl Entries {
                 let mut common_prefix_key = existing_key.clone().common_prefix(entry.key());
                 common_prefix_key
                     .additional_keys
-                    .push(entry.key().clone().common_prefix(&existing_key));
+                    .push(entry.key().clone().common_prefix(existing_key));
 
                 let mut pseudo_entries = Entries(IndexMap::with_capacity(2));
 
@@ -999,12 +999,12 @@ impl ArrayNode {
         match self.items.last_mut().unwrap() {
             ValueNode::Table(last_table) => match table.syntax.kind() {
                 TABLE_HEADER => last_table.entries.insert_table(
-                    key.without_prefix(&table.key().unwrap()).into(),
+                    key.without_prefix(table.key().unwrap()).into(),
                     table,
                     errors,
                 ),
                 TABLE_ARRAY_HEADER => last_table.entries.insert_table_array(
-                    key.without_prefix(&table.key().unwrap()).into(),
+                    key.without_prefix(table.key().unwrap()).into(),
                     table,
                     errors,
                 ),
@@ -1136,14 +1136,11 @@ impl Cast for EntryNode {
                 .map(rowan::NodeOrToken::Node)
                 .and_then(Cast::cast);
 
-            match val {
-                Some(value) => Some(Self {
-                    key: key.unwrap(),
-                    value,
-                    syntax: element,
-                }),
-                None => None,
-            }
+            val.map(|value| Self {
+                key: key.unwrap(),
+                value,
+                syntax: element,
+            })
         }
     }
 }
@@ -1590,9 +1587,9 @@ impl Cast for StringNode {
                         .as_token()
                         .unwrap()
                         .text()
-                        .strip_prefix(r#"""#)
+                        .strip_prefix('"')
                         .unwrap()
-                        .strip_suffix(r#"""#)
+                        .strip_suffix('"')
                         .unwrap(),
                 ) {
                     Ok(s) => s,
@@ -1612,7 +1609,7 @@ impl Cast for StringNode {
                         .strip_suffix(r#"""""#)
                         .unwrap();
 
-                    if let Some(n) = s.strip_prefix("\n") {
+                    if let Some(n) = s.strip_prefix('\n') {
                         s = n
                     }
 
@@ -1629,9 +1626,9 @@ impl Cast for StringNode {
                     .as_token()
                     .unwrap()
                     .text()
-                    .strip_prefix(r#"'"#)
+                    .strip_prefix('\'')
                     .unwrap()
-                    .strip_suffix(r#"'"#)
+                    .strip_suffix('\'')
                     .unwrap()
                     .into(),
                 syntax: element,
@@ -1648,7 +1645,7 @@ impl Cast for StringNode {
                         .strip_suffix(r#"'''"#)
                         .unwrap();
 
-                    if let Some(n) = s.strip_prefix("\n") {
+                    if let Some(n) = s.strip_prefix('\n') {
                         s = n
                     }
 

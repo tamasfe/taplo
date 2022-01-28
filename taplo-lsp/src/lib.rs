@@ -91,7 +91,7 @@ impl WorldState {
         let mut incomplete = Vec::new();
 
         if let Some(c) = &self.taplo_config {
-            if let Some(p) = uri.to_file_path().ok() {
+            if let Ok(p) = uri.to_file_path() {
                 let p = self
                     .workspace_uri
                     .as_ref()
@@ -131,24 +131,20 @@ impl WorldState {
     ///
     /// If nothing is found, returns `None`.
     fn get_schema_name(&self, uri: &Url) -> Option<String> {
-        match self.documents.get(uri) {
-            Some(doc) => {
-                for directive in Directive::collect_from_syntax(doc.parse.clone().into_syntax()) {
-                    if directive.value.starts_with("schema") {
-                        return directive
-                            .value
-                            .split_whitespace()
-                            .skip(1)
-                            .next()
-                            .map(|s| s.to_string());
-                    }
+        if let Some(doc) = self.documents.get(uri) {
+            for directive in Directive::collect_from_syntax(doc.parse.clone().into_syntax()) {
+                if directive.value.starts_with("schema") {
+                    return directive
+                        .value
+                        .split_whitespace()
+                        .nth(1)
+                        .map(|s| s.to_string());
                 }
             }
-            None => {}
         }
 
         if let Some(c) = &self.taplo_config {
-            if let Some(p) = uri.to_file_path().ok() {
+            if let Ok(p) = uri.to_file_path() {
                 let p = self
                     .workspace_uri
                     .as_ref()
@@ -209,7 +205,6 @@ impl WorldState {
         mut path: &str,
         mut context: Context<World>,
     ) -> Result<RootSchema, anyhow::Error> {
-
         // resolve taplo://
         if path.starts_with(&format!("{}://", BUILTIN_SCHEME)) {
             if path == "taplo://taplo.toml" {
@@ -302,26 +297,30 @@ impl WorldState {
                     for_url,
                     path,
                     for_url.scheme()
-                ))
+                ));
             }
             match for_url.join(path) {
                 Ok(schema) => serde_json::from_slice(
                     &read_file(
-                        schema.to_file_path().expect(&format!("{} has to be a file path here", schema))
+                        schema
+                            .to_file_path()
+                            .unwrap_or_else(|_| panic!("{} has to be a file path here", schema))
                             // this should be utf-8 safe since it came from an URL
-                            .to_str().unwrap()
-                    ).await?
-                ).map_err(Into::into),
+                            .to_str()
+                            .unwrap(),
+                    )
+                    .await?,
+                )
+                .map_err(Into::into),
                 Err(err) => Err(anyhow!(
                     "Cannot resolve relative schema {}, coming from file {}. Error: {}",
                     path,
                     for_url,
                     err
-                ))
+                )),
             }
         }
     }
-
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

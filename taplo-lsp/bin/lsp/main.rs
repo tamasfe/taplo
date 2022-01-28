@@ -47,10 +47,10 @@ fn main() {
                 .about("Runs the server using a TCP socket for communication")
                 .arg(
                     Arg::new("address")
-                        .about("The address to listen on")
+                        .help("The address to listen on")
                         .default_value("localhost"),
                 )
-                .arg(Arg::new("port").about("Port to use").default_value("5000")),
+                .arg(Arg::new("port").help("Port to use").default_value("5000")),
         )
         .setting(AppSettings::SubcommandRequiredElseHelp);
 

@@ -117,7 +117,7 @@ impl<'b> SemanticTokensBuilder<'b> {
 
             self.last_range = Some(range.into_lsp());
         } else {
-            let ranges = range.split_lines(&self.mapper);
+            let ranges = range.split_lines(self.mapper);
 
             for r in ranges {
                 let relative = relative_range(

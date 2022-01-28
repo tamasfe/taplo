@@ -16,6 +16,8 @@ crate-type = ["cdylib", "lib"]
 [features]
 default = []
 
+toml-test = []
+
 # In order to output anything on nightly wasm, an unstable feature
 # `set_stdio` must be used right now.
 nightly = []
@@ -37,6 +39,7 @@ sha2 = "0.9"
 taplo = { version = "0.8.0", path = "../taplo", features = [
     "serde",
     "verify",
+    "time",
     "schema",
 ] }
 time = { version = "0.3", features = ["parsing"] }

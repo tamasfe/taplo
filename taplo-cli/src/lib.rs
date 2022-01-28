@@ -1,5 +1,6 @@
 #![cfg_attr(all(target_arch = "wasm32", feature = "nightly"), feature(set_stdio))]
 
+use anyhow::anyhow;
 use clap::{App, AppSettings, Arg, ArgMatches};
 use external::{download_schema_index, load_config, load_schema_index, update_schemas};
 use once_cell::sync::Lazy;
@@ -8,10 +9,13 @@ use pretty_lint::{
     Severity,
 };
 use std::{
+    convert::TryFrom,
     ffi::OsString,
+    io::Read,
     sync::atomic::{AtomicBool, Ordering},
 };
-use taplo::formatter;
+use taplo::{formatter, value::Value};
+use toml_test::TomlTestValue;
 use util::cache_schema_index;
 
 #[cfg(target_arch = "wasm32")]
@@ -30,6 +34,8 @@ mod external;
 mod format;
 mod lint;
 
+#[cfg(feature = "toml-test")]
+pub mod toml_test;
 pub mod util;
 
 static ERROR_STATUS: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
@@ -257,6 +263,11 @@ where
         )
         .setting(AppSettings::SubcommandRequired)
         .setting(AppSettings::NoBinaryName);
+
+    #[cfg(feature = "toml-test")]
+    {
+        app = app.subcommand(App::new("toml-test"));
+    }
 
     match app.try_get_matches_from_mut(itr) {
         Ok(matches) => execute(matches).await,
@@ -561,6 +572,7 @@ async fn execute(matches: ArgMatches) -> bool {
                 !is_error()
             }
         }
+        Some(("toml-test", _)) => run_toml_test().is_ok(),
         _ => unreachable!(),
     };
 
@@ -573,6 +585,29 @@ async fn execute(matches: ArgMatches) -> bool {
     }
 
     success
+}
+
+fn run_toml_test() -> Result<(), anyhow::Error> {
+    let mut buf = String::new();
+    std::io::stdin().read_to_string(&mut buf)?;
+
+    let parse = taplo::parser::parse(&buf);
+
+    if !parse.errors.is_empty() {
+        return Err(anyhow!("invalid toml"));
+    }
+
+    let dom = parse.into_dom();
+
+    if !dom.errors().is_empty() {
+        return Err(anyhow!("invalid toml"));
+    }
+
+    let value = Value::try_from(dom).map_err(|err| anyhow!("{}", err))?;
+
+    serde_json::to_writer(std::io::stdout(), &TomlTestValue::new(&value))?;
+
+    Ok(())
 }
 
 #[cfg(target_arch = "wasm32")]

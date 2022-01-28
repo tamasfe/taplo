@@ -394,7 +394,7 @@
     "@taplo/lsp": "^0.2.4",
     "deep-equal": "^2.0.4",
     "encoding": "^0.1.13",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.1.1",
     "vscode-languageclient": "^7.0.0"
   },
   "devDependencies": {

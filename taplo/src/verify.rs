@@ -185,7 +185,7 @@ impl Validate for ValueNode {
                     // We try to use the smallest type,
                     // since some validators have size constraints,
                     // but we store everything as 64bits.
-                    Value::UnsizedInteger(u) => {
+                    Value::UnsignedInteger(u) => {
                         if let Ok(v) = u8::try_from(u) {
                             validator.validate_u8(v)
                         } else if let Ok(v) = u16::try_from(u) {
@@ -226,7 +226,9 @@ impl Validate for ValueNode {
 
                 #[cfg(feature = "chrono")]
                 match date {
-                    crate::value::Date::OffsetDateTime(d) => validator.validate_str(&d.to_rfc3339()),
+                    crate::value::Date::OffsetDateTime(d) => {
+                        validator.validate_str(&d.to_rfc3339())
+                    }
                     crate::value::Date::LocalDateTime(d) => validator.validate_str(&d.to_string()),
                     crate::value::Date::LocalDate(d) => validator.validate_str(&d.to_string()),
                     crate::value::Date::LocalTime(d) => validator.validate_str(&d.to_string()),
@@ -234,9 +236,10 @@ impl Validate for ValueNode {
 
                 #[cfg(feature = "time")]
                 match date {
-                    crate::value::Date::OffsetDateTime(d) => {
-                        validator.validate_str(&d.format(time::Format::Rfc3339))
-                    }
+                    crate::value::Date::OffsetDateTime(d) => validator.validate_str(
+                        &d.format(&time::format_description::well_known::Rfc3339)
+                            .unwrap(),
+                    ),
                     crate::value::Date::LocalDateTime(d) => validator.validate_str(&d.to_string()),
                     crate::value::Date::LocalDate(d) => validator.validate_str(&d.to_string()),
                     crate::value::Date::LocalTime(d) => validator.validate_str(&d.to_string()),

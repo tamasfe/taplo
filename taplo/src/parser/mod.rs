@@ -466,7 +466,12 @@ impl<'p> Parser<'p> {
                 }
             }
             FLOAT => {
-                if self.lexer.slice().starts_with('+') {
+                if (self.lexer.slice().starts_with('0') && self.lexer.slice() != "0")
+                    || (self.lexer.slice().starts_with("+0") && self.lexer.slice() != "+0")
+                    || (self.lexer.slice().starts_with("-0") && self.lexer.slice() != "-0")
+                {
+                    self.error("zero-padded numbers are not allowed")
+                } else if self.lexer.slice().starts_with('+') {
                     Err(())
                 } else {
                     for (i, s) in self.lexer.slice().split('.').enumerate() {
@@ -480,9 +485,7 @@ impl<'p> Parser<'p> {
                     Ok(())
                 }
             }
-            BOOL => {
-                self.token_as(IDENT)
-            }
+            BOOL => self.token_as(IDENT),
             _ => self.error("expected identifier"),
         }
     }

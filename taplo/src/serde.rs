@@ -7,6 +7,7 @@ use serde_crate::{
     ser::{Serialize, SerializeMap, SerializeSeq, Serializer},
     Deserialize,
 };
+use time::macros::format_description;
 
 impl Serialize for Value {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -15,7 +16,7 @@ impl Serialize for Value {
     {
         match self {
             Value::Bool(b) => serializer.serialize_bool(*b),
-            Value::UnsizedInteger(i) => serializer.serialize_u64(*i),
+            Value::UnsignedInteger(i) => serializer.serialize_u64(*i),
             Value::Integer(i) => serializer.serialize_i64(*i),
             Value::Float(f) => serializer.serialize_f64(*f),
             Value::String(s) => serializer.serialize_str(s),
@@ -26,18 +27,19 @@ impl Serialize for Value {
                     serializer.serialize_str(&dt.to_rfc3339())
                 }
                 #[cfg(feature = "time")]
-                crate::value::Date::OffsetDateTime(dt) => {
-                    serializer.serialize_str(&dt.format(time::Format::Rfc3339))
-                }
-                crate::value::Date::LocalDateTime(dt) => {
-                    serializer.serialize_str(&dt.format("%Y-%m-%d %H:%M:%S").to_string())
-                }
+                crate::value::Date::OffsetDateTime(dt) => serializer.serialize_str(
+                    &dt.format(&time::format_description::well_known::Rfc3339)
+                        .unwrap(),
+                ),
+                crate::value::Date::LocalDateTime(dt) => serializer.serialize_str(
+                    &dt.format(&format_description!("%Y-%m-%d %H:%M:%S"))
+                        .unwrap(),
+                ),
                 crate::value::Date::LocalDate(date) => {
-                    serializer.serialize_str(&date.format("%Y-%m-%d").to_string())
+                    serializer.serialize_str(&date.format(&format_description!("Y-%m-%d")).unwrap())
                 }
-                crate::value::Date::LocalTime(time) => {
-                    serializer.serialize_str(&time.format("%H:%M:%S").to_string())
-                }
+                crate::value::Date::LocalTime(time) => serializer
+                    .serialize_str(&time.format(&format_description!("%H:%M:%S")).unwrap()),
             },
             Value::Array(arr) => {
                 let mut seq = serializer.serialize_seq(Some(arr.len()))?;
@@ -122,28 +124,28 @@ impl<'de> Visitor<'de> for ValueVisitor {
     where
         E: serde_crate::de::Error,
     {
-        Ok(Value::UnsizedInteger(v.into()))
+        Ok(Value::UnsignedInteger(v.into()))
     }
 
     fn visit_u16<E>(self, v: u16) -> Result<Self::Value, E>
     where
         E: serde_crate::de::Error,
     {
-        Ok(Value::UnsizedInteger(v.into()))
+        Ok(Value::UnsignedInteger(v.into()))
     }
 
     fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E>
     where
         E: serde_crate::de::Error,
     {
-        Ok(Value::UnsizedInteger(v.into()))
+        Ok(Value::UnsignedInteger(v.into()))
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
     where
         E: serde_crate::de::Error,
     {
-        Ok(Value::UnsizedInteger(v))
+        Ok(Value::UnsignedInteger(v))
     }
 
     fn visit_f32<E>(self, v: f32) -> Result<Self::Value, E>

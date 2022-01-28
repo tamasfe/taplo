@@ -7,6 +7,7 @@ use crate::{
 };
 use indexmap::IndexMap;
 use std::convert::{TryFrom, TryInto};
+use time::macros::format_description;
 
 #[cfg(feature = "chrono")]
 use chrono::{DateTime, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime};
@@ -48,7 +49,7 @@ pub enum Date {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Bool(bool),
-    UnsizedInteger(u64),
+    UnsignedInteger(u64),
     Integer(i64),
     Float(f64),
     #[cfg(any(feature = "time", feature = "chrono"))]
@@ -75,14 +76,14 @@ impl Value {
 
     pub fn as_u64(&self) -> Option<&u64> {
         match self {
-            Value::UnsizedInteger(v) => Some(v),
+            Value::UnsignedInteger(v) => Some(v),
             _ => None,
         }
     }
 
     pub fn into_u64(self) -> Option<u64> {
         match self {
-            Value::UnsizedInteger(v) => Some(v),
+            Value::UnsignedInteger(v) => Some(v),
             _ => None,
         }
     }
@@ -284,13 +285,13 @@ impl TryFrom<dom::IntegerNode> for Value {
         Ok(match node.repr() {
             dom::IntegerRepr::Dec => match node_str.parse::<i64>() {
                 Ok(i) => Value::Integer(i),
-                Err(_) => Value::UnsizedInteger(node_str.parse::<u64>()?),
+                Err(_) => Value::UnsignedInteger(node_str.parse::<u64>()?),
             },
 
             dom::IntegerRepr::Bin => {
                 match i64::from_str_radix(node_str.trim_start_matches("0b"), 2) {
                     Ok(i) => Value::Integer(i),
-                    Err(_) => Value::UnsizedInteger(u64::from_str_radix(
+                    Err(_) => Value::UnsignedInteger(u64::from_str_radix(
                         node_str.trim_start_matches("0b"),
                         2,
                     )?),
@@ -299,7 +300,7 @@ impl TryFrom<dom::IntegerNode> for Value {
             dom::IntegerRepr::Oct => {
                 match i64::from_str_radix(node_str.trim_start_matches("0o"), 8) {
                     Ok(i) => Value::Integer(i),
-                    Err(_) => Value::UnsizedInteger(u64::from_str_radix(
+                    Err(_) => Value::UnsignedInteger(u64::from_str_radix(
                         node_str.trim_start_matches("0o"),
                         8,
                     )?),
@@ -308,7 +309,7 @@ impl TryFrom<dom::IntegerNode> for Value {
             dom::IntegerRepr::Hex => {
                 match i64::from_str_radix(node_str.trim_start_matches("0x"), 16) {
                     Ok(i) => Value::Integer(i),
-                    Err(_) => Value::UnsizedInteger(u64::from_str_radix(
+                    Err(_) => Value::UnsignedInteger(u64::from_str_radix(
                         node_str.trim_start_matches("0x"),
                         16,
                     )?),
@@ -371,19 +372,23 @@ impl TryFrom<dom::DateNode> for Value {
             .replace(" ", "T")
             .replace("t", "T");
 
-        if let Ok(d) = time::OffsetDateTime::parse(&date_str, time::Format::Rfc3339) {
+        if let Ok(d) =
+            time::OffsetDateTime::parse(&date_str, &time::format_description::well_known::Rfc3339)
+        {
             return Ok(Value::Date(Date::OffsetDateTime(d)));
         }
 
-        if let Ok(d) = time::PrimitiveDateTime::parse(&date_str, "%Y-%m-%dT%H:%M:%S") {
+        if let Ok(d) =
+            time::PrimitiveDateTime::parse(&date_str, &format_description!("%Y-%m-%dT%H:%M:%S"))
+        {
             return Ok(Value::Date(Date::LocalDateTime(d)));
         }
 
-        if let Ok(d) = time::Time::parse(&date_str, "%H:%M:%S") {
+        if let Ok(d) = time::Time::parse(&date_str, &format_description!("%H:%M:%S")) {
             return Ok(Value::Date(Date::LocalTime(d)));
         }
 
-        if let Ok(d) = time::Date::parse(&date_str, "%Y-%m-%d") {
+        if let Ok(d) = time::Date::parse(&date_str, &format_description!("%Y-%m-%d")) {
             return Ok(Value::Date(Date::LocalDate(d)));
         }
 

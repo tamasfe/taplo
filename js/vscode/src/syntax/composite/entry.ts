@@ -6,7 +6,7 @@ export const entryBegin = {
       patterns: [
         {
           match: "[^\\s.]+",
-          name: "variable.key.toml",
+          name: "support.type.property-name.toml",
         },
         {
           match: "\\.",

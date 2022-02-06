@@ -1,5 +1,5 @@
 include = ["**/*.toml"]
-exclude = ["**/*nested-1000.toml"]
+exclude = ["**/*nested-1000.toml", "**/node_modules/**", "**/invalid/*", "test-data/analytics/**"]
 
 [[rule]]
 include = ["**/Cargo.toml"]

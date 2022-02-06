@@ -1,52 +1,22 @@
 import * as vscode from "vscode";
 import * as client from "vscode-languageclient/node";
-import * as path from "path";
 import { registerCommands } from "./commands";
-import { Methods } from "@taplo/lsp";
+import { createClient } from "./client";
 
 let output: vscode.OutputChannel;
 
 export function getOutput(): vscode.OutputChannel {
+  if (!output) {
+    output = vscode.window.createOutputChannel("Even Better TOML");
+  }
+
   return output;
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-  let p = context.asAbsolutePath(path.join("dist", "server.js"));
-
-  let serverOpts: client.ServerOptions = {
-    run: { module: p, transport: client.TransportKind.ipc },
-    debug: { module: p, transport: client.TransportKind.ipc },
-  };
-
-  let clientOpts: client.LanguageClientOptions = {
-    documentSelector: [
-      { scheme: "file", language: "toml" },
-      { scheme: "file", language: "cargoLock" },
-    ],
-
-    initializationOptions: {
-      configuration: vscode.workspace.getConfiguration().get("evenBetterToml"),
-    },
-
-    synchronize: {
-      configurationSection: "evenBetterToml",
-      fileEvents: [
-        vscode.workspace.createFileSystemWatcher("**/.toml"),
-        vscode.workspace.createFileSystemWatcher("**/Cargo.lock"),
-      ],
-    },
-  };
-
-  let c = new client.LanguageClient(
-    "evenBetterToml",
-    "Even Better TOML LSP",
-    serverOpts,
-    clientOpts
-  );
+  const c = createClient(context);
 
   c.registerProposedFeatures();
-
-  output = vscode.window.createOutputChannel("Even Better TOML");
 
   registerCommands(context, c);
 
@@ -71,12 +41,12 @@ export async function activate(context: vscode.ExtensionContext) {
   } else {
     await c.onReady();
   }
-  c.sendNotification(Methods.CachePath.METHOD, {
-    path: context.globalStorageUri.fsPath,
-  });
-  c.onNotification(Methods.MessageWithOutput.METHOD, async params =>
-    showMessage(params, c)
-  );
+  // c.sendNotification(Methods.CachePath.METHOD, {
+  //   path: context.globalStorageUri.fsPath,
+  // });
+  // c.onNotification(Methods.MessageWithOutput.METHOD, async params =>
+  //   showMessage(params, c)
+  // );
 }
 
 async function checkAssociations() {
@@ -133,30 +103,30 @@ async function checkAssociations() {
   }
 }
 
-async function showMessage(
-  params: Methods.MessageWithOutput.Params,
-  c: client.LanguageClient
-) {
-  let show: string | undefined;
-  switch (params.kind) {
-    case Methods.MessageWithOutput.MessageKind.Info:
-      show = await vscode.window.showInformationMessage(
-        params.message,
-        "Show Details"
-      );
-    case Methods.MessageWithOutput.MessageKind.Warn:
-      show = await vscode.window.showWarningMessage(
-        params.message,
-        "Show Details"
-      );
-    case Methods.MessageWithOutput.MessageKind.Error:
-      show = await vscode.window.showErrorMessage(
-        params.message,
-        "Show Details"
-      );
-  }
+// export async function showMessage(
+//   params: Methods.MessageWithOutput.Params,
+//   c: client.LanguageClient
+// ) {
+//   let show: string | undefined;
+//   switch (params.kind) {
+//     case Methods.MessageWithOutput.MessageKind.Info:
+//       show = await vscode.window.showInformationMessage(
+//         params.message,
+//         "Show Details"
+//       );
+//     case Methods.MessageWithOutput.MessageKind.Warn:
+//       show = await vscode.window.showWarningMessage(
+//         params.message,
+//         "Show Details"
+//       );
+//     case Methods.MessageWithOutput.MessageKind.Error:
+//       show = await vscode.window.showErrorMessage(
+//         params.message,
+//         "Show Details"
+//       );
+//   }
 
-  if (show) {
-    c.outputChannel.show();
-  }
-}
+//   if (show) {
+//     c.outputChannel.show();
+//   }
+// }

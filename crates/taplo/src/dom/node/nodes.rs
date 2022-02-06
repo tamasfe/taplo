@@ -608,12 +608,12 @@ impl DateTime {
                 // SAFETY: we're replacing single-byte characters.
                 unsafe {
                     for b in text.as_bytes_mut() {
-                        if *b == ' ' as u8 || *b == 't' as u8 {
-                            *b = 'T' as _;
-                        } else if *b == 'z' as u8 {
-                            *b = 'Z' as u8;
-                        } else if *b == ',' as u8 {
-                            *b = '.' as u8;
+                        if *b == b' ' || *b == b't' {
+                            *b = b'T';
+                        } else if *b == b'z' {
+                            *b = b'Z';
+                        } else if *b == b',' {
+                            *b = b'.';
                         }
                     }
                 }

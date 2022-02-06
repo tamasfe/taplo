@@ -26,6 +26,7 @@ pub(crate) async fn format<E: Environment>(
         },
         ..Default::default()
     };
+
     if let Some(v) = p.options.insert_final_newline {
         format_opts.trailing_newline = v;
     }
@@ -39,6 +40,10 @@ pub(crate) async fn format<E: Environment>(
             doc.parse.clone().into_dom(),
             format_opts,
             ws.taplo_config.format_scopes(doc_path),
-        ),
+        )
+        .map_err(|err| {
+            tracing::error!(error = %err, "invalid key pattern");
+            Error::internal_error().with_data("invalid Taplo configuration")
+        })?,
     }]))
 }

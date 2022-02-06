@@ -1,4 +1,5 @@
 use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
+use rowan::TextRange;
 use rowan::TextSize;
 
 pub(crate) mod shared;
@@ -162,4 +163,14 @@ impl SyntaxExt for SyntaxNode {
 
         None
     }
+}
+
+pub fn join_ranges<I: IntoIterator<Item = TextRange>>(ranges: I) -> TextRange {
+    ranges
+        .into_iter()
+        .fold(None, |ranges, range| match ranges {
+            Some(r) => Some(range.cover(r)),
+            None => Some(range),
+        })
+        .unwrap()
 }

@@ -49,6 +49,7 @@ pub fn parse(source: &str) -> Parse {
 /// a Rowan green tree from them.
 pub(crate) struct Parser<'p> {
     skip_whitespace: bool,
+    glob_allowed: bool,
     current_token: Option<SyntaxKind>,
 
     // These tokens are not consumed on errors.
@@ -73,8 +74,12 @@ pub(crate) struct Parser<'p> {
 }
 
 impl<'p> Parser<'p> {
-    /// Required for patch syntax.
+    /// Required for patch syntax
+    /// and key matches.
+    /// 
+    /// It allows a part of glob syntax in identifiers as well.
     pub(crate) fn parse_key_only(mut self) -> Parse {
+        self.glob_allowed = true;
         let _ = with_node!(self.builder, KEY, self.parse_key());
 
         Parse {
@@ -97,6 +102,7 @@ impl<'p> Parser<'p> {
         Parser {
             current_token: None,
             skip_whitespace: true,
+            glob_allowed: false,
             error_whitelist: 0,
             lexer: SyntaxKind::lexer(source),
             builder: Default::default(),
@@ -416,6 +422,13 @@ impl<'p> Parser<'p> {
         let t = self.get_token()?;
         match t {
             IDENT => self.token(),
+            IDENT_WITH_GLOB => {
+                if self.glob_allowed {
+                    self.token_as(IDENT)
+                } else {
+                    self.error("expected identifier")
+                }
+            }
             INTEGER_HEX | INTEGER_BIN | INTEGER_OCT => self.token_as(IDENT),
             INTEGER => {
                 if self.lexer.slice().starts_with('+') {
@@ -511,7 +524,7 @@ impl<'p> Parser<'p> {
             INTEGER => {
                 // This is probably a logos bug or a priority issue,
                 // for some reason "1979-05-27" gets lexed as INTEGER.
-                if !self.lexer.slice().starts_with("-") && self.lexer.slice().contains('-') {
+                if !self.lexer.slice().starts_with('-') && self.lexer.slice().contains('-') {
                     return self.token_as(DATE);
                 }
 
@@ -550,9 +563,9 @@ impl<'p> Parser<'p> {
             }
             FLOAT => {
                 let int_slice = if self.lexer.slice().contains('.') {
-                    self.lexer.slice().split(".").next().unwrap()
+                    self.lexer.slice().split('.').next().unwrap()
                 } else {
-                    self.lexer.slice().split("e").next().unwrap()
+                    self.lexer.slice().split('e').next().unwrap()
                 };
 
                 if (int_slice.starts_with('0') && int_slice != "0")

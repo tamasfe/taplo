@@ -3,7 +3,7 @@ exclude = ["**/*nested-1000.toml", "**/node_modules/**", "**/invalid/*", "test-d
 
 [[rule]]
 include = ["**/Cargo.toml"]
-keys = ["dependencies", "dev-dependencies"]
+keys = ["dependencies", "*-dependencies"]
 
 [rule.formatting]
 reorder_keys = true

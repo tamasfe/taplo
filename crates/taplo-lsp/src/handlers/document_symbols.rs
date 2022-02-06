@@ -5,7 +5,7 @@ use lsp_async_stub::{
     Context, Params,
 };
 use lsp_types::{DocumentSymbol, DocumentSymbolParams, DocumentSymbolResponse, SymbolKind};
-use taplo::{dom::Node, rowan::TextRange, util::syntax::join_ranges};
+use taplo::{dom::Node, rowan::TextRange, util::join_ranges};
 use taplo_common::environment::Environment;
 
 pub(crate) async fn document_symbols<E: Environment>(
@@ -34,7 +34,7 @@ pub(crate) fn create_symbols(doc: &DocumentState) -> Vec<DocumentSymbol> {
         symbols_for_value(
             ensure_non_empty_key(key.value().to_string()),
             None,
-            &entry,
+            entry,
             mapper,
             &mut symbols,
         );
@@ -151,7 +151,7 @@ fn symbols_for_value(
                         symbols_for_value(
                             ensure_non_empty_key(key.value().to_string()),
                             None,
-                            &entry,
+                            entry,
                             mapper,
                             &mut child_symbols,
                         );

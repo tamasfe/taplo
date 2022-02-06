@@ -1,13 +1,10 @@
-use std::{ops::Range, sync::Arc};
-
-use crate::{dom, parser::Parser, syntax::SyntaxKind};
-
 use super::{
-    error::QueryError,
-    from_syntax::keys_from_syntax,
-    node::{DomNode, Key, Node},
+    node::{DomNode, Node},
+    Keys,
 };
+use crate::{dom, syntax::SyntaxKind};
 use rowan::TextRange;
+use std::{ops::Range, sync::Arc};
 use thiserror::Error;
 
 #[derive(Debug)]
@@ -32,44 +29,23 @@ impl Rewrite {
         let patch = patch.into();
         match patch {
             Patch::RenameKeys { key, to } => {
-                let mut keys = parse_keys(&key)?;
-                let mut node = self.root.clone();
+                let keys = key.parse::<Keys>()?;
+                let nodes = self.root.find_all_matches(keys, false)?;
 
-                while let Some(search_key) = keys.next() {
-                    if keys.len() == 0 {
-                        if let Node::Table(t) = node {
-                            let entries = t.inner.entries.read();
-                            let (node_key, _) =
-                                entries.lookup.get_key_value(&search_key).ok_or_else(|| {
-                                    Error::Dom(dom::Error::Query(QueryError::NotFound {
-                                        key: search_key.value().to_string(),
-                                    }))
-                                })?;
+                for (keys, _) in nodes {
+                    let key = match keys.iter().last().cloned() {
+                        Some(dom::KeyOrIndex::Key(k)) => k,
+                        _ => continue,
+                    };
 
-                            let mut ranges = Vec::with_capacity(1);
-                            if let Some(s) = node_key.syntax() {
-                                ranges.push(s.text_range());
-                            }
-                            let additional_syntax = node_key.inner.additional_syntaxes.read();
-                            ranges.extend(additional_syntax.iter().map(|s| s.text_range()));
+                    for range in key.text_ranges() {
+                        self.check_overlap(range)?;
 
-                            for range in &ranges {
-                                self.check_overlap(*range)?;
-                            }
-
-                            self.patches
-                                .extend(ranges.into_iter().map(|range| PendingPatch {
-                                    range,
-                                    kind: AppliedPatchKind::Replace(to.clone()),
-                                }));
-                        } else {
-                            return Err(Error::ExpectedTable);
-                        }
-
-                        break;
+                        self.patches.push(PendingPatch {
+                            range,
+                            kind: PendingPatchKind::Replace(to.clone()),
+                        })
                     }
-
-                    node = node.try_get(search_key.value())?;
                 }
             }
         }
@@ -114,7 +90,7 @@ impl core::fmt::Display for Rewrite {
 
         for patch in &self.patches {
             match &patch.kind {
-                AppliedPatchKind::Replace(to) => {
+                PendingPatchKind::Replace(to) => {
                     s.replace_range(std_range(patch.range), &*to);
                 }
             }
@@ -132,11 +108,11 @@ pub enum Patch {
 #[derive(Debug)]
 pub struct PendingPatch {
     pub range: TextRange,
-    pub kind: AppliedPatchKind,
+    pub kind: PendingPatchKind,
 }
 
 #[derive(Debug)]
-pub enum AppliedPatchKind {
+pub enum PendingPatchKind {
     Replace(Arc<str>),
 }
 
@@ -144,22 +120,12 @@ pub enum AppliedPatchKind {
 pub enum Error {
     #[error("only the root node can be patched")]
     RootNodeExpected,
-    #[error("the given key is invalid: {0}")]
-    InvalidKey(crate::parser::Error),
     #[error("expected table")]
     ExpectedTable,
     #[error("new patches would overlap with existing ones")]
     Overlap,
     #[error("{0}")]
     Dom(#[from] dom::error::Error),
-}
-
-fn parse_keys(s: &str) -> Result<impl ExactSizeIterator<Item = Key>, Error> {
-    let mut p = Parser::new(s).parse_key_only();
-    if let Some(err) = p.errors.pop() {
-        return Err(Error::InvalidKey(err));
-    }
-    Ok(keys_from_syntax(&p.into_syntax().into()))
 }
 
 #[cfg(test)]
@@ -174,9 +140,14 @@ mod tests {
 [table.middle.inner.inner]
 "#;
 
+        let expected_toml = r#"
+[table_new.middle_new.inner_new]
+[table_new.middle_new.inner_new.inner2_new]
+"#;
+
         let root = parse(toml).into_dom();
 
-        let mut patches = Rewrite::new(root.clone()).unwrap();
+        let mut patches = Rewrite::new(root).unwrap();
 
         patches.rename_keys("table", "table_new").unwrap();
         patches.rename_keys("table.middle", "middle_new").unwrap();
@@ -187,7 +158,37 @@ mod tests {
             .rename_keys("table.middle.inner.inner", "inner2_new")
             .unwrap();
 
-        println!("{patches}");
+        assert_eq!(expected_toml, patches.to_string());
+    }
+
+    #[test]
+    fn rename_keys_array_of_tables() {
+        let toml = r#"
+[[table.middle.inner]]
+[[table.middle.inner]]
+[table.middle.inner.inner]
+"#;
+
+        let expected_toml = r#"
+[[table_new.middle_new.inner_new]]
+[[table_new.middle_new.inner_new]]
+[table_new.middle_new.inner_new.inner2_new]
+"#;
+
+        let root = parse(toml).into_dom();
+
+        let mut patches = Rewrite::new(root).unwrap();
+
+        patches.rename_keys("table", "table_new").unwrap();
+        patches.rename_keys("table.middle", "middle_new").unwrap();
+        patches
+            .rename_keys("table.middle.inner", "inner_new")
+            .unwrap();
+        patches
+            .rename_keys("table.middle.inner.*.inner", "inner2_new")
+            .unwrap();
+
+        assert_eq!(expected_toml, patches.to_string());
     }
 }
 

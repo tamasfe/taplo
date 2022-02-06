@@ -17,8 +17,13 @@ pub enum SyntaxKind {
     #[regex(r"#[^\n\r]*")]
     COMMENT,
 
-    #[regex(r"[A-Za-z0-9_-]+")]
+    #[regex(r"[A-Za-z0-9_-]+", priority = 2)]
     IDENT,
+
+    /// Not part of the regular TOML syntax, only used to allow
+    /// glob patterns in keys.
+    #[regex(r"[*?A-Za-z0-9_-]+")]
+    IDENT_WITH_GLOB,
 
     #[token(".")]
     PERIOD,
@@ -41,7 +46,7 @@ pub enum SyntaxKind {
     #[regex(r#"'''"#, lex_multi_line_string_literal)]
     MULTI_LINE_STRING_LITERAL,
 
-    #[regex(r"[+-]?[0-9_]+", priority = 3)]
+    #[regex(r"[+-]?[0-9_]+", priority = 4)]
     INTEGER,
 
     #[regex(r"0x[0-9A-Fa-f_]+")]
@@ -53,7 +58,7 @@ pub enum SyntaxKind {
     #[regex(r"0b(0|1|_)+")]
     INTEGER_BIN,
 
-    #[regex(r"[-+]?([0-9_]+(\.[0-9_]+)?([eE][+-]?[0-9_]+)?|nan|inf)", priority = 2)]
+    #[regex(r"[-+]?([0-9_]+(\.[0-9_]+)?([eE][+-]?[0-9_]+)?|nan|inf)", priority = 3)]
     FLOAT,
 
     #[regex(r"true|false")]

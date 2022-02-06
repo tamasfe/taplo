@@ -1,12 +1,13 @@
 use super::{DomNode, Node};
 use crate::{
     dom::{error::Error, Entries, KeyOrIndex, Keys},
-    syntax::SyntaxElement,
+    syntax::{SyntaxElement, SyntaxKind},
     util::{shared::Shared, unescape},
 };
+use logos::Lexer;
 use once_cell::unsync::OnceCell;
 use rowan::{NodeOrToken, TextRange};
-use std::{iter::once, sync::Arc};
+use std::{fmt::Write, iter::once, sync::Arc};
 use time::macros::format_description;
 
 macro_rules! wrap_node {
@@ -257,6 +258,20 @@ impl AsRef<str> for Key {
 
 impl core::fmt::Display for Key {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(s) = self.syntax() {
+            return s.fmt(f);
+        }
+
+        if !matches!(
+            Lexer::<SyntaxKind>::new(self.value()).next(),
+            Some(SyntaxKind::IDENT) | None
+        ) {
+            f.write_char('\'')?;
+            self.value().fmt(f)?;
+            f.write_char('\'')?;
+            return Ok(());
+        }
+
         self.value().fmt(f)
     }
 }
@@ -599,8 +614,6 @@ wrap_node! {
 
 impl DateTime {
     pub fn value(&self) -> DateTimeValue {
-        use crate::syntax::SyntaxKind;
-
         *self.inner.value.get_or_init(|| {
             if let Some(token) = self.syntax().and_then(|s| s.as_token()) {
                 let mut text = token.text().to_string();

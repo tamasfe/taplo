@@ -1,13 +1,20 @@
-use crate::{private::Sealed, syntax::SyntaxElement, util::shared::Shared};
+use std::iter::empty;
+
+use crate::{
+    private::Sealed,
+    syntax::{SyntaxElement, SyntaxKind},
+    util::shared::Shared,
+};
 
 mod nodes;
+use either::Either;
 pub use nodes::*;
 use rowan::TextRange;
 
 use super::{
     error::{Error, QueryError},
     index::Index,
-    KeyOrIndex, Keys,
+    Comment, FromSyntax, KeyOrIndex, Keys,
 };
 
 pub trait DomNode: Sized + Sealed {
@@ -75,15 +82,20 @@ impl DomNode for Node {
 
 impl Node {
     pub fn get(&self, idx: impl Index) -> Node {
-        idx.index_into(self).unwrap()
+        idx.index_into(self).unwrap_or_else(|| {
+            Node::from(
+                InvalidInner {
+                    errors: Shared::from(Vec::from([Error::Query(QueryError::NotFound)])),
+                    syntax: None,
+                }
+                .wrap(),
+            )
+        })
     }
 
     pub fn try_get(&self, idx: impl Index) -> Result<Node, Error> {
-        idx.index_into(self).ok_or_else(|| {
-            Error::Query(QueryError::NotFound {
-                key: idx.to_string(),
-            })
-        })
+        idx.index_into(self)
+            .ok_or(Error::Query(QueryError::NotFound))
     }
 
     pub fn get_matches(
@@ -262,6 +274,19 @@ impl Node {
         }
 
         ranges.into_iter()
+    }
+
+    pub fn comments(&self) -> impl Iterator<Item = Comment> {
+        if let Some(syntax) = self.syntax().cloned().and_then(|s| s.into_node()) {
+            Either::Left(
+                syntax
+                    .descendants_with_tokens()
+                    .filter(|t| t.kind() == SyntaxKind::COMMENT)
+                    .map(Comment::from_syntax),
+            )
+        } else {
+            Either::Right(empty())
+        }
     }
 
     fn flat_iter_impl(&self) -> Vec<(Keys, Node)> {

@@ -20,8 +20,8 @@ pub enum Error {
 
 #[derive(Debug, Clone, Error)]
 pub enum QueryError {
-    #[error("the key or index was not found: {key}")]
-    NotFound { key: String },
+    #[error("the key or index was not found")]
+    NotFound,
     #[error("invalid glob pattern: {0}")]
     InvalidGlob(#[from] globset::Error),
     #[error("the given key is invalid: {0}")]

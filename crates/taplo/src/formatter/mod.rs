@@ -6,6 +6,7 @@
 use crate::{
     dom::{self, node::DomNode, FromSyntax, Keys, Node},
     syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
+    util::overlaps,
 };
 use rowan::{GreenNode, NodeOrToken, TextRange};
 use std::{
@@ -169,11 +170,23 @@ impl Options {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 struct Context {
     indent_level: usize,
     force_multiline: bool,
+    errors: Rc<[TextRange]>,
     scopes: Rc<ScopedOptions>,
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Self {
+            indent_level: Default::default(),
+            force_multiline: Default::default(),
+            errors: Rc::from([]),
+            scopes: Default::default(),
+        }
+    }
 }
 
 impl Context {
@@ -184,6 +197,16 @@ impl Context {
                 opts.update(s.clone());
             }
         }
+    }
+
+    fn error_at(&self, range: TextRange) -> bool {
+        for error_range in self.errors.iter().copied() {
+            if overlaps(range, error_range) {
+                return true;
+            }
+        }
+
+        false
     }
 
     fn indent<'o>(&self, opts: &'o Options) -> impl Iterator<Item = &'o str> {
@@ -198,7 +221,14 @@ pub fn format_green(green: GreenNode, options: Options) -> String {
 
 /// Parses then formats a TOML document, ignoring errors.
 pub fn format(src: &str, options: Options) -> String {
-    format_syntax(crate::parser::parse(src).into_syntax(), options)
+    let p = crate::parser::parse(src);
+
+    let ctx = Context {
+        errors: p.errors.iter().map(|err| err.range).collect(),
+        ..Context::default()
+    };
+
+    format_impl(p.into_syntax(), options, ctx)
 }
 
 /// Formats a parsed TOML syntax tree.
@@ -397,10 +427,12 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
     let mut scoped_options = options.clone();
 
     for c in node.children_with_tokens() {
-        if c.as_node().is_some() {
-            scoped_options = options.clone();
-            context.update_options(&mut scoped_options, c.text_range());
+        if context.error_at(c.text_range()) {
+            formatted += &c.to_string();
+            continue;
         }
+
+        let c_range = c.text_range();
 
         match c {
             NodeOrToken::Node(node) => match node.kind() {
@@ -409,6 +441,9 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                         formatted += scoped_options.newline();
                         skip_newlines = 0;
                     }
+
+                    scoped_options = options.clone();
+                    context.update_options(&mut scoped_options, c_range);
 
                     // We treat everything as indented other than table headers from now on.
                     if scoped_options.indent_entries && context.indent_level == 0 {
@@ -463,6 +498,9 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                     }
                 }
                 ENTRY => {
+                    scoped_options = options.clone();
+                    context.update_options(&mut scoped_options, c_range);
+
                     if add_comments(
                         &mut comment_group,
                         &mut formatted,

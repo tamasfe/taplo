@@ -1,7 +1,7 @@
-use self::{from_syntax::keys_from_syntax, node::Key, error::QueryError};
-use crate::{parser::Parser, HashMap};
+use self::{error::QueryError, from_syntax::keys_from_syntax, node::Key};
+use crate::{parser::Parser, syntax::SyntaxElement, HashMap};
 use core::iter::once;
-use std::{iter::FromIterator, str::FromStr, sync::Arc};
+use std::{iter::{FromIterator, empty}, str::FromStr, sync::Arc};
 
 #[cfg(feature = "serde")]
 mod serde;
@@ -12,11 +12,13 @@ pub mod error;
 pub mod index;
 pub mod node;
 pub mod rewrite;
+mod to_toml;
 
 pub use error::Error;
 pub use from_syntax::FromSyntax;
 use itertools::Itertools;
 pub use node::Node;
+use once_cell::unsync::OnceCell;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum KeyOrIndex {
@@ -145,6 +147,10 @@ impl Keys {
         Self::new(self.keys.iter().rev().cloned().skip(n).rev())
     }
 
+    pub(crate) fn empty() -> Self {
+        Self::new(empty())
+    }
+
     pub(crate) fn new(keys: impl Iterator<Item = KeyOrIndex>) -> Self {
         let keys: Arc<[KeyOrIndex]> = keys.collect();
         let dotted: Arc<str> = Arc::from(keys.iter().join(".").as_str());
@@ -234,5 +240,96 @@ impl FromIterator<(Key, Node)> for Entries {
         }
 
         Self { lookup, all }
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct Comment {
+    syntax: Option<SyntaxElement>,
+    value: OnceCell<CommentValue>,
+}
+
+impl Comment {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self {
+            syntax: None,
+            value: OnceCell::from(CommentValue::Comment(value.into())),
+        }
+    }
+
+    pub fn new_directive(name: impl Into<String>, value: impl Into<String>) -> Self {
+        Self {
+            syntax: None,
+            value: OnceCell::from(CommentValue::Directive {
+                name: name.into(),
+                value: value.into(),
+            }),
+        }
+    }
+
+    pub fn is_directive(&self) -> bool {
+        self.value_internal().is_directive()
+    }
+
+    pub fn directive(&self) -> Option<&str> {
+        if let CommentValue::Directive { name, .. } = self.value_internal() {
+            Some(name)
+        } else {
+            None
+        }
+    }
+
+    pub fn value(&self) -> &str {
+        match self.value_internal() {
+            CommentValue::Comment(s) => s,
+            CommentValue::Directive { value, .. } => value,
+        }
+    }
+
+    fn value_internal(&self) -> &CommentValue {
+        self.value
+            .get_or_init(|| match self.syntax.as_ref().and_then(|s| s.as_token()) {
+                Some(t) => {
+                    let text = t.text();
+
+                    if let Some(directive_content) = text.strip_prefix("#:") {
+                        let mut directive_content = directive_content.split(' ');
+                        let directive_name = directive_content.next().unwrap_or("");
+                        let directive_value = directive_content.next().unwrap_or("");
+                        return CommentValue::Directive {
+                            name: directive_name.into(),
+                            value: directive_value.into(),
+                        };
+                    }
+
+                    if let Some(comment_content) = text.strip_prefix('#') {
+                        return CommentValue::Comment(comment_content.into());
+                    }
+
+                    Default::default()
+                }
+                None => Default::default(),
+            })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum CommentValue {
+    Comment(String),
+    Directive { name: String, value: String },
+}
+
+impl CommentValue {
+    /// Returns `true` if the comment value is [`Directive`].
+    ///
+    /// [`Directive`]: CommentValue::Directive
+    fn is_directive(&self) -> bool {
+        matches!(self, Self::Directive { .. })
+    }
+}
+
+impl Default for CommentValue {
+    fn default() -> Self {
+        Self::Comment(String::new())
     }
 }

@@ -74,6 +74,7 @@ pub mod util;
 pub use rowan;
 
 pub type HashMap<K, V> = ahash::AHashMap<K, V>;
+pub type HashSet<V> = ahash::AHashSet<V>;
 
 #[cfg(test)]
 mod tests;

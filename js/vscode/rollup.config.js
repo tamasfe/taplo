@@ -4,7 +4,7 @@ import resolve from "@rollup/plugin-node-resolve";
 
 export default {
   input: {
-    server: "src/server.ts",
+    // server: "src/server.ts",
     extension: "src/extension.ts",
   },
   output: {

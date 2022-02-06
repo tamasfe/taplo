@@ -8,7 +8,7 @@ export function registerCommands(
   ctx: vscode.ExtensionContext,
   c: client.LanguageClient
 ) {
-  conversionCommands.register(ctx, c);
-  debugCommands.register(ctx, c);
-  cacheCommands.register(ctx, c);
+  // conversionCommands.register(ctx, c);
+  // debugCommands.register(ctx, c);
+  // cacheCommands.register(ctx, c);
 }

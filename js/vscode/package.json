@@ -183,6 +183,45 @@
           "scope": "resource",
           "default": true
         },
+        "evenBetterToml.taplo.bundled": {
+          "description": "Whether to use the bundled LSP in the extension.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": true
+        },
+        "evenBetterToml.taplo.native.path": {
+          "description": "An absolute path to the `taplo-lsp` native executable.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "scope": "resource",
+          "default": null
+        },
+        "evenBetterToml.taplo.native.env": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "scope": "resource",
+          "description": "Environment variables for the Taplo LSP executable.",
+          "properties": {
+            "type": "string"
+          },
+          "default": null
+        },
+        "evenBetterToml.taplo.native.extraArgs": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "scope": "resource",
+          "description": "Additional arguments for the Taplo LSP executable.",
+          "items": {
+            "type": "string"
+          },
+          "default": null
+        },
         "evenBetterToml.taploConfig": {
           "description": "An absolute, or workspace relative path to the Taplo configuration file.",
           "type": "string",
@@ -391,19 +430,18 @@
     "build": "yarn --ignore-engines rollup --silent -c rollup.config.js"
   },
   "dependencies": {
-    "@taplo/lsp": "^0.2.4",
     "deep-equal": "^2.0.4",
     "encoding": "^0.1.13",
-    "node-fetch": "^3.1.1",
-    "vscode-languageclient": "^7.0.0"
+    "vscode-languageclient": "^7.0.0",
+    "which": "^2.0.2"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^16.0.0",
     "@rollup/plugin-node-resolve": "^10.0.0",
     "@types/deep-equal": "^1.0.1",
     "@types/node": "^12.12.0",
-    "@types/node-fetch": "^2.5.7",
     "@types/vscode": "^1.44.0",
+    "@types/which": "^2.0.1",
     "rollup": "^2.33.1",
     "rollup-plugin-typescript2": "^0.29.0",
     "ts-node": "^8.10.2",

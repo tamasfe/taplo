@@ -7,7 +7,7 @@ use rowan::TextRange;
 use super::{
     error::{Error, QueryError},
     index::Index,
-    Keys,
+    KeyOrIndex, Keys,
 };
 
 pub trait DomNode: Sized + Sealed {
@@ -86,6 +86,38 @@ impl Node {
         })
     }
 
+    pub fn get_matches(
+        &self,
+        pattern: &str,
+    ) -> Result<impl Iterator<Item = (KeyOrIndex, Node)>, Error> {
+        let glob = globset::Glob::new(pattern)
+            .map_err(QueryError::from)?
+            .compile_matcher();
+        let mut matched = Vec::new();
+
+        match self {
+            Node::Table(t) => {
+                let entries = t.entries().read();
+                for (key, node) in entries.iter() {
+                    if glob.is_match(pattern) {
+                        matched.push((KeyOrIndex::from(key.clone()), node.clone()));
+                    }
+                }
+            }
+            Node::Array(arr) => {
+                let items = arr.items().read();
+                for (idx, node) in items.iter().enumerate() {
+                    if glob.is_match(&idx.to_string()) {
+                        matched.push((KeyOrIndex::from(idx), node.clone()));
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        Ok(matched.into_iter())
+    }
+
     /// Validate the node and then all children recursively.
     pub fn validate(&self) -> Result<(), impl Iterator<Item = Error> + core::fmt::Debug> {
         let mut errors = Vec::new();
@@ -119,30 +151,106 @@ impl Node {
         all.into_iter()
     }
 
+    pub fn find_all_matches(
+        &self,
+        keys: Keys,
+        include_children: bool,
+    ) -> Result<impl Iterator<Item = (Keys, Node)>, Error> {
+        let mut all = self.flat_iter_impl();
+
+        let mut err: Option<Error> = None;
+
+        all.retain(|(k, _)| {
+            if k.len() < keys.len() {
+                return false;
+            }
+
+            let search_keys = keys.clone();
+            let keys = k.clone();
+
+            for (search_key, key) in search_keys.iter().zip(keys.iter()) {
+                match search_key {
+                    KeyOrIndex::Key(search_key) => {
+                        let glob = match globset::Glob::new(search_key.value()) {
+                            Ok(g) => g.compile_matcher(),
+                            Err(glob_err) => {
+                                err = Some(QueryError::from(glob_err).into());
+                                return true;
+                            }
+                        };
+
+                        match key {
+                            KeyOrIndex::Key(key) => {
+                                if !glob.is_match(key.value()) {
+                                    return false;
+                                }
+                            }
+                            KeyOrIndex::Index(idx) => {
+                                if !glob.is_match(&idx.to_string()) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                    KeyOrIndex::Index(search_idx) => match key {
+                        KeyOrIndex::Key(_) => {
+                            return false;
+                        }
+                        KeyOrIndex::Index(idx) => {
+                            if idx != search_idx {
+                                return false;
+                            }
+                        }
+                    },
+                }
+            }
+
+            true
+        });
+
+        if !include_children {
+            all.retain(|(k, _)| k.len() == keys.len());
+        }
+
+        if let Some(err) = err {
+            return Err(err);
+        }
+
+        Ok(all.into_iter())
+    }
+
     pub fn text_ranges(&self) -> impl ExactSizeIterator<Item = TextRange> {
         let mut ranges = Vec::with_capacity(1);
 
         match self {
             Node::Table(v) => {
-                if let Some(r) = v.syntax().map(|s| s.text_range()) {
-                    ranges.push(r);
-                }
-
                 let entries = v.entries().read();
 
                 for (k, entry) in entries.iter() {
                     ranges.extend(k.text_ranges());
                     ranges.extend(entry.text_ranges());
                 }
+
+                if let Some(mut r) = v.syntax().map(|s| s.text_range()) {
+                    for range in &ranges {
+                        r = r.cover(*range);
+                    }
+
+                    ranges.insert(0, r);
+                }
             }
             Node::Array(v) => {
-                if let Some(r) = v.syntax().map(|s| s.text_range()) {
-                    ranges.push(r);
-                }
-
                 let items = v.items().read();
                 for item in items.iter() {
                     ranges.extend(item.text_ranges());
+                }
+
+                if let Some(mut r) = v.syntax().map(|s| s.text_range()) {
+                    for range in &ranges {
+                        r = r.cover(*range);
+                    }
+
+                    ranges.insert(0, r);
                 }
             }
             Node::Bool(v) => ranges.push(v.syntax().map(|s| s.text_range()).unwrap_or_default()),
@@ -156,15 +264,39 @@ impl Node {
         ranges.into_iter()
     }
 
+    fn flat_iter_impl(&self) -> Vec<(Keys, Node)> {
+        let mut all = Vec::new();
+
+        match self {
+            Node::Table(t) => {
+                let entries = t.inner.entries.read();
+                for (key, entry) in &entries.all {
+                    entry.collect_flat(Keys::from(key.clone()), &mut all);
+                }
+            }
+            Node::Array(arr) => {
+                let items = arr.inner.items.read();
+                for (idx, item) in items.iter().enumerate() {
+                    item.collect_flat(Keys::from(idx), &mut all);
+                }
+            }
+            _ => {}
+        }
+
+        all
+    }
+
     fn collect_flat(&self, parent: Keys, all: &mut Vec<(Keys, Node)>) {
         match self {
             Node::Table(t) => {
+                all.push((parent.clone(), self.clone()));
                 let entries = t.inner.entries.read();
                 for (key, entry) in &entries.all {
                     entry.collect_flat(parent.join(key.clone()), all);
                 }
             }
             Node::Array(arr) => {
+                all.push((parent.clone(), self.clone()));
                 let items = arr.inner.items.read();
                 for (idx, item) in items.iter().enumerate() {
                     item.collect_flat(parent.join(Key::new(idx.to_string())), all);

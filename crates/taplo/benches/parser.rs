@@ -1,7 +1,10 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use taplo::parser::parse;
+use taplo::{
+    formatter::{format, format_syntax, Options},
+    parser::parse,
+};
 
-pub fn criterion_benchmark(c: &mut Criterion) {
+pub fn parsing(c: &mut Criterion) {
     let source = include_str!("../../../test-data/example.toml");
     c.bench_function("parse taplo syntax", |b| {
         b.iter(|| parse(black_box(source)))
@@ -12,10 +15,22 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("parse taplo dom and validate", |b| {
         b.iter(|| parse(black_box(source)).into_dom().validate())
     });
-    c.bench_function("parse toml", |b| {
+    c.bench_function("parse toml-rs", |b| {
         b.iter(|| toml::from_str::<toml::Value>(black_box(source)))
     });
 }
 
-criterion_group!(benches, criterion_benchmark);
+pub fn formatting(c: &mut Criterion) {
+    let source = include_str!("../../../test-data/example.toml");
+
+    let syntax = parse(source).into_syntax();
+    c.bench_function("format syntax", |b| {
+        b.iter(|| format_syntax(black_box(syntax.clone()), Options::default()))
+    });
+    c.bench_function("parse and format", |b| {
+        b.iter(|| format(black_box(source), Options::default()))
+    });
+}
+
+criterion_group!(benches, parsing, formatting);
 criterion_main!(benches);

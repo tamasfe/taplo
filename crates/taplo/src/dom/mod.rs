@@ -1,7 +1,7 @@
-use self::node::Key;
-use crate::HashMap;
+use self::{from_syntax::keys_from_syntax, node::Key, error::QueryError};
+use crate::{parser::Parser, HashMap};
 use core::iter::once;
-use std::{iter::FromIterator, sync::Arc};
+use std::{iter::FromIterator, str::FromStr, sync::Arc};
 
 #[cfg(feature = "serde")]
 mod serde;
@@ -104,7 +104,7 @@ impl Keys {
         )
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &KeyOrIndex> {
+    pub fn iter(&self) -> impl ExactSizeIterator<Item = &KeyOrIndex> {
         self.keys.iter()
     }
 
@@ -152,6 +152,26 @@ impl Keys {
     }
 }
 
+impl core::fmt::Display for Keys {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.dotted().fmt(f)
+    }
+}
+
+impl FromStr for Keys {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut p = Parser::new(s).parse_key_only();
+        if let Some(err) = p.errors.pop() {
+            return Err(QueryError::InvalidKey(err).into());
+        }
+        Ok(Keys::new(
+            keys_from_syntax(&p.into_syntax().into()).map(Into::into),
+        ))
+    }
+}
+
 impl PartialEq for Keys {
     fn eq(&self, other: &Self) -> bool {
         self.dotted == other.dotted
@@ -184,6 +204,10 @@ pub struct Entries {
 impl Entries {
     pub fn len(&self) -> usize {
         self.all.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.all.is_empty()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &(Key, Node)> {

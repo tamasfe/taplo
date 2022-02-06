@@ -43,7 +43,8 @@ impl<E: Environment> Taplo<E> {
             dom,
             format_opts,
             config.format_scopes(Path::new("-")),
-        );
+        )
+        .map_err(|err| anyhow!("invalid key pattern: {err}"))?;
 
         if cmd.check {
             if source != formatted {
@@ -100,7 +101,8 @@ impl<E: Environment> Taplo<E> {
             let dom = p.into_dom();
 
             let formatted =
-                formatter::format_with_path_scopes(dom, format_opts, config.format_scopes(&path));
+                formatter::format_with_path_scopes(dom, format_opts, config.format_scopes(&path))
+                    .map_err(|err| anyhow!("invalid key pattern: {err}"))?;
 
             if cmd.check {
                 if source != formatted {

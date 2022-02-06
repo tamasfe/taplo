@@ -539,6 +539,15 @@ fn root_from_syntax(syntax: SyntaxElement) -> Table {
                                     if let Some((existing_key, existing_node)) =
                                         entries.lookup.get_key_value(&key)
                                     {
+                                        if let Some(key_syntax) = key.syntax() {
+                                            existing_key
+                                                .inner
+                                                .additional_syntaxes
+                                                .update(|key_syntaxes| {
+                                                    key_syntaxes.push(key_syntax.clone());
+                                                });
+                                        }
+
                                         match existing_node {
                                             Node::Array(arr) => {
                                                 if arr.inner.kind != ArrayKind::Tables {

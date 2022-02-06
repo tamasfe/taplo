@@ -4,7 +4,7 @@
 //! contain invalid syntax. In that case the invalid part is skipped.
 
 use crate::{
-    dom::{node::DomNode, FromSyntax, Keys, Node},
+    dom::{self, node::DomNode, FromSyntax, Keys, Node},
     syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
 };
 use rowan::{GreenNode, NodeOrToken, TextRange};
@@ -240,11 +240,12 @@ pub fn format_with_scopes(dom: Node, options: Options, scopes: ScopedOptions) ->
 
 /// Formats a DOM root node with given scopes.
 ///
-/// All the scope keys must be valid glob patterns,
-/// otherwise this function will panic!
-///
 /// **This doesn't check errors of the DOM.**
-pub fn format_with_path_scopes<I, S>(dom: Node, options: Options, scopes: I) -> String
+pub fn format_with_path_scopes<I, S>(
+    dom: Node,
+    options: Options,
+    scopes: I,
+) -> Result<String, dom::Error>
 where
     I: IntoIterator<Item = (S, OptionsIncomplete)>,
     S: AsRef<str>,
@@ -254,13 +255,12 @@ where
     let mut s = Vec::new();
 
     for (scope, opts) in scopes {
-        let pat = glob::Pattern::new(scope.as_ref()).unwrap();
-        for (p2, node) in dom.flat_iter() {
-            if pat.matches(&p2.dotted()) {
-                s.extend(node.text_ranges().into_iter().map(|r| (r, opts.clone())));
-            }
+        let keys: Keys = scope.as_ref().parse()?;
+        let matched = dom.find_all_matches(keys, false)?;
+
+        for (_, node) in matched {
+            s.extend(node.text_ranges().into_iter().map(|r| (r, opts.clone())));
         }
-        todo!()
     }
 
     c.scopes = Rc::new(ScopedOptions::from_iter(s));
@@ -277,7 +277,7 @@ where
         s += options.newline();
     }
 
-    s
+    Ok(s)
 }
 
 fn format_impl(node: SyntaxNode, options: Options, context: Context) -> String {
@@ -397,8 +397,10 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
     let mut scoped_options = options.clone();
 
     for c in node.children_with_tokens() {
-        scoped_options = options.clone();
-        context.update_options(&mut scoped_options, c.text_range());
+        if c.as_node().is_some() {
+            scoped_options = options.clone();
+            context.update_options(&mut scoped_options, c.text_range());
+        }
 
         match c {
             NodeOrToken::Node(node) => match node.kind() {

@@ -15,11 +15,15 @@ pub enum Error {
     #[error("expected array of tables")]
     ExpectedArrayOfTables { not_array_of_tables: Key, required_by: Key },
     #[error("{0}")]
-    Query(QueryError)
+    Query(#[from] QueryError)
 }
 
 #[derive(Debug, Clone, Error)]
 pub enum QueryError {
     #[error("the key or index was not found: {key}")]
-    NotFound { key: String }
+    NotFound { key: String },
+    #[error("invalid glob pattern: {0}")]
+    InvalidGlob(#[from] globset::Error),
+    #[error("the given key is invalid: {0}")]
+    InvalidKey(crate::parser::Error),
 }

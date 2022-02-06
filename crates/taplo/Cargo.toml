@@ -15,35 +15,25 @@ version = "0.8.0"
 crate-type = ["cdylib", "lib"]
 
 [features]
-default = ["serde"]
+default = ["serde", "glob"]
 schema = ["schemars"]
+glob = ["globset"]
 
 [dependencies]
-glob = "0.3"
-logos = "0.12.0"
-regex = "1.5.4"
-rowan = "0.15.3"
-semver = { version = "1.0.3", features = ["serde"] }
-
-time = { version = "0.3.3", features = [
-    "parsing",
-    "formatting",
-    "macros",
-] }
-
 ahash = "0.7.6"
 arc-swap = "1.5.0"
 either = "1.6.1"
-enum-as-inner = "0.3.3"
-from_variants = "0.6.0"
 itertools = "0.10.3"
+logos = "0.12.0"
 once_cell = "1.9.0"
-parking_lot = "0.12.0"
+rowan = "0.15.3"
+thiserror = "1.0.30"
+time = { version = "0.3.3", features = ["parsing", "formatting", "macros"] }
+
+globset = { version = "0.4.8", optional = true }
 schemars = { version = "0.8.3", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
-# TODO
-serde_json = "1"
-thiserror = "1.0.30"
+
 
 [dev-dependencies]
 assert-json-diff = "2"

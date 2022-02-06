@@ -15,3 +15,6 @@ pub(crate) use document_symbols::*;
 
 mod formatting;
 pub(crate) use formatting::*;
+
+mod hover;
+pub(crate) use hover::*;

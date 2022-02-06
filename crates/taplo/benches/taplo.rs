@@ -1,5 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use taplo::{
+    dom::Node,
     formatter::{format, format_syntax, Options},
     parser::parse,
 };
@@ -32,5 +33,18 @@ pub fn formatting(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, parsing, formatting);
+pub fn conversion(c: &mut Criterion) {
+    let source = include_str!("../../../test-data/example.toml");
+    let v: serde_json::Value = toml::from_str(source).unwrap();
+
+    c.bench_function("convert from JSON", |b| {
+        b.iter(|| {
+            serde_json::from_value::<Node>(black_box(v.clone()))
+                .unwrap()
+                .to_toml(false)
+        })
+    });
+}
+
+criterion_group!(benches, parsing, formatting, conversion);
 criterion_main!(benches);

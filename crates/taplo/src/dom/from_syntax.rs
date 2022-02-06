@@ -5,7 +5,7 @@ use super::{
         FloatInner, Integer, IntegerInner, IntegerRepr, Invalid, InvalidInner, Key, KeyInner, Node,
         Str, StrInner, StrRepr, Table, TableInner, TableKind,
     },
-    Keys,
+    Comment, Keys,
 };
 use crate::{
     private::Sealed,
@@ -376,6 +376,16 @@ impl FromSyntax for Keys {
     }
 }
 
+impl Sealed for Comment {}
+impl FromSyntax for Comment {
+    fn from_syntax(syntax: SyntaxElement) -> Self {
+        Self {
+            syntax: Some(syntax),
+            value: Default::default(),
+        }
+    }
+}
+
 pub(crate) fn keys_from_syntax(syntax: &SyntaxElement) -> impl ExactSizeIterator<Item = Key> {
     assert!(syntax.kind() == KEY);
 
@@ -540,12 +550,11 @@ fn root_from_syntax(syntax: SyntaxElement) -> Table {
                                         entries.lookup.get_key_value(&key)
                                     {
                                         if let Some(key_syntax) = key.syntax() {
-                                            existing_key
-                                                .inner
-                                                .additional_syntaxes
-                                                .update(|key_syntaxes| {
+                                            existing_key.inner.additional_syntaxes.update(
+                                                |key_syntaxes| {
                                                     key_syntaxes.push(key_syntax.clone());
-                                                });
+                                                },
+                                            );
                                         }
 
                                         match existing_node {

@@ -2,8 +2,8 @@ use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
 use rowan::TextRange;
 use rowan::TextSize;
 
-pub(crate) mod shared;
 pub(crate) mod iter;
+pub(crate) mod shared;
 
 mod escape;
 pub mod syntax;
@@ -173,4 +173,13 @@ pub fn join_ranges<I: IntoIterator<Item = TextRange>>(ranges: I) -> TextRange {
             None => Some(range),
         })
         .unwrap()
+}
+
+pub fn overlaps(range: TextRange, other: TextRange) -> bool {
+    range.contains_range(other)
+        || other.contains_range(range)
+        || range.contains(other.start())
+        || range.contains(other.end())
+        || other.contains(range.start())
+        || other.contains(range.end())
 }

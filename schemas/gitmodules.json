@@ -1,0 +1,54 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": ".gitmodules config schema",
+    "description": "https://git-scm.com/docs/gitmodules",
+    "x-taplo-info": {
+      "authors": ["Emily Grace Seville (https://github.com/EmilySeville7cfg)"],
+      "patterns": ["^\\\\.gitmodules$"]
+    },
+    "type": "object",
+    "patternProperties": {
+        "^\\[ *submodule *\".*?\"\\]$": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Path, relative to the top-level directory of the Git working tree, where the submodule is expected to be checked out.",
+                    "pattern": ".[^/]$"
+                },
+                "url": {
+                    "type": "string",
+                    "description": "URL from which the submodule repository can be cloned.",
+                    "minLength": 1
+                },
+                "update": {
+                    "type": "string",
+                    "description": "Default update procedure for the named submodule, i.e. how the submodule is updated by the git submodule update command in the superproject.",
+                    "enum": ["checkout", "rebase", "merge", "none"]
+                },
+                "branch": {
+                    "type": "string",
+                    "description": "Remote branch name for tracking updates in the upstream submodule.",
+                    "examples": ["HEAD", "."]
+                },
+                "fetchRecurseSubmodules": {
+                    "type": "boolean",
+                    "description": "Recursive fetching of this submodule."
+                },
+                "ignore": {
+                    "type": "string",
+                    "description": "Circumstances under what git status and the diff family show a submodule as modified.",
+                    "enum": ["all", "dirty", "untracked", "none"]
+                },
+                "shallow": {
+                    "type": "boolean",
+                    "description": "Clone this submodule as a shallow clone."
+                }
+            },
+            "required": ["path", "url"],
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}
+  

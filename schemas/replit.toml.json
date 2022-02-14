@@ -83,25 +83,30 @@
                 }
             },
             "additionalProperties": false
-        }
-    },
-    "patternProperties": {
-        "^languages\\.": {
+        },
+        "languages": {
             "description": "Language configuration",
             "type": "object",
-            "properties": {
-                "glob": {
-                    "description": "Glob for language files",
-                    "type": "string",
-                    "minLength": 1
-                },
-                "languageServer": {
-                    "description": "Language Server Protocol (LSP) configuration",
+            "patternProperties": {
+                ".": {
+                    "description": "Language configuration",
                     "type": "object",
                     "properties": {
-                        "start": {
-                            "description": "Command to run server",
-                            "type": "string"
+                        "glob": {
+                            "description": "Glob for language files",
+                            "type": "string",
+                            "minLength": 1
+                        },
+                        "languageServer": {
+                            "description": "Language Server Protocol (LSP) configuration",
+                            "type": "object",
+                            "properties": {
+                                "start": {
+                                    "description": "Command to run server",
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
                         }
                     },
                     "additionalProperties": false

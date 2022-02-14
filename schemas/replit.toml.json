@@ -10,7 +10,10 @@
     "properties": {
         "run": {
             "description": "Command to run REPL",
-            "type": "string"
+            "type": ["string", "array"],
+            "items": {
+                "type": "string"
+            }
         },
         "language": {
             "description": "Language name used in REPL",

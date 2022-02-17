@@ -14,119 +14,86 @@ export function getOutput(): vscode.OutputChannel {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-  const c = createClient(context);
+  const schemaIndicator = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    0
+  );
 
-  c.registerProposedFeatures();
+  schemaIndicator.text = "no schema selected";
+  schemaIndicator.tooltip = "TOML Schema";
+  schemaIndicator.command = "evenBetterToml.selectSchema";
+
+  const c = await createClient(context);
+  context.subscriptions.push(c.start());
+
+  await c.onReady();
+
+  if (vscode.window.activeTextEditor?.document.languageId === "toml") {
+    schemaIndicator.show();
+  }
 
   registerCommands(context, c);
 
-  context.subscriptions.push(output, c.start());
-
-  const showNotification = vscode.workspace
-    .getConfiguration()
-    .get("evenBetterToml.activationStatus");
-
-  checkAssociations();
-
-  if (showNotification) {
-    await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Window,
-        title: "TOML loading...",
-      },
-      async _ => {
-        await c.onReady();
+  context.subscriptions.push(
+    output,
+    schemaIndicator,
+    c.onNotification("taplo/messageWithOutput", async params =>
+      showMessage(params, c)
+    ),
+    vscode.window.onDidChangeActiveTextEditor(editor => {
+      if (editor.document.languageId === "toml") {
+        schemaIndicator.show();
+      } else {
+        schemaIndicator.hide();
       }
-    );
-  } else {
-    await c.onReady();
-  }
-  // c.sendNotification(Methods.CachePath.METHOD, {
-  //   path: context.globalStorageUri.fsPath,
-  // });
-  // c.onNotification(Methods.MessageWithOutput.METHOD, async params =>
-  //   showMessage(params, c)
-  // );
+    }),
+    c.onNotification(
+      "taplo/didChangeSchemaAssociation",
+      async (params: {
+        documentUri: string;
+        schemaUri?: string;
+        meta?: Record<string, any>;
+      }) => {
+        const currentDocumentUrl =
+          vscode.window.activeTextEditor?.document.uri.toString();
+
+        if (!currentDocumentUrl) {
+          return;
+        }
+
+        if (params.documentUri === currentDocumentUrl) {
+          schemaIndicator.text =
+            params.meta?.name ?? params.schemaUri ?? "no schema selected";
+        }
+      }
+    )
+  );
 }
 
-async function checkAssociations() {
-  const oldBuiltins = [
-    "taplo://taplo@taplo.toml",
-    "taplo://cargo@Cargo.toml",
-    "taplo://python@pyproject.toml",
-    "taplo://rust@rustfmt.toml",
-  ];
-
-  if (
-    vscode.workspace
-      .getConfiguration()
-      .get("evenBetterToml.actions.ignoreDeprecatedAssociations") === true
-  ) {
-    return;
-  }
-
-  const assoc = vscode.workspace
-    .getConfiguration()
-    .get("evenBetterToml.schema.associations");
-
-  if (!assoc) {
-    return;
-  }
-
-  for (const k of Object.keys(assoc)) {
-    const val = assoc[k];
-
-    if (oldBuiltins.indexOf(val) !== -1) {
-      const c = await vscode.window.showWarningMessage(
-        "Your schema associations reference schemas that are not bundled anymore and will not work.",
-        "More Information",
-        "Ignore"
+export async function showMessage(
+  params: { kind: "info" | "warn" | "error"; message: string },
+  c: client.LanguageClient
+) {
+  let show: string | undefined;
+  switch (params.kind) {
+    case "info":
+      show = await vscode.window.showInformationMessage(
+        params.message,
+        "Show Details"
       );
+    case "warn":
+      show = await vscode.window.showWarningMessage(
+        params.message,
+        "Show Details"
+      );
+    case "error":
+      show = await vscode.window.showErrorMessage(
+        params.message,
+        "Show Details"
+      );
+  }
 
-      if (c === "More Information") {
-        vscode.env.openExternal(
-          vscode.Uri.parse(
-            "https://taplo.tamasfe.dev/configuration/#official-schemas"
-          )
-        );
-      } else if (c === "Ignore") {
-        await vscode.workspace
-          .getConfiguration()
-          .update(
-            "evenBetterToml.actions.ignoreDeprecatedAssociations",
-            true,
-            vscode.ConfigurationTarget.Global
-          );
-      }
-      break;
-    }
+  if (show) {
+    c.outputChannel.show();
   }
 }
-
-// export async function showMessage(
-//   params: Methods.MessageWithOutput.Params,
-//   c: client.LanguageClient
-// ) {
-//   let show: string | undefined;
-//   switch (params.kind) {
-//     case Methods.MessageWithOutput.MessageKind.Info:
-//       show = await vscode.window.showInformationMessage(
-//         params.message,
-//         "Show Details"
-//       );
-//     case Methods.MessageWithOutput.MessageKind.Warn:
-//       show = await vscode.window.showWarningMessage(
-//         params.message,
-//         "Show Details"
-//       );
-//     case Methods.MessageWithOutput.MessageKind.Error:
-//       show = await vscode.window.showErrorMessage(
-//         params.message,
-//         "Show Details"
-//       );
-//   }
-
-//   if (show) {
-//     c.outputChannel.show();
-//   }
-// }

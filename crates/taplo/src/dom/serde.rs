@@ -1,6 +1,6 @@
 use super::node::{
-    ArrayInner, ArrayKind, BoolInner, FloatInner, IntegerInner, IntegerValue, Node, StrInner,
-    TableInner,
+    ArrayInner, ArrayKind, BoolInner, DomNode, FloatInner, IntegerInner, IntegerValue, Node,
+    StrInner, TableInner,
 };
 use crate::dom::node::Key;
 use serde::{
@@ -20,7 +20,9 @@ impl Serialize for Node {
                 let mut map = ser.serialize_map(Some(entries.all.len()))?;
 
                 for (key, entry) in entries.all.iter() {
-                    map.serialize_entry(key.value(), entry)?;
+                    if !entry.is_invalid() {
+                        map.serialize_entry(key.value(), entry)?;
+                    }
                 }
 
                 map.end()
@@ -29,7 +31,9 @@ impl Serialize for Node {
                 let items = arr.inner.items.read();
                 let mut seq = ser.serialize_seq(Some(items.len()))?;
                 for item in &**items {
-                    seq.serialize_element(item)?;
+                    if !item.is_invalid() {
+                        seq.serialize_element(item)?;
+                    }
                 }
                 seq.end()
             }

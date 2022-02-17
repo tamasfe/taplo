@@ -1,21 +1,20 @@
-//! Messages that are not part of the LSP spec.
-
-use lsp_types::{notification::Notification, request::Request, Url};
+use lsp_types::{request::Request, Url};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 /// Serialize a TOML text to JSON.
-pub(crate) enum TomlToJsonRequest {}
+pub enum TomlToJsonRequest {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct TomlToJsonParams {
+pub struct TomlToJsonParams {
     /// TOML text.
     pub text: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct TomlToJsonResponse {
+pub struct TomlToJsonResponse {
     /// JSON text.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
@@ -32,18 +31,18 @@ impl Request for TomlToJsonRequest {
 }
 
 /// Serialize a TOML text to JSON.
-pub(crate) enum JsonToTomlRequest {}
+pub enum JsonToTomlRequest {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct JsonToTomlParams {
+pub struct JsonToTomlParams {
     /// JSON text.
     pub text: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct JsonToTomlResponse {
+pub struct JsonToTomlResponse {
     /// TOML text.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
@@ -58,59 +57,49 @@ impl Request for JsonToTomlRequest {
     const METHOD: &'static str = "taplo/jsonToToml";
 }
 
-/// Show Syntax Tree
-pub(crate) enum SyntaxTreeRequest {}
+pub enum ListSchemasRequest {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct SyntaxTreeParams {
-    /// URI of the document
-    pub uri: Url,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct SyntaxTreeResponse {
-    pub text: String,
-}
-
-impl Request for SyntaxTreeRequest {
-    type Params = SyntaxTreeParams;
-    type Result = SyntaxTreeResponse;
-    const METHOD: &'static str = "taplo/syntaxTree";
-}
-
-pub(crate) enum MessageWithOutput {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) enum MessageKind {
-    Info,
-    Warn,
-    Error,
+pub struct ListSchemasParams {
+    pub document_uri: Url,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct MessageWithOutputParams {
-    pub kind: MessageKind,
-    pub message: String,
+pub struct ListSchemasResponse {
+    pub schemas: Vec<SchemaInfo>,
 }
 
-impl Notification for MessageWithOutput {
-    type Params = MessageWithOutputParams;
-    const METHOD: &'static str = "taplo/messageWithOutput";
+impl Request for ListSchemasRequest {
+    type Params = ListSchemasParams;
+    type Result = ListSchemasResponse;
+    const METHOD: &'static str = "taplo/listSchemas";
 }
-
-pub(crate) enum CachePath {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct CachePathParams {
-    pub path: String,
+pub struct SchemaInfo {
+    pub url: Url,
+    pub meta: Value,
 }
 
-impl Notification for CachePath {
-    type Params = CachePathParams;
-    const METHOD: &'static str = "taplo/cachePath";
+pub enum AssociatedSchemaRequest {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssociatedSchemaParams {
+    pub document_uri: Url,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssociatedSchemaResponse {
+    pub schema: Option<SchemaInfo>,
+}
+
+impl Request for AssociatedSchemaRequest {
+    type Params = AssociatedSchemaParams;
+    type Result = AssociatedSchemaResponse;
+    const METHOD: &'static str = "taplo/associatedSchema";
 }

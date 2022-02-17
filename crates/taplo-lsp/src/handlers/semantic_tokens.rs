@@ -8,7 +8,10 @@ use lsp_types::{
     Range, SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens,
     SemanticTokensParams, SemanticTokensResult,
 };
-use taplo::syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken};
+use taplo::{
+    dom::node::DomNode,
+    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
+};
 use taplo_common::environment::Environment;
 
 #[tracing::instrument(level = "debug", skip_all)]
@@ -25,7 +28,7 @@ pub(crate) async fn semantic_tokens<E: Environment>(
 
     Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
         result_id: None,
-        data: create_tokens(&doc.parse.clone().into_syntax(), &doc.mapper),
+        data: create_tokens(doc.dom.syntax().unwrap().as_node().unwrap(), &doc.mapper),
     })))
 }
 

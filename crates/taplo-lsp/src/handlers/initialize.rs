@@ -1,4 +1,7 @@
-use super::semantic_tokens;
+use std::sync::Arc;
+
+use super::{semantic_tokens, update_configuration};
+use crate::config::InitConfig;
 use crate::world::WorkspaceState;
 use crate::World;
 use lsp_async_stub::{rpc::Error, Context, Params};
@@ -13,21 +16,35 @@ pub async fn initialize<E: Environment>(
 ) -> Result<InitializeResult, Error> {
     let p = params.required()?;
 
+    if let Some(init_opts) = p.initialization_options {
+        match serde_json::from_value::<InitConfig>(init_opts) {
+            Ok(c) => context.init_config.store(Arc::new(c)),
+            Err(error) => {
+                tracing::error!(%error, "invalid initialization options")
+            }
+        }
+    }
+
     if let Some(workspaces) = p.workspace_folders {
+        let mut wss = context.workspaces.write().await;
+        let init_config = context.init_config.load();
+
         for workspace in workspaces {
-            if let Err(error) = context
-                .workspaces
-                .write()
-                .await
+            let ws = wss
                 .entry(workspace.uri.clone())
-                .or_insert(WorkspaceState::new(context.env.clone(), workspace.uri))
-                .initialize(&context.env)
-                .await
-            {
+                .or_insert(WorkspaceState::new(context.env.clone(), workspace.uri));
+
+            ws.schemas
+                .cache()
+                .set_cache_path(init_config.cache_path.clone());
+
+            if let Err(error) = ws.initialize(context.clone(), &context.env).await {
                 tracing::error!(?error, "failed to initialize workspace");
             }
         }
     }
+
+    context.env.spawn_local(update_configuration(context.clone()));
 
     Ok(InitializeResult {
         capabilities: ServerCapabilities {
@@ -60,19 +77,19 @@ pub async fn initialize<E: Environment>(
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             document_symbol_provider: Some(OneOf::Left(true)),
             document_formatting_provider: Some(OneOf::Left(true)),
-            // hover_provider: Some(HoverProviderCapability::Simple(true)),
-            // completion_provider: Some(CompletionOptions {
-            //     resolve_provider: Some(false),
-            //     trigger_characters: Some(vec![
-            //         ".".into(),
-            //         "=".into(),
-            //         "[".into(),
-            //         "{".into(),
-            //         ",".into(),
-            //         "\"".into(),
-            //     ]),
-            //     ..Default::default()
-            // }),
+            hover_provider: Some(HoverProviderCapability::Simple(true)),
+            completion_provider: Some(CompletionOptions {
+                resolve_provider: Some(false),
+                trigger_characters: Some(vec![
+                    ".".into(),
+                    "=".into(),
+                    "[".into(),
+                    "{".into(),
+                    ",".into(),
+                    "\"".into(),
+                ]),
+                ..Default::default()
+            }),
             // document_link_provider: Some(DocumentLinkOptions {
             //     resolve_provider: None,
             //     work_done_progress_options: Default::default(),

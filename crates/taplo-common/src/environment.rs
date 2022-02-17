@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use futures::Future;
+use time::OffsetDateTime;
 use std::path::{Path, PathBuf};
 use tokio::io::{AsyncRead, AsyncWrite};
 use url::Url;
@@ -14,6 +15,8 @@ pub trait Environment: Clone + Send + Sync + 'static {
     type Stdin: AsyncRead + Unpin;
     type Stdout: AsyncWrite + Unpin;
     type Stderr: AsyncWrite + Unpin;
+
+    fn now(&self) -> OffsetDateTime;
 
     fn spawn<F>(&self, fut: F)
     where

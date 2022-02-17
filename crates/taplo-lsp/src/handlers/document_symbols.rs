@@ -25,7 +25,7 @@ pub(crate) fn create_symbols(doc: &DocumentState) -> Vec<DocumentSymbol> {
     let mapper = &doc.mapper;
     let mut symbols: Vec<DocumentSymbol> = Vec::new();
 
-    let dom = doc.parse.clone().into_dom();
+    let dom = doc.dom.clone();
 
     let root_table = dom.as_table().unwrap();
     let entries = root_table.entries().read();

@@ -1,7 +1,11 @@
 use self::{error::QueryError, from_syntax::keys_from_syntax, node::Key};
-use crate::{parser::Parser, syntax::SyntaxElement, HashMap};
+use crate::{parser::Parser, syntax::SyntaxElement, util::join_ranges, HashMap};
 use core::iter::once;
-use std::{iter::{FromIterator, empty}, str::FromStr, sync::Arc};
+use std::{
+    iter::{empty, FromIterator},
+    str::FromStr,
+    sync::Arc,
+};
 
 #[cfg(feature = "serde")]
 mod serde;
@@ -19,6 +23,7 @@ pub use from_syntax::FromSyntax;
 use itertools::Itertools;
 pub use node::Node;
 use once_cell::unsync::OnceCell;
+use rowan::TextRange;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum KeyOrIndex {
@@ -137,17 +142,26 @@ impl Keys {
         other.contains(self)
     }
 
-    pub fn skip_left(&self, mut n: usize) -> Self {
-        n = self.len().saturating_sub(n).max(self.len());
+    pub fn skip_left(&self, n: usize) -> Self {
         Self::new(self.keys.iter().cloned().skip(n))
     }
 
-    pub fn skip_right(&self, mut n: usize) -> Self {
-        n = self.len().saturating_sub(n).max(self.len());
+    pub fn skip_right(&self, n: usize) -> Self {
         Self::new(self.keys.iter().rev().cloned().skip(n).rev())
     }
 
-    pub(crate) fn empty() -> Self {
+    pub fn all_text_range(&self) -> TextRange {
+        join_ranges(
+            self.keys
+                .iter()
+                .filter_map(KeyOrIndex::as_key)
+                .map(|k| k.text_ranges())
+                .flatten(),
+        )
+    }
+
+    #[inline]
+    pub fn empty() -> Self {
         Self::new(empty())
     }
 
@@ -155,6 +169,16 @@ impl Keys {
         let keys: Arc<[KeyOrIndex]> = keys.collect();
         let dotted: Arc<str> = Arc::from(keys.iter().join(".").as_str());
         Self { keys, dotted }
+    }
+}
+
+impl IntoIterator for Keys {
+    type Item = KeyOrIndex;
+
+    type IntoIter = std::vec::IntoIter<KeyOrIndex>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Vec::from(&*self.keys).into_iter()
     }
 }
 
@@ -293,7 +317,8 @@ impl Comment {
                     let text = t.text();
 
                     if let Some(directive_content) = text.strip_prefix("#:") {
-                        let mut directive_content = directive_content.split(' ');
+                        let mut directive_content =
+                            directive_content.trim_start().split_whitespace();
                         let directive_name = directive_content.next().unwrap_or("");
                         let directive_value = directive_content.next().unwrap_or("");
                         return CommentValue::Directive {
@@ -310,6 +335,27 @@ impl Comment {
                 }
                 None => Default::default(),
             })
+    }
+}
+
+impl core::fmt::Display for Comment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(s) = &self.syntax {
+            s.fmt(f)
+        } else {
+            match self.value_internal() {
+                CommentValue::Comment(c) => {
+                    f.write_str("#")?;
+                    c.fmt(f)
+                }
+                CommentValue::Directive { name, value } => {
+                    f.write_str("#:")?;
+                    name.fmt(f)?;
+                    f.write_str(" ")?;
+                    value.fmt(f)
+                }
+            }
+        }
     }
 }
 

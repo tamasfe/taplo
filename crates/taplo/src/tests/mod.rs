@@ -1,6 +1,6 @@
-// mod generated {
-//     mod invalid;
-//     mod valid;
-// }
+mod generated {
+    mod invalid;
+    // mod valid;
+}
 
 // mod formatter;

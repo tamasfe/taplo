@@ -105,40 +105,6 @@ fn main() {
 
         let json_validation = quote! {};
 
-        // TODO do a more sophisticated comparison
-        // fs::read_to_string(valid_file.path().with_file_name(&(base_name.clone() + ".yaml"))).and_then(
-        //     |s| {
-        //         serde_yaml::from_str::<serde_json::Value>(&s)
-        //             .and_then(|v| Ok(serde_json::to_string(&v).unwrap()))
-        //             .and_then(|s| {
-        //                 json_validation.extend(quote! {
-        //                     let expected_json = serde_json::from_str::<serde_json::Value>(#s).unwrap();
-        //                     let json = serde_json::to_value(crate::value::Value::try_from(dom).unwrap()).unwrap();
-        //                     assert_json_diff::assert_json_eq!(expected_json, json);
-        //                 });
-        //                 Ok(())
-        //             }).ok();
-        //         Ok(())
-        //     },
-        // ).or_else(|_| {
-        //     fs::read_to_string(valid_file.path().with_file_name(&(base_name + ".json")))
-        //         .and_then(
-        //             |s| {
-        //                 serde_json::from_str::<serde_json::Value>(&s)
-        //                     .and_then(|v| Ok(serde_json::to_string(&v).unwrap()))
-        //                     .and_then(|s| {
-        //                         json_validation.extend(quote! {
-        //                             let expected_json = serde_json::from_str::<serde_json::Value>(#s).unwrap();
-        //                             let json = serde_json::to_value(crate::value::Value::try_from(dom).unwrap()).unwrap();
-        //                             assert_json_diff::assert_json_eq!(expected_json, json);
-        //                         });
-        //                         Ok(())
-        //                     }).ok();
-        //                 Ok(())
-        //             },
-        //         )
-        // }).ok();
-
         valid_src.extend(quote! {
             #[test]
             #ignore_attr

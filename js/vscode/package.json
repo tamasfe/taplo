@@ -35,9 +35,7 @@
     "onCommand:evenBetterToml.pasteTomlAsJson",
     "onCommand:evenBetterToml.copyTomlAsJson",
     "onCommand:evenBetterToml.pasteJsonAsToml",
-    "onCommand:evenBetterToml.copyJsonAsToml",
-    "onCommand:evenBetterToml.clearCache",
-    "onCommand:evenBetterToml.downloadSchemas"
+    "onCommand:evenBetterToml.copyJsonAsToml"
   ],
   "keywords": [
     "toml",
@@ -92,6 +90,10 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "evenBetterToml.selectSchema",
+          "when": "editorLangId == toml"
+        },
+        {
           "command": "evenBetterToml.copyTomlAsJson",
           "when": "config.evenBetterToml.commands.copyTomlAsJson"
         },
@@ -119,9 +121,8 @@
     },
     "commands": [
       {
-        "command": "evenBetterToml.copyTomlAsJson",
-        "title": "TOML: Copy Selection as JSON",
-        "enablement": "editorHasSelection"
+        "command": "evenBetterToml.selectSchema",
+        "title": "TOML: Select Schema"
       },
       {
         "command": "evenBetterToml.copyJsonAsToml",
@@ -133,21 +134,12 @@
         "title": "TOML: Paste as JSON"
       },
       {
+        "command": "evenBetterToml.pasteTomlAsJson",
+        "title": "TOML: Paste as JSON"
+      },
+      {
         "command": "evenBetterToml.pasteJsonAsToml",
         "title": "TOML: Paste JSON as TOML"
-      },
-      {
-        "command": "evenBetterToml.clearCache",
-        "title": "TOML: Clear Cache"
-      },
-      {
-        "command": "evenBetterToml.downloadSchemas",
-        "title": "TOML: Download All Schemas"
-      },
-      {
-        "command": "evenBetterToml.debug.showSyntaxTree",
-        "title": "TOML (debug): Show Syntax Tree",
-        "enablement": "editorLangId == toml && config.evenBetterToml.debug"
       }
     ],
     "semanticTokenTypes": [
@@ -177,20 +169,8 @@
     "configuration": {
       "title": "Even Better TOML",
       "properties": {
-        "evenBetterToml.activationStatus": {
-          "description": "Show a status bar message while the extension is activating.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.taplo.bundled": {
-          "description": "Whether to use the bundled LSP in the extension.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.taplo.native.path": {
-          "description": "An absolute path to the `taplo-lsp` native executable.",
+        "evenBetterToml.taplo.path": {
+          "description": "An absolute path to the `taplo` executable.",
           "type": [
             "string",
             "null"
@@ -198,19 +178,18 @@
           "scope": "resource",
           "default": null
         },
-        "evenBetterToml.taplo.native.env": {
+        "evenBetterToml.taplo.environment": {
           "type": [
-            "object",
-            "null"
+            "object"
           ],
           "scope": "resource",
           "description": "Environment variables for the Taplo LSP executable.",
-          "properties": {
+          "additionalProperties": {
             "type": "string"
           },
-          "default": null
+          "default": {}
         },
-        "evenBetterToml.taplo.native.extraArgs": {
+        "evenBetterToml.taplo.extraArgs": {
           "type": [
             "array",
             "null"
@@ -222,12 +201,12 @@
           },
           "default": null
         },
-        "evenBetterToml.taploConfig": {
+        "evenBetterToml.taplo.configFile.path": {
           "description": "An absolute, or workspace relative path to the Taplo configuration file.",
           "type": "string",
           "scope": "resource"
         },
-        "evenBetterToml.taploConfigEnabled": {
+        "evenBetterToml.taplo.configFile.enabled": {
           "description": "Whether to enable the usage of a Taplo configuration file.",
           "type": "boolean",
           "scope": "resource",
@@ -239,142 +218,6 @@
           "scope": "resource",
           "default": false
         },
-        "evenBetterToml.commands.copyTomlAsJson": {
-          "description": "Show the \"Copy Selection as JSON\" command in the palette.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.commands.copyJsonAsToml": {
-          "description": "Show the \"Copy JSON Selection as TOML\" command in the palette.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.commands.pasteJsonAsToml": {
-          "description": "Show the \"Paste JSON as TOML\" command in the palette.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.commands.pasteTomlAsJson": {
-          "description": "Show the \"Paste as JSON\" command in the palette.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.commands.clearCache": {
-          "description": "Show the \"Clear Cache\" command in the palette.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": false
-        },
-        "evenBetterToml.commands.downloadSchemas": {
-          "description": "Show the \"Download All Schemas\" command in the palette.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": false
-        },
-        "evenBetterToml.formatter.alignEntries": {
-          "description": "Align consecutive entries vertically.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": false
-        },
-        "evenBetterToml.formatter.alignComments": {
-          "description": "Align comments vertically after entries and array values.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.formatter.arrayTrailingComma": {
-          "description": "Append trailing commas for multi-line arrays.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.formatter.arrayAutoExpand": {
-          "description": "Expand arrays to multiple lines that exceed the maximum column width.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.formatter.arrayAutoCollapse": {
-          "description": "Collapse arrays that don't exceed the maximum column width and don't contain comments.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.formatter.compactArrays": {
-          "description": "Omit white space padding from single-line arrays.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.formatter.compactInlineTables": {
-          "description": "Omit white space padding from the start and end of inline tables.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": false
-        },
-        "evenBetterToml.formatter.compactEntries": {
-          "description": "Omit white space padding around `=` for entries.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": false
-        },
-        "evenBetterToml.formatter.columnWidth": {
-          "description": "Maximum column width in characters, affects array expansion and collapse, this doesn't take whitespace into account.",
-          "type": "number",
-          "minimum": 0,
-          "default": 80
-        },
-        "evenBetterToml.formatter.indentTables": {
-          "description": "Indent based on tables and arrays of tables and their subtables, subtables out of order are not indented.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": false
-        },
-        "evenBetterToml.formatter.indentEntries": {
-          "description": "Indent entries under tables.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": false
-        },
-        "evenBetterToml.formatter.indentString": {
-          "description": "The substring that is used for indentation, should be tabs or spaces, but technically can be anything. Uses the IDE setting if not set.",
-          "type": [
-            "string",
-            "null"
-          ],
-          "scope": "resource",
-          "default": null
-        },
-        "evenBetterToml.formatter.reorderKeys": {
-          "description": "Alphabetically reorder keys that are not separated by empty lines.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": false
-        },
-        "evenBetterToml.formatter.allowedBlankLines": {
-          "description": "Maximum amount of allowed consecutive blank lines. This does not affect the whitespace at the end of the document, as it is always stripped.",
-          "type": "integer",
-          "scope": "resource",
-          "minimum": 0,
-          "default": 2
-        },
-        "evenBetterToml.formatter.trailingNewline": {
-          "description": "Add trailing newline at the end of the file if not present.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": true
-        },
-        "evenBetterToml.formatter.crlf": {
-          "description": "Use CRLF for line endings.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": false
-        },
         "evenBetterToml.schema.enabled": {
           "description": "Enable completion and validation based on JSON schemas.",
           "type": "boolean",
@@ -382,43 +225,56 @@
           "default": true
         },
         "evenBetterToml.schema.links": {
-          "description": "Enable editor links.",
-          "type": "boolean",
-          "scope": "resource",
-          "default": false
-        },
-        "evenBetterToml.schema.repositoryEnabled": {
-          "description": "Whether to use schemas from the provided schema repository.",
+          "description": "Whether to show clickable links for keys in the editor.",
           "type": "boolean",
           "scope": "resource",
           "default": true
         },
-        "evenBetterToml.schema.repositoryUrl": {
-          "description": "A HTTP(S) URL that points to a schema index.",
-          "type": "string",
+        "evenBetterToml.schema.catalogs": {
+          "description": "A list of URLs to schema catalogs where schemas and associations can be fetched from",
+          "type": "array",
           "scope": "resource",
-          "default": "https://taplo.tamasfe.dev/schema_index.json"
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "https://taplo.tamasfe.dev/schema_index.json",
+            "https://www.schemastore.org/api/json/catalog.json"
+          ]
         },
         "evenBetterToml.schema.associations": {
           "description": "Document and schema associations.",
-          "markdownDescription": "Document and schema associations. \n\n The key must be a regular expression, this pattern is used to associate schemas with absolute document URIs. On multiple matches the first one is used in an undefined order. \n\n The value must be an absolute URI to the JSON schema, for supported values and more information [read here](https://taplo.tamasfe.dev/configuration#visual-studio-code).",
+          "markdownDescription": "Additional document and schema associations. \n\n The key must be a regular expression, this pattern is used to associate schemas with absolute document URIs. On multiple matches the first one is used in an undefined order. \n\n The value must be an absolute URI to the JSON schema, for supported values and more information [read here](https://taplo.tamasfe.dev/configuration#visual-studio-code).",
           "type": "object",
           "scope": "resource",
-          "default": {
-            "^(.*(/|\\\\)\\.?taplo\\.toml|\\.?taplo\\.toml)$": "taplo://taplo.toml"
-          }
+          "default": {}
         },
-        "evenBetterToml.actions.ignoreDeprecatedAssociations": {
-          "description": "Whether to ignore deprecated builtin associations.",
-          "type": "string",
+        "evenBetterToml.schema.cache.memory": {
+          "description": "Set the upper limit of schema expiration time from memory in seconds.",
+          "type": "integer",
           "scope": "resource",
-          "default": false
+          "minimum": 0,
+          "default": 10
         },
-        "evenBetterToml.debug": {
-          "description": "Enable features to debug the extension.",
+        "evenBetterToml.schema.cache.disk": {
+          "description": "Set the upper limit of schema expiration time from the disk in seconds.",
+          "type": "integer",
+          "scope": "resource",
+          "minimum": 0,
+          "default": 600
+        },
+        "evenBetterToml.completion.maxKeys": {
+          "description": "The maximum amount of keys in a dotted key to display during completion, 0 effectively disables key completions.",
+          "type": "integer",
+          "scope": "resource",
+          "minimum": 0,
+          "default": 5
+        },
+        "evenBetterToml.syntax.semanticTokens": {
+          "description": "Whether to enable semantic tokens for tables and arrays.",
           "type": "boolean",
           "scope": "resource",
-          "default": false
+          "default": true
         }
       }
     }

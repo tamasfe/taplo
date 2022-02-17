@@ -20,22 +20,25 @@ pub fn setup_stderr_logging(e: impl Environment, taplo: &TaploArgs) {
         None => EnvFilter::default().add_directive(tracing::Level::INFO.into()),
     };
 
-    let format = tracing_subscriber::fmt::format()
-        .with_ansi(match taplo.colors {
-            Colors::Auto => e.atty_stderr(),
-            Colors::Always => true,
-            Colors::Never => false,
-        })
-        .pretty();
-
     if taplo.verbose {
         registry
             .with(env_filter)
             .with(
                 tracing_subscriber::fmt::layer()
-                    .with_writer(io::stderr)
+                    .with_ansi(match taplo.colors {
+                        Colors::Auto => e.atty_stderr(),
+                        Colors::Always => true,
+                        Colors::Never => false,
+                    })
                     .with_span_events(span_events)
-                    .event_format(format.pretty()),
+                    .event_format(tracing_subscriber::fmt::format().pretty().with_ansi(
+                        match taplo.colors {
+                            Colors::Auto => e.atty_stderr(),
+                            Colors::Always => true,
+                            Colors::Never => false,
+                        },
+                    ))
+                    .with_writer(io::stderr),
             )
             .init();
     } else {
@@ -43,18 +46,28 @@ pub fn setup_stderr_logging(e: impl Environment, taplo: &TaploArgs) {
             .with(env_filter)
             .with(
                 tracing_subscriber::fmt::layer()
-                    .without_time()
-                    .with_file(false)
-                    .with_line_number(false)
-                    .with_writer(io::stderr)
-                    .with_span_events(span_events)
+                    .with_ansi(match taplo.colors {
+                        Colors::Auto => e.atty_stderr(),
+                        Colors::Always => true,
+                        Colors::Never => false,
+                    })
                     .event_format(
-                        format
+                        tracing_subscriber::fmt::format()
                             .compact()
                             .with_source_location(false)
                             .with_target(false)
-                            .without_time(),
-                    ),
+                            .without_time()
+                            .with_ansi(match taplo.colors {
+                                Colors::Auto => e.atty_stderr(),
+                                Colors::Always => true,
+                                Colors::Never => false,
+                            }),
+                    )
+                    .without_time()
+                    .with_file(false)
+                    .with_line_number(false)
+                    .with_span_events(span_events)
+                    .with_writer(io::stderr),
             )
             .init();
     }

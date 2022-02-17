@@ -37,7 +37,7 @@ pub(crate) async fn format<E: Environment>(
     Ok(Some(vec![TextEdit {
         range: doc.mapper.all_range().into_lsp(),
         new_text: taplo::formatter::format_with_path_scopes(
-            doc.parse.clone().into_dom(),
+            doc.dom.clone(),
             format_opts,
             ws.taplo_config.format_scopes(doc_path),
         )

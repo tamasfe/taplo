@@ -79,6 +79,10 @@ impl Table {
         &self.inner.entries
     }
 
+    pub fn kind(&self) -> TableKind {
+        self.inner.kind
+    }
+
     /// Add an entry and also collect errors on conflicts.
     pub(crate) fn add_entry(&self, key: Key, node: Node) {
         self.inner.entries.update(|entries| {
@@ -316,6 +320,10 @@ impl Array {
         &self.inner.items
     }
 
+    pub fn kind(&self) -> ArrayKind {
+        self.inner.kind
+    }
+
     fn validate_impl(&self) -> Result<(), &Shared<Vec<Error>>> {
         if self.errors().read().as_ref().is_empty() {
             Ok(())
@@ -329,6 +337,22 @@ impl Array {
 pub enum ArrayKind {
     Tables,
     Inline,
+}
+
+impl ArrayKind {
+    /// Returns `true` if the array kind is [`Tables`].
+    ///
+    /// [`Tables`]: ArrayKind::Tables
+    pub fn is_tables(&self) -> bool {
+        matches!(self, Self::Tables)
+    }
+
+    /// Returns `true` if the array kind is [`Inline`].
+    ///
+    /// [`Inline`]: ArrayKind::Inline
+    pub fn is_inline(&self) -> bool {
+        matches!(self, Self::Inline)
+    }
 }
 
 #[derive(Debug)]

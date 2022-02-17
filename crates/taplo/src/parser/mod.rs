@@ -76,7 +76,7 @@ pub(crate) struct Parser<'p> {
 impl<'p> Parser<'p> {
     /// Required for patch syntax
     /// and key matches.
-    /// 
+    ///
     /// It allows a part of glob syntax in identifiers as well.
     pub(crate) fn parse_key_only(mut self) -> Parse {
         self.glob_allowed = true;
@@ -196,6 +196,18 @@ impl<'p> Parser<'p> {
                     message: "unexpected EOF".into(),
                 });
                 Err(())
+            }
+        }
+    }
+
+    // This is the same as `token` but won't consume trailing whitespace.
+    fn add_token(&mut self) -> ParserResult<()> {
+        match self.get_token() {
+            Err(_) => Err(()),
+            Ok(token) => {
+                self.builder.token(token.into(), self.lexer.slice());
+                self.current_token = None;
+                Ok(())
             }
         }
     }
@@ -685,9 +697,13 @@ impl<'p> Parser<'p> {
                     }
                 }
             }
-            BRACKET_START => with_node!(self.builder, ARRAY, self.parse_array()),
-            BRACE_START => with_node!(self.builder, INLINE_TABLE, self.parse_inline_table()),
-            IDENT => {
+            BRACKET_START => {
+                with_node!(self.builder, ARRAY, self.parse_array())
+            }
+            BRACE_START => {
+                with_node!(self.builder, INLINE_TABLE, self.parse_inline_table())
+            }
+            IDENT | BRACE_END => {
                 // FIXME(bit_flags): This branch is just a workaround.
                 self.report_error("expected value").ok();
                 self.token_as(ERROR)
@@ -702,6 +718,7 @@ impl<'p> Parser<'p> {
         let mut first = true;
         let mut comma_last = false;
         let mut was_newline = false;
+
         loop {
             let t = match self.get_token() {
                 Ok(t) => t,
@@ -716,7 +733,7 @@ impl<'p> Parser<'p> {
                         // table.
                         let _ = self.report_error("expected value, trailing comma is not allowed");
                     }
-                    break self.token()?;
+                    break self.add_token()?;
                 }
                 NEWLINE => {
                     // To avoid infinite loop in case
@@ -775,7 +792,7 @@ impl<'p> Parser<'p> {
             };
 
             match t {
-                BRACKET_END => break self.token()?,
+                BRACKET_END => break self.add_token()?,
                 NEWLINE => {
                     self.token()?;
                     continue; // as if it wasn't there, so it doesn't count as a first token

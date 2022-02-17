@@ -2,7 +2,7 @@ use lsp_async_stub::{rpc::Error, Context, Params, util::Mapper};
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 use taplo::{
     rowan::TextRange,
-    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode},
+    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode}, dom::node::DomNode,
 };
 use taplo_common::environment::Environment;
 
@@ -20,7 +20,7 @@ pub(crate) async fn folding_ranges<E: Environment>(
     let doc = ws.document(&p.text_document.uri)?;
 
     Ok(Some(create_folding_ranges(
-        &doc.parse.clone().into_syntax(),
+        doc.dom.syntax().unwrap().as_node().unwrap(),
         &doc.mapper,
     )))
 }

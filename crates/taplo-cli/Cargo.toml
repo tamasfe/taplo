@@ -18,15 +18,19 @@ default = ["lsp"]
 lsp = ["taplo-lsp"]
 
 [dependencies]
+anyhow = { version = "1", features = ["backtrace"] }
+async-ctrlc = { version = "1.2.0", features = ["stream"] }
+atty = "0.2.14"
+clap = { version = "3.0.0", features = ["derive", "cargo"] }
+codespan-reporting = "0.11.1"
+futures = "0.3"
+glob = "0.3"
+hex = "0.4"
+itertools = "0.10.3"
 lsp-async-stub = { version = "0.4.1", path = "../lsp-async-stub", features = [
     "tokio-tcp",
     "tokio-stdio",
 ] }
-anyhow = { version = "1", features = ["backtrace"] }
-clap = { version = "3.0.0", features = ["derive", "cargo"] }
-futures = "0.3"
-glob = "0.3"
-hex = "0.4"
 once_cell = "1.4"
 pretty-lint = { version = "0.1" }
 regex = "1.4"
@@ -35,19 +39,13 @@ schemars = "0.8"
 serde = "1"
 serde_json = "1"
 sha2 = "0.10"
-taplo = { version = "0.8.0", path = "../taplo", features = [
-    "serde",
-] }
+taplo = { version = "0.8.0", path = "../taplo", features = ["serde"] }
+taplo-common = { version = "0.1.0", path = "../taplo-common" }
 taplo-lsp = { path = "../taplo-lsp", optional = true }
 time = { version = "0.3", features = ["parsing"] }
 toml = "0.5"
-tracing-subscriber = { version = "0.3.7", features = ["env-filter"] }
 tracing = "0.1.29"
-atty = "0.2.14"
-taplo-common = { version = "0.1.0", path = "../taplo-common" }
-codespan-reporting = "0.11.1"
-itertools = "0.10.3"
-async-ctrlc = { version = "1.2.0", features = ["stream"] }
+tracing-subscriber = { version = "0.3.7", features = ["env-filter"] }
 url = "2.2.2"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

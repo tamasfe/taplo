@@ -125,9 +125,7 @@ impl Node {
             }
             Node::Bool(b) => write!(f, "{}", b.value())?,
             Node::Str(s) => {
-                f.write_char('\'')?;
-                write!(f, "{}", s.value())?;
-                f.write_char('\'')?;
+                write!(f, "{}", serde_json::to_string(s.value()).unwrap())?;
             }
             Node::Integer(i) => match i.inner.repr {
                 IntegerRepr::Dec => match i.value() {

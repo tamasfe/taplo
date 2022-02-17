@@ -1,14 +1,14 @@
 use self::{associations::SchemaAssociations, cache::Cache};
-use crate::{environment::Environment, HashMap};
-use anyhow::anyhow;
+use crate::{environment::Environment, LruCache};
+use anyhow::{anyhow, Context};
 use async_recursion::async_recursion;
 use futures::{stream::FuturesUnordered, StreamExt};
 use jsonschema::{error::ValidationErrorKind, JSONSchema, SchemaResolver, ValidationError};
-use parking_lot::RwLock;
+use parking_lot::Mutex;
 use regex::Regex;
 use serde_json::Value;
-use taplo::dom::{self, Keys, KeyOrIndex};
 use std::{borrow::Cow, sync::Arc};
+use taplo::dom::{self, node::Key, KeyOrIndex, Keys};
 use thiserror::Error;
 use tokio::sync::Semaphore;
 use url::Url;
@@ -23,8 +23,7 @@ pub struct Schemas<E: Environment> {
     associations: SchemaAssociations<E>,
     concurrent_requests: Arc<Semaphore>,
     http: reqwest::Client,
-    validators: Arc<RwLock<HashMap<Url, Arc<JSONSchema>>>>,
-    schemas: Arc<RwLock<HashMap<Url, Arc<Value>>>>,
+    validators: Arc<Mutex<LruCache<Url, Arc<JSONSchema>>>>,
     cache: Cache<E>,
 }
 
@@ -38,8 +37,7 @@ impl<E: Environment> Schemas<E> {
             env,
             concurrent_requests: Arc::new(Semaphore::new(10)),
             http,
-            validators: Default::default(),
-            schemas: Default::default(),
+            validators: Arc::new(Mutex::new(LruCache::new(3))),
         }
     }
 
@@ -78,9 +76,13 @@ impl<E: Environment> Schemas<E> {
         let validator = match self.get_validator(schema_url) {
             Some(s) => s,
             None => {
-                let schema = self.load_schema(schema_url).await?;
-                self.add_schema(schema_url, schema, true)?;
-                self.get_validator(schema_url).unwrap()
+                let schema = self
+                    .load_schema(schema_url)
+                    .await
+                    .with_context(|| format!("failed to load schema {schema_url}"))?;
+                self.add_schema(schema_url, schema.clone()).await;
+                self.add_validator(schema_url.clone(), &schema)
+                    .with_context(|| format!("invalid schema {schema_url}"))?
             }
         };
 
@@ -118,7 +120,7 @@ impl<E: Environment> Schemas<E> {
                             if let ValidationErrorKind::Resolver { url, .. } = &err.kind {
                                 Some(async {
                                     let value = self.load_schema(url).await?;
-                                    self.schemas.write().insert(url.clone(), Arc::new(value));
+                                    let _ = self.cache.store(url.clone(), value);
                                     Result::<(), anyhow::Error>::Ok(())
                                 })
                             } else {
@@ -149,37 +151,57 @@ impl<E: Environment> Schemas<E> {
         }
     }
 
-    pub fn add_schema(
-        &self,
-        schema_url: &Url,
-        schema: Value,
-        validator: bool,
-    ) -> Result<(), anyhow::Error> {
-        if validator {
-            let validator = self.create_validator(&schema)?;
-            self.validators
-                .write()
-                .insert(schema_url.clone(), Arc::new(validator));
+    pub async fn add_schema(&self, schema_url: &Url, schema: Arc<Value>) {
+        let _ = self.cache.store(schema_url.clone(), schema).await;
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(%schema_url))]
+    pub async fn load_schema(&self, schema_url: &Url) -> Result<Arc<Value>, anyhow::Error> {
+        if let Ok(s) = self.cache.load(schema_url, false).await {
+            tracing::debug!(%schema_url, "schema was found in cache");
+            return Ok(s);
         }
 
-        self.schemas
-            .write()
-            .insert(schema_url.clone(), Arc::new(schema));
+        let schema = match self.fetch_external(schema_url).await {
+            Ok(s) => Arc::new(s),
+            Err(error) => {
+                tracing::warn!(?error, "failed to fetch remote schema");
+                if let Ok(s) = self.cache.load(schema_url, true).await {
+                    tracing::debug!(%schema_url, "expired schema was found in cache");
+                    return Ok(s);
+                }
+                return Err(error);
+            }
+        };
 
-        Ok(())
+        if let Err(error) = self.cache.store(schema_url.clone(), schema.clone()).await {
+            tracing::warn!(%error, "failed to cache schema");
+        }
+
+        Ok(schema)
     }
 
-    pub fn get_schema(&self, schema_url: &Url) -> Option<Arc<Value>> {
-        self.schemas.read().get(schema_url).cloned()
+    fn get_validator(&self, schema_url: &Url) -> Option<Arc<JSONSchema>> {
+        if self.cache().lru_expired() {
+            self.validators.lock().clear();
+        }
+
+        self.validators.lock().get(schema_url).cloned()
     }
 
-    pub fn get_validator(&self, schema_url: &Url) -> Option<Arc<JSONSchema>> {
-        self.validators.read().get(schema_url).cloned()
+    fn add_validator(
+        &self,
+        schema_url: Url,
+        schema: &Value,
+    ) -> Result<Arc<JSONSchema>, anyhow::Error> {
+        let v = Arc::new(self.create_validator(schema)?);
+        self.validators.lock().put(schema_url, v.clone());
+        Ok(v)
     }
 
     #[async_recursion(?Send)]
     #[must_use]
-    pub async fn resolve_schema(&self, url: Url) -> Result<Arc<Value>, anyhow::Error> {
+    pub(crate) async fn resolve_schema(&self, url: Url) -> Result<Arc<Value>, anyhow::Error> {
         match url.fragment() {
             Some(fragment) => {
                 let mut res_url = url.clone();
@@ -193,8 +215,8 @@ impl<E: Environment> Schemas<E> {
             }
             None => {
                 let val = self.load_schema(&url).await?;
-                let val = Arc::new(val);
-                self.schemas.write().insert(url, val.clone());
+                let val = val;
+                let _ = self.cache.store(url, val.clone());
                 Ok(val)
             }
         }
@@ -205,24 +227,6 @@ impl<E: Environment> Schemas<E> {
             .with_resolver(self.clone())
             .compile(schema)
             .map_err(|err| anyhow!("invalid schema: {err}"))
-    }
-
-    #[tracing::instrument(level = "debug", skip_all, fields(%schema_url))]
-    async fn load_schema(&self, schema_url: &Url) -> Result<Value, anyhow::Error> {
-        if let Ok(s) = self.cache.load(schema_url).await {
-            tracing::debug!(%schema_url, "schema was found in cache");
-            return Ok(s.value);
-        }
-
-        let schema = self.fetch_external(schema_url).await?;
-
-        if self.cache.is_cache_path_set() {
-            if let Err(error) = self.cache.store(schema_url.clone(), schema.clone()).await {
-                tracing::warn!(%error, "failed to cache schema");
-            }
-        }
-
-        Ok(schema)
     }
 
     async fn fetch_external(&self, schema_url: &Url) -> Result<Value, anyhow::Error> {
@@ -251,20 +255,28 @@ impl<E: Environment> Schemas<E> {
 }
 
 impl<E: Environment> Schemas<E> {
-    #[tracing::instrument(level = "debug", skip_all, fields(%schema_url, ?path))]
+    #[tracing::instrument(level = "debug", skip_all, fields(%schema_url, %path))]
     pub async fn schemas_at_path(
         &self,
         schema_url: &Url,
-        schema: &Value,
         value: &Value,
         path: &Keys,
-    ) -> Result<Vec<Arc<Value>>, anyhow::Error> {
+    ) -> Result<Vec<(Keys, Arc<Value>)>, anyhow::Error> {
         let mut schemas = Vec::new();
-        self.collect_schemas(schema_url, schema, value, path, &mut schemas)
-            .await?;
+        let schema = self.load_schema(schema_url).await?;
+        self.collect_schemas(
+            schema_url,
+            &schema,
+            value,
+            Keys::empty(),
+            path,
+            &mut schemas,
+        )
+        .await?;
         Ok(schemas)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(%path))]
     #[async_recursion(?Send)]
     #[must_use]
     async fn collect_schemas(
@@ -272,10 +284,11 @@ impl<E: Environment> Schemas<E> {
         root_url: &Url,
         schema: &Value,
         value: &Value,
+        full_path: Keys,
         path: &Keys,
-        schemas: &mut Vec<Arc<Value>>,
+        schemas: &mut Vec<(Keys, Arc<Value>)>,
     ) -> Result<(), anyhow::Error> {
-        if !value.is_object() {
+        if !schema.is_object() {
             return Ok(());
         }
 
@@ -284,49 +297,59 @@ impl<E: Environment> Schemas<E> {
                 .ok_or_else(|| anyhow!("could not determine schema URL"))?;
             let schema = self.resolve_schema(url).await?;
             return self
-                .collect_schemas(root_url, &schema, value, path, schemas)
+                .collect_schemas(root_url, &schema, value, full_path.clone(), path, schemas)
                 .await;
-        }
-
-        let validator = self.create_validator(schema)?;
-        if !self.validate_impl(&validator, value).await?.is_empty() {
-            return Ok(());
         }
 
         if let Some(one_ofs) = schema["oneOf"].as_array() {
             for one_of in one_ofs {
-                self.collect_schemas(root_url, one_of, value, path, schemas)
+                self.collect_schemas(root_url, one_of, value, full_path.clone(), path, schemas)
                     .await?;
             }
         }
 
         if let Some(any_ofs) = schema["anyOf"].as_array() {
             for any_of in any_ofs {
-                self.collect_schemas(root_url, any_of, value, path, schemas)
+                self.collect_schemas(root_url, any_of, value, full_path.clone(), path, schemas)
                     .await?;
             }
         }
 
         if let Some(all_ofs) = schema["allOf"].as_array() {
             for all_of in all_ofs {
-                self.collect_schemas(root_url, all_of, value, path, schemas)
+                self.collect_schemas(root_url, all_of, value, full_path.clone(), path, schemas)
                     .await?;
             }
         }
 
         let key = match path.iter().next() {
             Some(k) => k,
-            None => return Ok(()),
+            None => {
+                schemas.push((full_path.clone(), Arc::new(schema.clone())));
+                return Ok(());
+            }
         };
 
         let child_path = path.skip_left(1);
 
         match key {
             KeyOrIndex::Key(k) => {
+                // For array of tables.
+                self.collect_schemas(
+                    root_url,
+                    &schema["items"][k.value()],
+                    value,
+                    full_path.join(k.clone()),
+                    &child_path,
+                    schemas,
+                )
+                .await?;
+
                 self.collect_schemas(
                     root_url,
                     &schema["properties"][k.value()],
                     &value[k.value()],
+                    full_path.join(k.clone()),
                     &child_path,
                     schemas,
                 )
@@ -336,6 +359,7 @@ impl<E: Environment> Schemas<E> {
                     root_url,
                     &schema["additionalProperties"],
                     &value[k.value()],
+                    full_path.join(k.clone()),
                     &child_path,
                     schemas,
                 )
@@ -349,6 +373,7 @@ impl<E: Environment> Schemas<E> {
                                     root_url,
                                     pattern_schema,
                                     &value[k.value()],
+                                    full_path.join(k.clone()),
                                     &child_path,
                                     schemas,
                                 )
@@ -364,6 +389,7 @@ impl<E: Environment> Schemas<E> {
                         root_url,
                         &schema["items"][idx],
                         &value[idx],
+                        full_path.join(*idx),
                         &child_path,
                         schemas,
                     )
@@ -373,6 +399,7 @@ impl<E: Environment> Schemas<E> {
                         root_url,
                         &schema["items"],
                         &value[idx],
+                        full_path.join(*idx),
                         &child_path,
                         schemas,
                     )
@@ -382,6 +409,114 @@ impl<E: Environment> Schemas<E> {
         }
 
         Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(%schema_url, %path))]
+    pub async fn child_schemas_from(
+        &self,
+        schema_url: &Url,
+        value: &Value,
+        path: &Keys,
+        max_depth: usize,
+    ) -> Result<Vec<(Keys, Keys, Arc<Value>)>, anyhow::Error> {
+        let schemas = self.schemas_at_path(schema_url, value, path).await?;
+
+        let mut children = Vec::with_capacity(schemas.len());
+
+        for (path, schema) in schemas {
+            self.collect_child_schemas(
+                schema_url,
+                &*schema,
+                &path,
+                &Keys::empty(),
+                max_depth,
+                &mut children,
+            )
+            .await;
+        }
+
+        Ok(children)
+    }
+
+    #[async_recursion(?Send)]
+    #[must_use]
+    async fn collect_child_schemas(
+        &self,
+        root_url: &Url,
+        schema: &Value,
+        root_path: &Keys,
+        path: &Keys,
+        mut depth: usize,
+        schemas: &mut Vec<(Keys, Keys, Arc<Value>)>,
+    ) {
+        if !schema.is_object() || depth == 0 {
+            return;
+        }
+
+        if let Some(r) = schema.schema_ref() {
+            let url = match reference_url(root_url, r)
+                .ok_or_else(|| anyhow!("could not determine schema URL"))
+            {
+                Ok(u) => u,
+                Err(error) => {
+                    tracing::error!(?error, "failed to resolve schema");
+                    return;
+                }
+            };
+            let schema = match self.resolve_schema(url).await {
+                Ok(s) => s,
+                Err(error) => {
+                    tracing::error!(?error, "failed to resolve schema");
+                    return;
+                }
+            };
+            return self
+                .collect_child_schemas(root_url, &schema, root_path, path, depth, schemas)
+                .await;
+        }
+
+        if let Some(one_ofs) = schema["oneOf"].as_array() {
+            for one_of in one_ofs {
+                self.collect_child_schemas(root_url, one_of, root_path, path, depth, schemas)
+                    .await;
+            }
+        }
+
+        if let Some(any_ofs) = schema["anyOf"].as_array() {
+            for any_of in any_ofs {
+                self.collect_child_schemas(root_url, any_of, root_path, path, depth, schemas)
+                    .await;
+            }
+        }
+
+        if let Some(all_ofs) = schema["allOf"].as_array() {
+            for all_of in all_ofs {
+                self.collect_child_schemas(root_url, all_of, root_path, path, depth, schemas)
+                    .await;
+            }
+        }
+
+        schemas.push((
+            root_path.extend(path.clone()),
+            path.clone(),
+            Arc::new(schema.clone()),
+        ));
+
+        depth -= 1;
+
+        if let Some(map) = schema["properties"].as_object() {
+            for (k, v) in map {
+                self.collect_child_schemas(
+                    root_url,
+                    v,
+                    root_path,
+                    &path.join(Key::from(k)),
+                    depth,
+                    schemas,
+                )
+                .await;
+            }
+        }
     }
 }
 
@@ -394,7 +529,7 @@ fn reference_url(root_url: &Url, reference: &str) -> Option<Url> {
     Some(url)
 }
 
-trait ValueExt {
+pub trait ValueExt {
     fn is_schema_ref(&self) -> bool;
     fn schema_ref(&self) -> Option<&str>;
 }
@@ -416,10 +551,8 @@ impl<E: Environment> SchemaResolver for Schemas<E> {
         url: &Url,
         _original_ref: &str,
     ) -> Result<Arc<serde_json::Value>, jsonschema::SchemaResolverError> {
-        self.schemas
-            .read()
-            .get(url)
-            .cloned()
+        self.cache
+            .get_schema(url)
             .ok_or_else(|| WouldBlockError.into())
     }
 }
@@ -431,26 +564,40 @@ struct WouldBlockError;
 /// A validation error that contains text ranges as well.
 #[derive(Debug)]
 pub struct NodeValidationError {
+    pub keys: Keys,
     pub node: dom::Node,
     pub error: ValidationError<'static>,
 }
 
 impl NodeValidationError {
     fn new(root: &dom::Node, error: ValidationError<'static>) -> Result<Self, anyhow::Error> {
+        let mut keys = Keys::empty();
         let mut node = root.clone();
 
-        for path in &error.instance_path {
+        'outer: for path in &error.instance_path {
             match path {
-                jsonschema::paths::PathChunk::Property(p) => {
-                    node = node.try_get(&**p).map_err(|_| anyhow!("invalid key"))?;
-                }
+                jsonschema::paths::PathChunk::Property(p) => match node {
+                    dom::Node::Table(t) => {
+                        let entries = t.entries().read();
+                        for (k, entry) in entries.iter() {
+                            if k.value() == &**p {
+                                keys = keys.join(k.clone());
+                                node = entry.clone();
+                                continue 'outer;
+                            }
+                        }
+                        return Err(anyhow!("invalid key"));
+                    }
+                    _ => return Err(anyhow!("invalid key")),
+                },
                 jsonschema::paths::PathChunk::Index(idx) => {
-                    node = node.try_get(*idx).map_err(|_| anyhow!("invalid key"))?;
+                    node = node.try_get(*idx).map_err(|_| anyhow!("invalid index"))?;
+                    keys = keys.join(*idx);
                 }
                 _ => {}
             }
         }
 
-        Ok(Self { node, error })
+        Ok(Self { keys, node, error })
     }
 }

@@ -2,6 +2,7 @@ use crate::config::CONFIG_FILE_NAMES;
 
 use super::Environment;
 use async_trait::async_trait;
+use time::OffsetDateTime;
 
 #[derive(Clone, Copy)]
 pub struct NativeEnvironment;
@@ -11,6 +12,10 @@ impl Environment for NativeEnvironment {
     type Stdin = tokio::io::Stdin;
     type Stdout = tokio::io::Stdout;
     type Stderr = tokio::io::Stderr;
+
+    fn now(&self) -> time::OffsetDateTime {
+        OffsetDateTime::now_utc()
+    }
 
     fn spawn<F>(&self, fut: F)
     where

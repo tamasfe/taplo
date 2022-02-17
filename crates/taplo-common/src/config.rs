@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Debug,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Context;
 use schemars::JsonSchema;
@@ -10,7 +13,7 @@ use crate::{environment::Environment, util::GlobRule};
 
 pub const CONFIG_FILE_NAMES: &[&str] = &[".taplo.toml", "taplo.toml"];
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     /// Files to include.
@@ -44,6 +47,17 @@ pub struct Config {
 
     #[serde(skip)]
     pub file_rule: Option<GlobRule>,
+}
+
+impl Debug for Config {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Config")
+            .field("include", &self.include)
+            .field("exclude", &self.exclude)
+            .field("rule", &self.rule)
+            .field("global_options", &self.global_options)
+            .finish()
+    }
 }
 
 impl Config {
@@ -181,7 +195,7 @@ impl Options {
 }
 
 /// A rule to override options by either name or file.
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Rule {
     /// The name of the rule.
@@ -227,6 +241,18 @@ pub struct Rule {
 
     #[serde(skip)]
     pub file_rule: Option<GlobRule>,
+}
+
+impl Debug for Rule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Rule")
+            .field("name", &self.name)
+            .field("include", &self.include)
+            .field("exclude", &self.exclude)
+            .field("keys", &self.keys)
+            .field("options", &self.options)
+            .finish()
+    }
 }
 
 impl Rule {

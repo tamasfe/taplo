@@ -1,4 +1,4 @@
-use lsp_async_stub::{Context, Params, util::Mapper};
+use lsp_async_stub::{util::Mapper, Context, Params};
 use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
 };
@@ -25,17 +25,23 @@ pub(crate) async fn document_open<E: Environment>(
     let mut workspaces = context.workspaces.write().await;
     let ws = workspaces.by_document_mut(&p.text_document.uri);
 
-    ws.documents
-        .insert(p.text_document.uri.clone(), DocumentState { parse, mapper });
+    let dom = parse.clone().into_dom();
+
+    if ws.config.schema.enabled {
+        ws.schemas
+            .associations()
+            .add_from_directive(&p.text_document.uri, &dom);
+        ws.emit_associations(context.clone()).await;
+    }
+
+    ws.documents.insert(
+        p.text_document.uri.clone(),
+        DocumentState { dom, parse, mapper },
+    );
 
     let ws_root = ws.root.clone();
     drop(workspaces);
-
-    context.env.spawn_local(diagnostics::publish_diagnostics(
-        context.clone(),
-        ws_root,
-        p.text_document.uri,
-    ));
+    diagnostics::publish_diagnostics(context.clone(), ws_root, p.text_document.uri).await;
 }
 
 #[tracing::instrument(level = "debug", skip_all)]
@@ -60,17 +66,27 @@ pub(crate) async fn document_change<E: Environment>(
     let mut workspaces = context.workspaces.write().await;
     let ws = workspaces.by_document_mut(&p.text_document.uri);
 
-    ws.documents
-        .insert(p.text_document.uri.clone(), DocumentState { parse, mapper });
+    let dom = parse.clone().into_dom();
+
+    if ws.config.schema.enabled {
+        ws.schemas
+            .associations()
+            .add_from_directive(&p.text_document.uri, &dom);
+        ws.emit_associations(context.clone()).await;
+    }
+
+    ws.documents.insert(
+        p.text_document.uri.clone(),
+        DocumentState {
+            dom,
+            parse,
+            mapper,
+        },
+    );
 
     let ws_root = ws.root.clone();
     drop(workspaces);
-
-    context.env.spawn_local(diagnostics::publish_diagnostics(
-        context.clone(),
-        ws_root,
-        p.text_document.uri,
-    ));
+    diagnostics::publish_diagnostics(context.clone(), ws_root, p.text_document.uri).await;
 }
 
 #[tracing::instrument(level = "debug", skip_all)]

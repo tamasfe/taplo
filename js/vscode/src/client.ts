@@ -4,28 +4,17 @@ import * as path from "path";
 import which from "which";
 import { getOutput } from "./extension";
 
-export function createClient(
+export async function createClient(
   context: vscode.ExtensionContext
-): client.LanguageClient {
-  const nativeTaplo = !vscode.workspace
-    .getConfiguration()
-    .get("evenBetterToml.taplo.bundled");
-
-  let c: client.LanguageClient;
-  if (nativeTaplo) {
-    c = createNativeClient();
-  } else {
-    c = createBundledClient(context);
-  }
-
-  return c;
+): Promise<client.LanguageClient> {
+  return createNativeClient(context);
 }
 
-function createNativeClient(): client.LanguageClient {
+async function createNativeClient(
+  context: vscode.ExtensionContext
+): Promise<client.LanguageClient> {
   const taploPath =
-    vscode.workspace
-      .getConfiguration()
-      .get("evenBetterToml.taplo.native.path") ??
+    vscode.workspace.getConfiguration().get("evenBetterToml.taplo.path") ??
     which.sync("taplo", { nothrow: true });
 
   if (typeof taploPath !== "string") {
@@ -35,7 +24,7 @@ function createNativeClient(): client.LanguageClient {
 
   let extraArgs = vscode.workspace
     .getConfiguration()
-    .get("evenBetterToml.taplo.native.extraArgs");
+    .get("evenBetterToml.taplo.extraArgs");
 
   if (!Array.isArray(extraArgs)) {
     extraArgs = [];
@@ -52,7 +41,7 @@ function createNativeClient(): client.LanguageClient {
       env:
         vscode.workspace
           .getConfiguration()
-          .get("evenBetterToml.taplo.native.env") ?? undefined,
+          .get("evenBetterToml.taplo.environment") ?? undefined,
     },
   };
 
@@ -65,29 +54,15 @@ function createNativeClient(): client.LanguageClient {
     "evenBetterToml",
     "Even Better TOML LSP",
     serverOpts,
-    clientOpts()
+    await clientOpts(context)
   );
 }
 
-function createBundledClient(
+async function clientOpts(
   context: vscode.ExtensionContext
-): client.LanguageClient {
-  let p = context.asAbsolutePath(path.join("dist", "server.js"));
+): Promise<client.LanguageClientOptions> {
+  await vscode.workspace.fs.createDirectory(context.globalStorageUri);
 
-  let serverOpts: client.ServerOptions = {
-    run: { module: p, transport: client.TransportKind.ipc },
-    debug: { module: p, transport: client.TransportKind.ipc },
-  };
-
-  return new client.LanguageClient(
-    "evenBetterToml",
-    "Even Better TOML LSP",
-    serverOpts,
-    clientOpts()
-  );
-}
-
-function clientOpts(): client.LanguageClientOptions {
   return {
     documentSelector: [
       { scheme: "file", language: "toml" },
@@ -95,15 +70,8 @@ function clientOpts(): client.LanguageClientOptions {
     ],
 
     initializationOptions: {
-      configuration: vscode.workspace.getConfiguration().get("evenBetterToml"),
-    },
-
-    synchronize: {
       configurationSection: "evenBetterToml",
-      fileEvents: [
-        vscode.workspace.createFileSystemWatcher("**/.toml"),
-        vscode.workspace.createFileSystemWatcher("**/Cargo.lock"),
-      ],
+      cachePath: context.globalStorageUri.fsPath,
     },
   };
 }

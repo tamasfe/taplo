@@ -81,6 +81,19 @@ impl DomNode for Node {
 }
 
 impl Node {
+    pub fn path(&self, keys: &Keys) -> Option<Node> {
+        let mut node = self.clone();
+        for key in keys.iter() {
+            node = node.get(key);
+        }
+
+        if node.is_invalid() {
+            None
+        } else {
+            Some(node)
+        }
+    }
+
     pub fn get(&self, idx: impl Index) -> Node {
         idx.index_into(self).unwrap_or_else(|| {
             Node::from(
@@ -141,7 +154,7 @@ impl Node {
         }
     }
 
-    pub fn flat_iter(&self) -> impl Iterator<Item = (Keys, Node)> {
+    pub fn flat_iter(&self) -> impl DoubleEndedIterator<Item = (Keys, Node)> {
         let mut all = Vec::new();
 
         match self {
@@ -276,6 +289,7 @@ impl Node {
         ranges.into_iter()
     }
 
+    /// All the comments in the tree, including header comments returned from [`Self::header_comments`].
     pub fn comments(&self) -> impl Iterator<Item = Comment> {
         if let Some(syntax) = self.syntax().cloned().and_then(|s| s.into_node()) {
             Either::Left(
@@ -286,6 +300,24 @@ impl Node {
             )
         } else {
             Either::Right(empty())
+        }
+    }
+
+    /// Comments before the first item in the file.
+    ///
+    /// These are always counted from the root and the same
+    /// values are returned from every node in the same tree.
+    pub fn header_comments(&self) -> impl Iterator<Item = Comment> {
+        let first_item = self
+            .syntax()
+            .and_then(|syntax| syntax.ancestors().last())
+            .and_then(|root| root.descendants().nth(1));
+
+        match first_item {
+            Some(it) => Either::Left(self.comments().take_while(move |c| {
+                c.syntax.as_ref().unwrap().text_range().end() <= it.text_range().start()
+            })),
+            None => Either::Right(self.comments()),
         }
     }
 
@@ -324,7 +356,7 @@ impl Node {
                 all.push((parent.clone(), self.clone()));
                 let items = arr.inner.items.read();
                 for (idx, item) in items.iter().enumerate() {
-                    item.collect_flat(parent.join(Key::new(idx.to_string())), all);
+                    item.collect_flat(parent.join(idx), all);
                 }
             }
             _ => {

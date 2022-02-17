@@ -1,9 +1,19 @@
-use super::node::Node;
+use super::{node::Node, KeyOrIndex};
 use crate::private::Sealed;
 
 pub trait Index: Sealed + core::fmt::Display {
     #[doc(hidden)]
     fn index_into(&self, v: &Node) -> Option<Node>;
+}
+
+impl Sealed for KeyOrIndex {}
+impl Index for KeyOrIndex {
+    fn index_into(&self, v: &Node) -> Option<Node> {
+        match self {
+            KeyOrIndex::Key(k) => k.value().index_into(v),
+            KeyOrIndex::Index(idx) => idx.index_into(v),
+        }
+    }
 }
 
 impl Sealed for usize {}

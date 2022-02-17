@@ -1,10 +1,11 @@
 use crate::world::{DocumentState, WorkspaceState, World};
+use either::Either;
 use lsp_async_stub::{util::LspExt, Context, RequestWriter};
 use lsp_types::{
     notification, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, Location,
     PublishDiagnosticsParams, Url,
 };
-use taplo::dom::Node;
+use taplo::dom::{Node, KeyOrIndex};
 use taplo_common::environment::Environment;
 
 #[tracing::instrument(level = "debug", skip_all)]
@@ -57,7 +58,7 @@ pub(crate) async fn publish_diagnostics<E: Environment>(
         None => return,
     };
 
-    let dom = doc.parse.clone().into_dom();
+    let dom = doc.dom.clone();
 
     collect_dom_errors(doc, &dom, &document_url, &mut diags);
     drop(workspaces);
@@ -297,6 +298,10 @@ async fn collect_schema_errors<E: Environment>(
     document_url: &Url,
     diags: &mut Vec<Diagnostic>,
 ) {
+    if !ws.config.schema.enabled {
+        return;
+    }
+
     if let Some(schema_association) = ws
         .schemas
         .associations()
@@ -311,7 +316,15 @@ async fn collect_schema_errors<E: Environment>(
 
         match ws.schemas.validate_root(&schema_association.url, dom).await {
             Ok(errors) => diags.extend(errors.into_iter().flat_map(|err| {
-                err.node.text_ranges().into_iter().map(move |range| {
+                let ranges = if let Some(KeyOrIndex::Key(k)) = err.keys.into_iter().last() {
+                    Either::Left(k.text_ranges())
+                } else {
+                    Either::Right(err.node.text_ranges())
+                };
+
+                let error = err.error;
+
+                ranges.map(move |range| {
                     let range = doc.mapper.range(range).unwrap_or_default().into_lsp();
                     Diagnostic {
                         range,
@@ -319,7 +332,7 @@ async fn collect_schema_errors<E: Environment>(
                         code: None,
                         code_description: None,
                         source: Some("Even Better TOML".into()),
-                        message: err.error.to_string(),
+                        message: error.to_string(),
                         related_information: None,
                         tags: None,
                         data: None,
@@ -327,7 +340,7 @@ async fn collect_schema_errors<E: Environment>(
                 })
             })),
             Err(error) => {
-                tracing::error!(%error, "schema validation failed");
+                tracing::error!(?error, "schema validation failed");
             }
         }
     }

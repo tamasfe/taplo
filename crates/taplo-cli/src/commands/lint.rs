@@ -27,6 +27,7 @@ impl<E: Environment> Taplo<E> {
                     SchemaAssociation {
                         meta: json!({"source": "command-line"}),
                         url: schema_url,
+                        priority: 999,
                     },
                 );
             } else {
@@ -97,10 +98,10 @@ impl<E: Environment> Taplo<E> {
         self.lint_source(&*file.to_string_lossy(), &source).await
     }
 
-    async fn lint_source(&self, file_name: &str, source: &str) -> Result<(), anyhow::Error> {
+    async fn lint_source(&self, file_path: &str, source: &str) -> Result<(), anyhow::Error> {
         let parse = parser::parse(source);
 
-        self.print_parse_errors(&SimpleFile::new(file_name, source), &parse.errors)
+        self.print_parse_errors(&SimpleFile::new(file_path, source), &parse.errors)
             .await?;
 
         if !parse.errors.is_empty() {
@@ -109,15 +110,18 @@ impl<E: Environment> Taplo<E> {
 
         let dom = parse.into_dom();
 
-        // TODO
-        // if !dom.errors().is_empty() {
-        //     self.print_semantic_errors(&SimpleFile::new(file_name, source), dom.errors())
-        //         .await?;
+        if let Err(errors) = dom.validate() {
+            self.print_semantic_errors(&SimpleFile::new(file_path, source), errors)
+                .await?;
 
-        //     return Err(anyhow!("semantic errors found"));
-        // }
+            return Err(anyhow!("semantic errors found"));
+        }
 
-        if let Some(schema_association) = self.schemas.associations().association_for(file_name) {
+        self.schemas
+            .associations()
+            .add_from_directive(&format!("file://{file_path}").parse().unwrap(), &dom);
+
+        if let Some(schema_association) = self.schemas.associations().association_for(file_path) {
             tracing::debug!(
                 schema.url = %schema_association.url,
                 schema.name = schema_association.meta["name"].as_str().unwrap_or(""),
@@ -131,7 +135,7 @@ impl<E: Environment> Taplo<E> {
                 .await?;
 
             if !errors.is_empty() {
-                self.print_schema_errors(&SimpleFile::new(file_name, source), &errors)
+                self.print_schema_errors(&SimpleFile::new(file_path, source), &errors)
                     .await?;
 
                 return Err(anyhow!("schema validation failed"));

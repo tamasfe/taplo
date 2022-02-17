@@ -18,3 +18,15 @@ pub(crate) use formatting::*;
 
 mod hover;
 pub(crate) use hover::*;
+
+mod completion;
+pub(crate) use completion::*;
+
+mod schema;
+pub(crate) use schema::*;
+
+mod configuration;
+pub(crate) use configuration::*;
+
+mod workspaces;
+pub(crate) use workspaces::*;

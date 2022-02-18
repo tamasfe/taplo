@@ -213,7 +213,7 @@
           "default": true
         },
         "evenBetterToml.semanticTokens": {
-          "description": "Enable semantic tokens for inline table and array keys. If enabled, keys of arrays and inline tables will have the same color as table headers and array of tables headers.",
+          "description": "Enable semantic tokens for inline table and array keys.",
           "type": "boolean",
           "scope": "resource",
           "default": false
@@ -228,7 +228,7 @@
           "description": "Whether to show clickable links for keys in the editor.",
           "type": "boolean",
           "scope": "resource",
-          "default": true
+          "default": false
         },
         "evenBetterToml.schema.catalogs": {
           "description": "A list of URLs to schema catalogs where schemas and associations can be fetched from",
@@ -244,20 +244,21 @@
         },
         "evenBetterToml.schema.associations": {
           "description": "Document and schema associations.",
-          "markdownDescription": "Additional document and schema associations. \n\n The key must be a regular expression, this pattern is used to associate schemas with absolute document URIs. On multiple matches the first one is used in an undefined order. \n\n The value must be an absolute URI to the JSON schema, for supported values and more information [read here](https://taplo.tamasfe.dev/configuration#visual-studio-code).",
+          "markdownDescription": "Additional document and schema associations. \n\n The key must be a regular expression, this pattern is used to associate schemas with absolute document URIs. Overlapping patterns result in undefined behaviour and either matching schema can be used. \n\n The value must be an absolute URI to the JSON schema, for supported values and more information [read here](https://taplo.tamasfe.dev/configuration#visual-studio-code).",
           "type": "object",
           "scope": "resource",
           "default": {}
         },
-        "evenBetterToml.schema.cache.memory": {
-          "description": "Set the upper limit of schema expiration time from memory in seconds.",
+        "evenBetterToml.schema.cache.memoryExpiration": {
+          "description": "The amount of seconds after which schemas will be invalidated from memory.",
+          "markdownDescription": "The amount of seconds after which schemas will be invalidated from memory. \n**NOTE**: setting too low values will cause performance issues and validation of some schemas will fail.",
           "type": "integer",
           "scope": "resource",
           "minimum": 0,
-          "default": 10
+          "default": 60
         },
-        "evenBetterToml.schema.cache.disk": {
-          "description": "Set the upper limit of schema expiration time from the disk in seconds.",
+        "evenBetterToml.schema.cache.diskExpiration": {
+          "description": "The amount of seconds after which cached catalogs and schemas expire and will be attempted to be fetched again.",
           "type": "integer",
           "scope": "resource",
           "minimum": 0,

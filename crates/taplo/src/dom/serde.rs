@@ -1,6 +1,6 @@
 use super::node::{
-    ArrayInner, ArrayKind, BoolInner, DomNode, FloatInner, IntegerInner, IntegerValue, Node,
-    StrInner, TableInner,
+    ArrayInner, ArrayKind, BoolInner, FloatInner, IntegerInner, IntegerValue, Node, StrInner,
+    TableInner,
 };
 use crate::dom::node::Key;
 use serde::{

@@ -1,4 +1,7 @@
-use crate::{query::Query, world::World};
+use crate::{
+    query::{lookup_keys, Query},
+    world::World,
+};
 use itertools::Itertools;
 use lsp_async_stub::{
     rpc::Error,
@@ -6,7 +9,11 @@ use lsp_async_stub::{
     Context, Params,
 };
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent, MarkupKind};
-use taplo::syntax::SyntaxKind;
+use serde_json::Value;
+use taplo::{
+    dom::{KeyOrIndex, Keys},
+    syntax::SyntaxKind::{self, *},
+};
 use taplo_common::{environment::Environment, schema::ext::schema_ext_of};
 
 #[tracing::instrument(skip_all)]
@@ -33,16 +40,25 @@ pub(crate) async fn hover<E: Environment>(
 
     let query = Query::at(&doc.dom, offset);
 
-    let position_info = match query.before.or(query.after) {
-        Some(p) => p,
-        None => {
-            return Ok(None);
+    let position_info = match query.before.clone().and_then(|p| {
+        if p.syntax.kind() == IDENT || is_primitive(p.syntax.kind()) {
+            Some(p)
+        } else {
+            None
         }
+    }) {
+        Some(before) => before,
+        None => match query.after.clone().and_then(|p| {
+            if p.syntax.kind() == IDENT || is_primitive(p.syntax.kind()) {
+                Some(p)
+            } else {
+                None
+            }
+        }) {
+            Some(after) => after,
+            None => return Ok(None),
+        },
     };
-
-    if position_info.syntax.kind() != SyntaxKind::IDENT {
-        return Ok(None);
-    }
 
     if let Some(schema_association) = ws
         .schemas
@@ -64,59 +80,183 @@ pub(crate) async fn hover<E: Environment>(
             }
         };
 
-        // TODO
-        // match ws
-        //     .schemas
-        //     .schemas_at_path(&schema_association.url, &value, &position_info.dom_node.0)
-        //     .await
-        // {
-        //     Ok(schemas) => {
-        //         let content = schemas
-        //             .iter()
-        //             .map(|(_, schema)| {
-        //                 let mut s = String::new();
-        //                 if let Some(ext) = schema_ext_of(&*schema) {
-        //                     if let Some(link) = ext.links.and_then(|l| l.key) {
-        //                         s += "*[more information](";
-        //                         s += &link;
-        //                         s += ")*\n\n";
-        //                     }
+        let (keys, _) = match &position_info.dom_node {
+            Some(n) => n,
+            None => return Ok(None),
+        };
 
-        //                     if let Some(docs) = ext.docs.and_then(|d| d.main) {
-        //                         s += &docs;
-        //                     } else if let Some(desc) = schema["description"].as_str() {
-        //                         s += desc;
-        //                     }
-        //                 } else if let Some(desc) = schema["description"].as_str() {
-        //                     s += desc;
-        //                 }
+        let mut keys = keys.clone();
 
-        //                 s
-        //             })
-        //             .join("\n");
+        if let Some(header_key) = query.header_key() {
+            let key_idx = header_key
+                .descendants_with_tokens()
+                .filter(|t| t.kind() == SyntaxKind::IDENT)
+                .position(|t| t.as_token().unwrap() == &position_info.syntax)
+                .unwrap();
 
-        //         if content.is_empty() {
-        //             return Ok(None);
-        //         }
+            keys = lookup_keys(
+                doc.dom.clone(),
+                &Keys::new(keys.into_iter().take(key_idx + 1)),
+            );
+        }
 
-        //         return Ok(Some(Hover {
-        //             contents: HoverContents::Markup(MarkupContent {
-        //                 kind: MarkupKind::Markdown,
-        //                 value: content,
-        //             }),
-        //             range: Some(
-        //                 doc.mapper
-        //                     .range(position_info.syntax.text_range())
-        //                     .unwrap()
-        //                     .into_lsp(),
-        //             ),
-        //         }));
-        //     }
-        //     Err(error) => {
-        //         tracing::warn!(?error, "schema resolution failed");
-        //     }
-        // }
+        let node = doc.dom.path(&keys).unwrap();
+
+        if position_info.syntax.kind() == SyntaxKind::IDENT {
+            keys = lookup_keys(doc.dom.clone(), &keys);
+
+            // We're interested in the array itself, not its item type.
+            if let Some(KeyOrIndex::Index(_)) = keys.iter().last() {
+                keys = keys.skip_right(1);
+            }
+
+            let schemas = match ws
+                .schemas
+                .schemas_at_path(&schema_association.url, &value, &keys)
+                .await
+            {
+                Ok(s) => s,
+                Err(error) => {
+                    tracing::error!(?error, "schema resolution failed");
+                    return Ok(None);
+                }
+            };
+
+            let content = schemas
+                .iter()
+                .map(|(_, schema)| {
+                    let ext = schema_ext_of(schema).unwrap_or_default();
+                    let ext_docs = ext.docs.unwrap_or_default();
+
+                    let mut s = String::new();
+                    if let Some(docs) = ext_docs.main {
+                        s += &docs;
+                    } else if let Some(desc) = schema["description"].as_str() {
+                        s += desc;
+                    }
+
+                    s
+                })
+                .join("\n\n");
+
+            if content.is_empty() {
+                return Ok(None);
+            }
+
+            return Ok(Some(Hover {
+                contents: HoverContents::Markup(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value: content,
+                }),
+                range: Some(
+                    doc.mapper
+                        .range(position_info.syntax.text_range())
+                        .unwrap()
+                        .into_lsp(),
+                ),
+            }));
+        } else if is_primitive(position_info.syntax.kind()) {
+            let schemas = match ws
+                .schemas
+                .schemas_at_path(&schema_association.url, &value, &keys)
+                .await
+            {
+                Ok(s) => s,
+                Err(error) => {
+                    tracing::error!(?error, "schema resolution failed");
+                    return Ok(None);
+                }
+            };
+
+            let value = match serde_json::to_value(node) {
+                Ok(v) => v,
+                Err(error) => {
+                    tracing::warn!(%error, "failed to turn DOM into JSON");
+                    Value::Null
+                }
+            };
+
+            let content = schemas
+                .iter()
+                .map(|(_, schema)| {
+                    let ext = schema_ext_of(schema).unwrap_or_default();
+                    let ext_docs = ext.docs.unwrap_or_default();
+                    let enum_docs = ext_docs.enum_values.unwrap_or_default();
+
+                    if !enum_docs.is_empty() {
+                        if let Some(enum_values) = schema["enum"].as_array() {
+                            for (idx, val) in enum_values.iter().enumerate() {
+                                if val == &value {
+                                    if let Some(enum_docs) = enum_docs.get(idx).cloned().flatten() {
+                                        return enum_docs;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if let (Some(docs), Some(default_value)) =
+                        (ext_docs.default_value, schema.get("default"))
+                    {
+                        if &value == default_value {
+                            return docs;
+                        }
+                    }
+
+                    if let (Some(docs), Some(const_value)) =
+                        (ext_docs.const_value, schema.get("const"))
+                    {
+                        if &value == const_value {
+                            return docs;
+                        }
+                    }
+
+                    if let Some(docs) = ext_docs.main {
+                        docs
+                    } else if let Some(desc) = schema["description"].as_str() {
+                        desc.to_string()
+                    } else {
+                        "".to_string()
+                    }
+                })
+                .join("\n");
+
+            if content.is_empty() {
+                return Ok(None);
+            }
+
+            return Ok(Some(Hover {
+                contents: HoverContents::Markup(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value: content,
+                }),
+                range: Some(
+                    doc.mapper
+                        .range(position_info.syntax.text_range())
+                        .unwrap()
+                        .into_lsp(),
+                ),
+            }));
+        }
     }
 
     Ok(None)
+}
+
+fn is_primitive(kind: SyntaxKind) -> bool {
+    matches!(
+        kind,
+        BOOL | DATE
+            | DATE_TIME_LOCAL
+            | DATE_TIME_OFFSET
+            | TIME
+            | STRING
+            | MULTI_LINE_STRING
+            | STRING_LITERAL
+            | MULTI_LINE_STRING_LITERAL
+            | INTEGER
+            | INTEGER_HEX
+            | INTEGER_OCT
+            | INTEGER_BIN
+    )
 }

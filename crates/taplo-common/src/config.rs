@@ -101,6 +101,10 @@ impl Config {
     }
 
     pub fn update_format_options(&self, path: &Path, options: &mut formatter::Options) {
+        if let Some(opts) = &self.global_options.formatting {
+            options.update(opts.clone());
+        }
+
         for rule in self.rules_for(path) {
             if rule.keys.is_none() {
                 if let Some(rule_opts) = rule.options.formatting.clone() {

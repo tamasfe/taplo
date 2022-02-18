@@ -30,3 +30,9 @@ pub(crate) use configuration::*;
 
 mod workspaces;
 pub(crate) use workspaces::*;
+
+mod links;
+pub(crate) use links::*;
+
+mod rename;
+pub(crate) use rename::*;

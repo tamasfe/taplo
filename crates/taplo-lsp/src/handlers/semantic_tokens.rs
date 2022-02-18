@@ -24,6 +24,10 @@ pub(crate) async fn semantic_tokens<E: Environment>(
     let workspaces = context.workspaces.read().await;
     let ws = workspaces.by_document(&p.text_document.uri);
 
+    if !ws.config.syntax.semantic_tokens {
+        return Ok(None);
+    }
+
     let doc = ws.document(&p.text_document.uri)?;
 
     Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {

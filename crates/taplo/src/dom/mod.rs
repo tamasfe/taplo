@@ -165,7 +165,7 @@ impl Keys {
         Self::new(empty())
     }
 
-    pub(crate) fn new(keys: impl Iterator<Item = KeyOrIndex>) -> Self {
+    pub fn new(keys: impl Iterator<Item = KeyOrIndex>) -> Self {
         let keys: Arc<[KeyOrIndex]> = keys.collect();
         let dotted: Arc<str> = Arc::from(keys.iter().join(".").as_str());
         Self { keys, dotted }

@@ -401,7 +401,10 @@ impl Query {
     }
 }
 
-/// Transform the lookup keys to account for arrays of tables.
+/// Transform the lookup keys to account for arrays of tables and arrays.
+/// 
+/// It appends an index after each array so that we get the item type
+/// during lookups.
 pub fn lookup_keys(root: Node, keys: &Keys) -> Keys {
     let mut node = root;
     let mut new_keys = Keys::empty();
@@ -417,7 +420,7 @@ pub fn lookup_keys(root: Node, keys: &Keys) -> Keys {
     new_keys
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PositionInfo {
     /// The narrowest syntax element that contains the position.
     pub syntax: SyntaxToken,

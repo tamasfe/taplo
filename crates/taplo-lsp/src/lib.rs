@@ -1,3 +1,5 @@
+#![allow(clippy::single_match)]
+
 use lsp_async_stub::Server;
 use lsp_types::{notification, request};
 use std::sync::Arc;
@@ -20,8 +22,10 @@ pub fn create_server<E: Environment>() -> Server<World<E>> {
         .on_request::<request::Formatting, _>(handlers::format)
         .on_request::<request::Completion, _>(handlers::completion)
         .on_request::<request::HoverRequest, _>(handlers::hover)
-        // .on_request::<request::DocumentLinkRequest, _>(handlers::links)
+        .on_request::<request::DocumentLinkRequest, _>(handlers::links)
         .on_request::<request::SemanticTokensFullRequest, _>(handlers::semantic_tokens)
+        .on_request::<request::PrepareRenameRequest, _>(handlers::prepare_rename)
+        .on_request::<request::Rename, _>(handlers::rename)
         // .on_request::<request::CodeActionRequest, _>(handlers::code_action)
         // .on_request::<msg_ext::TomlToJsonRequest, _>(handlers::toml_to_json)
         // .on_request::<msg_ext::JsonToTomlRequest, _>(handlers::json_to_toml)

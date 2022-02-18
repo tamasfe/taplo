@@ -36,7 +36,7 @@ pub struct LspConfig {
     pub schema: SchemaConfig,
     pub completion: CompletionConfig,
     pub syntax: SyntaxConfig,
-    pub formatter: taplo::formatter::Options,
+    pub formatter: taplo::formatter::OptionsIncompleteCamel,
 }
 
 impl LspConfig {

@@ -8,6 +8,7 @@ use lsp_types::{
 use std::iter::{once, FromIterator};
 use taplo_common::environment::Environment;
 
+#[tracing::instrument(skip_all)]
 pub async fn configuration_change<E: Environment>(
     context: Context<World<E>>,
     params: Params<DidChangeConfigurationParams>,
@@ -30,6 +31,7 @@ pub async fn configuration_change<E: Environment>(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_configuration<E: Environment>(context: Context<World<E>>) {
     let init_config = context.init_config.load();
 

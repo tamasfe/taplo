@@ -44,7 +44,9 @@ pub async fn initialize<E: Environment>(
         }
     }
 
-    context.env.spawn_local(update_configuration(context.clone()));
+    context
+        .env
+        .spawn_local(update_configuration(context.clone()));
 
     Ok(InitializeResult {
         capabilities: ServerCapabilities {
@@ -74,6 +76,10 @@ pub async fn initialize<E: Environment>(
             //     resolve_provider: None,
             //     work_done_progress_options: Default::default(),
             // })),
+            rename_provider: Some(OneOf::Right(RenameOptions {
+                prepare_provider: Some(true),
+                work_done_progress_options: Default::default()
+            })),
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             document_symbol_provider: Some(OneOf::Left(true)),
             document_formatting_provider: Some(OneOf::Left(true)),
@@ -90,10 +96,10 @@ pub async fn initialize<E: Environment>(
                 ]),
                 ..Default::default()
             }),
-            // document_link_provider: Some(DocumentLinkOptions {
-            //     resolve_provider: None,
-            //     work_done_progress_options: Default::default(),
-            // }),
+            document_link_provider: Some(DocumentLinkOptions {
+                resolve_provider: None,
+                work_done_progress_options: Default::default(),
+            }),
             ..Default::default()
         },
         server_info: Some(ServerInfo {

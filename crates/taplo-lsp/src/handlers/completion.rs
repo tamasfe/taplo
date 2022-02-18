@@ -79,8 +79,14 @@ pub async fn completion<E: Environment>(
             )
             .await
             .map(|s| {
-                s.into_iter()
-                    .filter(|(_, _, s)| s["type"].is_null() || s["type"] == "object")
+                s.into_iter().filter(|(_, _, s)| {
+                    s["type"].is_null()
+                        || s["type"] == "object"
+                        || s["type"]
+                            .as_array()
+                            .map(|arr| arr.iter().any(|v| v == "object"))
+                            .unwrap_or(false)
+                })
             }) {
             Ok(s) => s,
             Err(error) => {
@@ -101,6 +107,8 @@ pub async fn completion<E: Environment>(
             .dom_node()
             .cloned()
             .unwrap_or_else(|| (Keys::empty(), doc.dom.clone()));
+
+        tracing::info!("aaaaaaa");
 
         return Ok(Some(CompletionResponse::Array(
             object_schemas

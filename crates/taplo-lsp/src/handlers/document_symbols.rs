@@ -8,6 +8,7 @@ use lsp_types::{DocumentSymbol, DocumentSymbolParams, DocumentSymbolResponse, Sy
 use taplo::{dom::Node, rowan::TextRange, util::join_ranges};
 use taplo_common::environment::Environment;
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn document_symbols<E: Environment>(
     context: Context<World<E>>,
     params: Params<DocumentSymbolParams>,

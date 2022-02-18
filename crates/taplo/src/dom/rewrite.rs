@@ -112,6 +112,7 @@ pub struct PendingPatch {
 }
 
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum PendingPatchKind {
     Replace(Arc<str>),
 }

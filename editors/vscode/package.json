@@ -199,7 +199,7 @@
           "items": {
             "type": "string"
           },
-          "default": null
+          "default": []
         },
         "evenBetterToml.taplo.configFile.path": {
           "description": "An absolute, or workspace relative path to the Taplo configuration file.",

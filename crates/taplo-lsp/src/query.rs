@@ -296,6 +296,22 @@ impl Query {
             .unwrap_or(false)
     }
 
+    pub fn entry_has_eq(&self) -> bool {
+        let key_syntax = match self.entry_key() {
+            Some(p) => p,
+            None => return false,
+        };
+
+        key_syntax
+            .siblings(Direction::Next)
+            .find_map(|s| match s.kind() {
+                EQ => Some(true),
+                WHITESPACE => None,
+                _ => Some(false),
+            })
+            .unwrap_or(false)
+    }
+
     pub fn in_entry_value(&self) -> bool {
         let in_value = self
             .entry_value()
@@ -402,7 +418,7 @@ impl Query {
 }
 
 /// Transform the lookup keys to account for arrays of tables and arrays.
-/// 
+///
 /// It appends an index after each array so that we get the item type
 /// during lookups.
 pub fn lookup_keys(root: Node, keys: &Keys) -> Keys {

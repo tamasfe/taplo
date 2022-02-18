@@ -120,8 +120,6 @@ impl Default for SchemaCacheConfig {
 #[serde(rename_all = "camelCase")]
 pub struct TaploConfig {
     pub config_file: TaploConfigFileConfig,
-    pub environment: HashMap<String, String>,
-    pub extra_args: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

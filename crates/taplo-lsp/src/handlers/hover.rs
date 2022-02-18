@@ -100,7 +100,10 @@ pub(crate) async fn hover<E: Environment>(
             );
         }
 
-        let node = doc.dom.path(&keys).unwrap();
+        let node = match doc.dom.path(&keys) {
+            Some(n) => n,
+            None => return Ok(None),
+        };
 
         if position_info.syntax.kind() == SyntaxKind::IDENT {
             keys = lookup_keys(doc.dom.clone(), &keys);

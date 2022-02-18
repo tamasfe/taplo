@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use lsp_async_stub::{
     rpc::Error,
     util::{LspExt, Position},
@@ -9,6 +8,7 @@ use lsp_types::{
     Documentation, InsertTextFormat, MarkupContent, Range, TextEdit,
 };
 use serde_json::Value;
+use std::borrow::Cow;
 use taplo::dom::{node::TableKind, Keys, Node};
 use taplo_common::{
     environment::Environment,
@@ -228,14 +228,22 @@ pub async fn completion<E: Environment>(
     }
 
     if query.in_entry_keys() {
-        let parent = query.parent_table_or_array_table(&doc.dom);
+        let mut parent_keys = if let Some((k, _)) = query.dom_node() {
+            k.clone()
+        } else {
+            query.parent_table_or_array_table(&doc.dom).0
+        };
+
+        let entry_keys = query.entry_keys();
+
+        parent_keys = parent_keys.skip_right(entry_keys.len());
 
         let schemas = match ws
             .schemas
             .child_schemas_from(
                 &schema_association.url,
                 &value,
-                &lookup_keys(doc.dom.clone(), &parent.0),
+                &lookup_keys(doc.dom.clone(), &parent_keys),
                 ws.config.completion.max_keys + 1,
             )
             .await
@@ -249,6 +257,8 @@ pub async fn completion<E: Environment>(
 
         let key_range = query.entry_key().map(|k| k.text_range());
 
+        let has_eq = query.entry_has_eq();
+
         return Ok(Some(CompletionResponse::Array(
             schemas
                 .into_iter()
@@ -259,9 +269,23 @@ pub async fn completion<E: Environment>(
                     text_edit: key_range.map(|r| {
                         CompletionTextEdit::Edit(TextEdit {
                             range: doc.mapper.range(r).unwrap().into_lsp(),
-                            new_text: relative_keys.to_string() + " ",
+                            new_text: if !has_eq {
+                                new_entry_snippet(&relative_keys, &schema)
+                            } else {
+                                relative_keys.to_string() + " "
+                            },
                         })
                     }),
+                    insert_text: Some(if !has_eq {
+                        new_entry_snippet(&relative_keys, &schema)
+                    } else {
+                        relative_keys.to_string() + " "
+                    }),
+                    insert_text_format: if !has_eq {
+                        Some(InsertTextFormat::SNIPPET)
+                    } else {
+                        None
+                    },
                     ..Default::default()
                 })
                 .collect(),
@@ -270,7 +294,6 @@ pub async fn completion<E: Environment>(
 
     if query.in_entry_value() {
         let (path, _) = query.dom_node().unwrap();
-
         // Pretty much same as the entry on an empty line
         if query.in_inline_table() {
             let schemas = match ws
@@ -358,15 +381,23 @@ pub async fn completion<E: Environment>(
     }
 
     // Only standalone keys left.
-    // Almost the same as an empty line except we need to replace the keys.
-    let parent_table = query.parent_table_or_array_table(&doc.dom);
+    // Almost the same as an empty line except we need to replace the incomplete keys.
+    let mut parent_keys = if let Some((k, _)) = query.dom_node() {
+        k.clone()
+    } else {
+        query.parent_table_or_array_table(&doc.dom).0
+    };
+
+    let entry_keys = query.entry_keys();
+
+    parent_keys = parent_keys.skip_right(entry_keys.len());
 
     let schemas = match ws
         .schemas
         .child_schemas_from(
             &schema_association.url,
             &value,
-            &lookup_keys(doc.dom.clone(), &parent_table.0),
+            &lookup_keys(doc.dom.clone(), &parent_keys),
             ws.config.completion.max_keys + 1,
         )
         .await
@@ -377,8 +408,6 @@ pub async fn completion<E: Environment>(
             return Ok(None);
         }
     };
-
-    let entry_keys = query.entry_keys();
 
     Ok(Some(CompletionResponse::Array(
         schemas

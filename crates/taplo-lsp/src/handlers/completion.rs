@@ -1,5 +1,4 @@
 use std::borrow::Cow;
-
 use lsp_async_stub::{
     rpc::Error,
     util::{LspExt, Position},
@@ -33,7 +32,7 @@ pub async fn completion<E: Environment>(
     let workspaces = context.workspaces.read().await;
     let ws = workspaces.by_document(&document_uri);
 
-    // All completions are based on schemas.
+    // All completions are tied to schemas.
     if !ws.config.schema.enabled {
         return Ok(None);
     }
@@ -107,8 +106,6 @@ pub async fn completion<E: Environment>(
             .dom_node()
             .cloned()
             .unwrap_or_else(|| (Keys::empty(), doc.dom.clone()));
-
-        tracing::info!("aaaaaaa");
 
         return Ok(Some(CompletionResponse::Array(
             object_schemas

@@ -225,6 +225,8 @@ impl<E: Environment> Schemas<E> {
     fn create_validator(&self, schema: &Value) -> Result<JSONSchema, anyhow::Error> {
         JSONSchema::options()
             .with_resolver(self.clone())
+            .with_format("semver", formats::semver)
+            .with_format("semver-requirement", formats::semver_req)
             .compile(schema)
             .map_err(|err| anyhow!("invalid schema: {err}"))
     }
@@ -599,5 +601,15 @@ impl NodeValidationError {
         }
 
         Ok(Self { keys, node, error })
+    }
+}
+
+mod formats {
+    pub(super) fn semver(value: &str) -> bool {
+        semver::Version::parse(value).is_ok()
+    }
+
+    pub(super) fn semver_req(value: &str) -> bool {
+        semver::VersionReq::parse(value).is_ok()
     }
 }

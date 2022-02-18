@@ -103,15 +103,15 @@ impl Default for SchemaConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SchemaCacheConfig {
-    pub memory: u64,
-    pub disk: u64,
+    pub memory_expiration: u64,
+    pub disk_expiration: u64,
 }
 
 impl Default for SchemaCacheConfig {
     fn default() -> Self {
         Self {
-            memory: DEFAULT_LRU_CACHE_EXPIRATION_TIME.as_secs(),
-            disk: DEFAULT_LRU_CACHE_EXPIRATION_TIME.as_secs(),
+            memory_expiration: DEFAULT_LRU_CACHE_EXPIRATION_TIME.as_secs(),
+            disk_expiration: DEFAULT_LRU_CACHE_EXPIRATION_TIME.as_secs(),
         }
     }
 }

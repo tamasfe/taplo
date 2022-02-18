@@ -1,4 +1,4 @@
-use crate::query::{Query, lookup_keys};
+use crate::query::{lookup_keys, Query};
 use crate::world::World;
 use lsp_async_stub::rpc::Error;
 use lsp_async_stub::util::{LspExt, Position};
@@ -6,9 +6,9 @@ use lsp_async_stub::{Context, Params};
 use lsp_types::{
     PrepareRenameResponse, RenameParams, TextDocumentPositionParams, TextEdit, WorkspaceEdit,
 };
-use taplo::dom::Keys;
 use std::collections::HashMap;
 use taplo::dom::rewrite::Rewrite;
+use taplo::dom::{Keys, KeyOrIndex};
 use taplo::syntax::SyntaxKind;
 use taplo_common::environment::Environment;
 
@@ -126,6 +126,11 @@ pub async fn rename<E: Environment>(
             doc.dom.clone(),
             &Keys::new(keys.into_iter().take(key_idx + 1)),
         );
+    }
+
+    // We're interested in the array itself, not its item type.
+    if let Some(KeyOrIndex::Index(_)) = keys.iter().last() {
+        keys = keys.skip_right(1);
     }
 
     rewrite.rename_keys(keys.dotted(), &p.new_name).unwrap();

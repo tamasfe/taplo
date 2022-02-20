@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "title": ".replit config schema",
-    "description": "https://docs.replit.com/programming-ide/configuring-repl#:~:text=Configuring%20a%20Cloned%20Repl&text=replit%20file%20and%20make%20it,and%20close%20the%20visual%20editor.",
+    "description": "https://docs.replit.com/programming-ide/configuring-repl",
     "x-taplo-info": {
       "authors": ["Emily Grace Seville (https://github.com/EmilySeville7cfg)"],
       "patterns": ["\\.replit(?:\\.toml)?$"]

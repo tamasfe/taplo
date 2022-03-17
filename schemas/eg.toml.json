@@ -79,9 +79,10 @@
                 "remove-indents": {
                     "description": "",
                     "type": "array",
-                    "maxItems": 3,
                     "oneOf": [
                         {
+                            "minItems": 2,
+                            "maxItems": 2,
                             "items": [
                                 {
                                     "description": "Pattern",
@@ -93,7 +94,9 @@
                                 }
                             ]
                         },
-                        {                    
+                        {
+                            "minItems": 3,
+                            "maxItems": 3,
                             "items": [
                             {
                                 "description": "Pattern",
@@ -116,4 +119,4 @@
     },
     "additionalProperties": false
 }
-  
+ 

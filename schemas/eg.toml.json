@@ -1,0 +1,119 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Eg config file schema",
+    "description": "https://github.com/srsudar/eg",
+    "x-taplo-info": {
+      "authors": ["Emily Grace Seville (https://github.com/EmilySeville7cfg)"],
+      "patterns": ["^\\.?egrc$"]
+    },
+    "type": "object",
+    "properties": {
+        "eg-config": {
+            "description": "Directory options",
+            "type": "object",
+            "properties": {
+                "examples-dir": {
+                    "description": "Example directory",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "custom-dir": {
+                    "description": "Custom directory",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "color": {
+                    "description": "Enable/disable coloring",
+                    "type": "boolean",
+                    "default": false
+                },
+                "squeeze": {
+                    "description": "Enable/disable squeezing empty lines",
+                    "type": "boolean",
+                    "default": false
+                },
+                "pager-cmd": {
+                    "description": "Pager command",
+                    "type": "string",
+                    "default": "less -RMFXK"
+                }
+            },
+            "additionalProperties": false
+        },
+        "color": {
+            "description": "Color options",
+            "type": "object",
+            "properties": {
+                "pound": {
+                    "description": "Color of the pound sign before headings",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "heading": {
+                    "description": "Color of the text of headings",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "code": {
+                    "description": "Color of the anything indented four spaces other than a leading `$`",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "prompt": {
+                    "description": "Color of the `$` that is indented four spaces",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "backticks": {
+                    "description": "Color of the anything between two backticks",
+                    "type": "string",
+                    "minLength": 1
+                }
+            },
+            "additionalProperties": false
+        },
+        "substitutions": {
+            "description": "Substitution options",
+            "type": "object",
+            "properties": {
+                "remove-indents": {
+                    "description": "",
+                    "type": "array",
+                    "maxItems": 3,
+                    "oneOf": [
+                        {
+                            "items": [
+                                {
+                                    "description": "Pattern",
+                                    "type": "string"
+                                },
+                                {
+                                    "description": "Replacement",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        {                    
+                            "items": [
+                            {
+                                "description": "Pattern",
+                                "type": "string"
+                            },
+                            {
+                                "description": "Replacement",
+                                "type": "string"
+                            },
+                            {
+                                "description": "Enable/disable multiline mode",
+                                "type": "boolean"
+                            }
+                        ]}
+                    ]
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}
+  

@@ -5,7 +5,7 @@
   "description": "https://rust-lang.github.io/rustfmt",
   "x-taplo-info": {
     "authors": ["Aloso (https://github.com/Aloso)"],
-    "patterns": ["^(.*(/|\\\\).?rustfmt\\.toml|rustfmt\\.toml)$"]
+    "patterns": ["^(.*(/|\\\\)\\.?rustfmt\\.toml|rustfmt\\.toml)$"]
   },
   "properties": {
     "array_width": {

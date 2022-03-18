@@ -9,31 +9,31 @@
     "type": "object",
     "properties": {
         "eg-config": {
-            "description": "Directory options",
+            "description": "The directory options\nhttps://github.com/srsudar/eg#configuration-and-extension",
             "type": "object",
             "properties": {
                 "examples-dir": {
-                    "description": "Example directory",
+                    "description": "The example directory\nhttps://github.com/srsudar/eg#configuration-and-extension",
                     "type": "string",
                     "minLength": 1
                 },
                 "custom-dir": {
-                    "description": "Custom directory",
+                    "description": "The custom directory\nhttps://github.com/srsudar/eg#configuration-and-extension",
                     "type": "string",
                     "minLength": 1
                 },
                 "color": {
-                    "description": "Enable/disable coloring",
+                    "description": "Enable/disable coloring\nhttps://github.com/srsudar/eg#color",
                     "type": "boolean",
                     "default": false
                 },
                 "squeeze": {
-                    "description": "Enable/disable squeezing empty lines",
+                    "description": "Enable/disable squeezing empty lines\nhttps://github.com/srsudar/eg#squeezing-blank-lines",
                     "type": "boolean",
                     "default": false
                 },
                 "pager-cmd": {
-                    "description": "Pager command",
+                    "description": "The pager command\nhttps://github.com/srsudar/eg#paging",
                     "type": "string",
                     "default": "less -RMFXK"
                 }
@@ -41,31 +41,31 @@
             "additionalProperties": false
         },
         "color": {
-            "description": "Color options",
+            "description": "The color options\nhttps://github.com/srsudar/eg#color",
             "type": "object",
             "properties": {
                 "pound": {
-                    "description": "Color of the pound sign before headings",
+                    "description": "The color of the pound sign before headings\nhttps://github.com/srsudar/eg#color",
                     "type": "string",
                     "minLength": 1
                 },
                 "heading": {
-                    "description": "Color of the text of headings",
+                    "description": "The color of the text of headings\nhttps://github.com/srsudar/eg#color",
                     "type": "string",
                     "minLength": 1
                 },
                 "code": {
-                    "description": "Color of the anything indented four spaces other than a leading `$`",
+                    "description": "The color of the anything indented four spaces other than a leading `$`\nhttps://github.com/srsudar/eg#color",
                     "type": "string",
                     "minLength": 1
                 },
                 "prompt": {
-                    "description": "Color of the `$` that is indented four spaces",
+                    "description": "The color of the `$` that is indented four spaces\nhttps://github.com/srsudar/eg#color",
                     "type": "string",
                     "minLength": 1
                 },
                 "backticks": {
-                    "description": "Color of the anything between two backticks",
+                    "description": "The color of the anything between two backticks\nhttps://github.com/srsudar/eg#color",
                     "type": "string",
                     "minLength": 1
                 }
@@ -73,7 +73,7 @@
             "additionalProperties": false
         },
         "substitutions": {
-            "description": "Substitution options",
+            "description": "The substitution options\nhttps://github.com/srsudar/eg#regex-substitutions",
             "type": "object",
             "properties": {
                 "remove-indents": {
@@ -85,11 +85,11 @@
                             "maxItems": 2,
                             "items": [
                                 {
-                                    "description": "Pattern",
+                                    "description": "The pattern\nhttps://github.com/srsudar/eg#regex-substitutions",
                                     "type": "string"
                                 },
                                 {
-                                    "description": "Replacement",
+                                    "description": "The replacement\nhttps://github.com/srsudar/eg#regex-substitutions",
                                     "type": "string"
                                 }
                             ]
@@ -99,15 +99,15 @@
                             "maxItems": 3,
                             "items": [
                             {
-                                "description": "Pattern",
+                                "description": "The pattern\nhttps://github.com/srsudar/eg#regex-substitutions",
                                 "type": "string"
                             },
                             {
-                                "description": "Replacement",
+                                "description": "The replacement\nhttps://github.com/srsudar/eg#regex-substitutions",
                                 "type": "string"
                             },
                             {
-                                "description": "Enable/disable multiline mode",
+                                "description": "Enable/disable multiline mode\nhttps://github.com/srsudar/eg#regex-substitutions",
                                 "type": "boolean"
                             }
                         ]}

@@ -12,7 +12,7 @@
   },
   "properties": {
     "toolchain": {
-      "description": "Details about the Rust toolchain to be used.",
+      "description": "The Rust toolchain to be used.",
       "type": "object",
       "minProperties": 1,
       "oneOf": [
@@ -27,21 +27,23 @@
                     "stable",
                     "beta",
                     "nightly"
-                  ],
-                  "$comment": "TODO: enumValues docs? or maybe not"
+                  ]
                 },
                 {
-                  "$comment": "Empty schema allows for custom rustup toolchains with `rustup link`"
+                  "$comment": "Empty schema allows for custom rustup toolchains, specific nightlies, etc."
                 }
               ],
               "x-taplo": {
                 "links": {
                   "key": "https://rust-lang.github.io/rustup/concepts/channels.html"
+                },
+                "docs": {
+                  "main": "Rust is released to three different \"channels\": stable, beta,\nand nightly."
                 }
               }
             },
             "components": {
-              "description": "Components to be added when installing the toolchain.",
+              "description": "Components to be installed as part of the toolchain.",
               "type": "array",
               "items": {
                 "type": "string",
@@ -62,23 +64,22 @@
                       "llvm-tools-preview",
                       "rustc-dev"
                     ],
-                    "$comment": "TODO: enumValues docs",
                     "x-taplo": {
                       "docs": {
                         "enumValues": [
-                          null,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null
+                          "The Rust compiler and [Rustdoc].\n[rustdoc]: https://doc.rust-lang.org/rustdoc/",
+                          "[Cargo] is a package manager and build tool.\n\n[cargo]: https://doc.rust-lang.org/cargo/",
+                          "[Rustfmt] is a tool for automatically formatting code.\n\n[rustfmt]: https://github.com/rust-lang/rustfmt",
+                          "This is the Rust [standard library]. There is a separate\n  `rust-std` component for each target that `rustc` supports, such as\n  `rust-std-x86_64-pc-windows-msvc`. See the [Cross-compilation] chapter for\n  more detail.\n\n[standard library]: https://doc.rust-lang.org/std/\n[cross-compilation]: .https://rust-lang.github.io/rustup/cross-compilation.html",
+                          "This is a local copy of the [Rust documentation]. Use the\n  `rustup doc` command to open the documentation in a web browser. Run `rustup\n  doc --help` for more options.\n\n[rust documentation]: https://doc.rust-lang.org/",
+                          "[RLS] is a language server that provides support for editors and\n  IDEs.\n\n[RLS]: https://github.com/rust-lang/rls",
+                          "[Clippy] is a lint tool that provides extra checks for common\n  mistakes and stylistic choices.\n\n[clippy]: https://github.com/rust-lang/rust-clippy",
+                          "[Miri] is an experimental Rust interpreter, which can be used for\n  checking for undefined-behavior.\n\n[miri]: https://github.com/rust-lang/miri/",
+                          "This is a local copy of the source code of the Rust standard\n  library. This can be used by some tools, such as [RLS], to provide\n  auto-completion for functions within the standard library; [Miri] which is a\n  Rust interpreter; and Cargo's experimental [build-std] feature, which allows\n  you to rebuild the standard library locally.\n\n[RLS]: https://github.com/rust-lang/rls\n[miri]: https://github.com/rust-lang/miri/\n[build-std]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#build-std",
+                          "Metadata about the standard library, used by tools like\n  [RLS].\n\n[RLS]: https://github.com/rust-lang/rls",
+                          "This contains a linker and platform libraries for building on\n  the `x86_64-pc-windows-gnu` platform.",
+                          "This is an experimental component which contains a\n  collection of [LLVM] tools.\n\n[LLVM]: https://llvm.org/",
+                          "This component contains the compiler as a library. Most users\n  will not need this; it is only needed for development *of* tools that link\n  to the compiler, such as making modifications to [Clippy].\n\n[clippy]: https://github.com/rust-lang/rust-clippy"
                         ]
                       }
                     }
@@ -91,6 +92,9 @@
               "x-taplo": {
                 "links": {
                   "key": "https://rust-lang.github.io/rustup/concepts/components.html"
+                },
+                "docs": {
+                  "main": "Each release of Rust includes several \"components\", some of\nwhich are required (like `rustc`) and some that are optional (like\n[`clippy`])."
                 }
               }
             },
@@ -290,6 +294,9 @@
               "x-taplo": {
                 "links": {
                   "key": "https://rust-lang.github.io/rustup/cross-compilation.html"
+                },
+                "docs": {
+                  "main": "`rustc` is capable of generating code for many platforms. The\n\"target\" specifies the platform that the code will be generated for. By\ndefault, `cargo` and `rustc` use the host toolchain's platform as the\ntarget. To build for a different target, usually the target's standard\nlibrary needs to be installed first via the `rustup target` command."
                 }
               }
             },
@@ -297,7 +304,6 @@
               "description": "The set of components to install when installing the toolchain.",
               "type": "string",
               "default": "default",
-              "$comment": "TODO add docs for enumValues",
               "enum": [
                 "minimal",
                 "default",
@@ -306,6 +312,14 @@
               "x-taplo": {
                 "links": {
                   "key": "https://rust-lang.github.io/rustup/concepts/profiles.html"
+                },
+                "docs": {
+                  "main": "In order to make it easier to work with components, a\n\"profile\" defines a grouping of components.",
+                  "enumValues": [
+                    "This profile includes as few components as possible to get a\nworking compiler (`rustc`, `rust-std`, and `cargo`). It's recommended to use\nthis component on Windows systems if you don't use local documentation (the\nlarge number of files can cause issues with some Antivirus systems), and in\nCI.",
+                    "This profile includes all of components in the **minimal**\nprofile, and adds `rust-docs`, `rustfmt`, and `clippy`. This profile will be\nused by `rustup` by default, and it's the one recommended for general use.",
+                    "This profile includes all the components available through\n`rustup`. This should never be used, as it includes *every* component ever\nincluded in the metadata and thus will almost always fail. If you are\nlooking for a way to install devtools such as `miri` or IDE integration\ntools (`rls`), you should use the `default` profile and\ninstall the needed additional components manually, either by using `rustup\ncomponent add` or by using `-c` when installing the toolchain."
+                  ]
                 }
               }
             }
@@ -318,7 +332,12 @@
           "properties": {
             "path": {
               "type": "string",
-              "description": "Path to a custom local toolchain. Relative paths are resolved relative to the location of the `rust-toolchain.toml` file."
+              "description": "Path to a custom local toolchain.",
+              "x-taplo": {
+                "docs": {
+                  "main": "Path to a custom local toolchain. Since a `path` directive directly names a local toolchain, other options\nlike `components`, `targets`, and `profile` have no effect. `channel`\nand `path` are mutually exclusive, since a `path` already points to a\nspecific toolchain. A relative `path` is resolved relative to the\nlocation of the `rust-toolchain.toml` file."
+                }
+              }
             }
           },
           "required": [
@@ -332,7 +351,10 @@
         },
         "initKeys": [
           "channel"
-        ]
+        ],
+        "docs": {
+          "main": "A \"toolchain\" is a complete installation of the Rust\ncompiler (`rustc`) and related tools (like `cargo`). A toolchain\nspecification includes the release channel or version, and the host\nplatform that the toolchain runs on."
+        }
       }
     }
   },

@@ -57,7 +57,6 @@ jobs:
 
   cli_binaries:
     name: Publish and release Taplo CLI
-    needs: test
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-cli-')
     strategy:
       matrix:

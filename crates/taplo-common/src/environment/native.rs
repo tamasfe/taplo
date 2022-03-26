@@ -2,10 +2,28 @@ use crate::config::CONFIG_FILE_NAMES;
 
 use super::Environment;
 use async_trait::async_trait;
+use futures::{future::LocalBoxFuture, FutureExt};
 use time::OffsetDateTime;
 
-#[derive(Clone, Copy)]
-pub struct NativeEnvironment;
+#[derive(Clone)]
+pub struct NativeEnvironment {
+    handle: tokio::runtime::Handle,
+}
+
+impl NativeEnvironment {
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            handle: tokio::runtime::Handle::current(),
+        }
+    }
+}
+
+impl Default for NativeEnvironment {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[async_trait(?Send)]
 impl Environment for NativeEnvironment {
@@ -17,12 +35,22 @@ impl Environment for NativeEnvironment {
         OffsetDateTime::now_utc()
     }
 
-    fn spawn<F>(&self, fut: F)
+    fn spawn<F>(&self, fut: F) -> LocalBoxFuture<'static, F::Output>
     where
         F: futures::Future + Send + 'static,
         F::Output: Send,
     {
-        tokio::spawn(fut);
+        let handle = self.handle.spawn(fut);
+        { async move { handle.await.unwrap() } }.boxed_local()
+    }
+
+    fn spawn_blocking<F, R>(&self, cb: F) -> LocalBoxFuture<'static, R>
+    where
+        F: FnOnce() -> R + Send + 'static,
+        R: Send + 'static,
+    {
+        let handle = self.handle.spawn_blocking(cb);
+        async move { handle.await.unwrap() }.boxed_local()
     }
 
     fn spawn_local<F>(&self, fut: F)

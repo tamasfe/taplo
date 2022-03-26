@@ -9,8 +9,8 @@ use walkdir::WalkDir;
 
 const IGNORED_TESTS: &'static [&'static str] = &[
     "qa-array-inline-nested-1000",
-    "qa-table-inline-nested-1000"
-
+    "qa-table-inline-nested-1000",
+    "table-invalid-4"
 ];
 
 fn main() {

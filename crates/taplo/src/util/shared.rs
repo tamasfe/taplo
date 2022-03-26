@@ -74,4 +74,3 @@ impl<T: Clone> std::ops::Deref for SharedGuard<T> {
         self.0.as_ref().unwrap()
     }
 }
-

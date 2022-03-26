@@ -1,1 +1,0 @@
-Optimize for binary size.

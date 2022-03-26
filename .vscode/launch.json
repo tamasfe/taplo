@@ -1,0 +1,241 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'lsp-async-stub'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=lsp-async-stub"
+                ],
+                "filter": {
+                    "name": "lsp-async-stub",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'taplo'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=taplo"
+                ],
+                "filter": {
+                    "name": "taplo",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'parse'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=parse",
+                    "--package=taplo"
+                ],
+                "filter": {
+                    "name": "parse",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'parse'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=parse",
+                    "--package=taplo"
+                ],
+                "filter": {
+                    "name": "parse",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'taplo'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=taplo",
+                    "--package=taplo"
+                ],
+                "filter": {
+                    "name": "taplo",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'profile'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=profile",
+                    "--package=taplo"
+                ],
+                "filter": {
+                    "name": "profile",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'taplo-cli'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=taplo-cli"
+                ],
+                "filter": {
+                    "name": "taplo-cli",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'taplo'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=taplo",
+                    "--package=taplo-cli"
+                ],
+                "filter": {
+                    "name": "taplo",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "attach",
+            "name": "Attach to executable 'taplo'",
+            "pid": "${command:pickProcess}",
+            "cwd": "${workspaceFolder}"
+        },        
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'taplo'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=taplo",
+                    "--package=taplo-cli"
+                ],
+                "filter": {
+                    "name": "taplo",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'taplo-common'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=taplo-common"
+                ],
+                "filter": {
+                    "name": "taplo-common",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'taplo-lsp'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=taplo-lsp"
+                ],
+                "filter": {
+                    "name": "taplo-lsp",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'taplo-plugin-crates'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=taplo-plugin-crates"
+                ],
+                "filter": {
+                    "name": "taplo-plugin-crates",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

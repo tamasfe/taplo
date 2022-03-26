@@ -23,6 +23,7 @@ pub mod priority {
     pub const CONFIG_RULE: usize = 51;
     pub const LSP_CONFIG: usize = 60;
     pub const DIRECTIVE: usize = 70;
+    pub const SCHEMA_FIELD: usize = 75;
     pub const MAX: usize = usize::MAX;
 }
 
@@ -32,6 +33,7 @@ pub mod source {
     pub const LSP_CONFIG: &str = "lsp_config";
     pub const MANUAL: &str = "manual";
     pub const DIRECTIVE: &str = "directive";
+    pub const SCHEMA_FIELD: &str = "$schema";
 }
 
 #[derive(Clone)]
@@ -138,7 +140,8 @@ impl<E: Environment> SchemaAssociations<E> {
         Ok(())
     }
 
-    pub fn add_from_directive(&self, doc_url: &Url, root: &Node) {
+    /// Adds the schema from either a directive, or a `$schema` key in the root.
+    pub fn add_from_document(&self, doc_url: &Url, root: &Node) {
         self.retain(|(rule, assoc)| match rule {
             AssociationRule::Url(u) => !(u == doc_url && assoc.meta["source"] == source::DIRECTIVE),
             _ => true,
@@ -174,6 +177,35 @@ impl<E: Environment> SchemaAssociations<E> {
                 ));
                 break;
             }
+        }
+
+        if let Node::Str(s) = root.get("$schema") {
+            let schema_url: Url = if s.value().starts_with('.') {
+                match doc_url.join(s.value()) {
+                    Ok(s) => s,
+                    Err(error) => {
+                        tracing::error!(%error, "invalid schema url or path given in the `$schema` field");
+                        return;
+                    }
+                }
+            } else {
+                match s.value().parse() {
+                    Ok(s) => s,
+                    Err(error) => {
+                        tracing::error!(%error, "invalid schema url or path given in the `$schema` field");
+                        return;
+                    }
+                }
+            };
+
+            self.associations.write().push((
+                AssociationRule::Url(doc_url.clone()),
+                SchemaAssociation {
+                    url: schema_url,
+                    priority: priority::SCHEMA_FIELD,
+                    meta: json!({ "source": source::SCHEMA_FIELD }),
+                },
+            ));
         }
     }
 
@@ -334,6 +366,7 @@ impl From<GlobRule> for AssociationRule {
 }
 
 impl AssociationRule {
+    #[must_use]
     pub fn is_match(&self, text: &str) -> bool {
         match self {
             AssociationRule::Glob(g) => g.is_match(text),
@@ -372,7 +405,7 @@ impl SchemaCatalog {
                     }
 
                     if !fm.starts_with("**/") {
-                        *fm = String::from("**/") + fm;
+                        *fm = String::from("**/") + fm.as_str();
                     }
                 }
             }

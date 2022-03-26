@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 ahash = { version = "0.7.6", features = ["serde"] }
-anyhow = {version = "1.0.53", features = ["backtrace"]}
+anyhow = { version = "1.0.53", features = ["backtrace"] }
 arc-swap = "1.5.0"
 async-recursion = "1.0.0"
 async-trait = "0.1.52"
@@ -16,7 +16,7 @@ futures = "0.3.19"
 glob = "0.3.0"
 globset = "0.4.8"
 hex = "0.4.3"
-indexmap = { version = "1.8.0", features = ["serde"] }
+indexmap = { version = "1.8.0", features = ["serde", "rayon"] }
 jsonschema = { version = "0.15.0", default-features = false }
 lru = "0.7.2"
 parking_lot = "0.12.0"
@@ -25,14 +25,22 @@ reqwest = { version = "0.11.9", features = ["json"] }
 schemars = { version = "0.8.8", features = ["url"] }
 semver = { version = "1.0.5", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
-serde_json = "1.0.78"
+serde_json = { version = "1.0.78", features = ["preserve_order"] }
 sha-1 = "0.10.0"
 tap = "1.0.1"
 taplo = { version = "0.8.0", path = "../taplo", features = ["schema"] }
 thiserror = "1.0.30"
 time = { version = "0.3.7", features = ["serde"] }
-tokio = { version = "1.16.1", features = ["sync", "fs", "io-std", "parking_lot"] }
+tokio = { version = "1.16.1", features = [
+    "sync",
+    "fs",
+    "time",
+    "io-std",
+    "parking_lot",
+] }
 tracing = "0.1.29"
 url = { version = "2.2.2", features = ["serde"] }
+
+itertools = "0.10.3"
 
 [features]

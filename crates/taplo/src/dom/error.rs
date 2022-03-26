@@ -1,6 +1,6 @@
-use thiserror::Error;
-use crate::syntax::SyntaxElement;
 use super::node::Key;
+use crate::syntax::SyntaxElement;
+use thiserror::Error;
 
 #[derive(Debug, Clone, Error)]
 pub enum Error {
@@ -13,9 +13,12 @@ pub enum Error {
     #[error("expected table")]
     ExpectedTable { not_table: Key, required_by: Key },
     #[error("expected array of tables")]
-    ExpectedArrayOfTables { not_array_of_tables: Key, required_by: Key },
+    ExpectedArrayOfTables {
+        not_array_of_tables: Key,
+        required_by: Key,
+    },
     #[error("{0}")]
-    Query(#[from] QueryError)
+    Query(#[from] QueryError),
 }
 
 #[derive(Debug, Clone, Error)]

@@ -62,9 +62,7 @@ fn symbols_for_value(
         own_range
     };
 
-    let selection_range = key_range
-        .map(|r| mapper.range(r).unwrap())
-        .unwrap_or(own_range);
+    let selection_range = key_range.map_or(own_range, |r| mapper.range(r).unwrap());
 
     match node {
         Node::Bool(_) => symbols.push(DocumentSymbol {
@@ -87,17 +85,7 @@ fn symbols_for_value(
             tags: Default::default(),
             children: None,
         }),
-        Node::Integer(_) => symbols.push(DocumentSymbol {
-            name,
-            kind: SymbolKind::NUMBER,
-            range: range.into_lsp(),
-            selection_range: selection_range.into_lsp(),
-            detail: None,
-            deprecated: None,
-            tags: Default::default(),
-            children: None,
-        }),
-        Node::Float(_) => symbols.push(DocumentSymbol {
+        Node::Integer(_) | Node::Float(_) => symbols.push(DocumentSymbol {
             name,
             kind: SymbolKind::NUMBER,
             range: range.into_lsp(),
@@ -162,7 +150,7 @@ fn symbols_for_value(
                 },
             });
         }
-        _ => {}
+        Node::Invalid(_) => {}
     }
 }
 

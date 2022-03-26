@@ -12,7 +12,11 @@ use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent, MarkupKind};
 use serde_json::Value;
 use taplo::{
     dom::{KeyOrIndex, Keys},
-    syntax::SyntaxKind::{self, *},
+    syntax::SyntaxKind::{
+        self, BOOL, DATE, DATE_TIME_LOCAL, DATE_TIME_OFFSET, IDENT, INTEGER, INTEGER_BIN,
+        INTEGER_HEX, INTEGER_OCT, MULTI_LINE_STRING, MULTI_LINE_STRING_LITERAL, STRING,
+        STRING_LITERAL, TIME,
+    },
 };
 use taplo_common::{environment::Environment, schema::ext::schema_ext_of};
 

@@ -82,7 +82,7 @@ pub async fn links<E: Environment>(
                         target: Some(url.clone()),
                         tooltip: None,
                         data: None,
-                    }))
+                    }));
                 }
             }
         }

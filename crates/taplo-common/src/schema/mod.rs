@@ -1,8 +1,10 @@
-use self::{associations::SchemaAssociations, cache::Cache};
-use crate::{environment::Environment, LruCache};
+use self::{associations::SchemaAssociations, cache::Cache, ext::schema_ext_of, plugin::Plugin};
+use crate::{environment::Environment, plugin, util::ArcHashValue, HashMap, LruCache};
 use anyhow::{anyhow, Context};
+use arc_swap::ArcSwap;
 use async_recursion::async_recursion;
 use futures::{stream::FuturesUnordered, StreamExt};
+use itertools::Itertools;
 use jsonschema::{error::ValidationErrorKind, JSONSchema, SchemaResolver, ValidationError};
 use parking_lot::Mutex;
 use regex::Regex;
@@ -25,6 +27,8 @@ pub struct Schemas<E: Environment> {
     http: reqwest::Client,
     validators: Arc<Mutex<LruCache<Url, Arc<JSONSchema>>>>,
     cache: Cache<E>,
+    #[allow(clippy::type_complexity)]
+    plugins: Arc<ArcSwap<HashMap<Cow<'static, str>, Arc<dyn Plugin<E>>>>>,
 }
 
 impl<E: Environment> Schemas<E> {
@@ -38,6 +42,7 @@ impl<E: Environment> Schemas<E> {
             concurrent_requests: Arc::new(Semaphore::new(10)),
             http,
             validators: Arc::new(Mutex::new(LruCache::new(3))),
+            plugins: Default::default(),
         }
     }
 
@@ -49,6 +54,19 @@ impl<E: Environment> Schemas<E> {
     /// Get a reference to the schemas's cache.
     pub fn cache(&self) -> &Cache<E> {
         &self.cache
+    }
+
+    pub fn env(&self) -> &E {
+        &self.env
+    }
+
+    pub fn set_plugins(&self, plugins: &[Arc<dyn Plugin<E>>]) {
+        self.plugins.store(Arc::new(
+            plugins
+                .iter()
+                .map(|v| (v.name().clone(), v.clone()))
+                .collect::<HashMap<_, _>>(),
+        ));
     }
 }
 
@@ -120,7 +138,7 @@ impl<E: Environment> Schemas<E> {
                             if let ValidationErrorKind::Resolver { url, .. } = &err.kind {
                                 Some(async {
                                     let value = self.load_schema(url).await?;
-                                    let _ = self.cache.store(url.clone(), value);
+                                    drop(self.cache.store(url.clone(), value));
                                     Result::<(), anyhow::Error>::Ok(())
                                 })
                             } else {
@@ -152,7 +170,7 @@ impl<E: Environment> Schemas<E> {
     }
 
     pub async fn add_schema(&self, schema_url: &Url, schema: Arc<Value>) {
-        let _ = self.cache.store(schema_url.clone(), schema).await;
+        drop(self.cache.store(schema_url.clone(), schema).await);
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(%schema_url))]
@@ -216,7 +234,7 @@ impl<E: Environment> Schemas<E> {
             None => {
                 let val = self.load_schema(&url).await?;
                 let val = val;
-                let _ = self.cache.store(url, val.clone());
+                drop(self.cache.store(url, val.clone()));
                 Ok(val)
             }
         }
@@ -224,7 +242,9 @@ impl<E: Environment> Schemas<E> {
 
     fn create_validator(&self, schema: &Value) -> Result<JSONSchema, anyhow::Error> {
         JSONSchema::options()
-            .with_resolver(self.clone())
+            .with_resolver(CacheSchemaResolver {
+                cache: self.cache().clone(),
+            })
             .with_format("semver", formats::semver)
             .with_format("semver-requirement", formats::semver_req)
             .compile(schema)
@@ -275,6 +295,12 @@ impl<E: Environment> Schemas<E> {
             &mut schemas,
         )
         .await?;
+
+        schemas = schemas
+            .into_iter()
+            .unique_by(|(k, s)| (k.clone(), ArcHashValue(s.clone())))
+            .collect();
+
         Ok(schemas)
     }
 
@@ -414,7 +440,7 @@ impl<E: Environment> Schemas<E> {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(%schema_url, %path))]
-    pub async fn child_schemas_from(
+    pub async fn possible_schemas_from(
         &self,
         schema_url: &Url,
         value: &Value,
@@ -437,11 +463,17 @@ impl<E: Environment> Schemas<E> {
             .await;
         }
 
+        children = children
+            .into_iter()
+            .unique_by(|(k1, k2, s)| (k1.clone(), k2.clone(), ArcHashValue(s.clone())))
+            .collect();
+
         Ok(children)
     }
 
     #[async_recursion(?Send)]
     #[must_use]
+    #[allow(clippy::too_many_arguments)]
     async fn collect_child_schemas(
         &self,
         root_url: &Url,
@@ -472,12 +504,40 @@ impl<E: Environment> Schemas<E> {
                     return;
                 }
             };
+
             return self
                 .collect_child_schemas(root_url, &schema, root_path, path, depth, schemas)
                 .await;
         }
 
+
+        let mut subschemas_only = true;
+        if let Some(ext) = schema_ext_of(schema) {
+            for plugin_name in ext.plugins {
+                if let Some(p) = self.plugins.load().get(plugin_name.as_str()) {
+                    match p
+                        .possible_schemas(self, root_url, schema, root_path, path, schemas)
+                        .await
+                    {
+                        plugin::CollectSchemasAction::Continue => {}
+                        plugin::CollectSchemasAction::Stop => return,
+                    }
+                }
+            }
+
+            if let Some(true) = ext.hidden {
+                return;
+            }
+
+            if let Some(s) = ext.subschemas_only {
+                subschemas_only = s;
+            }
+        }
+
+        let mut had_subschemas = false;
+
         if let Some(one_ofs) = schema["oneOf"].as_array() {
+            had_subschemas = true;
             for one_of in one_ofs {
                 self.collect_child_schemas(root_url, one_of, root_path, path, depth, schemas)
                     .await;
@@ -485,17 +545,24 @@ impl<E: Environment> Schemas<E> {
         }
 
         if let Some(any_ofs) = schema["anyOf"].as_array() {
+            had_subschemas = true;
             for any_of in any_ofs {
                 self.collect_child_schemas(root_url, any_of, root_path, path, depth, schemas)
                     .await;
             }
         }
 
+        // FIXME: somehow merge allofs?
         if let Some(all_ofs) = schema["allOf"].as_array() {
+            had_subschemas = true;
             for all_of in all_ofs {
                 self.collect_child_schemas(root_url, all_of, root_path, path, depth, schemas)
                     .await;
             }
+        }
+
+        if had_subschemas && subschemas_only {
+            return;
         }
 
         schemas.push((
@@ -546,7 +613,11 @@ impl ValueExt for Value {
     }
 }
 
-impl<E: Environment> SchemaResolver for Schemas<E> {
+struct CacheSchemaResolver<E: Environment> {
+    cache: Cache<E>,
+}
+
+impl<E: Environment> SchemaResolver for CacheSchemaResolver<E> {
     fn resolve(
         &self,
         _root_schema: &serde_json::Value,
@@ -596,7 +667,7 @@ impl NodeValidationError {
                     node = node.try_get(*idx).map_err(|_| anyhow!("invalid index"))?;
                     keys = keys.join(*idx);
                 }
-                _ => {}
+                jsonschema::paths::PathChunk::Keyword(_) => {}
             }
         }
 

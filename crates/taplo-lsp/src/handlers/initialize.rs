@@ -5,7 +5,13 @@ use crate::config::InitConfig;
 use crate::world::WorkspaceState;
 use crate::World;
 use lsp_async_stub::{rpc::Error, Context, Params};
-use lsp_types::*;
+use lsp_types::{
+    CompletionOptions, DocumentLinkOptions, FoldingRangeProviderCapability,
+    HoverProviderCapability, OneOf, RenameOptions, SemanticTokensFullOptions, SemanticTokensLegend,
+    SemanticTokensOptions, SemanticTokensServerCapabilities, ServerCapabilities, ServerInfo,
+    TextDocumentSyncCapability, TextDocumentSyncKind, WorkDoneProgressOptions,
+    WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+};
 use lsp_types::{InitializeParams, InitializeResult};
 use taplo_common::environment::Environment;
 
@@ -20,7 +26,7 @@ pub async fn initialize<E: Environment>(
         match serde_json::from_value::<InitConfig>(init_opts) {
             Ok(c) => context.init_config.store(Arc::new(c)),
             Err(error) => {
-                tracing::error!(%error, "invalid initialization options")
+                tracing::error!(%error, "invalid initialization options");
             }
         }
     }
@@ -78,7 +84,7 @@ pub async fn initialize<E: Environment>(
             // })),
             rename_provider: Some(OneOf::Right(RenameOptions {
                 prepare_provider: Some(true),
-                work_done_progress_options: Default::default()
+                work_done_progress_options: Default::default(),
             })),
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             document_symbol_provider: Some(OneOf::Left(true)),

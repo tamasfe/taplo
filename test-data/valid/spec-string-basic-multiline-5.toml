@@ -1,5 +1,0 @@
-ml-escaped-nl = """
-  foo \
-  bar \\
-  baz \\\
-  quux"""

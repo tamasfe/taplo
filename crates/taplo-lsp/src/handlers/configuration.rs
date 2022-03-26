@@ -5,7 +5,7 @@ use lsp_types::{
     request::WorkspaceConfiguration, ConfigurationItem, ConfigurationParams,
     DidChangeConfigurationParams,
 };
-use std::iter::{once, FromIterator};
+use std::iter::once;
 use taplo_common::environment::Environment;
 
 #[tracing::instrument(skip_all)]
@@ -58,13 +58,12 @@ pub async fn update_configuration<E: Environment>(context: Context<World<E>>) {
     let res = context
         .clone()
         .write_request::<WorkspaceConfiguration, _>(Some(ConfigurationParams {
-            items: Vec::from_iter(
-                once(ConfigurationItem {
-                    scope_uri: None,
-                    section: Some(init_config.configuration_section.clone()),
-                })
-                .chain(config_items.iter().cloned()),
-            ),
+            items: once(ConfigurationItem {
+                scope_uri: None,
+                section: Some(init_config.configuration_section.clone()),
+            })
+            .chain(config_items.iter().cloned())
+            .collect::<Vec<_>>(),
         }))
         .await
         .context("failed to fetch configuration")

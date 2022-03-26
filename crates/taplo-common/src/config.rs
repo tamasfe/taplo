@@ -6,14 +6,15 @@ use std::{
 use anyhow::Context;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use taplo::formatter::{self, OptionsIncomplete};
+use serde_json::Value;
+use taplo::formatter;
 use url::Url;
 
-use crate::{environment::Environment, util::GlobRule};
+use crate::{environment::Environment, util::GlobRule, HashMap};
 
 pub const CONFIG_FILE_NAMES: &[&str] = &[".taplo.toml", "taplo.toml"];
 
-#[derive(Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     /// Files to include.
@@ -40,6 +41,7 @@ pub struct Config {
 
     /// Rules are used to override configurations by path and keys.
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub rule: Vec<Rule>,
 
     #[serde(flatten)]
@@ -47,6 +49,28 @@ pub struct Config {
 
     #[serde(skip)]
     pub file_rule: Option<GlobRule>,
+
+    #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    pub plugins: HashMap<String, Plugin>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            include: Default::default(),
+            exclude: Default::default(),
+            rule: Default::default(),
+            global_options: Options {
+                formatting: Some(taplo::formatter::OptionsIncomplete::from_options(
+                    taplo::formatter::Options::default(),
+                )),
+                ..Default::default()
+            },
+            file_rule: Default::default(),
+            plugins: Default::default(),
+        }
+    }
 }
 
 impl Debug for Config {
@@ -83,6 +107,7 @@ impl Config {
         Ok(())
     }
 
+    #[must_use]
     pub fn is_included(&self, path: &Path) -> bool {
         match &self.file_rule {
             Some(r) => r.is_match(path),
@@ -93,6 +118,7 @@ impl Config {
         }
     }
 
+    #[must_use]
     pub fn rules_for<'r>(
         &'r self,
         path: &'r Path,
@@ -117,7 +143,7 @@ impl Config {
     pub fn format_scopes<'s>(
         &'s self,
         path: &'s Path,
-    ) -> impl Iterator<Item = (&String, OptionsIncomplete)> + 's {
+    ) -> impl Iterator<Item = (&String, taplo::formatter::OptionsIncomplete)> + 's {
         self.rules_for(path)
             .filter_map(|rule| match (&rule.keys, &rule.options.formatting) {
                 (Some(keys), Some(opts)) => Some(keys.iter().map(move |k| (k, opts.clone()))),
@@ -178,10 +204,10 @@ impl Options {
         if let Some(schema_opts) = &mut self.schema {
             let url = match schema_opts.path.take() {
                 Some(p) => {
-                    let p = if !e.is_absolute(Path::new(&p)) {
-                        base.join(p)
-                    } else {
+                    let p = if e.is_absolute(Path::new(&p)) {
                         PathBuf::from(p)
+                    } else {
+                        base.join(p)
                     };
 
                     let s = p.to_string_lossy();
@@ -272,6 +298,7 @@ impl Rule {
         Ok(())
     }
 
+    #[must_use]
     pub fn is_included(&self, path: &Path) -> bool {
         match &self.file_rule {
             Some(r) => r.is_match(path),
@@ -303,4 +330,12 @@ pub struct SchemaOptions {
     ///
     /// The url of the schema, supported schemes are `http`, `https`, `file` and `taplo`.
     pub url: Option<Url>,
+}
+
+/// A plugin to extend Taplo's capabilities.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct Plugin {
+    /// Optional settings for the plugin.
+    #[serde(default)]
+    pub settings: Option<Value>,
 }

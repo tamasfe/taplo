@@ -10,7 +10,11 @@ use lsp_types::{
 };
 use taplo::{
     dom::node::DomNode,
-    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
+    syntax::{
+        SyntaxElement,
+        SyntaxKind::{ARRAY, IDENT, INLINE_TABLE},
+        SyntaxNode, SyntaxToken,
+    },
 };
 use taplo_common::environment::Environment;
 
@@ -76,8 +80,7 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                         .parent()
                         .and_then(|p| p.next_sibling())
                         .and_then(|t| t.first_child())
-                        .map(|t| t.kind() == INLINE_TABLE)
-                        .unwrap_or(false);
+                        .map_or(false, |t| t.kind() == INLINE_TABLE);
 
                     if is_table_key {
                         builder.add_token(&token, TokenType::TomlTableKey, &[]);
@@ -89,8 +92,7 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                         .parent()
                         .and_then(|p| p.next_sibling())
                         .and_then(|t| t.first_child())
-                        .map(|t| t.kind() == ARRAY)
-                        .unwrap_or(false);
+                        .map_or(false, |t| t.kind() == ARRAY);
 
                     if is_array_key {
                         builder.add_token(&token, TokenType::TomlArrayKey, &[]);
@@ -131,6 +133,7 @@ impl<'b> SemanticTokensBuilder<'b> {
             lsp_async_stub::util::Range::from_lsp(self.last_range.unwrap_or_default()),
         );
 
+        #[allow(clippy::cast_possible_truncation)]
         self.tokens.push(SemanticToken {
             delta_line: relative.start.line as u32,
             delta_start: relative.start.character as u32,

@@ -49,7 +49,8 @@ pub fn parse(source: &str) -> Parse {
 /// a Rowan green tree from them.
 pub(crate) struct Parser<'p> {
     skip_whitespace: bool,
-    glob_allowed: bool,
+    // Allow glob patterns as keys and using [] instead of dots.
+    key_pattern_syntax: bool,
     current_token: Option<SyntaxKind>,
 
     // These tokens are not consumed on errors.
@@ -79,7 +80,7 @@ impl<'p> Parser<'p> {
     ///
     /// It allows a part of glob syntax in identifiers as well.
     pub(crate) fn parse_key_only(mut self) -> Parse {
-        self.glob_allowed = true;
+        self.key_pattern_syntax = true;
         let _ = with_node!(self.builder, KEY, self.parse_key());
 
         Parse {
@@ -102,7 +103,7 @@ impl<'p> Parser<'p> {
         Parser {
             current_token: None,
             skip_whitespace: true,
-            glob_allowed: false,
+            key_pattern_syntax: false,
             error_whitelist: 0,
             lexer: SyntaxKind::lexer(source),
             builder: Default::default(),
@@ -121,18 +122,38 @@ impl<'p> Parser<'p> {
 
     fn error(&mut self, message: &str) -> ParserResult<()> {
         let span = self.lexer.span();
-        self.add_error(&Error {
+
+        let err = Error {
             range: TextRange::new(
                 TextSize::from(span.start as u32),
                 TextSize::from(span.end as u32),
             ),
             message: message.into(),
-        });
-        if let Some(t) = self.current_token {
-            if !self.whitelisted(t) {
-                self.token_as(ERROR).ok();
+        };
+
+        let same_error = self
+            .errors
+            .last()
+            .map(|e| e.range == err.range)
+            .unwrap_or(false);
+
+        if !same_error {
+            self.add_error(&Error {
+                range: TextRange::new(
+                    TextSize::from(span.start as u32),
+                    TextSize::from(span.end as u32),
+                ),
+                message: message.into(),
+            });
+            if let Some(t) = self.current_token {
+                if !self.whitelisted(t) {
+                    self.token_as(ERROR).ok();
+                }
             }
+        } else {
+            self.token_as(ERROR).ok();
         }
+
         Err(())
     }
 
@@ -389,7 +410,7 @@ impl<'p> Parser<'p> {
 
     fn parse_key(&mut self) -> ParserResult<()> {
         if self.parse_ident().is_err() {
-            return self.error("expected identifier");
+            return self.report_error("expected identifier");
         }
 
         let mut after_period = false;
@@ -413,6 +434,22 @@ impl<'p> Parser<'p> {
                         after_period = true;
                     }
                 }
+                BRACKET_START if self.key_pattern_syntax => {
+                    self.step();
+
+                    match self.parse_ident() {
+                        Ok(_) => {}
+                        Err(_) => return self.error("expected identifier"),
+                    }
+
+                    let token = self.get_token()?;
+
+                    if !matches!(token, BRACKET_END) {
+                        self.error(r#"expected "]""#)?;
+                    }
+                    self.step();
+                    after_period = false;
+                }
                 _ => {
                     if after_period {
                         match self.parse_ident() {
@@ -420,6 +457,8 @@ impl<'p> Parser<'p> {
                             Err(_) => return self.error("expected identifier"),
                         }
                         after_period = false;
+                    } else if self.key_pattern_syntax {
+                        return self.error("unexpected identifier");
                     } else {
                         break;
                     }
@@ -435,7 +474,7 @@ impl<'p> Parser<'p> {
         match t {
             IDENT => self.token(),
             IDENT_WITH_GLOB => {
-                if self.glob_allowed {
+                if self.key_pattern_syntax {
                     self.token_as(IDENT)
                 } else {
                     self.error("expected identifier")
@@ -706,7 +745,7 @@ impl<'p> Parser<'p> {
             IDENT | BRACE_END => {
                 // FIXME(bit_flags): This branch is just a workaround.
                 self.report_error("expected value").ok();
-                self.token_as(ERROR)
+                Ok(())
             }
             _ => self.error("expected value"),
         }

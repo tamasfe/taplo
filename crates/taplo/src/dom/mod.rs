@@ -46,6 +46,15 @@ impl From<Key> for KeyOrIndex {
     }
 }
 
+impl PartialEq<str> for KeyOrIndex {
+    fn eq(&self, other: &str) -> bool {
+        match self {
+            KeyOrIndex::Key(k) => k.value() == other,
+            KeyOrIndex::Index(_) => false,
+        }
+    }
+}
+
 impl core::fmt::Display for KeyOrIndex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -111,7 +120,7 @@ impl Keys {
         )
     }
 
-    pub fn iter(&self) -> impl ExactSizeIterator<Item = &KeyOrIndex> {
+    pub fn iter(&self) -> impl ExactSizeIterator<Item = &KeyOrIndex> + DoubleEndedIterator {
         self.keys.iter()
     }
 
@@ -155,8 +164,7 @@ impl Keys {
             self.keys
                 .iter()
                 .filter_map(KeyOrIndex::as_key)
-                .map(|k| k.text_ranges())
-                .flatten(),
+                .flat_map(|k| k.text_ranges()),
         )
     }
 
@@ -209,6 +217,12 @@ impl PartialEq for Keys {
 }
 
 impl Eq for Keys {}
+
+impl std::hash::Hash for Keys {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.dotted.hash(state);
+    }
+}
 
 impl From<Key> for Keys {
     fn from(key: Key) -> Self {

@@ -1,5 +1,5 @@
 [workspace]
-exclude = ["util/schema-gen", "util/test-gen", "util/schema-index"]
+exclude = ["util/test-gen", "util/schema-index"]
 members = ["crates/*"]
 
 [profile.release]

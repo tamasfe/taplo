@@ -1,1 +1,0 @@
-Terminate the process upon panic.

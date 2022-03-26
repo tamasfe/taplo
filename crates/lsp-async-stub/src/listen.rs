@@ -8,7 +8,10 @@ use futures::{
     SinkExt, Stream, StreamExt,
 };
 use lsp_types::NumberOrString;
-use tokio::{io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, BufReader}, select};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, BufReader},
+    select,
+};
 
 #[cfg(feature = "tokio-stdio")]
 mod stdio;
@@ -31,7 +34,7 @@ impl<W: Clone + 'static> Server<W> {
                 tokio::select! {
                     _ = shutdown_signals.next() => {
                         tracing::info!("shutdown signal received, shutting down...");
-    
+
                         let task_fut = self.handle_message(
                             world.clone(),
                             Request::<()>::new()
@@ -64,13 +67,13 @@ impl<W: Clone + 'static> Server<W> {
                                 } else if msg.method.as_ref().map(|m| m == "shutdown").unwrap_or(false) {
                                     continue;
                                 }
-    
+
                                 let task_fut = self.handle_message(
                                     world.clone(),
                                     msg,
                                     output.clone().sink_map_err(|e| panic!("{}", e)),
                                 );
-    
+
                                 tokio::task::spawn_local(async move {
                                     if let Err(e) = task_fut.await {
                                         tracing::error!(error = %e, "handler returned error");
@@ -82,7 +85,7 @@ impl<W: Clone + 'static> Server<W> {
                     }
                 };
             }
-    
+
             if self.is_shutting_down().await {
                 Ok(())
             } else {

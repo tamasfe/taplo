@@ -1,1 +1,0 @@
-No optimizations, also turns on [`cfg(debug_assertions)`](https://doc.rust-lang.org/cargo/reference/profiles.html#debug-assertions).

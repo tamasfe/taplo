@@ -1,3 +1,7 @@
+use crate::{
+    config::{InitConfig, LspConfig},
+    lsp_ext::notification::{DidChangeSchemaAssociation, DidChangeSchemaAssociationParams},
+};
 use anyhow::anyhow;
 use arc_swap::ArcSwap;
 use lsp_async_stub::{rpc, util::Mapper, Context, RequestWriter};
@@ -10,16 +14,12 @@ use taplo::{dom::Node, parser::Parse};
 use taplo_common::{
     config::Config,
     environment::Environment,
+    plugin::Plugin,
     schema::{
         associations::{priority, source, AssociationRule, SchemaAssociation},
         Schemas,
     },
     AsyncRwLock, HashMap, IndexMap,
-};
-
-use crate::{
-    config::{InitConfig, LspConfig},
-    lsp_ext::notification::{DidChangeSchemaAssociation, DidChangeSchemaAssociationParams},
 };
 
 pub type World<E> = Arc<WorldState<E>>;
@@ -42,16 +42,19 @@ impl<E: Environment> std::ops::DerefMut for Workspaces<E> {
 }
 
 impl<E: Environment> Workspaces<E> {
+    #[must_use]
     pub fn by_document(&self, url: &Url) -> &WorkspaceState<E> {
         self.0
             .iter()
             .filter(|(key, _)| url.as_str().starts_with(key.as_str()))
             .max_by(|(a, _), (b, _)| a.as_str().len().cmp(&b.as_str().len()))
-            .map(|(_, ws)| ws)
-            .unwrap_or_else(|| {
-                tracing::warn!(document_url = %url, "using detached workspace");
-                self.0.get(&*DEFAULT_WORKSPACE_URL).unwrap()
-            })
+            .map_or_else(
+                || {
+                    tracing::warn!(document_url = %url, "using detached workspace");
+                    self.0.get(&*DEFAULT_WORKSPACE_URL).unwrap()
+                },
+                |(_, ws)| ws,
+            )
     }
 
     pub fn by_document_mut(&mut self, url: &Url) -> &mut WorkspaceState<E> {
@@ -73,9 +76,10 @@ impl<E: Environment> Workspaces<E> {
 }
 
 pub struct WorldState<E: Environment> {
-    pub(crate) init_config: Arc<ArcSwap<InitConfig>>,
+    pub(crate) init_config: ArcSwap<InitConfig>,
     pub(crate) env: E,
     pub(crate) workspaces: AsyncRwLock<Workspaces<E>>,
+    pub(crate) default_config: ArcSwap<Config>,
 }
 
 pub static DEFAULT_WORKSPACE_URL: Lazy<Url> = Lazy::new(|| Url::parse("root:///").unwrap());
@@ -92,8 +96,14 @@ impl<E: Environment> WorldState<E> {
                 );
                 AsyncRwLock::new(Workspaces(m))
             },
+            default_config: Default::default(),
             env,
         }
+    }
+
+    /// Set the world state's default config.
+    pub fn set_default_config(&self, default_config: Arc<Config>) {
+        self.default_config.store(default_config);
     }
 }
 
@@ -103,6 +113,7 @@ pub struct WorkspaceState<E: Environment> {
     pub(crate) taplo_config: Config,
     pub(crate) schemas: Schemas<E>,
     pub(crate) config: LspConfig,
+    pub(crate) plugins: ArcSwap<Vec<Arc<dyn Plugin<E>>>>,
 }
 
 impl<E: Environment> WorkspaceState<E> {
@@ -119,6 +130,7 @@ impl<E: Environment> WorkspaceState<E> {
                     .unwrap(),
             ),
             config: LspConfig::default(),
+            plugins: Default::default(),
         }
     }
 }
@@ -136,7 +148,26 @@ impl<E: Environment> WorkspaceState<E> {
         context: Context<World<E>>,
         env: &impl Environment,
     ) -> Result<(), anyhow::Error> {
-        self.load_config(env).await?;
+        self.load_config(env, &*context.world().default_config.load())
+            .await?;
+
+        let plugins = Arc::new(
+            self.taplo_config
+                .plugins
+                .iter()
+                .filter_map(|(name, p_cfg)| {
+                    load_plugin::<E>(name).map(|p| {
+                        if let Some(settings) = p_cfg.settings.clone() {
+                            p.settings(settings);
+                        }
+                        p
+                    })
+                })
+                .collect::<Vec<_>>(),
+        );
+
+        self.schemas.set_plugins(&plugins);
+        self.plugins.store(plugins);
 
         self.schemas
             .associations()
@@ -187,7 +218,7 @@ impl<E: Environment> WorkspaceState<E> {
                     }),
                     priority: priority::LSP_CONFIG,
                 },
-            )
+            );
         }
 
         for catalog in &self.config.schema.catalogs {
@@ -203,9 +234,10 @@ impl<E: Environment> WorkspaceState<E> {
     pub(crate) async fn load_config(
         &mut self,
         env: &impl Environment,
+        default_config: &Config,
     ) -> Result<(), anyhow::Error> {
         if !self.config.taplo.config_file.enabled {
-            self.taplo_config = Default::default();
+            self.taplo_config = default_config.clone();
             return Ok(());
         }
 
@@ -221,13 +253,13 @@ impl<E: Environment> WorkspaceState<E> {
             let base_path = Path::new(self.root.as_str());
             self.taplo_config.prepare(env, base_path)?;
 
-            tracing::debug!("{:#?}", self.taplo_config);
+            tracing::debug!("using config: {:#?}", self.taplo_config);
         }
         Ok(())
     }
 
     pub(crate) async fn emit_associations(&self, mut context: Context<World<E>>) {
-        for (document_url, _) in &self.documents {
+        for document_url in self.documents.keys() {
             if let Some(assoc) = self
                 .schemas
                 .associations()
@@ -266,4 +298,15 @@ pub struct DocumentState {
     pub(crate) parse: Parse,
     pub(crate) dom: Node,
     pub(crate) mapper: Mapper,
+}
+
+fn load_plugin<E: Environment>(name: &str) -> Option<Arc<dyn Plugin<E>>> {
+    match name {
+        #[cfg(feature = "plugin-crates")]
+        "crates" => Some(Arc::new(taplo_plugin_crates::CratesPlugin::default())),
+        _ => {
+            tracing::warn!(%name, "unknown plugin");
+            None
+        }
+    }
 }

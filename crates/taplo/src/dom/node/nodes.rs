@@ -497,7 +497,7 @@ impl Integer {
     pub fn value(&self) -> IntegerValue {
         *self.inner.value.get_or_init(|| {
             if let Some(s) = self.syntax().and_then(|s| s.as_token()) {
-                let int_text = s.text().replace("_", "");
+                let int_text = s.text().replace('_', "");
 
                 match self.inner.repr {
                     IntegerRepr::Dec => {

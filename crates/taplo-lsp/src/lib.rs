@@ -1,4 +1,15 @@
-#![allow(clippy::single_match)]
+#![warn(clippy::pedantic)]
+#![deny(clippy::print_stdout, clippy::print_stderr)]
+#![allow(
+    clippy::single_match,
+    clippy::default_trait_access,
+    clippy::single_match_else,
+    clippy::module_name_repetitions,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::similar_names,
+    clippy::too_many_lines
+)]
 
 use lsp_async_stub::Server;
 use lsp_types::{notification, request};
@@ -14,6 +25,7 @@ pub mod lsp_ext;
 pub mod query;
 pub mod world;
 
+#[must_use]
 pub fn create_server<E: Environment>() -> Server<World<E>> {
     Server::new()
         .on_request::<request::Initialize, _>(handlers::initialize)

@@ -59,6 +59,14 @@ pub enum TaploCommand {
         #[clap(subcommand)]
         cmd: LspCommand,
     },
+    /// Operations with the Taplo config file.
+    #[clap(visible_aliases = &["cfg"])]
+    Config {
+        #[clap(subcommand)]
+        cmd: ConfigCommand,
+    },
+    /// Extract a value from the given TOML document.
+    Get(GetCommand),
     /// Start a decoder for `toml-test` (https://github.com/BurntSushi/toml-test).
     TomlTest {},
 }
@@ -101,6 +109,14 @@ pub enum LspCommand {
     Stdio {},
 }
 
+#[derive(Clone, Subcommand)]
+pub enum ConfigCommand {
+    /// Print the default `.taplo.toml` configuration file.
+    Default,
+    /// Print the JSON schema of the `.taplo.toml` configuration file.
+    Schema,
+}
+
 #[derive(Clone, Args)]
 pub struct LintCommand {
     #[clap(flatten)]
@@ -128,4 +144,64 @@ pub struct LintCommand {
     ///
     /// If the only argument is "-", the standard input will be used.
     pub files: Vec<String>,
+}
+
+#[derive(Clone, Args)]
+pub struct GetCommand {
+    /// The format specifying how the output is printed.
+    /// 
+    /// All newlines are LF, whether the output ends with a trailing new line is unspecified right now.
+    ///
+    /// Format-specific remarks:
+    ///
+    /// --- value:
+    ///
+    /// If the value is a string, all surrounding quotes will be stripped and
+    /// all escape sequences will be unescaped.
+    ///
+    /// If the value is an integer or float, it will be output in a decimal format without any rounding.
+    ///
+    /// If the value is an array, all of its items will be output on separate lines.
+    ///
+    /// If the value is a table or an array that contains tables, the operation will fail.
+    ///
+    /// --- toml:
+    ///
+    /// Comments and formatting will not be preserved.
+    /// It is possible to select arrays and individual values that are not tables,
+    /// in this case the output will not be a valid TOML document.
+    #[clap(short, long, arg_enum, default_value = "value")]
+    pub output_format: OutputFormat,
+
+    /// Path to the TOML document, if omitted the standard input will be used.
+    #[clap(short, long)]
+    pub file_path: Option<PathBuf>,
+
+    /// A dotted key pattern to the value within the TOML document.
+    ///
+    /// If omitted, the entire document will be printed.
+    ///
+    /// If the pattern yielded no values, the operation will fail.
+    /// 
+    /// The pattern supports `jq`-like syntax and glob patterns as well:
+    /// 
+    /// Examples:
+    /// 
+    /// - table.array[1].foo
+    /// - table.array.1.foo
+    /// - table.array[*].foo
+    /// - table.array.*.foo
+    /// - dependencies.tokio-*.version
+    /// 
+    pub pattern: Option<String>,
+}
+
+#[derive(Clone, Copy, ArgEnum)]
+pub enum OutputFormat {
+    /// Extract the value outputting it in a text format.
+    Value,
+    /// Output format in JSON.
+    Json,
+    /// Output format in TOML.
+    Toml,
 }

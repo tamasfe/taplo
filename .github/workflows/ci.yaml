@@ -80,6 +80,6 @@ jobs:
         name: Build taplo-cli
         with:
           command: build
-          args: --bin taplo
+          args: --bin taplo --no-default-features --features "toml-test"
       - name: Run toml-test
         run: ./toml-test-v1.1.0-linux-amd64 ./target/debug/taplo -- toml-test

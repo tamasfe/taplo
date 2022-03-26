@@ -2,7 +2,7 @@
 authors = ["tamasfe"]
 description = "A CLI for Taplo TOML toolkit"
 license = "MIT"
-edition = "2018"
+edition = "2021"
 name = "taplo-cli"
 version = "0.6.0"
 homepage = "https://taplo.tamasfe.dev"
@@ -26,21 +26,19 @@ futures = "0.3"
 glob = "0.3"
 hex = "0.4"
 itertools = "0.10.3"
-lsp-async-stub = { version = "0.4.1", path = "../lsp-async-stub", features = [
+lsp-async-stub = { version = "0.5.0", path = "../lsp-async-stub", features = [
     "tokio-tcp",
     "tokio-stdio",
 ] }
 once_cell = "1.4"
-pretty-lint = { version = "0.1" }
 regex = "1.4"
 reqwest = { version = "0.11.4", features = ["json"] }
 schemars = "0.8"
 serde = "1"
 serde_json = "1"
-sha2 = "0.10"
 taplo = { version = "0.8.0", path = "../taplo", features = ["serde"] }
 taplo-common = { version = "0.1.0", path = "../taplo-common" }
-taplo-lsp = { path = "../taplo-lsp", optional = true }
+taplo-lsp = { version = "0.3.0", path = "../taplo-lsp", optional = true }
 time = { version = "0.3", features = ["parsing"] }
 toml = "0.5"
 tracing = "0.1.29"

@@ -6,7 +6,7 @@ members = ["crates/*"]
 codegen-units = 1
 lto = "thin"
 opt-level = 3
-strip = "debuginfo"
+# strip = "debuginfo"
 
 [profile.bench]
 lto = true

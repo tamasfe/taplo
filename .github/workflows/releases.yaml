@@ -45,6 +45,6 @@ jobs:
           override: true
       - name: Publish to Crates.io
         run: cargo publish --allow-dirty --token $CRATES_IO_TOKEN
-        working-directory: ${{ crate }}
+        working-directory: ${{ matrix.crate }}
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}

@@ -1,0 +1,50 @@
+name: Releases
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  publish_crates:
+    name: Publish Crates
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        crate:
+          [
+            "crates/taplo",
+            "crates/taplo-common",
+            "crates/taplo-plugin-crates",
+            "crates/lsp-async-stub",
+            "crates/taplo-lsp",
+            "crates/taplo-cli",
+          ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Publish to Crates.io
+        run: cargo publish --allow-dirty --token $CRATES_IO_TOKEN
+        working-directory: ${{ crate }}
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}

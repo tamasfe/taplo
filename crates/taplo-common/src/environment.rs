@@ -1,7 +1,7 @@
 use async_trait::async_trait;
-use futures::Future;
-use time::OffsetDateTime;
+use futures::{future::LocalBoxFuture, Future};
 use std::path::{Path, PathBuf};
+use time::OffsetDateTime;
 use tokio::io::{AsyncRead, AsyncWrite};
 use url::Url;
 
@@ -18,10 +18,15 @@ pub trait Environment: Clone + Send + Sync + 'static {
 
     fn now(&self) -> OffsetDateTime;
 
-    fn spawn<F>(&self, fut: F)
+    fn spawn<F>(&self, fut: F) -> LocalBoxFuture<'static, F::Output>
     where
         F: Future + Send + 'static,
         F::Output: Send;
+
+    fn spawn_blocking<F, R>(&self, cb: F) -> LocalBoxFuture<'static, R>
+    where
+        F: FnOnce() -> R + Send + 'static,
+        R: Send + 'static;
 
     fn spawn_local<F>(&self, fut: F)
     where

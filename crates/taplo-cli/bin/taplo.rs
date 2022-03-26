@@ -7,9 +7,9 @@ use tracing::Instrument;
 #[tokio::main]
 async fn main() {
     let cli = TaploArgs::parse();
-    setup_stderr_logging(NativeEnvironment, &cli);
+    setup_stderr_logging(NativeEnvironment::new(), &cli);
 
-    match Taplo::new(NativeEnvironment)
+    match Taplo::new(NativeEnvironment::new())
         .execute(cli)
         .instrument(tracing::info_span!("taplo"))
         .await

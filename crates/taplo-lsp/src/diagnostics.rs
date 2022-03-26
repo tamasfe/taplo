@@ -5,7 +5,7 @@ use lsp_types::{
     notification, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, Location,
     PublishDiagnosticsParams, Url,
 };
-use taplo::dom::{Node, KeyOrIndex};
+use taplo::dom::{KeyOrIndex, Node};
 use taplo_common::environment::Environment;
 
 #[tracing::instrument(level = "debug", skip_all)]
@@ -283,7 +283,7 @@ fn collect_dom_errors(
                 taplo::dom::Error::InvalidEscapeSequence { string: _ }
                 | taplo::dom::Error::Query(_) => {}
                 taplo::dom::Error::UnexpectedSyntax { syntax } => {
-                    tracing::error!("unexpected syntax in dom: {syntax:#?}")
+                    tracing::error!("unexpected syntax in dom: {syntax:#?}");
                 }
             }
         }

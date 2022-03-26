@@ -119,7 +119,7 @@ impl<E: Environment> Taplo<E> {
 
         self.schemas
             .associations()
-            .add_from_directive(&format!("file://{file_path}").parse().unwrap(), &dom);
+            .add_from_document(&format!("file://{file_path}").parse().unwrap(), &dom);
 
         if let Some(schema_association) = self.schemas.associations().association_for(file_path) {
             tracing::debug!(

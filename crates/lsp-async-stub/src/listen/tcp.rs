@@ -3,7 +3,10 @@ use crate::{
     Server,
 };
 use futures::{Stream, StreamExt};
-use tokio::{net::{TcpListener, ToSocketAddrs}, select};
+use tokio::{
+    net::{TcpListener, ToSocketAddrs},
+    select,
+};
 
 impl<W: Clone + 'static> Server<W> {
     pub async fn listen_tcp<A>(

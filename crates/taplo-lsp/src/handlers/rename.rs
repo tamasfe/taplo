@@ -8,7 +8,7 @@ use lsp_types::{
 };
 use std::collections::HashMap;
 use taplo::dom::rewrite::Rewrite;
-use taplo::dom::{Keys, KeyOrIndex};
+use taplo::dom::{KeyOrIndex, Keys};
 use taplo::syntax::SyntaxKind;
 use taplo_common::environment::Environment;
 

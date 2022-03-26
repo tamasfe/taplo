@@ -7,10 +7,13 @@ pub const EXTENSION_KEY: &str = "x-taplo";
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct TaploSchemaExt {
+    pub subschemas_only: Option<bool>,
     pub hidden: Option<bool>,
     pub links: Option<ExtLinks>,
     pub docs: Option<ExtDocs>,
     pub init_keys: Option<Vec<String>>,
+    #[serde(default)]
+    pub plugins: Vec<String>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -29,6 +32,7 @@ pub struct ExtLinks {
     pub enum_values: Option<Vec<Option<String>>>,
 }
 
+#[must_use]
 pub fn schema_ext_of(schema: &Value) -> Option<TaploSchemaExt> {
     schema.get(EXTENSION_KEY).and_then(|val| {
         if val.is_object() {

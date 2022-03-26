@@ -5,10 +5,12 @@ use crate::{
     Taplo,
 };
 
+mod config;
 mod format;
 mod lint;
 #[cfg(feature = "lsp")]
 mod lsp;
+mod queries;
 mod toml_test;
 
 impl<E: Environment> Taplo<E> {
@@ -25,6 +27,8 @@ impl<E: Environment> Taplo<E> {
             TaploCommand::Lsp { cmd } => self.execute_lsp(cmd).await,
             TaploCommand::TomlTest {} => self.execute_toml_test().await,
             TaploCommand::Lint(cmd) => self.execute_lint(cmd).await,
+            TaploCommand::Config { cmd } => self.execute_config(cmd).await,
+            TaploCommand::Get(cmd) => self.execute_get(cmd).await,
         }
     }
 }

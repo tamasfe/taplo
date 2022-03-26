@@ -318,12 +318,6 @@ fn table_invalid_3() {
     assert!(!p.errors.is_empty() || p.into_dom().validate().is_err());
 }
 #[test]
-fn table_invalid_4() {
-    let src = "# INVALID TOML DOC\n[[fruit]]\nname = \"apple\"\n\n[[fruit.variety]]\nname = \"red delicious\"\n\n[fruit.physical]\ncolor = \"red\"\nshape = \"round\"\n\n# INVALID: This array of tables conflicts with the previous table\n[[fruit.physical]]\ncolor = \"green\"\n" ;
-    let p = crate::parser::parse(src);
-    assert!(!p.errors.is_empty() || p.into_dom().validate().is_err());
-}
-#[test]
 fn taplo_duplicate_keys() {
     let src = "# THIS WILL NOT WORK\nspelling = \"favorite\"\n\"spelling\" = \"favourite\"\n";
     let p = crate::parser::parse(src);

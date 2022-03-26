@@ -14,8 +14,9 @@ keywords = ["toml", "linter", "formatter"]
 crate-type = ["cdylib", "lib"]
 
 [features]
-default = ["lsp"]
+default = ["lsp", "plugin-crates"]
 lsp = ["taplo-lsp"]
+plugin-crates = ["taplo-lsp/plugin-crates"]
 
 [dependencies]
 anyhow = { version = "1", features = ["backtrace"] }
@@ -48,14 +49,9 @@ tracing = "0.1.29"
 tracing-subscriber = { version = "0.3.7", features = ["env-filter"] }
 url = "2.2.2"
 
+
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs"] }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
-wasm-bindgen-futures = "0.4"
-js-sys = "0.3"
-console_error_panic_hook = { version = "0.1" }
 
 [[bin]]
 name = "taplo"

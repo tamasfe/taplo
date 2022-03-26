@@ -2,7 +2,10 @@ use lsp_async_stub::{util::Mapper, Context, Params};
 use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
 };
-use taplo_common::environment::Environment;
+use taplo_common::{
+    environment::Environment,
+    schema::associations::{source, AssociationRule},
+};
 
 use crate::{
     diagnostics,
@@ -30,13 +33,23 @@ pub(crate) async fn document_open<E: Environment>(
     if ws.config.schema.enabled {
         ws.schemas
             .associations()
-            .add_from_directive(&p.text_document.uri, &dom);
+            .retain(|(rule, assoc)| match rule {
+                AssociationRule::Url(u) => {
+                    !(u == &p.text_document.uri
+                        && (assoc.meta["source"] != source::DIRECTIVE
+                            || assoc.meta["source"] != source::SCHEMA_FIELD))
+                }
+                _ => true,
+            });
+        ws.schemas
+            .associations()
+            .add_from_document(&p.text_document.uri, &dom);
         ws.emit_associations(context.clone()).await;
     }
 
     ws.documents.insert(
         p.text_document.uri.clone(),
-        DocumentState { dom, parse, mapper },
+        DocumentState { parse, dom, mapper },
     );
 
     let ws_root = ws.root.clone();
@@ -71,17 +84,23 @@ pub(crate) async fn document_change<E: Environment>(
     if ws.config.schema.enabled {
         ws.schemas
             .associations()
-            .add_from_directive(&p.text_document.uri, &dom);
+            .retain(|(rule, assoc)| match rule {
+                AssociationRule::Url(u) => {
+                    !(u == &p.text_document.uri
+                        && (assoc.meta["source"] != source::DIRECTIVE
+                            || assoc.meta["source"] != source::SCHEMA_FIELD))
+                }
+                _ => true,
+            });
+        ws.schemas
+            .associations()
+            .add_from_document(&p.text_document.uri, &dom);
         ws.emit_associations(context.clone()).await;
     }
 
     ws.documents.insert(
         p.text_document.uri.clone(),
-        DocumentState {
-            dom,
-            parse,
-            mapper,
-        },
+        DocumentState { parse, dom, mapper },
     );
 
     let ws_root = ws.root.clone();

@@ -1,8 +1,18 @@
-use lsp_async_stub::{rpc::Error, Context, Params, util::Mapper};
+#![allow(clippy::cast_possible_truncation)]
+
+use lsp_async_stub::{rpc::Error, util::Mapper, Context, Params};
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 use taplo::{
+    dom::node::DomNode,
     rowan::TextRange,
-    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode}, dom::node::DomNode,
+    syntax::{
+        SyntaxElement,
+        SyntaxKind::{
+            ARRAY, COMMENT, MULTI_LINE_STRING, MULTI_LINE_STRING_LITERAL, NEWLINE,
+            TABLE_ARRAY_HEADER, TABLE_HEADER, WHITESPACE,
+        },
+        SyntaxNode,
+    },
 };
 use taplo_common::environment::Environment;
 

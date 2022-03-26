@@ -37,7 +37,10 @@ impl<E: Environment> Taplo<E> {
             }
         }
 
-        self.env.stderr().write_all(&out_diag).await?;
+        let mut stderr = self.env.stderr();
+
+        stderr.write_all(&out_diag).await?;
+        stderr.flush().await?;
 
         Ok(())
     }
@@ -104,9 +107,9 @@ impl<E: Environment> Taplo<E> {
                 term::emit(&mut NoColor::new(&mut out_diag), &config, file, &diag)?;
             }
         }
-
-        self.env.stderr().write_all(&out_diag).await?;
-
+        let mut stderr = self.env.stderr();
+        stderr.write_all(&out_diag).await?;
+        stderr.flush().await?;
         Ok(())
     }
 
@@ -134,7 +137,9 @@ impl<E: Environment> Taplo<E> {
                 };
             }
         }
-        self.env.stderr().write_all(&out_diag).await?;
+        let mut stderr = self.env.stderr();
+        stderr.write_all(&out_diag).await?;
+        stderr.flush().await?;
 
         Ok(())
     }

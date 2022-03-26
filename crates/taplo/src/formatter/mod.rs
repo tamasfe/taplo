@@ -666,7 +666,11 @@ fn add_entries(
 
                     entry.value.clear();
 
-                    entry.comment = value.trailing_comment();
+                    if let Some(c) = value.trailing_comment() {
+                        debug_assert!(entry.comment.is_none());
+                        entry.comment = Some(c);
+                    }
+
                     value.write_to(&mut entry.value, options);
                     break;
                 }
@@ -899,7 +903,6 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
     let mut multiline = is_array_multiline(&node) || context.force_multiline;
 
     let mut formatted = String::new();
-    let mut trailing_comment = None;
 
     // We always try to collapse it if possible.
     if can_collapse_array(&node) && options.array_auto_collapse && !context.force_multiline {
@@ -1065,9 +1068,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                         skip_newlines = 0;
                     }
 
-                    if formatted.ends_with(']') {
-                        trailing_comment = Some(t.text().into());
-                    } else if formatted.ends_with('[') {
+                    if formatted.ends_with('[') {
                         formatted += " ";
                         formatted += t.text();
                     } else {
@@ -1084,7 +1085,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
         formatted = "[]".into();
     }
 
-    (node.into(), formatted, trailing_comment)
+    (node.into(), formatted, None)
 }
 
 fn format_table_header(

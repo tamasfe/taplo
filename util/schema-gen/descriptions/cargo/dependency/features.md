@@ -1,1 +1,0 @@
-List of features to activate in the dependency.

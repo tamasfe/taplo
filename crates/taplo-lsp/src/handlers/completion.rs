@@ -70,7 +70,7 @@ pub async fn completion<E: Environment>(
     if query.in_table_header() {
         let object_schemas = match ws
             .schemas
-            .child_schemas_from(
+            .possible_schemas_from(
                 &schema_association.url,
                 &value,
                 &Keys::empty(),
@@ -83,8 +83,7 @@ pub async fn completion<E: Environment>(
                         || s["type"] == "object"
                         || s["type"]
                             .as_array()
-                            .map(|arr| arr.iter().any(|v| v == "object"))
-                            .unwrap_or(false)
+                            .map_or(false, |arr| arr.iter().any(|v| v == "object"))
                 })
             }) {
             Ok(s) => s,
@@ -114,8 +113,7 @@ pub async fn completion<E: Environment>(
                     Some(n) => {
                         node.0 == *full_key
                             || n.as_table()
-                                .map(|t| t.kind() == TableKind::Pseudo)
-                                .unwrap_or(false)
+                                .map_or(false, |t| t.kind() == TableKind::Pseudo)
                     }
                     None => true,
                 })
@@ -138,7 +136,7 @@ pub async fn completion<E: Environment>(
     if query.in_table_array_header() {
         let array_of_objects_schemas = match ws
             .schemas
-            .child_schemas_from(
+            .possible_schemas_from(
                 &schema_association.url,
                 &value,
                 &Keys::empty(),
@@ -189,7 +187,7 @@ pub async fn completion<E: Environment>(
 
         let schemas = match ws
             .schemas
-            .child_schemas_from(
+            .possible_schemas_from(
                 &schema_association.url,
                 &value,
                 &lookup_keys(doc.dom.clone(), &parent_table.0),
@@ -211,8 +209,7 @@ pub async fn completion<E: Environment>(
                 .filter(|(full_key, _, _)| match doc.dom.path(full_key) {
                     Some(n) => n
                         .as_table()
-                        .map(|t| t.kind() == TableKind::Pseudo)
-                        .unwrap_or(false),
+                        .map_or(false, |t| t.kind() == TableKind::Pseudo),
                     None => true,
                 })
                 .map(|(_, relative_keys, schema)| CompletionItem {
@@ -240,7 +237,7 @@ pub async fn completion<E: Environment>(
 
         let schemas = match ws
             .schemas
-            .child_schemas_from(
+            .possible_schemas_from(
                 &schema_association.url,
                 &value,
                 &lookup_keys(doc.dom.clone(), &parent_keys),
@@ -269,22 +266,22 @@ pub async fn completion<E: Environment>(
                     text_edit: key_range.map(|r| {
                         CompletionTextEdit::Edit(TextEdit {
                             range: doc.mapper.range(r).unwrap().into_lsp(),
-                            new_text: if !has_eq {
-                                new_entry_snippet(&relative_keys, &schema)
-                            } else {
+                            new_text: if has_eq {
                                 relative_keys.to_string() + " "
+                            } else {
+                                new_entry_snippet(&relative_keys, &schema)
                             },
                         })
                     }),
-                    insert_text: Some(if !has_eq {
-                        new_entry_snippet(&relative_keys, &schema)
-                    } else {
+                    insert_text: Some(if has_eq {
                         relative_keys.to_string() + " "
-                    }),
-                    insert_text_format: if !has_eq {
-                        Some(InsertTextFormat::SNIPPET)
                     } else {
+                        new_entry_snippet(&relative_keys, &schema)
+                    }),
+                    insert_text_format: if has_eq {
                         None
+                    } else {
+                        Some(InsertTextFormat::SNIPPET)
                     },
                     ..Default::default()
                 })
@@ -298,7 +295,7 @@ pub async fn completion<E: Environment>(
         if query.in_inline_table() {
             let schemas = match ws
                 .schemas
-                .child_schemas_from(
+                .possible_schemas_from(
                     &schema_association.url,
                     &value,
                     &lookup_keys(doc.dom.clone(), path),
@@ -320,8 +317,7 @@ pub async fn completion<E: Environment>(
                     .filter(|(full_key, _, _)| match doc.dom.path(full_key) {
                         Some(n) => n
                             .as_table()
-                            .map(|t| t.kind() == TableKind::Pseudo)
-                            .unwrap_or(false),
+                            .map_or(false, |t| t.kind() == TableKind::Pseudo),
                         None => true,
                     })
                     .map(|(_, relative_keys, schema)| CompletionItem {
@@ -346,7 +342,7 @@ pub async fn completion<E: Environment>(
 
         let schemas = match ws
             .schemas
-            .child_schemas_from(
+            .possible_schemas_from(
                 &schema_association.url,
                 &value,
                 &path,
@@ -368,12 +364,12 @@ pub async fn completion<E: Environment>(
                 .entry_value()
                 .map(|k| k.text_range())
                 .and_then(|r| doc.mapper.range(r))
-                .map(|r| r.into_lsp())
+                .map(lsp_async_stub::util::LspExt::into_lsp)
         };
 
         let mut completions = Vec::new();
 
-        for (_, _, schema) in schemas.into_iter() {
+        for (_, _, schema) in schemas {
             add_value_completions(&schema, range, &mut completions);
         }
 
@@ -394,7 +390,7 @@ pub async fn completion<E: Environment>(
 
     let schemas = match ws
         .schemas
-        .child_schemas_from(
+        .possible_schemas_from(
             &schema_association.url,
             &value,
             &lookup_keys(doc.dom.clone(), &parent_keys),
@@ -416,8 +412,7 @@ pub async fn completion<E: Environment>(
             .filter(|(full_key, _, _)| match doc.dom.path(full_key) {
                 Some(n) => n
                     .as_table()
-                    .map(|t| t.kind() == TableKind::Pseudo)
-                    .unwrap_or(false),
+                    .map_or(false, |t| t.kind() == TableKind::Pseudo),
                 None => true,
             })
             .map(|(_, relative_keys, schema)| CompletionItem {
@@ -488,6 +483,7 @@ fn add_value_completions(
 
             completions.push(CompletionItem {
                 label: toml_value.clone(),
+                sort_text: Some(format!("{idx}{toml_value}")),
                 kind: Some(match node {
                     Node::Table(_) => CompletionItemKind::STRUCT,
                     _ => CompletionItemKind::VALUE,
@@ -541,6 +537,7 @@ fn add_value_completions(
             }),
             ..Default::default()
         });
+        return;
     }
 
     if let Some(default_value) = schema.get("default") {
@@ -570,32 +567,131 @@ fn add_value_completions(
             ..Default::default()
         });
     }
+
+        let types = match schema["type"].clone() {
+            Value::Null => Vec::from([Value::String("object".into())]),
+            Value::String(s) => Vec::from([Value::String(s)]),
+            Value::Array(tys) => tys,
+            _ => Vec::new(),
+        };
+
+        for ty in types {
+            if let Some(s) = ty.as_str() {
+                match s {
+                    "string" => {
+                        completions.push(CompletionItem {
+                            label: r#""""#.into(),
+                            kind: Some(CompletionItemKind::VALUE),
+                            documentation: Some(Documentation::MarkupContent(MarkupContent {
+                                kind: lsp_types::MarkupKind::Markdown,
+                                value: schema_docs.clone().unwrap_or_else(|| "string".into()),
+                            })),
+                            insert_text_format: Some(InsertTextFormat::SNIPPET),
+                            text_edit: range.map(|range| {
+                                CompletionTextEdit::Edit(TextEdit {
+                                    range,
+                                    new_text: r#""$0""#.into(),
+                                })
+                            }),
+                            ..Default::default()
+                        });
+                    }
+                    "boolean" => {
+                        completions.push(CompletionItem {
+                            label: r#"true"#.into(),
+                            kind: Some(CompletionItemKind::VALUE),
+                            documentation: Some(Documentation::MarkupContent(MarkupContent {
+                                kind: lsp_types::MarkupKind::Markdown,
+                                value: schema_docs.clone().unwrap_or_else(|| "true value".into()),
+                            })),
+                            insert_text_format: Some(InsertTextFormat::SNIPPET),
+                            text_edit: range.map(|range| {
+                                CompletionTextEdit::Edit(TextEdit {
+                                    range,
+                                    new_text: r#"true$0"#.into(),
+                                })
+                            }),
+                            ..Default::default()
+                        });
+                        completions.push(CompletionItem {
+                            label: r#"false"#.into(),
+                            kind: Some(CompletionItemKind::VALUE),
+                            documentation: Some(Documentation::MarkupContent(MarkupContent {
+                                kind: lsp_types::MarkupKind::Markdown,
+                                value: schema_docs.clone().unwrap_or_else(|| "false value".into()),
+                            })),
+                            insert_text_format: Some(InsertTextFormat::SNIPPET),
+                            text_edit: range.map(|range| {
+                                CompletionTextEdit::Edit(TextEdit {
+                                    range,
+                                    new_text: r#"false$0"#.into(),
+                                })
+                            }),
+                            ..Default::default()
+                        });
+                    }
+                    "array" => {
+                        completions.push(CompletionItem {
+                            label: r#"[]"#.into(),
+                            kind: Some(CompletionItemKind::VALUE),
+                            documentation: Some(Documentation::MarkupContent(MarkupContent {
+                                kind: lsp_types::MarkupKind::Markdown,
+                                value: schema_docs.clone().unwrap_or_else(|| "array".into()),
+                            })),
+                            insert_text_format: Some(InsertTextFormat::SNIPPET),
+                            text_edit: range.map(|range| {
+                                CompletionTextEdit::Edit(TextEdit {
+                                    range,
+                                    new_text: r#"[$0]"#.into(),
+                                })
+                            }),
+                            ..Default::default()
+                        });
+                    }
+                    "object" => {
+                        completions.push(CompletionItem {
+                            label: r#"{ }"#.into(),
+                            kind: Some(CompletionItemKind::VALUE),
+                            documentation: Some(Documentation::MarkupContent(MarkupContent {
+                                kind: lsp_types::MarkupKind::Markdown,
+                                value: schema_docs.clone().unwrap_or_else(|| "object".into()),
+                            })),
+                            insert_text_format: Some(InsertTextFormat::SNIPPET),
+                            text_edit: range.map(|range| {
+                                CompletionTextEdit::Edit(TextEdit {
+                                    range,
+                                    new_text: r#"{ $0 }"#.into(),
+                                })
+                            }),
+                            ..Default::default()
+                        });
+                    }
+                    _ => {}
+                }
+            }
+        }
 }
 
 fn new_entry_snippet(keys: &Keys, schema: &Value) -> String {
-    let value = entry_default_value_snippet(schema);
+    let value = default_value_snippet(schema, 0);
     format!("{keys} = {value}")
 }
 
-fn entry_default_value_snippet(schema: &Value) -> Cow<'static, str> {
+fn default_value_snippet(schema: &Value, cursor_count: usize) -> Cow<'static, str> {
     if let Some(const_value) = schema.get("const") {
         let node: Node = serde_json::from_value(const_value.clone()).unwrap();
-        return node.to_toml(true).into();
+        return format!("${{{}:{}}}", cursor_count, node.to_toml(true)).into();
     }
 
-    if let Some(default) = schema.get("default") {
-        let node: Node = serde_json::from_value(default.clone()).unwrap();
-        return format!("${{0:{}}}", node.to_toml(true)).into();
+    if let Some(default_value) = schema.get("default") {
+        let node: Node = serde_json::from_value(default_value.clone()).unwrap();
+        return format!("${{{}:{}}}", cursor_count, node.to_toml(true)).into();
     }
 
     if schema.get("enum").is_some() {
-        return Cow::Borrowed("$0");
+        return format!("${cursor_count}").into();
     }
 
-    default_value_snippet(schema)
-}
-
-fn default_value_snippet(schema: &Value) -> Cow<'static, str> {
     let mut init_keys = Vec::new();
 
     if let Some(ext) = schema_ext_of(schema) {
@@ -623,7 +719,7 @@ fn default_value_snippet(schema: &Value) -> Cow<'static, str> {
             }
             s += &format!(
                 "{init_key} = {}",
-                empty_value_snippet(&schema["properties"][init_key], i + 1)
+                default_value_snippet(&schema["properties"][init_key], cursor_count + 1)
             );
         }
 
@@ -632,7 +728,7 @@ fn default_value_snippet(schema: &Value) -> Cow<'static, str> {
         return s.into();
     }
 
-    empty_value_snippet(schema, 0).into()
+    empty_value_snippet(schema, cursor_count).into()
 }
 
 fn empty_value_snippet(schema: &Value, cursor_count: usize) -> String {
@@ -646,9 +742,9 @@ fn empty_value_snippet(schema: &Value, cursor_count: usize) -> String {
             "object" => format!("{{ ${cursor_count} }}"),
             "array" => format!("[${cursor_count}]"),
             "string" => format!(r#""${cursor_count}""#),
+            "boolean" => format!("${{{cursor_count}:false}}"),
             _ => format!("${cursor_count}"),
         },
-        Value::Array(_) => format!("${cursor_count}"),
         _ => format!("${cursor_count}"),
     }
 }

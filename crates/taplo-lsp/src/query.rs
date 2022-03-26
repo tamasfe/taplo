@@ -6,7 +6,13 @@ use taplo::{
         FromSyntax, KeyOrIndex, Keys, Node,
     },
     rowan::{Direction, TextRange, TextSize},
-    syntax::{SyntaxKind::*, SyntaxNode, SyntaxToken},
+    syntax::{
+        SyntaxKind::{
+            ARRAY, BRACE_END, BRACKET_END, BRACKET_START, COMMENT, ENTRY, EQ, INLINE_TABLE, KEY,
+            NEWLINE, TABLE_ARRAY_HEADER, TABLE_HEADER, VALUE, WHITESPACE,
+        },
+        SyntaxNode, SyntaxToken,
+    },
     util::join_ranges,
 };
 
@@ -30,6 +36,7 @@ impl Query {
     /// Also panics if the given DOM node is not root.
     ///
     /// Also the given offset must be within the tree.
+    #[must_use]
     pub fn at(root: &Node, offset: TextSize) -> Self {
         let syntax = root.syntax().cloned().unwrap().into_node().unwrap();
 
@@ -68,6 +75,7 @@ impl Query {
 }
 
 impl Query {
+    #[must_use]
     pub fn in_table_header(&self) -> bool {
         match (&self.before, &self.after) {
             (Some(before), Some(after)) => {
@@ -112,6 +120,7 @@ impl Query {
         }
     }
 
+    #[must_use]
     pub fn in_table_array_header(&self) -> bool {
         match (&self.before, &self.after) {
             (Some(before), Some(after)) => {
@@ -163,6 +172,7 @@ impl Query {
         }
     }
 
+    #[must_use]
     pub fn header_key(&self) -> Option<SyntaxNode> {
         match (&self.before, &self.after) {
             (Some(before), _) => {
@@ -181,8 +191,9 @@ impl Query {
         }
     }
 
+    #[must_use]
     pub fn entry_key(&self) -> Option<SyntaxNode> {
-        let syntax = match self.before.as_ref().or_else(|| self.after.as_ref()) {
+        let syntax = match self.before.as_ref().or(self.after.as_ref()) {
             Some(p) => &p.syntax,
             None => return None,
         };
@@ -199,8 +210,9 @@ impl Query {
         Some(keys)
     }
 
+    #[must_use]
     pub fn entry_value(&self) -> Option<SyntaxNode> {
-        let syntax = match self.before.as_ref().or_else(|| self.after.as_ref()) {
+        let syntax = match self.before.as_ref().or(self.after.as_ref()) {
             Some(p) => &p.syntax,
             None => return None,
         };
@@ -217,8 +229,9 @@ impl Query {
         Some(value)
     }
 
+    #[must_use]
     pub fn parent_table_or_array_table(&self, root: &Node) -> (Keys, Node) {
-        let syntax = match self.before.as_ref().or_else(|| self.after.as_ref()) {
+        let syntax = match self.before.as_ref().or(self.after.as_ref()) {
             Some(s) => s.syntax.clone(),
             None => return (Keys::empty(), root.clone()),
         };
@@ -251,6 +264,7 @@ impl Query {
         (keys, node)
     }
 
+    #[must_use]
     pub fn empty_line(&self) -> bool {
         let before_syntax = match self.before.as_ref() {
             Some(s) => &s.syntax,
@@ -290,12 +304,13 @@ impl Query {
             .unwrap_or(true)
     }
 
+    #[must_use]
     pub fn in_entry_keys(&self) -> bool {
         self.entry_key()
-            .map(|k| k.text_range().contains(self.offset))
-            .unwrap_or(false)
+            .map_or(false, |k| k.text_range().contains(self.offset))
     }
 
+    #[must_use]
     pub fn entry_has_eq(&self) -> bool {
         let key_syntax = match self.entry_key() {
             Some(p) => p,
@@ -312,18 +327,18 @@ impl Query {
             .unwrap_or(false)
     }
 
+    #[must_use]
     pub fn in_entry_value(&self) -> bool {
         let in_value = self
             .entry_value()
             // We are inside the value even if the cursor is right after it.
-            .map(|k| k.text_range().contains_inclusive(self.offset))
-            .unwrap_or(false);
+            .map_or(false, |k| k.text_range().contains_inclusive(self.offset));
 
         if in_value {
             return true;
         }
 
-        let syntax = match self.before.as_ref().or_else(|| self.after.as_ref()) {
+        let syntax = match self.before.as_ref().or(self.after.as_ref()) {
             Some(p) => &p.syntax,
             None => return false,
         };
@@ -338,8 +353,9 @@ impl Query {
             .unwrap_or(false)
     }
 
+    #[must_use]
     pub fn is_inline(&self) -> bool {
-        let syntax = match self.before.as_ref().or_else(|| self.after.as_ref()) {
+        let syntax = match self.before.as_ref().or(self.after.as_ref()) {
             Some(p) => &p.syntax,
             None => return false,
         };
@@ -349,8 +365,9 @@ impl Query {
             .any(|a| matches!(a.kind(), INLINE_TABLE | ARRAY))
     }
 
+    #[must_use]
     pub fn in_inline_table(&self) -> bool {
-        let syntax = match self.before.as_ref().or_else(|| self.after.as_ref()) {
+        let syntax = match self.before.as_ref().or(self.after.as_ref()) {
             Some(p) => &p.syntax,
             None => return false,
         };
@@ -376,8 +393,9 @@ impl Query {
         }
     }
 
+    #[must_use]
     pub fn in_array(&self) -> bool {
-        let syntax = match self.before.as_ref().or_else(|| self.after.as_ref()) {
+        let syntax = match self.before.as_ref().or(self.after.as_ref()) {
             Some(p) => &p.syntax,
             None => return false,
         };
@@ -405,10 +423,10 @@ impl Query {
 
     pub fn entry_keys(&self) -> Keys {
         self.entry_key()
-            .map(|keys| Keys::from_syntax(keys.into()))
-            .unwrap_or_else(Keys::empty)
+            .map_or_else(Keys::empty, |keys| Keys::from_syntax(keys.into()))
     }
 
+    #[must_use]
     pub fn dom_node(&self) -> Option<&(Keys, Node)> {
         self.before
             .as_ref()
@@ -421,6 +439,7 @@ impl Query {
 ///
 /// It appends an index after each array so that we get the item type
 /// during lookups.
+#[must_use]
 pub fn lookup_keys(root: Node, keys: &Keys) -> Keys {
     let mut node = root;
     let mut new_keys = Keys::empty();

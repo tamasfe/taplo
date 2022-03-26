@@ -73,9 +73,10 @@ jobs:
           override: true
       - name: Retrieve toml-test
         run: |
-          wget https://github.com/BurntSushi/toml-test/releases/download/v1.1.0/toml-test-v1.1.0-linux-amd64.gz
-          gunzip toml-test-v1.1.0-linux-amd64.gz
-          chmod +x toml-test
+          apt-get update && apt-get install gzip -y || exit 1
+          wget https://github.com/BurntSushi/toml-test/releases/download/v1.1.0/toml-test-v1.1.0-linux-amd64.gz || exit 1
+          gunzip toml-test-v1.1.0-linux-amd64.gz || exit 1
+          chmod +x toml-test || exit 1
       - uses: actions-rs/cargo@v1
         name: Build taplo-cli
         with:

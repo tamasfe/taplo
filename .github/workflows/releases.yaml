@@ -2,11 +2,17 @@ name: Releases
 
 on:
   workflow_dispatch: {}
+  push:
+    branches:
+      - master
+    tags:
+      - release-*
 
 jobs:
   publish_crates:
     name: Publish Crates
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -48,3 +54,96 @@ jobs:
         working-directory: ${{ matrix.crate }}
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  cli_binaries:
+    name: Publish and release Taplo CLI
+    needs: test
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-cli-')
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
+          - x86_64-apple-darwin
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            base: taplo
+            name: x86_64-unknown-linux-gnu.tar.gz
+          - target: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+            base: taplo.exe
+            name: x86_64-pc-windows-gnu.zip
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            base: taplo
+            name: x86_64-apple-darwin-gnu.tar.gz
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+ 
+      - name: Cache cargo registry
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Retrieve release version
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-cli-})" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        if: ${{ matrix.target == 'x86_64-pc-windows-gnu' }}
+        run: |
+          sudo apt update && sudo apt install mingw-w64
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: Build binary 
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target=${{ matrix.target }}
+ 
+      - name: Package
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          if [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]
+          then
+            zip "../../../taplo-$RELEASE_VERSION-${{ matrix.name }}" ${{ matrix.base }}
+          else
+            tar czvf "../../../taplo-$RELEASE_VERSION-${{ matrix.name }}" ${{ matrix.base }}
+          fi
+          cd -
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: Taplo CLI ${{ env.RELEASE_VERSION }}
+          # Only for merging three releases
+          draft: true
+          prerelease: false
+          files: |
+            taplo-*.tar.gz
+            taplo-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

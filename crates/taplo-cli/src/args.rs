@@ -68,6 +68,7 @@ pub enum TaploCommand {
     /// Extract a value from the given TOML document.
     Get(GetCommand),
     /// Start a decoder for `toml-test` (https://github.com/BurntSushi/toml-test).
+    #[cfg(feature = "toml-test")]
     TomlTest {},
 }
 

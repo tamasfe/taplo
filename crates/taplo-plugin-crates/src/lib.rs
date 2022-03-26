@@ -16,24 +16,18 @@ use taplo_common::{
 };
 use url::Url;
 
+/// All non-yanked crate names and versions.
 static ALL_CRATES: OnceCell<Vec<(CompactString, CompactString)>> = OnceCell::new();
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 struct CratesSettings {
     all_crates: bool,
 }
 
-impl Default for CratesSettings {
-    fn default() -> Self {
-        Self { all_crates: true }
-    }
-}
-
 #[derive(Default)]
 pub struct CratesPlugin {
     index: OnceCell<crates_index::Index>,
-    /// All non-yanked crate schemas.
     settings: ArcSwap<CratesSettings>,
 }
 

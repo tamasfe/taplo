@@ -10,13 +10,11 @@ repository = "https://github.com/tamasfe/taplo"
 categories = ["development-tools", "command-line-utilities"]
 keywords = ["toml", "linter", "formatter"]
 
-[lib]
-crate-type = ["cdylib", "lib"]
-
 [features]
 default = ["lsp", "plugin-crates"]
 lsp = ["taplo-lsp"]
 plugin-crates = ["taplo-lsp/plugin-crates"]
+toml-test = []
 
 [dependencies]
 anyhow = { version = "1", features = ["backtrace"] }

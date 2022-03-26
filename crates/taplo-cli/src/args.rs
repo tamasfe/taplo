@@ -150,7 +150,7 @@ pub struct LintCommand {
 pub struct GetCommand {
     /// The format specifying how the output is printed.
     /// 
-    /// All newlines are LF, whether the output ends with a trailing new line is unspecified right now.
+    /// All newlines are in the output are LF.
     ///
     /// Format-specific remarks:
     ///
@@ -172,6 +172,12 @@ pub struct GetCommand {
     /// in this case the output will not be a valid TOML document.
     #[clap(short, long, arg_enum, default_value = "value")]
     pub output_format: OutputFormat,
+
+    /// Strip the trailing newline from the output.
+    /// 
+    /// If this is not provided, all output will end with a line-feed character.
+    #[clap(short, long)]
+    pub strip_newline: bool,
 
     /// Path to the TOML document, if omitted the standard input will be used.
     #[clap(short, long)]

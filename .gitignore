@@ -1,3 +1,4 @@
 .local*
 Cargo.lock
 target
+.vscode/settings.json

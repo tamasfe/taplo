@@ -8,7 +8,7 @@ jobs:
     name: Publish Crates
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       max-parallel: 1
       matrix:
         crate:

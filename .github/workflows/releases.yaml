@@ -59,20 +59,21 @@ jobs:
     name: Publish and release Taplo CLI
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-cli-')
     strategy:
+      fail-fast: false
       matrix:
         target:
           - x86_64-unknown-linux-gnu
-          - x86_64-pc-windows-gnu
+          # - x86_64-pc-windows-gnu
           - x86_64-apple-darwin
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             base: taplo
             name: x86_64-unknown-linux-gnu.tar.gz
-          - target: x86_64-pc-windows-gnu
-            os: ubuntu-latest
-            base: taplo.exe
-            name: x86_64-pc-windows-gnu.zip
+          # - target: x86_64-pc-windows-gnu
+          #   os: ubuntu-latest
+          #   base: taplo.exe
+          #   name: x86_64-pc-windows-gnu.zip
           - target: x86_64-apple-darwin
             os: macos-latest
             base: taplo

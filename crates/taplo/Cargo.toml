@@ -7,7 +7,7 @@ homepage = "https://taplo.tamasfe.dev"
 keywords = ["toml", "parser", "formatter", "linter"]
 license = "MIT"
 name = "taplo"
-readme = "../README.md"
+readme = false
 repository = "https://github.com/tamasfe/taplo"
 version = "0.8.0"
 

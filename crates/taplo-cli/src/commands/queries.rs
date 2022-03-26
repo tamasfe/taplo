@@ -69,7 +69,9 @@ impl<E: Environment> Taplo<E> {
                         stdout
                             .write_all(&serde_json::to_vec_pretty(&nodes.next().unwrap().1)?)
                             .await?;
-                        stdout.write(b"\n").await?;
+                        if !cmd.strip_newline {
+                            stdout.write(b"\n").await?;
+                        }
                         stdout.flush().await?;
                     } else {
                         stdout
@@ -77,12 +79,16 @@ impl<E: Environment> Taplo<E> {
                                 &nodes.map(|n| n.1).collect::<Vec<_>>(),
                             )?)
                             .await?;
-                        stdout.write(b"\n").await?;
+                        if !cmd.strip_newline {
+                            stdout.write(b"\n").await?;
+                        }
                         stdout.flush().await?;
                     }
                 } else {
                     stdout.write_all(&serde_json::to_vec_pretty(&node)?).await?;
-                    stdout.write(b"\n").await?;
+                    if !cmd.strip_newline {
+                        stdout.write(b"\n").await?;
+                    }
                     stdout.flush().await?;
                 }
             }
@@ -107,10 +113,30 @@ impl<E: Environment> Taplo<E> {
                         buf += &extract_value(&node)?;
                         buf += "\n";
                     }
+                    if cmd.strip_newline {
+                        if buf.ends_with('\n') {
+                            let new_len = buf.trim_end().len();
+                            buf.truncate(new_len);
+                        }
+                    } else if !buf.ends_with('\n') {
+                        buf += "\n";
+                    }
+
                     stdout.write_all(buf.as_bytes()).await?;
                     stdout.flush().await?;
                 } else {
-                    stdout.write_all(extract_value(&node)?.as_bytes()).await?;
+                    let mut buf = extract_value(&node)?;
+
+                    if cmd.strip_newline {
+                        if buf.ends_with('\n') {
+                            let new_len = buf.trim_end().len();
+                            buf.truncate(new_len);
+                        }
+                    } else if !buf.ends_with('\n') {
+                        buf += "\n";
+                    }
+
+                    stdout.write_all(buf.as_bytes()).await?;
                     stdout.flush().await?;
                 }
             }
@@ -131,9 +157,18 @@ impl<E: Environment> Taplo<E> {
                     }
 
                     if nodes.len() == 1 {
-                        stdout
-                            .write_all(nodes.next().unwrap().1.to_toml(false).as_bytes())
-                            .await?;
+                        let mut buf = nodes.next().unwrap().1.to_toml(false);
+
+                        if cmd.strip_newline {
+                            if buf.ends_with('\n') {
+                                let new_len = buf.trim_end().len();
+                                buf.truncate(new_len);
+                            }
+                        } else if !buf.ends_with('\n') {
+                            buf += "\n";
+                        }
+
+                        stdout.write_all(buf.as_bytes()).await?;
                         stdout.flush().await?;
                     } else {
                         let mut buf = String::from("[\n");
@@ -146,12 +181,32 @@ impl<E: Environment> Taplo<E> {
 
                         buf += "]\n";
 
+                        if cmd.strip_newline {
+                            if buf.ends_with('\n') {
+                                let new_len = buf.trim_end().len();
+                                buf.truncate(new_len);
+                            }
+                        } else if !buf.ends_with('\n') {
+                            buf += "\n";
+                        }
+
                         stdout.write(buf.as_bytes()).await?;
                         stdout.flush().await?;
                     }
                     stdout.flush().await?;
                 } else {
-                    stdout.write_all(node.to_toml(false).as_bytes()).await?;
+                    let mut buf = node.to_toml(false);
+
+                    if cmd.strip_newline {
+                        if buf.ends_with('\n') {
+                            let new_len = buf.trim_end().len();
+                            buf.truncate(new_len);
+                        }
+                    } else if !buf.ends_with('\n') {
+                        buf += "\n";
+                    }
+
+                    stdout.write_all(buf.as_bytes()).await?;
                     stdout.flush().await?;
                 }
             }

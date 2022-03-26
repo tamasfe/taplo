@@ -4,45 +4,19 @@ on:
   push:
     branches:
       - master
-    tags:
-      - release-*
     paths-ignore:
       - "site/**/*"
       - schemas/**/*
       - util/**/*
+  workflow_dispatch: {}
   pull_request:
     branches:
       - master
 
 jobs:
-  test_gen:
-    name: TOML Test Generation
-    runs-on: ubuntu-latest
-    if: "!contains(github.ref, 'refs/tags/release-js')"
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: Run test generator
-        uses: actions-rs/cargo@v1
-        with:
-          command: run
-          args: --manifest-path=util/test-gen/Cargo.toml -- -i test-data -o taplo/src/tests/
-      - name: Upload generated tests
-        uses: actions/upload-artifact@v1
-        with:
-          name: generated_tests
-          path: taplo/src/tests/generated
-
   test:
     name: Test on Rust stable
-    needs: test_gen
     runs-on: ubuntu-latest
-    if: "!contains(github.ref, 'refs/tags/release-js')"
     steps:
       - uses: actions/checkout@v2
       - name: Cache cargo registry
@@ -60,11 +34,6 @@ jobs:
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Download generated tests
-        uses: actions/download-artifact@v1
-        with:
-          name: generated_tests
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -76,472 +45,41 @@ jobs:
         with:
           command: test
           args: -p taplo
+  toml_test:
+    name: Run toml-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Retrieve toml-test
+        run: |
+          wget https://github.com/BurntSushi/toml-test/releases/download/v1.1.0/toml-test-v1.1.0-linux-amd64.gz
+          gunzip toml-test-v1.1.0-linux-amd64.gz
+          chmod +x toml-test
       - uses: actions-rs/cargo@v1
-        name: Test Taplo-cli
-        with:
-          command: test
-          args: -p taplo-cli
-
-  # Run on tags like "release-lib-1.0.0-alpha.1"
-  publish_taplo_crate:
-    name: Publish Taplo Crate
-    needs: test
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-lib-')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Retrieve release version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-lib-})" >> $GITHUB_ENV
-      - name: Set release version in Cargo.toml
-        run: |
-          awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo/Cargo.toml > cargo_tmp
-          mv cargo_tmp taplo/Cargo.toml
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: Publish to Crates.io
-        run: cargo publish --allow-dirty --token $CRATES_IO_TOKEN
-        working-directory: taplo
-        env:
-          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-
-  publish_taplo_cli:
-    name: Publish and release Taplo CLI
-    needs: test
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-cli-')
-    strategy:
-      matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-          - x86_64-pc-windows-gnu
-          - x86_64-apple-darwin
-        include:
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            base: taplo
-            name: taplo-x86_64-unknown-linux-gnu.tar.gz
-          - target: x86_64-pc-windows-gnu
-            os: ubuntu-latest
-            base: taplo.exe
-            name: taplo-x86_64-pc-windows-gnu.zip
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            base: taplo
-            name: taplo-x86_64-apple-darwin-gnu.tar.gz
-    runs-on: ${{matrix.os}}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
- 
-      - name: Cache cargo registry
-        uses: actions/cache@v2
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v2
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo build
-        uses: actions/cache@v2
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Retrieve release version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-cli-})" >> $GITHUB_ENV
-      - name: Set release version in Cargo.toml
-        run: |
-          awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo-cli/Cargo.toml > cargo_tmp
-          mv cargo_tmp taplo-cli/Cargo.toml
-
-      - name: Install dependencies
-        if: ${{ matrix.target == 'x86_64-pc-windows-gnu' }}
-        run: |
-          sudo apt update && sudo apt install mingw-w64
-
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: ${{ matrix.target }}
-          override: true
-
-      - name: Build binary 
-        uses: actions-rs/cargo@v1
+        name: Build taplo-cli
         with:
           command: build
-          args: --release --target=${{ matrix.target }}
- 
-      - name: Package
-        shell: bash
-        run: |
-          strip target/${{ matrix.target }}/release/${{ matrix.base }}
-          cd target/${{ matrix.target }}/release
-          if [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]
-          then
-            zip ../../../${{ matrix.name }} ${{ matrix.base }}
-          else
-            tar czvf ../../../${{ matrix.name }} ${{ matrix.base }}
-          fi
-          cd -
-
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          tag_name: ${{ github.ref }}
-          name: CLI ${{ env.RELEASE_VERSION }}
-          # Only for merging three releases
-          draft: true
-          prerelease: false
-          files: |
-            taplo-*.tar.gz
-            taplo-*.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish to Crates.io
-        if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
-        run: cargo publish --allow-dirty --token $CRATES_IO_TOKEN
-        working-directory: taplo-cli
-        env:
-          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-
-  # Run on tags like "release-js-cli-1.0.0-alpha.1"
-  publish_js_cli:
-    name: Publish Js CLI
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-cli-')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      - name: Retrieve release version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-js-cli-})" >> $GITHUB_ENV
-      - name: Install Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: "12"
-          registry-url: "https://registry.npmjs.org"
-          scope: "@taplo"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly-2021-03-12
-          override: true
-      - name: Yarn Dependencies
-        run: yarn
-        working-directory: js/cli
-      - name: Build CLI
-        run: yarn build
-        env:
-          RELEASE: "true"
-        working-directory: js/cli
-      - name: Publish Package
-        run: yarn publish --access public --no-commit-hooks --no-git-tag-version --new-version $RELEASE_VERSION
-        working-directory: js/cli
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  # Run on tags like "release-js-lib-1.0.0-alpha.1"
-  publish_js_lib:
-    name: Publish Js Lib
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-lib-')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      - name: Retrieve release version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-js-lib-})" >> $GITHUB_ENV
-      - name: Install Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: "12"
-          registry-url: "https://registry.npmjs.org"
-          scope: "@taplo"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly-2021-03-12
-          override: true
-      - name: Yarn Dependencies
-        run: yarn
-        working-directory: js/lib
-      - name: Build lib
-        run: yarn build
-        env:
-          RELEASE: "true"
-        working-directory: js/lib
-      - name: Publish Package
-        run: yarn publish --access public --no-commit-hooks --no-git-tag-version --new-version $RELEASE_VERSION
-        working-directory: js/lib
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  publish_vscode_ext:
-    name: Publish VSCode Extension
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-vscode-')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      - name: Retrieve release version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-js-vscode-})" >> $GITHUB_ENV
-      - name: Install Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: "12"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly-2021-03-12
-          override: true
-      - name: Extension NPM Install
-        run: yarn && yarn upgrade
-        working-directory: js/vscode
-      - name: Install vsce
-        run: npm install -g vsce
-      - name: Set package.json version
-        working-directory: js/vscode
-        run: sed -i "s/\"0.0.0\"/\"$RELEASE_VERSION\"/g" package.json
-      - name: Package Extension
-        run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/js/vscode/images
-        working-directory: js/vscode
-        env:
-          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
-      - name: Publish extension to microsoft marketplace
-        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/js/vscode/images -p $VSCE_TOKEN
-        working-directory: js/vscode
-        env:
-          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}          
-      - name: Install ovsx
-        run: npm install -g ovsx
-      - name: Publish Open VSX Extension 
-        run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/js/vscode/images -p $OPEN_VSX_TOKEN "even-better-toml-$RELEASE_VERSION.vsix"
-        working-directory: js/vscode
-        env:
-          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}          
-
-  publish_lsp:
-    name: Publish Taplo LSP
-    needs: test
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-lsp-')
-    strategy:
-      matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-          - x86_64-pc-windows-gnu
-          - x86_64-apple-darwin
-        include:
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            base: taplo-lsp
-            name: taplo-lsp-x86_64-unknown-linux-gnu.tar.gz
-          - target: x86_64-pc-windows-gnu
-            os: ubuntu-latest
-            base: taplo-lsp.exe
-            name: taplo-lsp-windows-x86_64.zip
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            base: taplo-lsp
-            name: taplo-lsp-x86_64-apple-darwin-gnu.tar.gz
-    runs-on: ${{matrix.os}}
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Cache cargo registry
-        uses: actions/cache@v2
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v2
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo build
-        uses: actions/cache@v2
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Retrieve release version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-lsp-})" >> $GITHUB_ENV
-      - name: Set release version in Cargo.toml
-        run: |
-          awk 'NR==1,/version\s*=.*/{sub(/version\s*=.*/, "version = \"'${RELEASE_VERSION}'\"")} 1' taplo-lsp/Cargo.toml > cargo_tmp
-          mv cargo_tmp taplo-lsp/Cargo.toml
-
-      - name: Install dependencies
-        if: ${{ matrix.target == 'x86_64-pc-windows-gnu' }}
-        run: |
-          sudo apt update && sudo apt install mingw-w64
-
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: ${{ matrix.target }}
-          override: true
-
-      - name: Build binary 
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --target=${{ matrix.target }}
-
-      - name: Package
-        shell: bash
-        run: |
-          strip target/${{ matrix.target }}/release/${{ matrix.base }}
-          cd target/${{ matrix.target }}/release
-          if [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]
-          then
-            zip ../../../${{ matrix.name }} ${{ matrix.base }}
-          else
-            tar czvf ../../../${{ matrix.name }} ${{ matrix.base }}
-          fi
-          cd -
-
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          tag_name: ${{ github.ref }}
-          name: LSP ${{ env.RELEASE_VERSION }}
-          # Only for merging three releases
-          draft: true
-          prerelease: false
-          files: |
-            taplo-lsp-*.tar.gz
-            taplo-lsp-*.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish to Crates.io
-        if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
-        run: cargo publish --allow-dirty --token $CRATES_IO_TOKEN
-        working-directory: taplo-lsp
-        env:
-          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-
-  publish_js_lsp:
-    name: Publish Js LSP
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-js-lsp-')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      - name: Retrieve release version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-js-lsp-})" >> $GITHUB_ENV
-      - name: Install Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: "12"
-          registry-url: "https://registry.npmjs.org"
-          scope: "@taplo"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly-2021-03-12
-          override: true
-      - name: Yarn Dependencies
-        run: yarn
-        working-directory: js/lsp
-      - name: Build lib
-        run: yarn build
-        env:
-          RELEASE: "true"
-        working-directory: js/lsp
-      - name: Publish Package
-        run: yarn publish --access public --no-commit-hooks --no-git-tag-version --new-version $RELEASE_VERSION
-        working-directory: js/lsp
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          args: --bin taplo
+      - name: Run toml-test
+        run: toml-test ./target/debug/taplo -- toml-test

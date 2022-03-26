@@ -11,6 +11,8 @@ mod lint;
 #[cfg(feature = "lsp")]
 mod lsp;
 mod queries;
+
+#[cfg(feature = "toml-test")]
 mod toml_test;
 
 impl<E: Environment> Taplo<E> {
@@ -25,6 +27,7 @@ impl<E: Environment> Taplo<E> {
             TaploCommand::Format(fmt) => self.execute_format(fmt).await,
             #[cfg(feature = "lsp")]
             TaploCommand::Lsp { cmd } => self.execute_lsp(cmd).await,
+            #[cfg(feature = "toml-test")]
             TaploCommand::TomlTest {} => self.execute_toml_test().await,
             TaploCommand::Lint(cmd) => self.execute_lint(cmd).await,
             TaploCommand::Config { cmd } => self.execute_config(cmd).await,

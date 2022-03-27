@@ -115,12 +115,22 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
-      - name: Build binary 
+      - name: Build full binary 
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --target=${{ matrix.target }}
- 
+          args: --release --bin taplo --features "toml-test" --target=${{ matrix.target }}
+
+      - name: Rename full binary
+        run: |
+          mv target/${{ matrix.target }}/release/taplo target/${{ matrix.target }}/release/taplo-full
+
+      - name: Build default binary 
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --bin taplo --no-default-features --target=${{ matrix.target }}
+
       - name: Package
         shell: bash
         run: |
@@ -130,10 +140,13 @@ jobs:
             zip "../../../taplo-$RELEASE_VERSION-${{ matrix.name }}" ${{ matrix.base }}
           else
             tar czvf "../../../taplo-$RELEASE_VERSION-${{ matrix.name }}" ${{ matrix.base }}
+            rm taplo
+            mv taplo-full taplo
+            tar czvf "../../../taplo-full-$RELEASE_VERSION-${{ matrix.name }}" ${{ matrix.base }}
           fi
           cd -
 
-      - name: Create Release
+      - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:

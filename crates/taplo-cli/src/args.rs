@@ -1,10 +1,11 @@
-use clap::{ArgEnum, Args, Parser, Subcommand};
+use clap::{crate_version, ArgEnum, Args, Parser, Subcommand};
 use std::path::PathBuf;
 use url::Url;
 
 #[derive(Clone, Parser)]
 #[clap(name = "taplo")]
 #[clap(bin_name = "taplo")]
+#[clap(version = crate_version!())]
 pub struct TaploArgs {
     #[clap(long, arg_enum, global = true, default_value = "auto")]
     pub colors: Colors,
@@ -150,7 +151,7 @@ pub struct LintCommand {
 #[derive(Clone, Args)]
 pub struct GetCommand {
     /// The format specifying how the output is printed.
-    /// 
+    ///
     /// All newlines are in the output are LF.
     ///
     /// Format-specific remarks:
@@ -175,7 +176,7 @@ pub struct GetCommand {
     pub output_format: OutputFormat,
 
     /// Strip the trailing newline from the output.
-    /// 
+    ///
     /// If this is not provided, all output will end with a line-feed character.
     #[clap(short, long)]
     pub strip_newline: bool,
@@ -189,17 +190,17 @@ pub struct GetCommand {
     /// If omitted, the entire document will be printed.
     ///
     /// If the pattern yielded no values, the operation will fail.
-    /// 
+    ///
     /// The pattern supports `jq`-like syntax and glob patterns as well:
-    /// 
+    ///
     /// Examples:
-    /// 
+    ///
     /// - table.array[1].foo
     /// - table.array.1.foo
     /// - table.array[*].foo
     /// - table.array.*.foo
     /// - dependencies.tokio-*.version
-    /// 
+    ///
     pub pattern: Option<String>,
 }
 

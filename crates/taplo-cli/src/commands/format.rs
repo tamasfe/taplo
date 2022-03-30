@@ -51,7 +51,7 @@ impl<E: Environment> Taplo<E> {
                 return Err(anyhow!("the input was not properly formatted"));
             }
         } else {
-            let mut stdout = self.env.stderr();
+            let mut stdout = self.env.stdout();
             stdout.write_all(formatted.as_bytes()).await?;
             stdout.flush().await?;
         }

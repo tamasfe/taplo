@@ -33,7 +33,7 @@
       "description": "Services",
       "type": "array",
       "items": {
-        "type": "object",
+        "type": ["object", "array"],
         "properties": {
           "internal_port": {
             "description": "The port this application listens on to communicate with clients. The default is 8080. We recommend applications use the default.",
@@ -43,10 +43,74 @@
           "concurrency": {
             "x-taplo": {
               "docs": {
-                "main": "application's behavior with regard to concurrent connections and compute scaling."
+                "main": "Control autoscaling metrics (connections or requests) and limits (hard and soft)."
               }
             },
             "$ref": "#/definitions/Concurrency"
+          },
+          "ports": {
+            "description": "For each external port you want to accept connections on, add a `ports` section.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "handlers": {
+                  "x-taplo": {
+                    "links": {
+                      "key": "https://fly.io/docs/reference/services/#connection-handlers"
+                    }
+                  },
+                  "description": "An array of strings that select handlers to terminate the connection at the edge.",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "enum": ["http", "tls", "proxy_proto"]
+                  }
+                },
+                "port": {
+                  "default": 8080,
+                  "type": "integer",
+                  "description": "A string which selects which external ports you want Fly to accept traffic on. "
+                },
+                "force_https": {
+                  "type": "boolean",
+                  "description": "Force HTTP connections to HTTPS. Only works when the only configured handler  is `http`."
+                }
+              }
+            }
+          },
+          "tcp_checks": {
+            "description": "By default, the Fly platform checks service health by connecting to the configured port.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "handlers": {
+                  "x-taplo": {
+                    "links": {
+                      "key": "https://fly.io/docs/reference/services/#connection-handlers"
+                    }
+                  },
+                  "description": "An array of strings that select handlers to terminate the connection at the edge.",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "enum": ["http", "tls", "proxy_proto"]
+                  }
+                },
+                "port": {
+                  "default": 8080,
+                  "type": "integer",
+                  "description": "A string which selects which external ports you want Fly to accept traffic on. "
+                },
+                "force_https": {
+                  "type": "boolean",
+                  "description": "Force HTTP connections to HTTPS. Only works when the only configured handler  is `http`."
+                }
+              }
+            }
           }
         }
       }
@@ -68,9 +132,7 @@
           "description": "Strategy for replacing VMs during a deployment.",
           "type": "string",
           "default": "canary",
-          "enum": [
-            "canary", "rolling", "bluegreen", "immediate"
-          ],
+          "enum": ["canary", "rolling", "bluegreen", "immediate"],
           "x-taplo": {
             "docs": {
               "main": "Strategy for replacing VMs during a deployment.",
@@ -84,15 +146,38 @@
             },
             "links": {
               "key": "https://fly.io/docs/reference/configuration/#strategy"
-            },
-            "initKeys": ["importantKey"]
+            }
           }
         }
       }
     },
-    "env": {
-      "description": "Non-sensitive environment variables on the VM runtime. Not available during builds. \n```toml\n[env]\n  USER=\"julieta\"\n  MODE=\"production\"\n```",
-      "type": "object"
+    "experimental": {
+      "description": "Flags and featurs which may be subject to change, deprecation or promotion to the main configuration.",
+      "type": "object",
+      "properties": {
+        "cmd": {
+          "description": "Override the server command (CMD) set by the Dockerfile. Specify as an array of strings:\n\n```toml\ncmd = [\"path/to/command\", \"arg1\", \"arg2\"]\n```",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "entrypoint": {
+          "description": "This overrides the ENTRYPOINT set by the Dockerfile. Specify as an array of strings:\n\n```toml\nentrypoint = [\"path/to/command\", \"arg1\", \"arg2\"]\n```",
+          "type": "string",
+          "minLength": 2
+        },
+        "auto_rollback": {
+          "description": "Failed deployments should roll back automatically to the previous successfully deployed release. Defaults to `true`",
+          "type": "boolean"
+        },
+        "private_network": {
+          "description": "Enables private network access to the Fly organization. Defaults to `true`.",
+          "default": true,
+          "type": "boolean"
+        }
+      }
     },
     "build": {
       "description": "Build configuration options. See docs at https://fly.io/docs/reference/builders.",
@@ -142,9 +227,15 @@
           "type": {
             "type": "string",
             "default": "connections",
-            "enum": [
-              "connections", "requests"
-            ]
+            "x-taplo": {
+              "docs": {
+                "enumValues": [
+                  "Autoscale based on number of concurrent connections",
+                  "Autoscale based on number of concurrent requests"
+                ]
+              }
+            },
+            "enum": ["connections", "requests"]
           },
           "hard_limit": {
             "default": 25,
@@ -152,6 +243,34 @@
             "description": "When an application instance is at or over this number, the system will bring up another instance."
           },
           "soft_limit": {
+            "default": 20,
+            "type": "integer",
+            "description": "When an application instance is at or over this number, the system is likely to bring up another instance."
+          }
+        }
+      }
+    },
+    "Port": {
+      "type": "object",
+      "description": "For each external port you want to accept connections on, add a `ports` section.",
+      "items": {
+        "properties": {
+          "handlers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "enum": ["http", "tls", "proxy_proto"]
+            }
+          },
+          "port": {
+            "default": 8080,
+            "type": "number",
+            "minimum": 1,
+            "maximum": 65535,
+            "description": "The external port you want Fly to accept traffic on."
+          },
+          "force_https": {
             "default": 20,
             "type": "integer",
             "description": "When an application instance is at or over this number, the system is likely to bring up another instance."

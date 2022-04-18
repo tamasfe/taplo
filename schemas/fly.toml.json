@@ -1,0 +1,163 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "Repl.it config schema (.replit)",
+  "description": "https://fly.io/docs/reference/configuration",
+  "x-taplo-info": {
+    "authors": ["Joshua Sierles (https://github.com/jsierles)"],
+    "patterns": ["\\.*fly(.*)?\\.toml)?$"]
+  },
+  "type": "object",
+  "properties": {
+    "app": {
+      "description": "Fly.io application name",
+      "type": "string"
+    },
+    "kill_timeout": {
+      "description": "Seconds to wait before forcing a VM process to exit. Default is 5 seconds.",
+      "type": "integer"
+    },
+    "kill_signal": {
+      "description": "Signal to send to a process to shut it down gracefully. Default is SIGINT.",
+      "type": "string",
+      "enum": [
+        "SIGINT",
+        "SIGTERM",
+        "SIGQUIT",
+        "SIGUSR1",
+        "SIGUSR2",
+        "SIGKILL",
+        "SIGSTOP"
+      ]
+    },
+    "services": {
+      "description": "Services",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "internal_port": {
+            "description": "The port this application listens on to communicate with clients. The default is 8080. We recommend applications use the default.",
+            "type": "integer",
+            "default": 8080
+          },
+          "concurrency": {
+            "x-taplo": {
+              "docs": {
+                "main": "application's behavior with regard to concurrent connections and compute scaling."
+              }
+            },
+            "$ref": "#/definitions/Concurrency"
+          }
+        }
+      }
+    },
+    "deploy": {
+      "type": "object",
+      "properties": {
+        "release_command": {
+          "x-taplo": {
+            "links": {
+              "key": "https://fly.io/docs/reference/configuration/#release_command"
+            },
+            "initKeys": ["importantKey"]
+          },
+          "description": "Command to run after a build, with access to the production environment, but before deployment. Non-zero exit status will abort the deployment.\n\n```toml\n[deploy]\n  release_command =\"bundle exec rails db:migrate\"\n```",
+          "type": "string"
+        },
+        "strategy": {
+          "description": "Strategy for replacing VMs during a deployment.",
+          "type": "string",
+          "default": "canary",
+          "enum": [
+            "canary", "rolling", "bluegreen", "immediate"
+          ],
+          "x-taplo": {
+            "docs": {
+              "main": "Strategy for replacing VMs during a deployment.",
+              "enumValues": [
+                "This default strategy - for apps without volumes - will boot a single, new VM with the new release, verify its health, then proceed with a rolling restart strategy.",
+                "One by one, each running VM is taken down and replaced by a new release VM. This is the default strategy for apps with volumes.",
+                "For every running VM, a new one is booted alongside it. All new VMs must pass health checks to complete deployment, when traffic gets migrated to new VMs. If your app has multiple VMs, this strategy may reduce deploy time and downtime, assuming your app is scaled to 2 or more VMs.",
+                "Replace all VMs with new releases immediately without waiting for health checks to pass. This is useful in emergency situations where you're confident a release will be healthy."
+              ],
+              "defaultValue": "Default is 'canary': boot a single, new VM with the new release, verify its health, then proceed with a rolling restart strategy."
+            },
+            "links": {
+              "key": "https://fly.io/docs/reference/configuration/#strategy"
+            },
+            "initKeys": ["importantKey"]
+          }
+        }
+      }
+    },
+    "env": {
+      "description": "Non-sensitive environment variables on the VM runtime. Not available during builds. \n```toml\n[env]\n  USER=\"julieta\"\n  MODE=\"production\"\n```",
+      "type": "object"
+    },
+    "build": {
+      "description": "Build configuration options. See docs at https://fly.io/docs/reference/builders.",
+      "type": "object",
+      "properties": {
+        "builder": {
+          "description": "Builder Docker image to be used with the 'buildpacks' option",
+          "type": "string"
+        },
+        "buildpacks": {
+          "description": "Buildpacks to be run by the 'builder' Docker image",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "args": {
+          "description": "Build arguments passed to both Dockerfile and Buildpack builds. These are not available on VMs at runtime.\n```toml\n[build.args]\n  USER=\"julieta\"\n  MODE=\"production\"\n```",
+          "type": "object",
+          "items": {
+            "type": "object"
+          }
+        },
+
+        "image": {
+          "description": "Docker image to be deployed (skips the build process)",
+          "type": "string"
+        },
+        "dockerfile": {
+          "description": "Dockerfile used for builds. Defaults to './Dockerfile'",
+          "type": "string"
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": true
+  },
+  "definitions": {
+    "Concurrency": {
+      "type": "object",
+      "description": "Control autoscaling behavior based on concurrent requests or connections.",
+      "items": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "default": "connections",
+            "enum": [
+              "connections", "requests"
+            ]
+          },
+          "hard_limit": {
+            "default": 25,
+            "type": "integer",
+            "description": "When an application instance is at or over this number, the system will bring up another instance."
+          },
+          "soft_limit": {
+            "default": 20,
+            "type": "integer",
+            "description": "When an application instance is at or over this number, the system is likely to bring up another instance."
+          }
+        }
+      }
+    }
+  }
+}

@@ -4,7 +4,7 @@
   "description": "https://fly.io/docs/reference/configuration",
   "x-taplo-info": {
     "authors": ["Joshua Sierles (https://github.com/jsierles)"],
-    "patterns": ["\\.*fly(.*)?\\.toml)?$"]
+    "patterns": ["\\.*fly(.*)?\\.toml?$"]
   },
   "type": "object",
   "properties": {

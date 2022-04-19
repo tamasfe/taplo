@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "title": "Repl.it config schema (.replit)",
+  "title": "Fly.io config schema (fly.toml)",
   "description": "https://fly.io/docs/reference/configuration",
   "x-taplo-info": {
     "authors": ["Joshua Sierles (https://github.com/jsierles)"],
@@ -284,7 +284,6 @@
     "experimental": {
       "description": "Flags and features that are subject to change, deprecation or promotion to the main configuration.",
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "cmd": {
           "description": "Override the server command (CMD) set by the Dockerfile. Specify as an array of strings:\n\n```toml\ncmd = [\"path/to/command\", \"arg1\", \"arg2\"]\n```",

@@ -31,6 +31,8 @@
     },
     "statics": {
       "description": "The `statics` sections expose static assets built into your application's container to Fly's Anycast network. You can serve HTML files, Javascript, and images without needing to run a web server inside your container.",
+      "required": ["guest_path", "url_prefix"],
+      "additionalProperties": false,
       "x-taplo": {
         "links": {
           "key": "https://fly.io/docs/reference/configuration/#the-statics-sections"
@@ -55,6 +57,7 @@
     "services": {
       "description": "Configure the mapping of ports from the public Fly proxy to your application.\n\nYou can have:\n* **No services section**: The application has no mappings to the external internet - typically apps like databases or background job workers that talk over 6PN private networking to other apps.\n* **One services section**: One internal port mapped to one external port on the internet.\n* **Multiple services sections**: Map multiple internal ports to multiple external ports.",
       "type": "array",
+      "additionalProperties": false,
       "items": {
         "type": ["object", "array"],
         "properties": {
@@ -222,6 +225,7 @@
     },
     "deploy": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "release_command": {
           "x-taplo": {
@@ -258,6 +262,11 @@
     },
     "mounts": {
       "type": "object",
+      "x-taplo": {
+        "links": {
+          "key": "https://fly.io/docs/reference/configuration/#the-mounts-section"
+        }
+      },
       "description": "Mount [persistent storage volumes](https://fly.io/docs/reference/volumes) previously setup via `flyctl`. Both settings are required. Example:\n\n```toml\n[mounts]\n  source = \"myapp_data\"\n  destination = \"/data\"\n```",
       "required": ["source", "destination"],
       "additionalProperties": false,
@@ -275,6 +284,7 @@
     "experimental": {
       "description": "Flags and features that are subject to change, deprecation or promotion to the main configuration.",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "cmd": {
           "description": "Override the server command (CMD) set by the Dockerfile. Specify as an array of strings:\n\n```toml\ncmd = [\"path/to/command\", \"arg1\", \"arg2\"]\n```",
@@ -348,19 +358,5 @@
       }
     },
     "additionalProperties": true
-  },
-  "definitions": {
-    "mounts": {
-      "required": ["source", "destination"],
-      "additionalProperties": false,
-      "properties": {
-        "source": {
-          "description": "source"
-        },
-        "destination": {
-          "description": "destination"
-        }
-      }
-    }
   }
 }

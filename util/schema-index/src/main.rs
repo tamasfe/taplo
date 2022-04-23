@@ -10,7 +10,7 @@ use std::{collections::HashSet, ffi::OsStr, path::PathBuf};
 use structopt::StructOpt;
 use tabwriter::TabWriter;
 use taplo::schema::{SchemaExtraInfo, SchemaIndex, SchemaMeta};
-use time::{Format, OffsetDateTime};
+use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 use walkdir::WalkDir;
 
 #[derive(Serialize, Deserialize)]
@@ -136,10 +136,12 @@ fn main() -> anyhow::Result<()> {
                         hasher.update(url.as_bytes());
                         let url_hash = hasher.finalize().encode_hex::<String>();
 
-                        let updated =
-                            OffsetDateTime::from_unix_timestamp(time_unix).format(Format::Rfc3339);
+                        let updated = OffsetDateTime::from_unix_timestamp(time_unix)
+                            .unwrap()
+                            .format(&Rfc3339)
+                            .unwrap();
 
-                        write!(&mut tw, "{}\t{:?}\t{}\n", name, delta.status(), &updated).unwrap();
+                        writeln!(&mut tw, "{}\t{:?}\t{}", name, delta.status(), &updated).unwrap();
 
                         index.schemas.push(SchemaMeta {
                             title: s.title,
@@ -183,7 +185,7 @@ fn fetch_schema_store(index: &mut SchemaIndex) -> Result<(), anyhow::Error> {
     let catalog: SchemaStoreCatalog =
         reqwest::blocking::get("https://www.schemastore.org/api/json/catalog.json")?.json()?;
 
-    let now_ts = OffsetDateTime::now_utc().format(Format::Rfc3339);
+    let now_ts = OffsetDateTime::now_utc().format(&Rfc3339).unwrap();
     let mut tw = TabWriter::new(vec![]);
 
     for schema in catalog.schemas {
@@ -224,7 +226,7 @@ fn fetch_schema_store(index: &mut SchemaIndex) -> Result<(), anyhow::Error> {
 
                         re = g
                             .regex()
-                            .strip_suffix("$")
+                            .strip_suffix('$')
                             .unwrap_or(re)
                             .strip_prefix("(?-u)^")
                             .unwrap_or(re);
@@ -240,9 +242,9 @@ fn fetch_schema_store(index: &mut SchemaIndex) -> Result<(), anyhow::Error> {
             },
         };
 
-        write!(
+        writeln!(
             &mut tw,
-            "{}\t{}\n",
+            "{}\t{}",
             sm.title.clone().unwrap_or_default(),
             sm.url
         )

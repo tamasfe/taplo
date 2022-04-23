@@ -2,22 +2,23 @@
 name = "schema-index"
 version = "0.1.0"
 authors = ["Ferenc Tamás <tamasf97@outlook.com>"]
-edition = "2018"
+edition = "2021"
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git2 = "0.13"
-walkdir = "2"
-structopt = { version = "0.3", default-features = false }
 anyhow = "1"
-time = "0.2"
-taplo = { path = "../../crates/taplo", features = ["schema"] }
+git2 = "0.14"
+globset = "0.4"
+hex = "0.4"
 path-clean = "0.1"
+reqwest = { version = "0.11", features = ["blocking", "json"] }
 serde = "1"
 serde_json = "1"
-sha2 = "0.9"
-hex = "0.4"
-reqwest = { version = "0.10", features = ["blocking", "json"] }
-globset = "0.4"
+sha2 = "0.10"
+structopt = { version = "0.3", default-features = false }
 tabwriter = "1.2"
+taplo = {version = "0.7.0", features = ["schema"]}
+time = {version = "0.3", features = ["formatting"]}
+walkdir = "2"

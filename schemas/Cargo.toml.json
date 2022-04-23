@@ -68,6 +68,10 @@
       "x-taplo": {
         "links": {
           "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#build-dependencies"
+        },
+        "plugins": ["crates"],
+        "crates": {
+          "schemas": "dependencies"
         }
       }
     },
@@ -107,6 +111,10 @@
       "x-taplo": {
         "links": {
           "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#development-dependencies"
+        },
+        "plugins": ["crates"],
+        "crates": {
+          "schemas": "dependencies"
         }
       }
     },
@@ -233,10 +241,20 @@
       "description": "The `build` field specifies a file in the package root which is a [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html) for building native code. More information can be found in the [build script guide](https://doc.rust-lang.org/cargo/reference/build-scripts.html).\n\n\n```toml\n[package]\n# ...\nbuild = \"build.rs\"\n```\n\nThe default is `\"build.rs\"`, which loads the script from a file named\n`build.rs` in the root of the package. Use `build = \"custom_build_name.rs\"` to\nspecify a path to a different file or `build = false` to disable automatic\ndetection of the build script.\n",
       "anyOf": [
         {
+          "description": "Path to the build file.",
           "type": "string"
         },
         {
-          "type": "boolean"
+          "type": "boolean",
+          "enum": [true, false],
+          "x-taplo": {
+            "docs": {
+              "enumValues": [
+                "Automatically detect the build file (`build.rs`).",
+                "Disable automatic detection of the build file."
+              ]
+            }
+          }
         }
       ],
       "x-taplo": {
@@ -322,6 +340,10 @@
             "x-taplo": {
               "links": {
                 "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#choosing-features"
+              },
+              "plugins": ["crates"],
+              "crates": {
+                "schemas": "feature"
               }
             }
           },
@@ -826,6 +848,10 @@
           "x-taplo": {
             "links": {
               "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#build-dependencies"
+            },
+            "plugins": ["crates"],
+            "crates": {
+              "schemas": "dependencies"
             }
           }
         },
@@ -859,6 +885,10 @@
           "x-taplo": {
             "links": {
               "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#development-dependencies"
+            },
+            "plugins": ["crates"],
+            "crates": {
+              "schemas": "dependencies"
             }
           }
         },
@@ -1037,13 +1067,25 @@
       "description": "The `publish` field can be used to prevent a package from being published to a package registry (like *crates.io*) by mistake, for instance to keep a package\nprivate in a company.\n\n```toml\n[package]\n# ...\npublish = false\n```\n\nThe value may also be an array of strings which are registry names that are\nallowed to be published to.\n\n```toml\n[package]\n# ...\npublish = [\"some-registry-name\"]\n```",
       "anyOf": [
         {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "description": "A boolean indicating whether the package can be published.",
+          "type": "boolean",
+          "enum": [true, false],
+          "default": true,
+          "x-taplo": {
+            "docs": {
+              "enumValues": [
+                "The package can be published.",
+                "The package cannot be published."
+              ]
+            }
           }
         },
         {
-          "type": "boolean"
+          "type": "array",
+          "description": "An array of registry names.",
+          "items": {
+            "type": "string"
+          }
         }
       ],
       "x-taplo": {
@@ -1057,10 +1099,20 @@
       "description": "The `readme` field should be the path to a file in the package root (relative\nto this `Cargo.toml`) that contains general information about the package.\nThis file will be transferred to the registry when you publish. [crates.io](https://crates.io)\nwill interpret it as Markdown and render it on the crate's page.\n\n```toml\n[package]\n# ...\nreadme = \"README.md\"\n```\n\nIf no value is specified for this field, and a file named `README.md`,\n`README.txt` or `README` exists in the package root, then the name of that\nfile will be used. You can suppress this behavior by setting this field to\n`false`. If the field is set to `true`, a default value of `README.md` will\nbe assumed.\n",
       "anyOf": [
         {
+          "description": "The `readme` field should be the path to a file in the package root (relative\nto this `Cargo.toml`) that contains general information about the package.",
           "type": "string"
         },
         {
-          "type": "boolean"
+          "type": "boolean",
+          "enum": [true, false],
+          "x-taplo": {
+            "docs": {
+              "enumValues": [
+                "Use the `README.md` file.",
+                "Do not use the default `README.md` file"
+              ]
+            }
+          }
         }
       ],
       "x-taplo": {
@@ -1074,7 +1126,7 @@
       "description": "Cargo bakes in the concept of [Semantic Versioning](https://semver.org/), so make sure you follow some basic rules:\n\n* Before you reach 1.0.0, anything goes, but if you make breaking changes,\n    increment the minor version. In Rust, breaking changes include adding fields to\n    structs or variants to enums.\n* After 1.0.0, only make breaking changes when you increment the major version.\n    Don’t break the build.\n* After 1.0.0, don’t add any new public API (no new `pub` anything) in patch-level\n    versions. Always increment the minor version if you add any new `pub` structs,\n    traits, fields, types, functions, methods or anything else.\n* Use version numbers with three numeric parts such as 1.0.0 rather than 1.0.",
       "default": "0.1.0",
       "type": "string",
-      "pattern": "^\\s*(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?\\s*$",
+      "format": "semver",
       "x-taplo": {
         "links": {
           "key": "https://doc.rust-lang.org/cargo/reference/manifest.html#the-version-field"
@@ -1086,9 +1138,14 @@
       "description": "The [version requirement](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html) of the target dependency.",
       "default": "*",
       "type": "string",
+      "format": "semver-requirement",
       "x-taplo": {
         "links": {
           "key": "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html"
+        },
+        "plugins": ["crates"],
+        "crates": {
+          "schemas": "version"
         }
       }
     },

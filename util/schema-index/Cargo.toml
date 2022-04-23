@@ -12,7 +12,7 @@ walkdir = "2"
 structopt = { version = "0.3", default-features = false }
 anyhow = "1"
 time = "0.2"
-taplo = { path = "../../taplo", features = ["schema"] }
+taplo = { path = "../../crates/taplo", features = ["schema"] }
 path-clean = "0.1"
 serde = "1"
 serde_json = "1"

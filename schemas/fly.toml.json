@@ -57,6 +57,7 @@
     "services": {
       "description": "Configure the mapping of ports from the public Fly proxy to your application.\n\nYou can have:\n* **No services section**: The application has no mappings to the external internet - typically apps like databases or background job workers that talk over 6PN private networking to other apps.\n* **One services section**: One internal port mapped to one external port on the internet.\n* **Multiple services sections**: Map multiple internal ports to multiple external ports.",
       "type": "array",
+      "required": ["port", "internal_port"],
       "additionalProperties": false,
       "items": {
         "type": ["object", "array"],
@@ -287,16 +288,11 @@
       "properties": {
         "cmd": {
           "description": "Override the server command (CMD) set by the Dockerfile. Specify as an array of strings:\n\n```toml\ncmd = [\"path/to/command\", \"arg1\", \"arg2\"]\n```",
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
+          "type": ["array", "string"]
         },
         "entrypoint": {
           "description": "Override the ENTRYPOINT set by the Dockerfile. Specify as an array of strings:\n\n```toml\nentrypoint = [\"path/to/command\", \"arg1\", \"arg2\"]\n```",
-          "type": "string",
-          "minLength": 1
+          "type": ["array", "string"]
         },
         "auto_rollback": {
           "description": "Failed deployments should roll back automatically to the previous successfully deployed release. Defaults to `true`",

@@ -22,11 +22,12 @@ impl<E: Environment> Taplo<E> {
         self.env.stdin().read_to_string(&mut source).await?;
 
         let config = self.load_config(&cmd.general).await?;
+        let display_path = cmd.stdin_filepath.as_deref().unwrap_or(&"-");
 
         let p = parser::parse(&source);
 
         if !p.errors.is_empty() {
-            self.print_parse_errors(&SimpleFile::new("-", source.as_str()), &p.errors)
+            self.print_parse_errors(&SimpleFile::new(display_path, source.as_str()), &p.errors)
                 .await?;
 
             if !cmd.force {
@@ -35,14 +36,14 @@ impl<E: Environment> Taplo<E> {
         }
 
         let mut format_opts = self.format_options(&config, &cmd)?;
-        config.update_format_options(Path::new("-"), &mut format_opts);
+        config.update_format_options(Path::new(display_path), &mut format_opts);
 
         let dom = p.into_dom();
 
         let formatted = formatter::format_with_path_scopes(
             dom,
             format_opts,
-            config.format_scopes(Path::new("-")),
+            config.format_scopes(Path::new(display_path)),
         )
         .map_err(|err| anyhow!("invalid key pattern: {err}"))?;
 
@@ -61,6 +62,10 @@ impl<E: Environment> Taplo<E> {
 
     #[tracing::instrument(level = "debug", skip_all)]
     async fn format_files(&mut self, cmd: FormatCommand) -> Result<(), anyhow::Error> {
+        if cmd.stdin_filepath.is_some() {
+            tracing::warn!("using `--stdin-filepath` has no effect unless input comes from stdin")
+        }
+
         let config = self.load_config(&cmd.general).await?;
 
         let cwd = self

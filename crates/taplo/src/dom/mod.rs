@@ -152,11 +152,11 @@ impl Keys {
     }
 
     pub fn skip_left(&self, n: usize) -> Self {
-        Self::new(self.keys.iter().cloned().skip(n))
+        Self::new(self.keys.iter().skip(n).cloned())
     }
 
     pub fn skip_right(&self, n: usize) -> Self {
-        Self::new(self.keys.iter().rev().cloned().skip(n).rev())
+        Self::new(self.keys.iter().rev().skip(n).cloned().rev())
     }
 
     pub fn all_text_range(&self) -> TextRange {

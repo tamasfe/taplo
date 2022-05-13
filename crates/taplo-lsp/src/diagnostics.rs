@@ -305,7 +305,7 @@ async fn collect_schema_errors<E: Environment>(
     if let Some(schema_association) = ws
         .schemas
         .associations()
-        .association_for(document_url.as_str())
+        .association_for(document_url)
     {
         tracing::debug!(
             schema.url = %schema_association.url,

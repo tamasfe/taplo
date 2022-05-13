@@ -117,11 +117,13 @@ impl<E: Environment> Taplo<E> {
             return Err(anyhow!("semantic errors found"));
         }
 
+        let file_uri: Url = format!("file://{file_path}").parse().unwrap();
+
         self.schemas
             .associations()
-            .add_from_document(&format!("file://{file_path}").parse().unwrap(), &dom);
+            .add_from_document(&file_uri, &dom);
 
-        if let Some(schema_association) = self.schemas.associations().association_for(file_path) {
+        if let Some(schema_association) = self.schemas.associations().association_for(&file_uri) {
             tracing::debug!(
                 schema.url = %schema_association.url,
                 schema.name = schema_association.meta["name"].as_str().unwrap_or(""),

@@ -257,12 +257,12 @@ impl<E: Environment> SchemaAssociations<E> {
         }
     }
 
-    pub fn association_for(&self, file: &str) -> Option<SchemaAssociation> {
+    pub fn association_for(&self, file: &Url) -> Option<SchemaAssociation> {
         self.associations
             .read()
             .iter()
             .filter_map(|(rule, assoc)| {
-                if rule.is_match(file) {
+                if rule.is_match(file.as_str()) {
                     Some(assoc.clone())
                 } else {
                     None

@@ -3,7 +3,7 @@ authors = ["tamasf97 <tamasf97@outlook.com>"]
 description = "Language server for Taplo"
 edition = "2021"
 name = "taplo-lsp"
-version = "0.3.0"
+version = "0.3.1"
 license = "MIT"
 homepage = "https://taplo.tamasfe.dev"
 repository = "https://github.com/tamasfe/taplo"
@@ -34,7 +34,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 tap = "1.0.1"
 taplo = { version = "0.8.0", path = "../taplo", features = ["serde"] }
-taplo-common = { version = "0.1.0", path = "../taplo-common" }
+taplo-common = { version = "0.1.2", path = "../taplo-common" }
 time = { version = "0.3", features = ["formatting", "parsing"] }
 toml = "0.5"
 tracing = "0.1.29"

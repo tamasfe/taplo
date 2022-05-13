@@ -263,7 +263,7 @@ impl<E: Environment> WorkspaceState<E> {
             if let Some(assoc) = self
                 .schemas
                 .associations()
-                .association_for(document_url.as_str())
+                .association_for(document_url)
             {
                 if let Err(error) = context
                     .write_notification::<DidChangeSchemaAssociation, _>(Some(

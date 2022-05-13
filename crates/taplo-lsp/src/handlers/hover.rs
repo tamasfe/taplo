@@ -67,7 +67,7 @@ pub(crate) async fn hover<E: Environment>(
     if let Some(schema_association) = ws
         .schemas
         .associations()
-        .association_for(document_uri.as_str())
+        .association_for(&document_uri)
     {
         tracing::debug!(
             schema.url = %schema_association.url,

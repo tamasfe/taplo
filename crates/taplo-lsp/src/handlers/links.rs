@@ -28,7 +28,7 @@ pub async fn links<E: Environment>(
     if let Some(schema_association) = ws
         .schemas
         .associations()
-        .association_for(p.text_document.uri.as_str())
+        .association_for(&p.text_document.uri)
     {
         tracing::debug!(
             schema.url = %schema_association.url,

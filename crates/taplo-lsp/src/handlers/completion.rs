@@ -39,11 +39,7 @@ pub async fn completion<E: Environment>(
 
     let doc = ws.document(&document_uri)?;
 
-    let schema_association = match ws
-        .schemas
-        .associations()
-        .association_for(document_uri.as_str())
-    {
+    let schema_association = match ws.schemas.associations().association_for(&document_uri) {
         Some(ass) => ass,
         None => return Ok(None),
     };
@@ -568,108 +564,108 @@ fn add_value_completions(
         });
     }
 
-        let types = match schema["type"].clone() {
-            Value::Null => Vec::from([Value::String("object".into())]),
-            Value::String(s) => Vec::from([Value::String(s)]),
-            Value::Array(tys) => tys,
-            _ => Vec::new(),
-        };
+    let types = match schema["type"].clone() {
+        Value::Null => Vec::from([Value::String("object".into())]),
+        Value::String(s) => Vec::from([Value::String(s)]),
+        Value::Array(tys) => tys,
+        _ => Vec::new(),
+    };
 
-        for ty in types {
-            if let Some(s) = ty.as_str() {
-                match s {
-                    "string" => {
-                        completions.push(CompletionItem {
-                            label: r#""""#.into(),
-                            kind: Some(CompletionItemKind::VALUE),
-                            documentation: Some(Documentation::MarkupContent(MarkupContent {
-                                kind: lsp_types::MarkupKind::Markdown,
-                                value: schema_docs.clone().unwrap_or_else(|| "string".into()),
-                            })),
-                            insert_text_format: Some(InsertTextFormat::SNIPPET),
-                            text_edit: range.map(|range| {
-                                CompletionTextEdit::Edit(TextEdit {
-                                    range,
-                                    new_text: r#""$0""#.into(),
-                                })
-                            }),
-                            ..Default::default()
-                        });
-                    }
-                    "boolean" => {
-                        completions.push(CompletionItem {
-                            label: r#"true"#.into(),
-                            kind: Some(CompletionItemKind::VALUE),
-                            documentation: Some(Documentation::MarkupContent(MarkupContent {
-                                kind: lsp_types::MarkupKind::Markdown,
-                                value: schema_docs.clone().unwrap_or_else(|| "true value".into()),
-                            })),
-                            insert_text_format: Some(InsertTextFormat::SNIPPET),
-                            text_edit: range.map(|range| {
-                                CompletionTextEdit::Edit(TextEdit {
-                                    range,
-                                    new_text: r#"true$0"#.into(),
-                                })
-                            }),
-                            ..Default::default()
-                        });
-                        completions.push(CompletionItem {
-                            label: r#"false"#.into(),
-                            kind: Some(CompletionItemKind::VALUE),
-                            documentation: Some(Documentation::MarkupContent(MarkupContent {
-                                kind: lsp_types::MarkupKind::Markdown,
-                                value: schema_docs.clone().unwrap_or_else(|| "false value".into()),
-                            })),
-                            insert_text_format: Some(InsertTextFormat::SNIPPET),
-                            text_edit: range.map(|range| {
-                                CompletionTextEdit::Edit(TextEdit {
-                                    range,
-                                    new_text: r#"false$0"#.into(),
-                                })
-                            }),
-                            ..Default::default()
-                        });
-                    }
-                    "array" => {
-                        completions.push(CompletionItem {
-                            label: r#"[]"#.into(),
-                            kind: Some(CompletionItemKind::VALUE),
-                            documentation: Some(Documentation::MarkupContent(MarkupContent {
-                                kind: lsp_types::MarkupKind::Markdown,
-                                value: schema_docs.clone().unwrap_or_else(|| "array".into()),
-                            })),
-                            insert_text_format: Some(InsertTextFormat::SNIPPET),
-                            text_edit: range.map(|range| {
-                                CompletionTextEdit::Edit(TextEdit {
-                                    range,
-                                    new_text: r#"[$0]"#.into(),
-                                })
-                            }),
-                            ..Default::default()
-                        });
-                    }
-                    "object" => {
-                        completions.push(CompletionItem {
-                            label: r#"{ }"#.into(),
-                            kind: Some(CompletionItemKind::VALUE),
-                            documentation: Some(Documentation::MarkupContent(MarkupContent {
-                                kind: lsp_types::MarkupKind::Markdown,
-                                value: schema_docs.clone().unwrap_or_else(|| "object".into()),
-                            })),
-                            insert_text_format: Some(InsertTextFormat::SNIPPET),
-                            text_edit: range.map(|range| {
-                                CompletionTextEdit::Edit(TextEdit {
-                                    range,
-                                    new_text: r#"{ $0 }"#.into(),
-                                })
-                            }),
-                            ..Default::default()
-                        });
-                    }
-                    _ => {}
+    for ty in types {
+        if let Some(s) = ty.as_str() {
+            match s {
+                "string" => {
+                    completions.push(CompletionItem {
+                        label: r#""""#.into(),
+                        kind: Some(CompletionItemKind::VALUE),
+                        documentation: Some(Documentation::MarkupContent(MarkupContent {
+                            kind: lsp_types::MarkupKind::Markdown,
+                            value: schema_docs.clone().unwrap_or_else(|| "string".into()),
+                        })),
+                        insert_text_format: Some(InsertTextFormat::SNIPPET),
+                        text_edit: range.map(|range| {
+                            CompletionTextEdit::Edit(TextEdit {
+                                range,
+                                new_text: r#""$0""#.into(),
+                            })
+                        }),
+                        ..Default::default()
+                    });
                 }
+                "boolean" => {
+                    completions.push(CompletionItem {
+                        label: r#"true"#.into(),
+                        kind: Some(CompletionItemKind::VALUE),
+                        documentation: Some(Documentation::MarkupContent(MarkupContent {
+                            kind: lsp_types::MarkupKind::Markdown,
+                            value: schema_docs.clone().unwrap_or_else(|| "true value".into()),
+                        })),
+                        insert_text_format: Some(InsertTextFormat::SNIPPET),
+                        text_edit: range.map(|range| {
+                            CompletionTextEdit::Edit(TextEdit {
+                                range,
+                                new_text: r#"true$0"#.into(),
+                            })
+                        }),
+                        ..Default::default()
+                    });
+                    completions.push(CompletionItem {
+                        label: r#"false"#.into(),
+                        kind: Some(CompletionItemKind::VALUE),
+                        documentation: Some(Documentation::MarkupContent(MarkupContent {
+                            kind: lsp_types::MarkupKind::Markdown,
+                            value: schema_docs.clone().unwrap_or_else(|| "false value".into()),
+                        })),
+                        insert_text_format: Some(InsertTextFormat::SNIPPET),
+                        text_edit: range.map(|range| {
+                            CompletionTextEdit::Edit(TextEdit {
+                                range,
+                                new_text: r#"false$0"#.into(),
+                            })
+                        }),
+                        ..Default::default()
+                    });
+                }
+                "array" => {
+                    completions.push(CompletionItem {
+                        label: r#"[]"#.into(),
+                        kind: Some(CompletionItemKind::VALUE),
+                        documentation: Some(Documentation::MarkupContent(MarkupContent {
+                            kind: lsp_types::MarkupKind::Markdown,
+                            value: schema_docs.clone().unwrap_or_else(|| "array".into()),
+                        })),
+                        insert_text_format: Some(InsertTextFormat::SNIPPET),
+                        text_edit: range.map(|range| {
+                            CompletionTextEdit::Edit(TextEdit {
+                                range,
+                                new_text: r#"[$0]"#.into(),
+                            })
+                        }),
+                        ..Default::default()
+                    });
+                }
+                "object" => {
+                    completions.push(CompletionItem {
+                        label: r#"{ }"#.into(),
+                        kind: Some(CompletionItemKind::VALUE),
+                        documentation: Some(Documentation::MarkupContent(MarkupContent {
+                            kind: lsp_types::MarkupKind::Markdown,
+                            value: schema_docs.clone().unwrap_or_else(|| "object".into()),
+                        })),
+                        insert_text_format: Some(InsertTextFormat::SNIPPET),
+                        text_edit: range.map(|range| {
+                            CompletionTextEdit::Edit(TextEdit {
+                                range,
+                                new_text: r#"{ $0 }"#.into(),
+                            })
+                        }),
+                        ..Default::default()
+                    });
+                }
+                _ => {}
             }
         }
+    }
 }
 
 fn new_entry_snippet(keys: &Keys, schema: &Value) -> String {

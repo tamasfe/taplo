@@ -193,7 +193,7 @@ impl<E: Environment> Schemas<E> {
         };
 
         if let Err(error) = self.cache.store(schema_url.clone(), schema.clone()).await {
-            tracing::warn!(%error, "failed to cache schema");
+            tracing::debug!(%error, "failed to cache schema");
         }
 
         Ok(schema)

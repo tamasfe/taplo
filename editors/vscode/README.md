@@ -30,7 +30,7 @@ This extension will try to support all the TOML versions in the future.
 
 Syntax highlighting for TOML documents with TextMate grammar.
 
-![Syntax Highlighting](highlight.png)
+![Syntax Highlighting](images/highlight.png)
 
 ### Extended Colors
 
@@ -71,7 +71,7 @@ You might also want to set a color for dates and times, as they don't have have 
 ```
 </details>
 
-![Extended Color Highlighting](extended_colors.png)
+![Extended Color Highlighting](images/extended_colors.png)
 
 ## Semantic highlighting
 
@@ -79,29 +79,29 @@ Semantic key highlighting for inline tables and arrays can be enabled in the set
 
 **You need to set extended colors in order for this to have any practical effect.**
 
-![Semantic Highlighting](semantic_colors.png)
+![Semantic Highlighting](images/semantic_colors.png)
 
 ## Validation
 
-![Validation](validation.gif)
+![Validation](images/validation.gif)
 
 ## Folding
 
 Arrays, multi-line strings and top level tables and comments can be folded.
 
-![Folding](folding.gif)
+![Folding](images/folding.gif)
 
 ## Symbol tree and navigation
 
 Works even for tables not in order.
 
-![Symbols](symbols.gif)
+![Symbols](images/symbols.gif)
 
 ## Formatting
 
 The formatter is rather conservative by default, additional features can be enabled in the settings. If you're missing a configuration option, feel free to open an issue about it!
 
-![Formatting](formatting.gif)
+![Formatting](images/formatting.gif)
 
 ## Completion and Validation with [JSON Schema](https://json-schema.org/)
 
@@ -111,7 +111,7 @@ Schemas can be associated with document URIs with the `evenBetterToml.schema.ass
 
 You can provide your own schemas or use the ones provided with the extension. More details [here](https://taplo.tamasfe.dev/configuration/#schemas). Schema submissions and fixes are welcome!
 
-![Schema](schema.gif)
+![Schema](images/schema.gif)
 
 ### Built-in schemas
 

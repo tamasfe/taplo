@@ -36,3 +36,6 @@ pub(crate) use links::*;
 
 mod rename;
 pub(crate) use rename::*;
+
+mod conversion;
+pub(crate) use conversion::*;

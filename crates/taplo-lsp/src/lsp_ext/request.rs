@@ -3,46 +3,45 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// Serialize a TOML text to JSON.
-pub enum TomlToJsonRequest {}
+pub enum ConvertToJsonRequest {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TomlToJsonParams {
-    /// TOML text.
+pub struct ConvertToJsonParams {
+    /// TOML or JSON text.
     pub text: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TomlToJsonResponse {
+pub struct ConvertToJsonResponse {
     /// JSON text.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
 
-    /// List of syntax or semantic errors.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub errors: Option<Vec<String>>,
+    pub error: Option<String>,
 }
 
-impl Request for TomlToJsonRequest {
-    type Params = TomlToJsonParams;
-    type Result = TomlToJsonResponse;
-    const METHOD: &'static str = "taplo/tomlToJson";
+impl Request for ConvertToJsonRequest {
+    type Params = ConvertToJsonParams;
+    type Result = ConvertToJsonResponse;
+    const METHOD: &'static str = "taplo/convertToJson";
 }
 
 /// Serialize a TOML text to JSON.
-pub enum JsonToTomlRequest {}
+pub enum ConvertToTomlRequest {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct JsonToTomlParams {
-    /// JSON text.
+pub struct ConvertToTomlParams {
+    /// TOML or JSON text.
     pub text: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct JsonToTomlResponse {
+pub struct ConvertToTomlResponse {
     /// TOML text.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
@@ -51,10 +50,10 @@ pub struct JsonToTomlResponse {
     pub error: Option<String>,
 }
 
-impl Request for JsonToTomlRequest {
-    type Params = JsonToTomlParams;
-    type Result = JsonToTomlResponse;
-    const METHOD: &'static str = "taplo/jsonToToml";
+impl Request for ConvertToTomlRequest {
+    type Params = ConvertToTomlParams;
+    type Result = ConvertToTomlResponse;
+    const METHOD: &'static str = "taplo/convertToToml";
 }
 
 pub enum ListSchemasRequest {}

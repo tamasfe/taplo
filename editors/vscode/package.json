@@ -32,10 +32,10 @@
   "activationEvents": [
     "onLanguage:toml",
     "onLanguage:cargoLock",
-    "onCommand:evenBetterToml.pasteTomlAsJson",
-    "onCommand:evenBetterToml.copyTomlAsJson",
-    "onCommand:evenBetterToml.pasteJsonAsToml",
-    "onCommand:evenBetterToml.copyJsonAsToml"
+    "onCommand:evenBetterToml.pasteAsJson",
+    "onCommand:evenBetterToml.copyAsJson",
+    "onCommand:evenBetterToml.pasteAsToml",
+    "onCommand:evenBetterToml.copyAsToml"
   ],
   "keywords": [
     "toml",
@@ -94,28 +94,16 @@
           "when": "editorLangId == toml"
         },
         {
-          "command": "evenBetterToml.copyTomlAsJson",
-          "when": "config.evenBetterToml.commands.copyTomlAsJson"
+          "command": "evenBetterToml.copyAsJson"
         },
         {
-          "command": "evenBetterToml.pasteTomlAsJson",
-          "when": "config.evenBetterToml.commands.pasteTomlAsJson"
+          "command": "evenBetterToml.copyAsToml"
         },
         {
-          "command": "evenBetterToml.pasteJsonAsToml",
-          "when": "config.evenBetterToml.commands.pasteJsonAsToml"
+          "command": "evenBetterToml.pasteAsJson"
         },
         {
-          "command": "evenBetterToml.clearCache",
-          "when": "config.evenBetterToml.commands.clearCache"
-        },
-        {
-          "command": "evenBetterToml.downloadSchemas",
-          "when": "config.evenBetterToml.commands.downloadSchemas"
-        },
-        {
-          "command": "evenBetterToml.debug.showSyntaxTree",
-          "when": "editorLangId == toml && config.evenBetterToml.debug"
+          "command": "evenBetterToml.pasteAsToml"
         }
       ]
     },
@@ -125,21 +113,22 @@
         "title": "TOML: Select Schema"
       },
       {
-        "command": "evenBetterToml.copyJsonAsToml",
-        "title": "TOML: Copy JSON Selection as TOML",
+        "command": "evenBetterToml.copyAsJson",
+        "title": "TOML: Copy as JSON",
         "enablement": "editorHasSelection"
       },
       {
-        "command": "evenBetterToml.pasteTomlAsJson",
+        "command": "evenBetterToml.copyAsToml",
+        "title": "TOML: Copy as TOML",
+        "enablement": "editorHasSelection"
+      },
+      {
+        "command": "evenBetterToml.pasteAsJson",
         "title": "TOML: Paste as JSON"
       },
       {
-        "command": "evenBetterToml.pasteTomlAsJson",
-        "title": "TOML: Paste as JSON"
-      },
-      {
-        "command": "evenBetterToml.pasteJsonAsToml",
-        "title": "TOML: Paste JSON as TOML"
+        "command": "evenBetterToml.pasteAsToml",
+        "title": "TOML: Paste as TOML"
       }
     ],
     "semanticTokenTypes": [

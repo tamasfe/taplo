@@ -7,6 +7,6 @@ export function registerCommands(
   ctx: vscode.ExtensionContext,
   c: client.LanguageClient
 ) {
-  // conversionCommands.register(ctx, c);
+  conversionCommands.register(ctx, c);
   schemaCommands.register(ctx, c);
 }

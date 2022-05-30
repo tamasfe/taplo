@@ -24,13 +24,23 @@ impl Notification for MessageWithOutput {
     const METHOD: &'static str = "taplo/messageWithOutput";
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AssociationRule {
+    Glob(String),
+    Regex(String),
+    Url(Url),
+}
+
 pub enum AssociateSchema {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AssociateSchemaParams {
-    pub document_uri: Url,
+    pub document_uri: Option<Url>,
     pub schema_uri: Url,
+    pub rule: AssociationRule,
+    pub priority: Option<usize>,
     pub meta: Option<Value>,
 }
 

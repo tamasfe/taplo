@@ -337,6 +337,7 @@ impl<E: Environment> SchemaAssociations<E> {
     }
 }
 
+#[derive(Clone)]
 pub enum AssociationRule {
     Glob(GlobRule),
     Regex(Regex),

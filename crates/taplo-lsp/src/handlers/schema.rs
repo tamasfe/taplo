@@ -1,7 +1,7 @@
 use crate::{
     diagnostics::publish_diagnostics,
     lsp_ext::{
-        notification::AssociateSchemaParams,
+        notification::{self, AssociateSchemaParams},
         request::{
             AssociatedSchemaParams, AssociatedSchemaResponse, ListSchemasParams,
             ListSchemasResponse, SchemaInfo,
@@ -51,38 +51,72 @@ pub async fn associate_schema<E: Environment>(
     };
 
     let workspaces = context.workspaces.read().await;
-    let ws = workspaces.by_document(&p.document_uri);
 
-    ws.schemas
-        .associations()
-        .retain(|(rule, assoc)| match rule {
-            AssociationRule::Url(u) => {
-                !(*u == p.document_uri && assoc.meta["source"] == source::MANUAL)
+    let assoc = SchemaAssociation {
+        priority: p.priority.unwrap_or(priority::MAX),
+        url: p.schema_uri,
+        meta: {
+            let mut meta = p.meta.unwrap_or_default();
+            if !meta.is_object() {
+                meta = json!({});
             }
-            _ => true,
-        });
 
-    ws.schemas.associations().add(
-        AssociationRule::Url(p.document_uri.clone()),
-        SchemaAssociation {
-            priority: priority::MAX,
-            url: p.schema_uri,
-            meta: {
-                let mut meta = p.meta.unwrap_or_default();
-                if !meta.is_object() {
-                    meta = json!({});
-                }
-
-                meta["source"] = source::MANUAL.into();
-                meta
-            },
+            meta["source"] = source::MANUAL.into();
+            meta
         },
-    );
+    };
 
-    ws.emit_associations(context.clone()).await;
-    let ws_root = ws.root.clone();
-    drop(workspaces);
-    publish_diagnostics(context, ws_root, p.document_uri).await;
+    for (_, ws) in workspaces.iter() {
+        // FIXME: there is no way to remove these.
+        match &p.rule {
+            notification::AssociationRule::Glob(glob) => {
+                let rule = match AssociationRule::glob(glob) {
+                    Ok(re) => re,
+                    Err(err) => {
+                        tracing::error!(
+                        error = %err,
+                        schema_uri = %assoc.url,
+                        "invalid pattern for schema");
+                        return;
+                    }
+                };
+
+                ws.schemas.associations().add(rule, assoc.clone());
+            }
+            notification::AssociationRule::Regex(regex) => {
+                let rule = match AssociationRule::regex(&regex) {
+                    Ok(re) => re,
+                    Err(err) => {
+                        tracing::error!(
+                        error = %err,
+                        schema_uri = %assoc.url,
+                        "invalid pattern for schema");
+                        return;
+                    }
+                };
+
+                ws.schemas.associations().add(rule, assoc.clone());
+            }
+            notification::AssociationRule::Url(document_uri) => {
+                ws.schemas
+                    .associations()
+                    .retain(|(rule, assoc)| match rule {
+                        AssociationRule::Url(u) => {
+                            !(u == document_uri && assoc.meta["source"] == source::MANUAL)
+                        }
+                        _ => true,
+                    });
+
+                ws.schemas
+                    .associations()
+                    .add(AssociationRule::Url(document_uri.clone()), assoc.clone());
+
+                let ws_root = ws.root.clone();
+                publish_diagnostics(context.clone(), ws_root, document_uri.clone()).await;
+            }
+        };
+        ws.emit_associations(context.clone()).await;
+    }
 }
 
 #[tracing::instrument(skip_all)]

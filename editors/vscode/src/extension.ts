@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as client from "vscode-languageclient/node";
 import { registerCommands } from "./commands";
 import { createClient } from "./client";
+import { syncExtensionSchemas } from "./tomlValidation";
 
 let output: vscode.OutputChannel;
 
@@ -33,6 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 
   registerCommands(context, c);
+  syncExtensionSchemas(context, c);
 
   context.subscriptions.push(
     output,

@@ -44,6 +44,9 @@ export function register(
           c.sendNotification("taplo/associateSchema", {
             documentUri: editor.document.uri.toString(),
             schemaUri: selection.url,
+            rule: {
+              url: editor.document.uri.toString(),
+            },
             meta: selection.meta,
           });
         }

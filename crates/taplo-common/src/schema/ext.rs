@@ -7,7 +7,6 @@ pub const EXTENSION_KEY: &str = "x-taplo";
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct TaploSchemaExt {
-    pub subschemas_only: Option<bool>,
     pub hidden: Option<bool>,
     pub links: Option<ExtLinks>,
     pub docs: Option<ExtDocs>,

@@ -5,6 +5,7 @@ use arc_swap::ArcSwap;
 use async_recursion::async_recursion;
 use futures::{stream::FuturesUnordered, StreamExt};
 use itertools::Itertools;
+use json_value_merge::Merge;
 use jsonschema::{error::ValidationErrorKind, JSONSchema, SchemaResolver, ValidationError};
 use parking_lot::Mutex;
 use regex::Regex;
@@ -350,10 +351,14 @@ impl<E: Environment> Schemas<E> {
             }
         }
 
+        let include_self = schema["allOf"].is_null();
+
         let key = match path.iter().next() {
             Some(k) => k,
             None => {
-                schemas.push((full_path.clone(), Arc::new(schema.clone())));
+                if include_self {
+                    schemas.push((full_path.clone(), Arc::new(schema.clone())));
+                }
                 return Ok(());
             }
         };
@@ -459,6 +464,7 @@ impl<E: Environment> Schemas<E> {
                 &Keys::empty(),
                 max_depth,
                 &mut children,
+                false,
             )
             .await;
         }
@@ -482,36 +488,18 @@ impl<E: Environment> Schemas<E> {
         path: &Keys,
         mut depth: usize,
         schemas: &mut Vec<(Keys, Keys, Arc<Value>)>,
+        only_children: bool,
     ) {
         if !schema.is_object() || depth == 0 {
             return;
         }
 
-        if let Some(r) = schema.schema_ref() {
-            let url = match reference_url(root_url, r)
-                .ok_or_else(|| anyhow!("could not determine schema URL"))
-            {
-                Ok(u) => u,
-                Err(error) => {
-                    tracing::error!(?error, "failed to resolve schema");
-                    return;
-                }
-            };
-            let schema = match self.resolve_schema(url).await {
-                Ok(s) => s,
-                Err(error) => {
-                    tracing::error!(?error, "failed to resolve schema");
-                    return;
-                }
-            };
-
+        if let Some(schema) = self.ref_schema_value(root_url, schema).await {
             return self
-                .collect_child_schemas(root_url, &schema, root_path, path, depth, schemas)
+                .collect_child_schemas(root_url, &schema, root_path, path, depth, schemas, false)
                 .await;
         }
 
-
-        let mut subschemas_only = true;
         if let Some(ext) = schema_ext_of(schema) {
             for plugin_name in ext.plugins {
                 if let Some(p) = self.plugins.load().get(plugin_name.as_str()) {
@@ -528,48 +516,89 @@ impl<E: Environment> Schemas<E> {
             if let Some(true) = ext.hidden {
                 return;
             }
-
-            if let Some(s) = ext.subschemas_only {
-                subschemas_only = s;
-            }
         }
 
-        let mut had_subschemas = false;
-
         if let Some(one_ofs) = schema["oneOf"].as_array() {
-            had_subschemas = true;
             for one_of in one_ofs {
-                self.collect_child_schemas(root_url, one_of, root_path, path, depth, schemas)
-                    .await;
+                self.collect_child_schemas(
+                    root_url, one_of, root_path, path, depth, schemas, false,
+                )
+                .await;
             }
         }
 
         if let Some(any_ofs) = schema["anyOf"].as_array() {
-            had_subschemas = true;
             for any_of in any_ofs {
-                self.collect_child_schemas(root_url, any_of, root_path, path, depth, schemas)
-                    .await;
+                self.collect_child_schemas(
+                    root_url, any_of, root_path, path, depth, schemas, false,
+                )
+                .await;
             }
         }
 
-        // FIXME: somehow merge allofs?
+        // Deal with the { "description": "Foo", "allOf": [{ "$ref": "Bar" }] }
+        // pattern.
+        let composed = [
+            !schema["allOf"].is_null(),
+            !schema["oneOf"].is_null(),
+            !schema["anyOf"].is_null(),
+        ]
+        .into_iter()
+        .filter(|b| *b)
+        .count()
+            == 1
+            && schema["properties"].is_null();
+
         if let Some(all_ofs) = schema["allOf"].as_array() {
-            had_subschemas = true;
-            for all_of in all_ofs {
-                self.collect_child_schemas(root_url, all_of, root_path, path, depth, schemas)
+            if !all_ofs.is_empty() && composed {
+                let mut schema = schema.clone();
+                if let Some(obj) = schema["allOf"].as_object_mut() {
+                    obj.remove("allOf");
+                }
+
+                let mut merged_all_of = Value::Object(serde_json::Map::default());
+
+                for all_of in all_ofs {
+                    merged_all_of.merge(
+                        if let Some(schema) = self.ref_schema_value(root_url, all_of).await {
+                            Arc::try_unwrap(schema).unwrap()
+                        } else {
+                            all_of.clone()
+                        },
+                    );
+                }
+
+                merged_all_of.merge(schema);
+
+                self.collect_child_schemas(
+                    root_url,
+                    &merged_all_of,
+                    root_path,
+                    path,
+                    depth,
+                    schemas,
+                    true,
+                )
+                .await;
+            } else {
+                for all_of in all_ofs {
+                    self.collect_child_schemas(
+                        root_url, all_of, root_path, path, depth, schemas, false,
+                    )
                     .await;
+                }
             }
         }
 
-        if had_subschemas && subschemas_only {
-            return;
-        }
+        let include_self = !only_children && !composed;
 
-        schemas.push((
-            root_path.extend(path.clone()),
-            path.clone(),
-            Arc::new(schema.clone()),
-        ));
+        if include_self {
+            schemas.push((
+                root_path.extend(path.clone()),
+                path.clone(),
+                Arc::new(schema.clone()),
+            ));
+        }
 
         depth -= 1;
 
@@ -582,9 +611,35 @@ impl<E: Environment> Schemas<E> {
                     &path.join(Key::from(k)),
                     depth,
                     schemas,
+                    false,
                 )
                 .await;
             }
+        }
+    }
+
+    async fn ref_schema_value(&self, root_url: &Url, schema: &Value) -> Option<Arc<Value>> {
+        if let Some(r) = schema.schema_ref() {
+            let url = match reference_url(root_url, r)
+                .ok_or_else(|| anyhow!("could not determine schema URL"))
+            {
+                Ok(u) => u,
+                Err(error) => {
+                    tracing::error!(?error, "failed to resolve schema");
+                    return None;
+                }
+            };
+            let schema = match self.resolve_schema(url).await {
+                Ok(s) => s,
+                Err(error) => {
+                    tracing::error!(?error, "failed to resolve schema");
+                    return None;
+                }
+            };
+
+            Some(schema)
+        } else {
+            None
         }
     }
 }

@@ -38,11 +38,14 @@ impl<E: Environment> Taplo<E> {
         let mut format_opts = self.format_options(&config, &cmd)?;
         config.update_format_options(Path::new(display_path), &mut format_opts);
 
+        let error_ranges = p.errors.iter().map(|e| e.range).collect::<Vec<_>>();
+
         let dom = p.into_dom();
 
         let formatted = formatter::format_with_path_scopes(
             dom,
             format_opts,
+            &error_ranges,
             config.format_scopes(Path::new(display_path)),
         )
         .map_err(|err| anyhow!("invalid key pattern: {err}"))?;
@@ -105,11 +108,17 @@ impl<E: Environment> Taplo<E> {
                 }
             }
 
+            let error_ranges = p.errors.iter().map(|e| e.range).collect::<Vec<_>>();
+
             let dom = p.into_dom();
 
-            let formatted =
-                formatter::format_with_path_scopes(dom, format_opts, config.format_scopes(&path))
-                    .map_err(|err| anyhow!("invalid key pattern: {err}"))?;
+            let formatted = formatter::format_with_path_scopes(
+                dom,
+                format_opts,
+                &error_ranges,
+                config.format_scopes(&path),
+            )
+            .map_err(|err| anyhow!("invalid key pattern: {err}"))?;
 
             if cmd.check {
                 if source != formatted {

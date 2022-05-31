@@ -42,6 +42,11 @@ pub(crate) async fn format<E: Environment>(
         new_text: taplo::formatter::format_with_path_scopes(
             doc.dom.clone(),
             format_opts,
+            &doc.parse
+                .errors
+                .iter()
+                .map(|err| err.range)
+                .collect::<Vec<_>>(),
             ws.taplo_config.format_scopes(doc_path),
         )
         .map_err(|err| {

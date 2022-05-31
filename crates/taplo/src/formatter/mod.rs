@@ -219,7 +219,7 @@ pub fn format_green(green: GreenNode, options: Options) -> String {
     format_syntax(SyntaxNode::new_root(green), options)
 }
 
-/// Parses then formats a TOML document, ignoring errors.
+/// Parses then formats a TOML document, skipping ranges that contain syntax errors.
 pub fn format(src: &str, options: Options) -> String {
     let p = crate::parser::parse(src);
 
@@ -247,9 +247,15 @@ pub fn format_syntax(node: SyntaxNode, options: Options) -> String {
 /// Formats a DOM root node with given scopes.
 ///
 /// **This doesn't check errors of the DOM.**
-pub fn format_with_scopes(dom: Node, options: Options, scopes: ScopedOptions) -> String {
+pub fn format_with_scopes(
+    dom: Node,
+    options: Options,
+    errors: &[TextRange],
+    scopes: ScopedOptions,
+) -> String {
     let c = Context {
         scopes: Rc::new(scopes),
+        errors: errors.into(),
         ..Context::default()
     };
 
@@ -274,13 +280,17 @@ pub fn format_with_scopes(dom: Node, options: Options, scopes: ScopedOptions) ->
 pub fn format_with_path_scopes<I, S>(
     dom: Node,
     options: Options,
+    errors: &[TextRange],
     scopes: I,
 ) -> Result<String, dom::Error>
 where
     I: IntoIterator<Item = (S, OptionsIncomplete)>,
     S: AsRef<str>,
 {
-    let mut c = Context::default();
+    let mut c = Context {
+        errors: errors.into(),
+        ..Context::default()
+    };
 
     let mut s = Vec::new();
 
@@ -555,7 +565,7 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                     skip_newlines += 1;
                 }
                 WHITESPACE => {}
-                _ => unreachable!(),
+                _ => formatted += token.text(),
             },
         }
     }
@@ -882,7 +892,7 @@ fn format_inline_table(
                     debug_assert!(comment.is_none());
                     comment = Some(t.text().into());
                 }
-                _ => unreachable!(),
+                _ => formatted += t.text(),
             },
         }
     }
@@ -998,7 +1008,11 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
 
                     node_index += 1;
                 }
-                _ => unreachable!(),
+                _ => {
+                    if cfg!(debug_assertions) {
+                        unreachable!()
+                    }
+                }
             },
             NodeOrToken::Token(t) => match t.kind() {
                 BRACKET_START => {
@@ -1108,7 +1122,7 @@ fn format_table_header(
                     debug_assert!(comment.is_none());
                     comment = Some(t.text().to_string());
                 }
-                _ => unreachable!(),
+                _ => formatted += t.text(),
             },
         }
     }

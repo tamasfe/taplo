@@ -64,13 +64,15 @@ pub async fn completion<E: Environment>(
     };
 
     if query.in_table_header() {
+        let key_count = query.header_keys().len();
+
         let object_schemas = match ws
             .schemas
             .possible_schemas_from(
                 &schema_association.url,
                 &value,
                 &Keys::empty(),
-                ws.config.completion.max_keys + 1,
+                key_count + ws.config.completion.max_keys + 1,
             )
             .await
             .map(|s| {
@@ -130,13 +132,14 @@ pub async fn completion<E: Environment>(
     }
 
     if query.in_table_array_header() {
+        let key_count = query.header_keys().len();
         let array_of_objects_schemas = match ws
             .schemas
             .possible_schemas_from(
                 &schema_association.url,
                 &value,
                 &Keys::empty(),
-                ws.config.completion.max_keys + 1,
+                key_count + ws.config.completion.max_keys + 1,
             )
             .await
             .map(|s| {
@@ -237,7 +240,7 @@ pub async fn completion<E: Environment>(
                 &schema_association.url,
                 &value,
                 &lookup_keys(doc.dom.clone(), &parent_keys),
-                ws.config.completion.max_keys + 1,
+                entry_keys.len() + ws.config.completion.max_keys + 1,
             )
             .await
         {

@@ -426,6 +426,11 @@ impl Query {
             .map_or_else(Keys::empty, |keys| Keys::from_syntax(keys.into()))
     }
 
+    pub fn header_keys(&self) -> Keys {
+        self.header_key()
+            .map_or_else(Keys::empty, |keys| Keys::from_syntax(keys.into()))
+    }
+
     #[must_use]
     pub fn dom_node(&self) -> Option<&(Keys, Node)> {
         self.before

@@ -464,7 +464,6 @@ impl<E: Environment> Schemas<E> {
                 &Keys::empty(),
                 max_depth,
                 &mut children,
-                false,
             )
             .await;
         }
@@ -488,7 +487,6 @@ impl<E: Environment> Schemas<E> {
         path: &Keys,
         mut depth: usize,
         schemas: &mut Vec<(Keys, Keys, Arc<Value>)>,
-        only_children: bool,
     ) {
         if !schema.is_object() || depth == 0 {
             return;
@@ -496,7 +494,7 @@ impl<E: Environment> Schemas<E> {
 
         if let Some(schema) = self.ref_schema_value(root_url, schema).await {
             return self
-                .collect_child_schemas(root_url, &schema, root_path, path, depth, schemas, false)
+                .collect_child_schemas(root_url, &schema, root_path, path, depth, schemas)
                 .await;
         }
 
@@ -520,19 +518,15 @@ impl<E: Environment> Schemas<E> {
 
         if let Some(one_ofs) = schema["oneOf"].as_array() {
             for one_of in one_ofs {
-                self.collect_child_schemas(
-                    root_url, one_of, root_path, path, depth, schemas, false,
-                )
-                .await;
+                self.collect_child_schemas(root_url, one_of, root_path, path, depth, schemas)
+                    .await;
             }
         }
 
         if let Some(any_ofs) = schema["anyOf"].as_array() {
             for any_of in any_ofs {
-                self.collect_child_schemas(
-                    root_url, any_of, root_path, path, depth, schemas, false,
-                )
-                .await;
+                self.collect_child_schemas(root_url, any_of, root_path, path, depth, schemas)
+                    .await;
             }
         }
 
@@ -577,20 +571,14 @@ impl<E: Environment> Schemas<E> {
                     path,
                     depth,
                     schemas,
-                    true,
                 )
                 .await;
-            } else {
-                for all_of in all_ofs {
-                    self.collect_child_schemas(
-                        root_url, all_of, root_path, path, depth, schemas, false,
-                    )
-                    .await;
-                }
             }
+            // TODO: handle allOfs in regular schemas.
+            // doing so currently will overflow the stack.
         }
 
-        let include_self = !only_children && !composed;
+        let include_self = !composed;
 
         if include_self {
             schemas.push((
@@ -611,7 +599,6 @@ impl<E: Environment> Schemas<E> {
                     &path.join(Key::from(k)),
                     depth,
                     schemas,
-                    false,
                 )
                 .await;
             }

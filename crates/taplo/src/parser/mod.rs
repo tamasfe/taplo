@@ -454,7 +454,7 @@ impl<'p> Parser<'p> {
                     if after_period {
                         match self.parse_ident() {
                             Ok(_) => {}
-                            Err(_) => return self.error("expected identifier"),
+                            Err(_) => return self.report_error("expected identifier"),
                         }
                         after_period = false;
                     } else if self.key_pattern_syntax {

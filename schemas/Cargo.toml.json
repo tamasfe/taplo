@@ -267,16 +267,6 @@
       "title": "Debug Level",
       "description": "The `debug` setting controls the [`-C debuginfo` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#debuginfo) which controls the\namount of debug information included in the compiled binary.",
       "enum": [0, 1, 2, true, false],
-      "anyOf": [
-        {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        {
-          "type": "boolean"
-        }
-      ],
       "x-taplo": {
         "docs": {
           "enumValues": [
@@ -451,14 +441,6 @@
       "title": "Lto",
       "description": "The `lto` setting controls the [`-C lto` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#lto) which controls LLVM's [link time optimizations](https://llvm.org/docs/LinkTimeOptimization.html). LTO can produce better optimized code, using\nwhole-program analysis, at the cost of longer linking time.\n                    \nSee also the [`-C linker-plugin-lto`](https://doc.rust-lang.org/rustc/codegen-options/index.html#linker-plugin-lto) `rustc` flag for cross-language LTO.",
       "enum": ["fat", "thin", "off", true, false],
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "boolean"
-        }
-      ],
       "x-taplo": {
         "docs": {
           "enumValues": [
@@ -496,15 +478,6 @@
       "title": "Optimization Level",
       "description": "The `opt-level` setting controls the [`-C opt-level` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#opt-level) which controls the level\nof optimization. Higher optimization levels may produce faster runtime code at\nthe expense of longer compiler times. Higher levels may also change and\nrearrange the compiled code which may make it harder to use with a debugger.\n\nIt is recommended to experiment with different levels to find the right\nbalance for your project. There may be surprising results, such as level `3`\nbeing slower than `2`, or the `\"s\"` and `\"z\"` levels not being necessarily\nsmaller. You may also want to reevaluate your settings over time as newer\nversions of `rustc` changes optimization behavior.\n\nSee also [Profile Guided Optimization](https://doc.rust-lang.org/rustc/profile-guided-optimization.html) for more advanced optimization\ntechniques.",
       "enum": [0, 1, 2, 3, "s", "z"],
-      "anyOf": [
-        {
-          "type": "integer",
-          "format": "int32"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "x-taplo": {
         "docs": {
           "enumValues": [
@@ -903,21 +876,42 @@
         }
       }
     },
+    "BuildOverride": {
+      "title": "Build Override",
+      "type": "object",
+      "description": "Profile settings can be overridden for specific packages and build-time\ncrates. To override the settings for a specific package, use the `package`\ntable to change the settings for the named package:\n\n```toml\n# The `foo` package will use the -Copt-level=3 flag.\n[profile.dev.package.foo]\nopt-level = 3\n```\n\nThe package name is actually a [Package ID Spec](https://doc.rust-lang.org/cargo/reference/pkgid-spec.html), so you can\ntarget individual versions of a package with syntax such as\n`[profile.dev.package.\"foo:2.1.0\"]`.\n\nTo override the settings for all dependencies (but not any workspace member),\nuse the `\"*\"` package name:\n\n```toml\n# Set the default for dependencies.\n[profile.dev.package.\"*\"]\nopt-level = 2\n```\n\nTo override the settings for build scripts, proc macros, and their\ndependencies, use the `build-override` table:\n\n```toml\n# Set the settings for build scripts and proc-macros.\n[profile.dev.build-override]\nopt-level = 3\n```\n\n> Note: When a dependency is both a normal dependency and a build dependency,\n> Cargo will try to only build it once when `--target` is not specified. When\n> using `build-override`, the dependency may need to be built twice, once as a\n> normal dependency and once with the overridden build settings. This may\n> increase initial build times.\n",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Profile"
+        }
+      ],
+      "x-taplo": {
+        "docs": {
+          "main": "Profile settings can be overridden for specific packages and build-time\ncrates. To override the settings for a specific package, use the `package`\ntable to change the settings for the named package:\n\n```toml\n# The `foo` package will use the -Copt-level=3 flag.\n[profile.dev.package.foo]\nopt-level = 3\n```\n\nThe package name is actually a [Package ID Spec](https://doc.rust-lang.org/cargo/reference/pkgid-spec.html), so you can\ntarget individual versions of a package with syntax such as\n`[profile.dev.package.\"foo:2.1.0\"]`.\n\nTo override the settings for all dependencies (but not any workspace member),\nuse the `\"*\"` package name:\n\n```toml\n# Set the default for dependencies.\n[profile.dev.package.\"*\"]\nopt-level = 2\n```\n\nTo override the settings for build scripts, proc macros, and their\ndependencies, use the `build-override` table:\n\n```toml\n# Set the settings for build scripts and proc-macros.\n[profile.dev.build-override]\nopt-level = 3\n```\n\n> Note: When a dependency is both a normal dependency and a build dependency,\n> Cargo will try to only build it once when `--target` is not specified. When\n> using `build-override`, the dependency may need to be built twice, once as a\n> normal dependency and once with the overridden build settings. This may\n> increase initial build times.\n"
+        },
+        "links": {
+          "key": "https://doc.rust-lang.org/cargo/reference/profiles.html#overrides"
+        }
+      }
+    },
+    "ProfileWithBuildOverride": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Profile"
+        },
+        {
+          "properties": {
+            "build-override": {
+              "$ref": "#/definitions/Profile"
+            }
+          }
+        }
+      ]
+    },
     "Profile": {
       "title": "Profile",
       "type": "object",
       "properties": {
-        "build-override": {
-          "$ref": "#/definitions/Profile",
-          "x-taplo": {
-            "docs": {
-              "main": "Profile settings can be overridden for specific packages and build-time\ncrates. To override the settings for a specific package, use the `package`\ntable to change the settings for the named package:\n\n```toml\n# The `foo` package will use the -Copt-level=3 flag.\n[profile.dev.package.foo]\nopt-level = 3\n```\n\nThe package name is actually a [Package ID Spec](https://doc.rust-lang.org/cargo/reference/pkgid-spec.html), so you can\ntarget individual versions of a package with syntax such as\n`[profile.dev.package.\"foo:2.1.0\"]`.\n\nTo override the settings for all dependencies (but not any workspace member),\nuse the `\"*\"` package name:\n\n```toml\n# Set the default for dependencies.\n[profile.dev.package.\"*\"]\nopt-level = 2\n```\n\nTo override the settings for build scripts, proc macros, and their\ndependencies, use the `build-override` table:\n\n```toml\n# Set the settings for build scripts and proc-macros.\n[profile.dev.build-override]\nopt-level = 3\n```\n\n> Note: When a dependency is both a normal dependency and a build dependency,\n> Cargo will try to only build it once when `--target` is not specified. When\n> using `build-override`, the dependency may need to be built twice, once as a\n> normal dependency and once with the overridden build settings. This may\n> increase initial build times.\n"
-            },
-            "links": {
-              "key": "https://doc.rust-lang.org/cargo/reference/profiles.html#overrides"
-            }
-          }
-        },
         "codegen-units": {
           "description": "The `codegen-units` setting controls the [`-C codegen-units` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#codegen-units) which\ncontrols how many \"code generation units\" a crate will be split into. More\ncode generation units allows more of a crate to be processed in parallel\npossibly reducing compile time, but may produce slower code.\n\nThis option takes an integer greater than 0.\n\nThe default is 256 for [incremental](https://doc.rust-lang.org/cargo/reference/profiles.html#incremental) builds, and 16 for\nnon-incremental builds.",
           "type": "integer",
@@ -1009,52 +1003,20 @@
       "type": "object",
       "properties": {
         "bench": {
-          "$ref": "#/definitions/Profile",
-          "x-taplo": {
-            "docs": {
-              "main": "`bench` Cargo built-in profile."
-            },
-            "links": {
-              "key": "https://doc.rust-lang.org/cargo/reference/profiles.html#bench"
-            }
-          }
+          "$ref": "#/definitions/ProfileWithBuildOverride"
         },
         "dev": {
-          "$ref": "#/definitions/Profile",
-          "x-taplo": {
-            "docs": {
-              "main": "`dev` Cargo built-in profile."
-            },
-            "links": {
-              "key": "https://doc.rust-lang.org/cargo/reference/profiles.html#dev"
-            }
-          }
+          "$ref": "#/definitions/ProfileWithBuildOverride"
         },
         "release": {
-          "$ref": "#/definitions/Profile",
-          "x-taplo": {
-            "docs": {
-              "main": "`release` Cargo built-in profile."
-            },
-            "links": {
-              "key": "https://doc.rust-lang.org/cargo/reference/profiles.html#release"
-            }
-          }
+          "$ref": "#/definitions/ProfileWithBuildOverride"
         },
         "test": {
-          "$ref": "#/definitions/Profile",
-          "x-taplo": {
-            "docs": {
-              "main": "`test` Cargo built-in profile."
-            },
-            "links": {
-              "key": "https://doc.rust-lang.org/cargo/reference/profiles.html#test"
-            }
-          }
+          "$ref": "#/definitions/ProfileWithBuildOverride"
         }
       },
       "additionalProperties": {
-        "$ref": "#/definitions/Profile"
+        "$ref": "#/definitions/ProfileWithBuildOverride"
       },
       "x-taplo": {
         "links": {

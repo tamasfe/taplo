@@ -70,7 +70,7 @@ impl<E: Environment> Taplo<E> {
                             .write_all(&serde_json::to_vec_pretty(&nodes.next().unwrap().1)?)
                             .await?;
                         if !cmd.strip_newline {
-                            stdout.write(b"\n").await?;
+                            stdout.write_all(b"\n").await?;
                         }
                         stdout.flush().await?;
                     } else {
@@ -80,14 +80,14 @@ impl<E: Environment> Taplo<E> {
                             )?)
                             .await?;
                         if !cmd.strip_newline {
-                            stdout.write(b"\n").await?;
+                            stdout.write_all(b"\n").await?;
                         }
                         stdout.flush().await?;
                     }
                 } else {
                     stdout.write_all(&serde_json::to_vec_pretty(&node)?).await?;
                     if !cmd.strip_newline {
-                        stdout.write(b"\n").await?;
+                        stdout.write_all(b"\n").await?;
                     }
                     stdout.flush().await?;
                 }
@@ -190,7 +190,7 @@ impl<E: Environment> Taplo<E> {
                             buf += "\n";
                         }
 
-                        stdout.write(buf.as_bytes()).await?;
+                        stdout.write_all(buf.as_bytes()).await?;
                         stdout.flush().await?;
                     }
                     stdout.flush().await?;

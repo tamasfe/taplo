@@ -17,7 +17,7 @@ pub(crate) async fn convert_to_json<E: Environment>(
 ) -> Result<ConvertToJsonResponse, Error> {
     let p = params.required()?;
 
-    if let Ok(_) = serde_json::from_str::<Value>(&p.text) {
+    if serde_json::from_str::<Value>(&p.text).is_ok() {
         return Ok(ConvertToJsonResponse {
             text: Some(p.text),
             error: None,

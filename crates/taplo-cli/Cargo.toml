@@ -13,7 +13,6 @@ keywords = ["toml", "linter", "formatter"]
 [features]
 default = ["lsp"]
 lsp = ["taplo-lsp"]
-# plugin-crates = ["taplo-lsp/plugin-crates"]
 toml-test = []
 
 [dependencies]

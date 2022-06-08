@@ -10,9 +10,9 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 impl<E: Environment> Taplo<E> {
     pub async fn execute_format(&mut self, cmd: FormatCommand) -> Result<(), anyhow::Error> {
         if matches!(cmd.files.get(0).map(|it| it.as_str()), Some("-")) {
-            return self.format_stdin(cmd).await;
+            self.format_stdin(cmd).await
         } else {
-            return self.format_files(cmd).await;
+            self.format_files(cmd).await
         }
     }
 
@@ -22,7 +22,7 @@ impl<E: Environment> Taplo<E> {
         self.env.stdin().read_to_string(&mut source).await?;
 
         let config = self.load_config(&cmd.general).await?;
-        let display_path = cmd.stdin_filepath.as_deref().unwrap_or(&"-");
+        let display_path = cmd.stdin_filepath.as_deref().unwrap_or("-");
 
         let p = parser::parse(&source);
 

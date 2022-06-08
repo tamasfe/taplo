@@ -205,7 +205,7 @@ pub(crate) async fn hover<E: Environment>(
                                     if let Some(enum_docs) = enum_docs.get(idx).cloned().flatten() {
                                         if links_in_hover {
                                             if let Some(enum_link) =
-                                                enum_links.get(idx).map(Option::as_ref).flatten()
+                                                enum_links.get(idx).and_then(Option::as_ref)
                                             {
                                                 return format!("[...]({enum_link})\n\n{enum_docs}");
                                             }

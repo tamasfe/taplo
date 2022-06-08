@@ -9,6 +9,7 @@ use lsp_types::{
 };
 use serde_json::Value;
 use std::borrow::Cow;
+use std::fmt::Write as _;
 use taplo::dom::{node::TableKind, Keys, Node};
 use taplo_common::{
     environment::Environment,
@@ -716,10 +717,12 @@ fn default_value_snippet(schema: &Value, cursor_count: usize) -> Cow<'static, st
             if i != 0 {
                 s += ", ";
             }
-            s += &format!(
+            write!(
+                s,
                 "{init_key} = {}",
                 default_value_snippet(&schema["properties"][init_key], cursor_count + 1)
-            );
+            )
+            .unwrap();
         }
 
         s += " }$0";

@@ -21,7 +21,6 @@ jobs:
           [
             "crates/taplo",
             "crates/taplo-common",
-            "crates/taplo-plugin-crates",
             "crates/lsp-async-stub",
             "crates/taplo-lsp",
             "crates/taplo-cli",

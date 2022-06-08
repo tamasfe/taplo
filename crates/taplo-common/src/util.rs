@@ -1,13 +1,7 @@
-use futures::{
-    future::{abortable, AbortHandle},
-    Future,
-};
 use globset::{Glob, GlobSetBuilder};
-use parking_lot::Mutex;
 use serde_json::Value;
 use std::{
     hash::{Hash, Hasher},
-    ops::ControlFlow,
     path::Path,
     sync::Arc,
 };
@@ -45,51 +39,6 @@ impl GlobRule {
         }
 
         !self.exclude.is_match(text.as_ref())
-    }
-}
-
-pub struct Debounce {
-    abort_handle: Mutex<Option<AbortHandle>>,
-    duration: std::time::Duration,
-}
-
-impl Debounce {
-    #[must_use]
-    pub fn new(duration: std::time::Duration) -> Self {
-        Self {
-            abort_handle: Default::default(),
-            duration,
-        }
-    }
-
-    pub async fn execute(&self, f: impl FnOnce()) {
-        if let ControlFlow::Break(_) = self.wait_timer().await {
-            return;
-        }
-
-        f();
-    }
-
-    pub async fn execute_future(&self, f: impl Future) {
-        if let ControlFlow::Break(_) = self.wait_timer().await {
-            return;
-        }
-
-        f.await;
-    }
-
-    async fn wait_timer(&self) -> ControlFlow<()> {
-        let mut h = self.abort_handle.lock();
-        if let Some(h) = h.take() {
-            h.abort();
-        }
-        let (sleep, abort_handle) = abortable(tokio::time::sleep(self.duration));
-        *h = Some(abort_handle);
-        drop(h);
-        if sleep.await.is_err() {
-            return ControlFlow::Break(());
-        }
-        ControlFlow::Continue(())
     }
 }
 

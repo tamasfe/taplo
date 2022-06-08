@@ -84,7 +84,7 @@ pub async fn associate_schema<E: Environment>(
                 ws.schemas.associations().add(rule, assoc.clone());
             }
             notification::AssociationRule::Regex(regex) => {
-                let rule = match AssociationRule::regex(&regex) {
+                let rule = match AssociationRule::regex(regex) {
                     Ok(re) => re,
                     Err(err) => {
                         tracing::error!(

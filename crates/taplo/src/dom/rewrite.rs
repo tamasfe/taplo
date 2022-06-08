@@ -91,7 +91,7 @@ impl core::fmt::Display for Rewrite {
         for patch in &self.patches {
             match &patch.kind {
                 PendingPatchKind::Replace(to) => {
-                    s.replace_range(std_range(patch.range), &*to);
+                    s.replace_range(std_range(patch.range), to);
                 }
             }
         }

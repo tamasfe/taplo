@@ -79,13 +79,16 @@ impl Query {
     pub fn in_table_header(&self) -> bool {
         match (&self.before, &self.after) {
             (Some(before), Some(after)) => {
-                let header_syntax =
-                    match before.syntax.ancestors().find(|s| s.kind() == TABLE_HEADER) {
-                        Some(h) => h,
-                        None => return false,
-                    };
+                let header_syntax = match before
+                    .syntax
+                    .parent_ancestors()
+                    .find(|s| s.kind() == TABLE_HEADER)
+                {
+                    Some(h) => h,
+                    None => return false,
+                };
 
-                if !after.syntax.ancestors().any(|a| a == header_syntax) {
+                if !after.syntax.parent_ancestors().any(|a| a == header_syntax) {
                     return false;
                 }
 
@@ -126,14 +129,14 @@ impl Query {
             (Some(before), Some(after)) => {
                 let header_syntax = match before
                     .syntax
-                    .ancestors()
+                    .parent_ancestors()
                     .find(|s| s.kind() == TABLE_ARRAY_HEADER)
                 {
                     Some(h) => h,
                     None => return false,
                 };
 
-                if !after.syntax.ancestors().any(|a| a == header_syntax) {
+                if !after.syntax.parent_ancestors().any(|a| a == header_syntax) {
                     return false;
                 }
 
@@ -178,7 +181,7 @@ impl Query {
             (Some(before), _) => {
                 let header_syntax = match before
                     .syntax
-                    .ancestors()
+                    .parent_ancestors()
                     .find(|s| matches!(s.kind(), TABLE_ARRAY_HEADER | TABLE_HEADER))
                 {
                     Some(h) => h,
@@ -199,7 +202,7 @@ impl Query {
         };
 
         let keys = match syntax
-            .ancestors()
+            .parent_ancestors()
             .find(|n| n.kind() == ENTRY)
             .and_then(|entry| entry.children().find(|c| c.kind() == KEY))
         {
@@ -218,7 +221,7 @@ impl Query {
         };
 
         let value = match syntax
-            .ancestors()
+            .parent_ancestors()
             .find(|n| n.kind() == ENTRY)
             .and_then(|entry| entry.children().find(|c| c.kind() == VALUE))
         {
@@ -361,7 +364,7 @@ impl Query {
         };
 
         syntax
-            .ancestors()
+            .parent_ancestors()
             .any(|a| matches!(a.kind(), INLINE_TABLE | ARRAY))
     }
 

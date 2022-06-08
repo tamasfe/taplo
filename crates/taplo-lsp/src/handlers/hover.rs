@@ -64,11 +64,7 @@ pub(crate) async fn hover<E: Environment>(
         },
     };
 
-    if let Some(schema_association) = ws
-        .schemas
-        .associations()
-        .association_for(&document_uri)
-    {
+    if let Some(schema_association) = ws.schemas.associations().association_for(&document_uri) {
         tracing::debug!(
             schema.url = %schema_association.url,
             schema.name = schema_association.meta["name"].as_str().unwrap_or(""),
@@ -88,6 +84,8 @@ pub(crate) async fn hover<E: Environment>(
             Some(n) => n,
             None => return Ok(None),
         };
+
+        let links_in_hover = !ws.config.schema.links;
 
         let mut keys = keys.clone();
 
@@ -134,12 +132,19 @@ pub(crate) async fn hover<E: Environment>(
                 .map(|(_, schema)| {
                     let ext = schema_ext_of(schema).unwrap_or_default();
                     let ext_docs = ext.docs.unwrap_or_default();
+                    let ext_links = ext.links.unwrap_or_default();
 
                     let mut s = String::new();
                     if let Some(docs) = ext_docs.main {
                         s += &docs;
                     } else if let Some(desc) = schema["description"].as_str() {
                         s += desc;
+                    }
+
+                    if links_in_hover {
+                        if let Some(link) = &ext_links.key {
+                            s = format!("[...]({link})\n\n{s}");
+                        }
                     }
 
                     s
@@ -190,11 +195,22 @@ pub(crate) async fn hover<E: Environment>(
                     let ext_docs = ext.docs.unwrap_or_default();
                     let enum_docs = ext_docs.enum_values.unwrap_or_default();
 
+                    let ext_links = ext.links.unwrap_or_default();
+                    let enum_links = ext_links.enum_values.unwrap_or_default();
+
                     if !enum_docs.is_empty() {
                         if let Some(enum_values) = schema["enum"].as_array() {
                             for (idx, val) in enum_values.iter().enumerate() {
                                 if val == &value {
                                     if let Some(enum_docs) = enum_docs.get(idx).cloned().flatten() {
+                                        if links_in_hover {
+                                            if let Some(enum_link) =
+                                                enum_links.get(idx).map(Option::as_ref).flatten()
+                                            {
+                                                return format!("[...]({enum_link})\n\n{enum_docs}");
+                                            }
+                                        }
+
                                         return enum_docs;
                                     }
                                 }

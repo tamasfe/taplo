@@ -1,5 +1,4 @@
 use std::{
-    iter::FromIterator,
     path::{Path, PathBuf},
     sync::Arc,
     time::Duration,
@@ -8,7 +7,7 @@ use std::{
 use anyhow::{anyhow, Context};
 use args::GeneralArgs;
 use itertools::Itertools;
-use taplo_common::{config::Config, environment::Environment, schema::Schemas, HashMap};
+use taplo_common::{config::Config, environment::Environment, schema::Schemas};
 
 pub mod args;
 pub mod commands;
@@ -140,10 +139,7 @@ impl<E: Environment> Taplo<E> {
 
 pub fn default_config() -> Config {
     Config {
-        plugins: HashMap::from_iter([
-            #[cfg(feature = "plugin-crates")]
-            ("crates".into(), taplo_common::config::Plugin { settings: None }),
-        ]),
+        plugins: None,
         ..Default::default()
     }
 }

@@ -14,7 +14,6 @@
 pub mod config;
 pub mod convert;
 pub mod environment;
-pub mod plugin;
 pub mod schema;
 pub mod util;
 

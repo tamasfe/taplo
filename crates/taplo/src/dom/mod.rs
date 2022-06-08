@@ -103,6 +103,21 @@ pub struct Keys {
 }
 
 impl Keys {
+    #[inline]
+    pub fn empty() -> Self {
+        Self::new(empty())
+    }
+
+    pub fn single(key: impl Into<KeyOrIndex>) -> Self {
+        Self::new(once(key.into()))
+    }
+
+    pub fn new(keys: impl Iterator<Item = KeyOrIndex>) -> Self {
+        let keys: Arc<[KeyOrIndex]> = keys.collect();
+        let dotted: Arc<str> = Arc::from(keys.iter().join(".").as_str());
+        Self { keys, dotted }
+    }
+
     pub fn join(&self, key: impl Into<KeyOrIndex>) -> Self {
         self.extend(once(key.into()))
     }
@@ -166,17 +181,6 @@ impl Keys {
                 .filter_map(KeyOrIndex::as_key)
                 .flat_map(|k| k.text_ranges()),
         )
-    }
-
-    #[inline]
-    pub fn empty() -> Self {
-        Self::new(empty())
-    }
-
-    pub fn new(keys: impl Iterator<Item = KeyOrIndex>) -> Self {
-        let keys: Arc<[KeyOrIndex]> = keys.collect();
-        let dotted: Arc<str> = Arc::from(keys.iter().join(".").as_str());
-        Self { keys, dotted }
     }
 }
 

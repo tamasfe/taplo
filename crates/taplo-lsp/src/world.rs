@@ -14,7 +14,6 @@ use taplo::{dom::Node, parser::Parse};
 use taplo_common::{
     config::Config,
     environment::Environment,
-    plugin::Plugin,
     schema::{
         associations::{priority, source, AssociationRule, SchemaAssociation},
         Schemas,
@@ -113,7 +112,6 @@ pub struct WorkspaceState<E: Environment> {
     pub(crate) taplo_config: Config,
     pub(crate) schemas: Schemas<E>,
     pub(crate) config: LspConfig,
-    pub(crate) plugins: ArcSwap<Vec<Arc<dyn Plugin<E>>>>,
 }
 
 impl<E: Environment> WorkspaceState<E> {
@@ -130,7 +128,6 @@ impl<E: Environment> WorkspaceState<E> {
                     .unwrap(),
             ),
             config: LspConfig::default(),
-            plugins: Default::default(),
         }
     }
 }
@@ -150,24 +147,6 @@ impl<E: Environment> WorkspaceState<E> {
     ) -> Result<(), anyhow::Error> {
         self.load_config(env, &*context.world().default_config.load())
             .await?;
-
-        let plugins = Arc::new(
-            self.taplo_config
-                .plugins
-                .iter()
-                .filter_map(|(name, p_cfg)| {
-                    load_plugin::<E>(name).map(|p| {
-                        if let Some(settings) = p_cfg.settings.clone() {
-                            p.settings(settings);
-                        }
-                        p
-                    })
-                })
-                .collect::<Vec<_>>(),
-        );
-
-        self.schemas.set_plugins(&plugins);
-        self.plugins.store(plugins);
 
         self.schemas
             .associations()
@@ -260,11 +239,7 @@ impl<E: Environment> WorkspaceState<E> {
 
     pub(crate) async fn emit_associations(&self, mut context: Context<World<E>>) {
         for document_url in self.documents.keys() {
-            if let Some(assoc) = self
-                .schemas
-                .associations()
-                .association_for(document_url)
-            {
+            if let Some(assoc) = self.schemas.associations().association_for(document_url) {
                 if let Err(error) = context
                     .write_notification::<DidChangeSchemaAssociation, _>(Some(
                         DidChangeSchemaAssociationParams {
@@ -298,15 +273,4 @@ pub struct DocumentState {
     pub(crate) parse: Parse,
     pub(crate) dom: Node,
     pub(crate) mapper: Mapper,
-}
-
-fn load_plugin<E: Environment>(name: &str) -> Option<Arc<dyn Plugin<E>>> {
-    match name {
-        #[cfg(feature = "plugin-crates")]
-        "crates" => Some(Arc::new(taplo_plugin_crates::CratesPlugin::default())),
-        _ => {
-            tracing::warn!(%name, "unknown plugin");
-            None
-        }
-    }
 }

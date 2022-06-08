@@ -1,7 +1,6 @@
-use self::{associations::SchemaAssociations, cache::Cache, ext::schema_ext_of, plugin::Plugin};
-use crate::{environment::Environment, plugin, util::ArcHashValue, HashMap, LruCache};
+use self::{associations::SchemaAssociations, cache::Cache};
+use crate::{environment::Environment, util::ArcHashValue, LruCache};
 use anyhow::{anyhow, Context};
-use arc_swap::ArcSwap;
 use async_recursion::async_recursion;
 use futures::{stream::FuturesUnordered, StreamExt};
 use itertools::Itertools;
@@ -28,8 +27,6 @@ pub struct Schemas<E: Environment> {
     http: reqwest::Client,
     validators: Arc<Mutex<LruCache<Url, Arc<JSONSchema>>>>,
     cache: Cache<E>,
-    #[allow(clippy::type_complexity)]
-    plugins: Arc<ArcSwap<HashMap<Cow<'static, str>, Arc<dyn Plugin<E>>>>>,
 }
 
 impl<E: Environment> Schemas<E> {
@@ -43,7 +40,6 @@ impl<E: Environment> Schemas<E> {
             concurrent_requests: Arc::new(Semaphore::new(10)),
             http,
             validators: Arc::new(Mutex::new(LruCache::new(3))),
-            plugins: Default::default(),
         }
     }
 
@@ -59,15 +55,6 @@ impl<E: Environment> Schemas<E> {
 
     pub fn env(&self) -> &E {
         &self.env
-    }
-
-    pub fn set_plugins(&self, plugins: &[Arc<dyn Plugin<E>>]) {
-        self.plugins.store(Arc::new(
-            plugins
-                .iter()
-                .map(|v| (v.name().clone(), v.clone()))
-                .collect::<HashMap<_, _>>(),
-        ));
     }
 }
 
@@ -496,24 +483,6 @@ impl<E: Environment> Schemas<E> {
             return self
                 .collect_child_schemas(root_url, &schema, root_path, path, depth, schemas)
                 .await;
-        }
-
-        if let Some(ext) = schema_ext_of(schema) {
-            for plugin_name in ext.plugins {
-                if let Some(p) = self.plugins.load().get(plugin_name.as_str()) {
-                    match p
-                        .possible_schemas(self, root_url, schema, root_path, path, schemas)
-                        .await
-                    {
-                        plugin::CollectSchemasAction::Continue => {}
-                        plugin::CollectSchemasAction::Stop => return,
-                    }
-                }
-            }
-
-            if let Some(true) = ext.hidden {
-                return;
-            }
         }
 
         if let Some(one_ofs) = schema["oneOf"].as_array() {

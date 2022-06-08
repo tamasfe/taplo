@@ -51,8 +51,8 @@ pub struct Config {
     pub file_rule: Option<GlobRule>,
 
     #[serde(default)]
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
-    pub plugins: HashMap<String, Plugin>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plugins: Option<HashMap<String, Plugin>>,
 }
 
 impl Default for Config {
@@ -68,7 +68,7 @@ impl Default for Config {
                 ..Default::default()
             },
             file_rule: Default::default(),
-            plugins: Default::default(),
+            plugins: None,
         }
     }
 }

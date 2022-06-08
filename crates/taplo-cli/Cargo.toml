@@ -11,9 +11,9 @@ categories = ["development-tools", "command-line-utilities"]
 keywords = ["toml", "linter", "formatter"]
 
 [features]
-default = ["lsp", "plugin-crates"]
+default = ["lsp"]
 lsp = ["taplo-lsp"]
-plugin-crates = ["taplo-lsp/plugin-crates"]
+# plugin-crates = ["taplo-lsp/plugin-crates"]
 toml-test = []
 
 [dependencies]

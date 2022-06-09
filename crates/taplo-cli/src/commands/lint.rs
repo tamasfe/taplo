@@ -117,6 +117,13 @@ impl<E: Environment> Taplo<E> {
             return Err(anyhow!("semantic errors found"));
         }
 
+        let config = self.config.as_ref().unwrap();
+
+        if !config.is_schema_enabled(Path::new(file_path)) {
+            tracing::debug!("schema validation disabled for config file");
+            return Ok(());
+        }
+
         let file_uri: Url = format!("file://{file_path}").parse().unwrap();
 
         self.schemas

@@ -20,12 +20,14 @@ jobs:
     name: Tag Releases
     if: github.event_name == 'push' && github.ref_type == 'branch'
     runs-on: ubuntu-latest
-    steps: 
+    steps:
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.WORKFLOW_PAT }}
           persist-credentials: false
-      - uses: tamasfe/auto-tag@v3
+      - uses: tamasfe/auto-tag@v2
+        with:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}
 
   test:
     name: Test on Rust stable

@@ -24,7 +24,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.WORKFLOW_PAT }}
-          persist-credentials: false
       - uses: tamasfe/auto-tag@v4
         with:
           name: tamasfe

@@ -23,7 +23,7 @@ jobs:
     steps: 
       - uses: actions/checkout@v3
         with:
-          token: ${{ secrets.WORKFLOW_TOKEN }}
+          ssh-key: ${{ secrets.WORKFLOW_KEY }}
       - uses: tamasfe/auto-tag@v2
 
   test:

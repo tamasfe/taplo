@@ -1,10 +1,9 @@
 name: Releases
 
 on:
-  workflow_dispatch: {}
   push:
     tags:
-      - release-*
+      - release-**
 
 jobs:
   wait_for_ci:

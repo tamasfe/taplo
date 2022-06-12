@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
       - uses: tamasfe/auto-tag@v2
         with:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}
+          github_token: ${{ secrets.WORKFLOW_PAT }}
 
   test:
     name: Test on Rust stable

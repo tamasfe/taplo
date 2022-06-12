@@ -41,6 +41,7 @@ jobs:
         with:
           max_attempts: 3
           retry_wait_seconds: 60
+          timeout_minutes: 60
           command: cd crates/taplo && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
@@ -68,6 +69,7 @@ jobs:
         with:
           max_attempts: 3
           retry_wait_seconds: 60
+          timeout_minutes: 60
           command: cd crates/taplo-cli && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
@@ -95,6 +97,7 @@ jobs:
         with:
           max_attempts: 3
           retry_wait_seconds: 60
+          timeout_minutes: 60
           command: cd crates/taplo-common && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
@@ -122,6 +125,7 @@ jobs:
         with:
           max_attempts: 3
           retry_wait_seconds: 60
+          timeout_minutes: 60
           command: cd crates/taplo-lsp && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
@@ -149,6 +153,7 @@ jobs:
         with:
           max_attempts: 3
           retry_wait_seconds: 60
+          timeout_minutes: 60
           command: cd crates/lsp-async-stub && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}

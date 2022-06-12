@@ -14,7 +14,7 @@ jobs:
         uses: lewagon/wait-on-check-action@v1.0.0
         with:
           ref: ${{ github.ref }}
-          check-name: "Continuous integration"
+          check-name: "Test on Rust stable"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
 

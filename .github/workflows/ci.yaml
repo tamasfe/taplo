@@ -24,7 +24,9 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.WORKFLOW_KEY }}
-      - uses: tamasfe/auto-tag@v2
+      - uses: tamasfe/auto-tag@v3
+        env:
+          GITHUB_KEY: ${{ secrets. }}
 
   test:
     name: Test on Rust stable

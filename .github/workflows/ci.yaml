@@ -16,11 +16,19 @@ on:
       - master
 
 jobs:
+  auto_tag:
+    name: Tag Releases
+    if: github.event_name == 'push' && github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v3
+      - uses: tamasfe/auto-tag@v2
+
   test:
     name: Test on Rust stable
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -37,7 +45,7 @@ jobs:
     name: Run toml-test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:

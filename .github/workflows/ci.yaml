@@ -25,9 +25,11 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_PAT }}
           persist-credentials: false
-      - uses: tamasfe/auto-tag@v2
+      - uses: tamasfe/auto-tag@v4
         with:
-          github_token: ${{ secrets.WORKFLOW_PAT }}
+          name: tamasfe
+          email: me@tamasfe.dev
+          token: ${{ secrets.WORKFLOW_PAT }}
 
   test:
     name: Test on Rust stable

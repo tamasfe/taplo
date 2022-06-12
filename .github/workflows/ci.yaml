@@ -25,7 +25,7 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_PAT }}
           fetch-depth: 0
-      - uses: tamasfe/auto-tag@v4
+      - uses: tamasfe/auto-tag@v5
         with:
           name: tamasfe
           email: me@tamasfe.dev

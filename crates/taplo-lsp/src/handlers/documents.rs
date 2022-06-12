@@ -1,6 +1,7 @@
 use lsp_async_stub::{util::Mapper, Context, Params};
 use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+    DidSaveTextDocumentParams,
 };
 use taplo_common::{
     environment::Environment,
@@ -12,7 +13,7 @@ use crate::{
     world::{DocumentState, World},
 };
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn document_open<E: Environment>(
     context: Context<World<E>>,
     params: Params<DidOpenTextDocumentParams>,
@@ -57,7 +58,7 @@ pub(crate) async fn document_open<E: Environment>(
     diagnostics::publish_diagnostics(context.clone(), ws_root, p.text_document.uri).await;
 }
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn document_change<E: Environment>(
     context: Context<World<E>>,
     params: Params<DidChangeTextDocumentParams>,
@@ -108,7 +109,15 @@ pub(crate) async fn document_change<E: Environment>(
     diagnostics::publish_diagnostics(context.clone(), ws_root, p.text_document.uri).await;
 }
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
+pub(crate) async fn document_save<E: Environment>(
+    _context: Context<World<E>>,
+    _params: Params<DidSaveTextDocumentParams>,
+) {
+    // stub to silence warnings
+}
+
+#[tracing::instrument(skip_all)]
 pub(crate) async fn document_close<E: Environment>(
     context: Context<World<E>>,
     params: Params<DidCloseTextDocumentParams>,

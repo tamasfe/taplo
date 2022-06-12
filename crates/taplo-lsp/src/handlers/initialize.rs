@@ -7,15 +7,15 @@ use crate::World;
 use lsp_async_stub::{rpc::Error, Context, Params};
 use lsp_types::{
     CompletionOptions, DocumentLinkOptions, FoldingRangeProviderCapability,
-    HoverProviderCapability, OneOf, RenameOptions, SemanticTokensFullOptions, SemanticTokensLegend,
-    SemanticTokensOptions, SemanticTokensServerCapabilities, ServerCapabilities, ServerInfo,
-    TextDocumentSyncCapability, TextDocumentSyncKind, WorkDoneProgressOptions,
-    WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+    HoverProviderCapability, InitializedParams, OneOf, RenameOptions, SemanticTokensFullOptions,
+    SemanticTokensLegend, SemanticTokensOptions, SemanticTokensServerCapabilities,
+    ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind,
+    WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 use lsp_types::{InitializeParams, InitializeResult};
 use taplo_common::environment::Environment;
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 pub async fn initialize<E: Environment>(
     context: Context<World<E>>,
     params: Params<InitializeParams>,
@@ -77,11 +77,6 @@ pub async fn initialize<E: Environment>(
                     range: Some(false),
                 }),
             ),
-            // code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
-            //     code_action_kinds: Some(vec![CodeActionKind::REFACTOR]),
-            //     resolve_provider: None,
-            //     work_done_progress_options: Default::default(),
-            // })),
             rename_provider: Some(OneOf::Right(RenameOptions {
                 prepare_provider: Some(true),
                 work_done_progress_options: Default::default(),
@@ -114,4 +109,12 @@ pub async fn initialize<E: Environment>(
         }),
         offset_encoding: None,
     })
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn initialized<E: Environment>(
+    _context: Context<World<E>>,
+    _params: Params<InitializedParams>,
+) {
+    // stub to silence warnings.
 }

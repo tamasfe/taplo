@@ -1,10 +1,11 @@
 use async_trait::async_trait;
-use futures::{future::LocalBoxFuture, Future};
+use futures::Future;
 use std::path::{Path, PathBuf};
 use time::OffsetDateTime;
 use tokio::io::{AsyncRead, AsyncWrite};
 use url::Url;
 
+#[cfg(not(target_family = "wasm"))]
 pub mod native;
 
 /// An environment in which the operations with Taplo are executed.
@@ -18,15 +19,10 @@ pub trait Environment: Clone + Send + Sync + 'static {
 
     fn now(&self) -> OffsetDateTime;
 
-    fn spawn<F>(&self, fut: F) -> LocalBoxFuture<'static, F::Output>
+    fn spawn<F>(&self, fut: F)
     where
         F: Future + Send + 'static,
         F::Output: Send;
-
-    fn spawn_blocking<F, R>(&self, cb: F) -> LocalBoxFuture<'static, R>
-    where
-        F: FnOnce() -> R + Send + 'static,
-        R: Send + 'static;
 
     fn spawn_local<F>(&self, fut: F)
     where
@@ -41,10 +37,7 @@ pub trait Environment: Clone + Send + Sync + 'static {
 
     fn glob_files(&self, glob: &str) -> Result<Vec<PathBuf>, anyhow::Error>;
 
-    async fn read_file(
-        &self,
-        path: impl AsRef<Path> + 'async_trait,
-    ) -> Result<Vec<u8>, anyhow::Error>;
+    async fn read_file(&self, path: &Path) -> Result<Vec<u8>, anyhow::Error>;
 
     async fn write_file(&self, path: &Path, bytes: &[u8]) -> Result<(), anyhow::Error>;
 
@@ -55,5 +48,5 @@ pub trait Environment: Clone + Send + Sync + 'static {
     /// Absolute current working dir.
     fn cwd(&self) -> Option<PathBuf>;
 
-    async fn find_config_file(&self, from: impl AsRef<Path> + 'async_trait) -> Option<PathBuf>;
+    async fn find_config_file(&self, from: &Path) -> Option<PathBuf>;
 }

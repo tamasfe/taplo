@@ -21,7 +21,7 @@
   },
   "license": "SEE LICENSE IN LICENSE.md",
   "engines": {
-    "vscode": "^1.44.0"
+    "vscode": "^1.68.0"
   },
   "categories": [
     "Programming Languages",
@@ -158,8 +158,14 @@
     "configuration": {
       "title": "Even Better TOML",
       "properties": {
+        "evenBetterToml.taplo.bundled": {
+          "description": "Use the bundled taplo language server. If set to `false`, the `taplo` executable must be found in PATH or must be set in `evenBetterToml.taplo.path`.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": true
+        },
         "evenBetterToml.taplo.path": {
-          "description": "An absolute path to the `taplo` executable.",
+          "description": "An absolute path to the `taplo` executable. `evenBetterToml.taplo.bundled` needs to be set to `false` for this to have any effect.",
           "type": [
             "string",
             "null"
@@ -172,7 +178,7 @@
             "object"
           ],
           "scope": "resource",
-          "description": "Environment variables for the Taplo LSP executable.",
+          "description": "Environment variables for Taplo.",
           "additionalProperties": {
             "type": "string"
           },
@@ -184,7 +190,7 @@
             "null"
           ],
           "scope": "resource",
-          "description": "Additional arguments for the Taplo LSP executable.",
+          "description": "Additional arguments for Taplo. Has no effect for the bundled LSP.",
           "items": {
             "type": "string"
           },
@@ -272,25 +278,29 @@
   "main": "./dist/extension.js",
   "scripts": {
     "build:syntax": "ts-node src/syntax/index.ts",
-    "vscode:prepublish": "yarn --ignore-engines build",
-    "build": "yarn --ignore-engines rollup --silent -c rollup.config.js"
+    "vscode:prepublish": "yarn build",
+    "build": "rm -rf dist && rollup -c rollup.config.js"
   },
   "dependencies": {
-    "deep-equal": "^2.0.4",
+    "@taplo/lsp": "^0.3.0-alpha.4",
+    "deep-equal": "^2.0.5",
     "encoding": "^0.1.13",
-    "vscode-languageclient": "^7.0.0",
+    "fast-glob": "^3.2.11",
+    "node-fetch": "^3.2.6",
+    "vscode-languageclient": "^8.0.1",
     "which": "^2.0.2"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^16.0.0",
-    "@rollup/plugin-node-resolve": "^10.0.0",
+    "@rollup/plugin-commonjs": "^22.0.0",
+    "@rollup/plugin-node-resolve": "^13.3.0",
     "@types/deep-equal": "^1.0.1",
-    "@types/node": "^12.12.0",
-    "@types/vscode": "^1.44.0",
+    "@types/node": "^17.0.42",
+    "@types/vscode": "^1.68.0",
     "@types/which": "^2.0.1",
-    "rollup": "^2.33.1",
-    "rollup-plugin-typescript2": "^0.29.0",
-    "ts-node": "^8.10.2",
-    "typescript": "^4.0.5"
+    "rollup": "^2.75.6",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-typescript2": "^0.32.1",
+    "ts-node": "^10.8.1",
+    "typescript": "^4.7.3"
   }
 }

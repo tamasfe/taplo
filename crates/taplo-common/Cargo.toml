@@ -35,14 +35,20 @@ tap = "1.0.1"
 taplo = { version = "0.8.0", path = "../taplo", features = ["schema"] }
 thiserror = "1.0.30"
 time = { version = "0.3.7", features = ["serde"] }
-tokio = { version = "1.16.1", features = [
+tracing = "0.1.29"
+tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
+url = { version = "2.2.2", features = ["serde"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1.19.2", features = [
     "sync",
     "fs",
     "time",
     "io-std",
     "parking_lot",
 ] }
-tracing = "0.1.29"
-url = { version = "2.2.2", features = ["serde"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tokio = { version = "1.19.2", features = ["sync", "parking_lot", "io-util"] }
 
 [features]

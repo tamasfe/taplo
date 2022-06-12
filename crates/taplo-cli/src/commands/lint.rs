@@ -60,14 +60,14 @@ impl<E: Environment> Taplo<E> {
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(skip_all)]
     async fn lint_stdin(&self, _cmd: LintCommand) -> Result<(), anyhow::Error> {
         let mut source = String::new();
         self.env.stdin().read_to_string(&mut source).await?;
         self.lint_source("-", &source).await
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(skip_all)]
     async fn lint_files(&mut self, cmd: LintCommand) -> Result<(), anyhow::Error> {
         let config = self.load_config(&cmd.general).await?;
 
@@ -93,7 +93,7 @@ impl<E: Environment> Taplo<E> {
     }
 
     async fn lint_file(&self, file: &Path) -> Result<(), anyhow::Error> {
-        let source = self.env.read_file(&file).await?;
+        let source = self.env.read_file(file).await?;
         let source = String::from_utf8(source)?;
         self.lint_source(&*file.to_string_lossy(), &source).await
     }

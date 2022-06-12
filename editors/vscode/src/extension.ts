@@ -3,16 +3,7 @@ import * as client from "vscode-languageclient/node";
 import { registerCommands } from "./commands";
 import { createClient } from "./client";
 import { syncExtensionSchemas } from "./tomlValidation";
-
-let output: vscode.OutputChannel;
-
-export function getOutput(): vscode.OutputChannel {
-  if (!output) {
-    output = vscode.window.createOutputChannel("Even Better TOML");
-  }
-
-  return output;
-}
+import { getOutput } from "./util";
 
 export async function activate(context: vscode.ExtensionContext) {
   const schemaIndicator = vscode.window.createStatusBarItem(
@@ -25,9 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
   schemaIndicator.command = "evenBetterToml.selectSchema";
 
   const c = await createClient(context);
-  context.subscriptions.push(c.start());
-
-  await c.onReady();
+  await c.start();
 
   if (vscode.window.activeTextEditor?.document.languageId === "toml") {
     schemaIndicator.show();
@@ -37,7 +26,7 @@ export async function activate(context: vscode.ExtensionContext) {
   syncExtensionSchemas(context, c);
 
   context.subscriptions.push(
-    output,
+    getOutput(),
     schemaIndicator,
     c.onNotification("taplo/messageWithOutput", async params =>
       showMessage(params, c)

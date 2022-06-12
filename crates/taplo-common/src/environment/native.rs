@@ -1,8 +1,9 @@
+use std::path::Path;
+
 use crate::config::CONFIG_FILE_NAMES;
 
 use super::Environment;
 use async_trait::async_trait;
-use futures::{future::LocalBoxFuture, FutureExt};
 use time::OffsetDateTime;
 
 #[derive(Clone)]
@@ -35,22 +36,12 @@ impl Environment for NativeEnvironment {
         OffsetDateTime::now_utc()
     }
 
-    fn spawn<F>(&self, fut: F) -> LocalBoxFuture<'static, F::Output>
+    fn spawn<F>(&self, fut: F)
     where
         F: futures::Future + Send + 'static,
         F::Output: Send,
     {
-        let handle = self.handle.spawn(fut);
-        { async move { handle.await.unwrap() } }.boxed_local()
-    }
-
-    fn spawn_blocking<F, R>(&self, cb: F) -> LocalBoxFuture<'static, R>
-    where
-        F: FnOnce() -> R + Send + 'static,
-        R: Send + 'static,
-    {
-        let handle = self.handle.spawn_blocking(cb);
-        async move { handle.await.unwrap() }.boxed_local()
+        self.handle.spawn(fut);
     }
 
     fn spawn_local<F>(&self, fut: F)
@@ -91,10 +82,7 @@ impl Environment for NativeEnvironment {
         Ok(paths.filter_map(Result::ok).collect())
     }
 
-    async fn read_file(
-        &self,
-        path: impl AsRef<std::path::Path> + 'async_trait,
-    ) -> Result<Vec<u8>, anyhow::Error> {
+    async fn read_file(&self, path: &Path) -> Result<Vec<u8>, anyhow::Error> {
         Ok(tokio::fs::read(path).await?)
     }
 
@@ -114,11 +102,8 @@ impl Environment for NativeEnvironment {
         std::env::current_dir().ok()
     }
 
-    async fn find_config_file(
-        &self,
-        from: impl AsRef<std::path::Path> + 'async_trait,
-    ) -> Option<std::path::PathBuf> {
-        let mut p = from.as_ref();
+    async fn find_config_file(&self, from: &Path) -> Option<std::path::PathBuf> {
+        let mut p = from;
 
         loop {
             if let Ok(mut dir) = tokio::fs::read_dir(p).await {

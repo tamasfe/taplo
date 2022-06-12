@@ -1,0 +1,33 @@
+{
+  "name": "@taplo/lib",
+  "version": "0.4.0-alpha.2",
+  "description": "A TOML linter and formatter and utility library.",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "yarn rollup --silent -c rollup.config.js",
+    "prepublish": "RELEASE=true yarn build"
+  },
+  "homepage": "https://taplo.tamasfe.dev",
+  "main": "dist/index.js",
+  "repository": "https://github.com/tamasfe/taplo",
+  "author": {
+    "name": "tamasfe",
+    "url": "https://github.com/tamasfe"
+  },
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "@taplo/core": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.41",
+    "@wasm-tool/rollup-plugin-rust": "^2.2.2",
+    "rollup": "^2.75.6",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-typescript2": "^0.32.1",
+    "tslib": "^2.0.3",
+    "typescript": "^4.7.3",
+    "@rollup/plugin-commonjs": "^22.0.0",
+    "@rollup/plugin-node-resolve": "^13.3.0"
+  }
+}

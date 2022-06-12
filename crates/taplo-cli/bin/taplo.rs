@@ -1,13 +1,25 @@
 use clap::StructOpt;
 use std::process::exit;
-use taplo_cli::{args::TaploArgs, log::setup_stderr_logging, Taplo};
-use taplo_common::environment::native::NativeEnvironment;
+use taplo_cli::{
+    args::{Colors, TaploArgs},
+    Taplo,
+};
+use taplo_common::{environment::native::NativeEnvironment, log::setup_stderr_logging};
 use tracing::Instrument;
 
 #[tokio::main]
 async fn main() {
     let cli = TaploArgs::parse();
-    setup_stderr_logging(NativeEnvironment::new(), &cli);
+    setup_stderr_logging(
+        NativeEnvironment::new(),
+        cli.log_spans,
+        cli.verbose,
+        match cli.colors {
+            Colors::Auto => None,
+            Colors::Always => Some(true),
+            Colors::Never => Some(false),
+        },
+    );
 
     match Taplo::new(NativeEnvironment::new())
         .execute(cli)

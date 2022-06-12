@@ -18,7 +18,7 @@ use taplo::{
 };
 use taplo_common::environment::Environment;
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn semantic_tokens<E: Environment>(
     context: Context<World<E>>,
     params: Params<SemanticTokensParams>,
@@ -66,7 +66,7 @@ impl TokenModifier {
     pub const MODIFIERS: &'static [SemanticTokenModifier] = &[SemanticTokenModifier::READONLY];
 }
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken> {
     let mut builder = SemanticTokensBuilder::new(mapper);
 

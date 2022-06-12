@@ -37,4 +37,3 @@ taplo-common = { version = "0.1.2", path = "../taplo-common" }
 time = { version = "0.3", features = ["formatting", "parsing"] }
 toml = "0.5"
 tracing = "0.1.29"
-

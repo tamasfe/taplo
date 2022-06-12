@@ -8,7 +8,7 @@ use lsp_types::{
 use taplo::dom::{KeyOrIndex, Node};
 use taplo_common::environment::Environment;
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn publish_diagnostics<E: Environment>(
     mut context: Context<World<E>>,
     ws_url: Url,
@@ -102,7 +102,7 @@ pub(crate) async fn publish_diagnostics<E: Environment>(
         .unwrap_or_else(|err| tracing::error!("{err}"));
 }
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn clear_diagnostics<E: Environment>(
     mut context: Context<World<E>>,
     document_url: Url,
@@ -117,7 +117,7 @@ pub(crate) async fn clear_diagnostics<E: Environment>(
         .unwrap_or_else(|err| tracing::error!("{}", err));
 }
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 fn collect_syntax_errors(doc: &DocumentState, diags: &mut Vec<Diagnostic>) {
     diags.extend(doc.parse.errors.iter().map(|e| {
         let range = doc.mapper.range(e.range).unwrap_or_default().into_lsp();
@@ -135,7 +135,7 @@ fn collect_syntax_errors(doc: &DocumentState, diags: &mut Vec<Diagnostic>) {
     }));
 }
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 fn collect_dom_errors(
     doc: &DocumentState,
     dom: &Node,
@@ -290,7 +290,7 @@ fn collect_dom_errors(
     }
 }
 
-#[tracing::instrument(level = "debug", skip_all, fields(%document_url))]
+#[tracing::instrument(skip_all, fields(%document_url))]
 async fn collect_schema_errors<E: Environment>(
     ws: &WorkspaceState<E>,
     doc: &DocumentState,

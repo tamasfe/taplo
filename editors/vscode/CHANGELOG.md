@@ -1,5 +1,20 @@
 # Change Log
 
+## next
+
+### Features
+
+- Support for `tomlValidation` for schemas.
+- Wide-range JSON schema support
+- Support for schema store
+- Support for multiple workspaces
+- It is now possible to specify schemas with either `#:schema <URL>` or `$schema = "<URL>"` in TOML files
+- Added rename feature that lets you rename keys that appear at multiple locations
+
+### Other
+
+- Almost a complete internal rewrite with various fixes and improvements. ([#211](https://github.com/tamasfe/taplo/pull/211))
+
 ## 0.14.3
 
 ### Fixes

@@ -16,7 +16,7 @@ impl<E: Environment> Taplo<E> {
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(skip_all)]
     async fn format_stdin(&mut self, cmd: FormatCommand) -> Result<(), anyhow::Error> {
         let mut source = String::new();
         self.env.stdin().read_to_string(&mut source).await?;
@@ -63,7 +63,7 @@ impl<E: Environment> Taplo<E> {
         Ok(())
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(skip_all)]
     async fn format_files(&mut self, cmd: FormatCommand) -> Result<(), anyhow::Error> {
         if cmd.stdin_filepath.is_some() {
             tracing::warn!("using `--stdin-filepath` has no effect unless input comes from stdin")

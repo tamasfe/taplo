@@ -59,7 +59,7 @@ impl<E: Environment> Schemas<E> {
 }
 
 impl<E: Environment> Schemas<E> {
-    #[tracing::instrument(level = "debug", skip_all, fields(%schema_url))]
+    #[tracing::instrument(skip_all, fields(%schema_url))]
     pub async fn validate_root(
         &self,
         schema_url: &Url,
@@ -73,7 +73,7 @@ impl<E: Environment> Schemas<E> {
             .collect::<Result<Vec<_>, _>>()
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(%schema_url))]
+    #[tracing::instrument(skip_all, fields(%schema_url))]
     pub async fn validate(
         &self,
         schema_url: &Url,
@@ -161,7 +161,7 @@ impl<E: Environment> Schemas<E> {
         drop(self.cache.store(schema_url.clone(), schema).await);
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(%schema_url))]
+    #[tracing::instrument(skip_all, fields(%schema_url))]
     pub async fn load_schema(&self, schema_url: &Url) -> Result<Arc<Value>, anyhow::Error> {
         if let Ok(s) = self.cache.load(schema_url, false).await {
             tracing::debug!(%schema_url, "schema was found in cache");
@@ -255,7 +255,8 @@ impl<E: Environment> Schemas<E> {
                     .read_file(
                         self.env
                             .to_file_path(schema_url)
-                            .ok_or_else(|| anyhow!("invalid file path"))?,
+                            .ok_or_else(|| anyhow!("invalid file path"))?
+                            .as_ref(),
                     )
                     .await?,
             )?),
@@ -265,7 +266,7 @@ impl<E: Environment> Schemas<E> {
 }
 
 impl<E: Environment> Schemas<E> {
-    #[tracing::instrument(level = "debug", skip_all, fields(%schema_url, %path))]
+    #[tracing::instrument(skip_all, fields(%schema_url, %path))]
     pub async fn schemas_at_path(
         &self,
         schema_url: &Url,
@@ -292,7 +293,7 @@ impl<E: Environment> Schemas<E> {
         Ok(schemas)
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(%path))]
+    #[tracing::instrument(skip_all, fields(%path))]
     #[async_recursion(?Send)]
     #[must_use]
     async fn collect_schemas(
@@ -431,7 +432,7 @@ impl<E: Environment> Schemas<E> {
         Ok(())
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(%schema_url, %path))]
+    #[tracing::instrument(skip_all, fields(%schema_url, %path))]
     pub async fn possible_schemas_from(
         &self,
         schema_url: &Url,

@@ -339,10 +339,7 @@ impl Rule {
     pub fn is_included(&self, path: &Path) -> bool {
         match &self.file_rule {
             Some(r) => r.is_match(path),
-            None => {
-                tracing::warn!("no file matches were set up");
-                false
-            }
+            None => true,
         }
     }
 }

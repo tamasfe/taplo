@@ -18,7 +18,7 @@ use taplo_common::environment::Environment;
 
 use crate::world::World;
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 pub(crate) async fn folding_ranges<E: Environment>(
     context: Context<World<E>>,
     params: Params<FoldingRangeParams>,
@@ -35,7 +35,7 @@ pub(crate) async fn folding_ranges<E: Environment>(
     )))
 }
 
-#[tracing::instrument(level = "debug", skip_all)]
+#[tracing::instrument(skip_all)]
 pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<FoldingRange> {
     let mut folding_ranges = Vec::with_capacity(20);
 

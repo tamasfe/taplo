@@ -1,17 +1,14 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-    time::Duration,
-};
-
 use anyhow::{anyhow, Context};
 use args::GeneralArgs;
 use itertools::Itertools;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use taplo_common::{config::Config, environment::Environment, schema::Schemas};
 
 pub mod args;
 pub mod commands;
-pub mod log;
 pub mod printing;
 
 pub struct Taplo<E: Environment> {
@@ -23,10 +20,14 @@ pub struct Taplo<E: Environment> {
 
 impl<E: Environment> Taplo<E> {
     pub fn new(env: E) -> Self {
+        #[cfg(not(target_arch = "wasm32"))]
         let http = reqwest::Client::builder()
-            .timeout(Duration::from_secs(5))
+            .timeout(std::time::Duration::from_secs(5))
             .build()
             .unwrap();
+
+        #[cfg(target_arch = "wasm32")]
+        let http = reqwest::Client::default();
 
         Self {
             schemas: Schemas::new(env.clone(), http),
@@ -36,7 +37,7 @@ impl<E: Environment> Taplo<E> {
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(skip_all)]
     async fn load_config(&mut self, general: &GeneralArgs) -> Result<Arc<Config>, anyhow::Error> {
         if let Some(c) = self.config.clone() {
             return Ok(c);
@@ -53,7 +54,7 @@ impl<E: Environment> Taplo<E> {
         let mut config = Config::default();
         if let Some(c) = config_path {
             tracing::info!(path = ?c, "found configuration file");
-            match self.env.read_file(c).await {
+            match self.env.read_file(&c).await {
                 Ok(cfg) => match toml::from_slice(&cfg) {
                     Ok(c) => config = c,
                     Err(error) => {
@@ -83,7 +84,7 @@ impl<E: Environment> Taplo<E> {
         Ok(c)
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(?cwd))]
+    #[tracing::instrument(skip_all, fields(?cwd))]
     async fn collect_files(
         &self,
         cwd: &Path,

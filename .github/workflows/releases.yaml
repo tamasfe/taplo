@@ -3,59 +3,159 @@ name: Releases
 on:
   workflow_dispatch: {}
   push:
-    branches:
-      - master
     tags:
       - release-*
 
 jobs:
-  publish_crates:
-    name: Publish Crates
+  wait_for_ci:
+    name: Wait for CI Workflow
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix:
-        crate:
-          [
-            "crates/taplo",
-            "crates/taplo-common",
-            "crates/lsp-async-stub",
-            "crates/taplo-lsp",
-            "crates/taplo-cli",
-          ]
     steps:
-      - uses: actions/checkout@v2
+      - name: Wait for CI
+        uses: lewagon/wait-on-check-action@v1.0.0
+        with:
+          ref: ${{ github.ref }}
+          check-name: "CI"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+
+  cargo_publish_taplo:
+    name: Cargo publish taplo
+    runs-on: ubuntu-latest
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-taplo-')
+    steps:
+      - uses: actions/checkout@v3
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
           path: ~/.cargo/registry
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
-          override: true
+      - uses: Swatinem/rust-cache@v1
       - name: Publish to Crates.io
-        run: cargo publish --allow-dirty --token $CRATES_IO_TOKEN
-        working-directory: ${{ matrix.crate }}
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_wait_seconds: 60
+          command: cd crates/taplo && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
+  cargo_publish_taplo_cli:
+    name: Cargo publish taplo-cli
+    runs-on: ubuntu-latest
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-taplo-cli-')
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Publish to Crates.io
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_wait_seconds: 60
+          command: cd crates/taplo-cli && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  cargo_publish_taplo_common:
+    name: Cargo publish taplo-common
+    runs-on: ubuntu-latest
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-taplo-common-')
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Publish to Crates.io
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_wait_seconds: 60
+          command: cd crates/taplo-common && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  cargo_publish_taplo_lsp:
+    name: Cargo publish taplo-lsp
+    runs-on: ubuntu-latest
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-taplo-lsp-')
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Publish to Crates.io
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_wait_seconds: 60
+          command: cd crates/taplo-lsp && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  cargo_publish_lsp_async_stub:
+    name: Cargo publish taplo-common
+    runs-on: ubuntu-latest
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-lsp-async-stub-')
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Publish to Crates.io
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_wait_seconds: 60
+          command: cd crates/lsp-async-stub && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+  
   cli_binaries:
-    name: Publish and release Taplo CLI
+    name: Publish and release Taplo CLI binaries
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/release-cli-')
     strategy:
       fail-fast: false
@@ -80,24 +180,7 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
- 
-      - name: Cache cargo registry
-        uses: actions/cache@v2
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v2
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo build
-        uses: actions/cache@v2
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
+        uses: actions/checkout@v3
       - name: Retrieve release version
         run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-cli-})" >> $GITHUB_ENV
 
@@ -112,23 +195,22 @@ jobs:
           profile: minimal
           toolchain: stable
           target: ${{ matrix.target }}
-          override: true
 
-      - name: Build full binary 
+      - name: Build full binary
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --bin taplo --features "toml-test" --target=${{ matrix.target }}
+          args: --release --bin taplo --features "toml-test lsp" --target=${{ matrix.target }}
 
       - name: Rename full binary
         run: |
           mv target/${{ matrix.target }}/release/taplo target/${{ matrix.target }}/release/taplo-full
 
-      - name: Build default binary 
+      - name: Build default binary
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --bin taplo --no-default-features --target=${{ matrix.target }}
+          args: --release --bin taplo --target=${{ matrix.target }}
 
       - name: Package
         shell: bash

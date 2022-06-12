@@ -22,7 +22,7 @@ figment = { version = "0.10.6", features = ["json"] }
 futures = "0.3.5"
 indexmap = { version = "1.6", features = ["serde"] }
 itertools = "0.10.3"
-lsp-async-stub = { version = "0.5.0", path = "../lsp-async-stub" }
+lsp-async-stub = { version = "0.6.0", path = "../lsp-async-stub" }
 lsp-types = { version = "0.93.0", features = ["proposed"] }
 once_cell = "1.5"
 parking_lot = "0.12.0"
@@ -32,8 +32,8 @@ schemars = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 tap = "1.0.1"
-taplo = { version = "0.8.0", path = "../taplo", features = ["serde"] }
-taplo-common = { version = "0.1.2", path = "../taplo-common" }
+taplo = { version = "0.9.0", path = "../taplo", features = ["serde"] }
+taplo-common = { version = "0.2.0", path = "../taplo-common" }
 time = { version = "0.3", features = ["formatting", "parsing"] }
 toml = "0.5"
 tracing = "0.1.29"

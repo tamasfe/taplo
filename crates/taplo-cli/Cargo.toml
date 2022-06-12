@@ -4,7 +4,7 @@ description = "A CLI for Taplo TOML toolkit"
 license = "MIT"
 edition = "2021"
 name = "taplo-cli"
-version = "0.6.3"
+version = "0.6.4"
 homepage = "https://taplo.tamasfe.dev"
 repository = "https://github.com/tamasfe/taplo"
 categories = ["development-tools", "command-line-utilities"]
@@ -30,8 +30,8 @@ reqwest = { version = "0.11.4", features = ["json"] }
 schemars = "0.8"
 serde = "1"
 serde_json = "1"
-taplo = { version = "0.8.0", path = "../taplo", features = ["serde"] }
-taplo-common = { version = "0.1.2", path = "../taplo-common" }
+taplo = { version = "0.9.0", path = "../taplo", features = ["serde"] }
+taplo-common = { version = "0.2.0", path = "../taplo-common" }
 taplo-lsp = { version = "0.3.0", path = "../taplo-lsp", optional = true }
 time = { version = "0.3", features = ["parsing"] }
 toml = "0.5"
@@ -49,14 +49,16 @@ tokio = { version = "1.19.2", features = [
     "rt-multi-thread",
     "parking_lot",
 ] }
-lsp-async-stub = { version = "0.5.0", path = "../lsp-async-stub", features = [
+lsp-async-stub = { version = "0.6.0", path = "../lsp-async-stub", features = [
     "tokio-tcp",
     "tokio-stdio",
 ] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 tokio = { version = "1.19.2", features = ["sync", "parking_lot", "io-util"] }
-lsp-async-stub = { version = "0.5.0", path = "../lsp-async-stub" }
+
+[package.metadata.auto-tag]
+enabled = true
 
 [[bin]]
 name = "taplo"

@@ -9,7 +9,7 @@ license = "MIT"
 name = "taplo"
 readme = false
 repository = "https://github.com/tamasfe/taplo"
-version = "0.8.1"
+version = "0.9.0"
 
 [features]
 default = ["serde"]
@@ -17,17 +17,17 @@ schema = ["schemars"]
 
 [dependencies]
 ahash = "0.7.6"
+arc-swap = "1.5.0"
 either = "1.6.1"
+globset = { version = "0.4.8" }
 itertools = "0.10.3"
 logos = "0.12.0"
 once_cell = "1.9.0"
 rowan = "0.15.3"
+serde_json = "1.0.79"
 thiserror = "1.0.30"
 time = { version = "0.3.3", features = ["parsing", "formatting", "macros"] }
 tracing = "0.1.30"
-arc-swap = "1.5.0"
-serde_json = "1.0.79"
-globset = { version = "0.4.8" }
 
 schemars = { version = "0.8.3", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
@@ -42,6 +42,9 @@ toml = "0.5"
 
 [package.metadata.docs.rs]
 features = ["serde", "schema"]
+
+[package.metadata.auto-tag]
+enabled = true
 
 [[bench]]
 name = "taplo"

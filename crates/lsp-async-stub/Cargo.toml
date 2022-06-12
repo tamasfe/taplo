@@ -3,7 +3,7 @@ authors = ["tamasfe"]
 description = "An LSP server stub for futures"
 edition = "2021"
 name = "lsp-async-stub"
-version = "0.5.0"
+version = "0.6.0"
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -29,10 +29,7 @@ tokio-stdio = [
     "tokio/io-std",
     "tokio/macros",
 ]
-tokio-tcp = [
-    "tokio",
-    "tokio/rt",
-    "tokio/io-util",
-    "tokio/net",
-    "tokio/macros",
-]
+tokio-tcp = ["tokio", "tokio/rt", "tokio/io-util", "tokio/net", "tokio/macros"]
+
+[package.metadata.auto-tag]
+enabled = true

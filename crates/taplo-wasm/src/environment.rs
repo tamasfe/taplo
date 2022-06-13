@@ -298,7 +298,7 @@ impl Environment for WasmEnvironment {
             .js_glob_files
             .call1(&this, &JsValue::from_str(glob))
             .unwrap();
-        serde_wasm_bindgen::from_value(res).map_err(|err| anyhow!("{err}"))
+        res.into_serde().map_err(|err| anyhow!("{err}"))
     }
 
     async fn read_file(&self, path: &Path) -> Result<Vec<u8>, anyhow::Error> {
@@ -321,12 +321,11 @@ impl Environment for WasmEnvironment {
             .call2(&this, &path_str, &JsValue::from(Uint8Array::from(bytes)))
             .unwrap();
 
-        Ok(serde_wasm_bindgen::from_value(
-            JsFuture::from(Promise::from(res))
-                .await
-                .map_err(|err| anyhow!("{:?}", err))?,
-        )
-        .map_err(|err| anyhow!("{err}"))?)
+        Ok(JsFuture::from(Promise::from(res))
+            .await
+            .map_err(|err| anyhow!("{:?}", err))?
+            .into_serde()
+            .map_err(|err| anyhow!("{err}"))?)
     }
 
     fn to_file_path(&self, url: &Url) -> Option<std::path::PathBuf> {

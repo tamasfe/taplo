@@ -18,7 +18,7 @@ futures = "0.3.19"
 glob = "0.3.0"
 globset = "0.4.8"
 hex = "0.4.3"
-indexmap = { version = "1.8.0", features = ["serde", "rayon"] }
+indexmap = { version = "1.6.0", features = ["serde", "rayon"] }
 itertools = "0.10.3"
 json_value_merge = "1.1.2"
 jsonschema = { version = "0.16.0", default-features = false }

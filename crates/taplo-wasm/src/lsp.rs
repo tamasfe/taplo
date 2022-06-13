@@ -17,7 +17,7 @@ pub struct TaploWasmLsp {
 #[wasm_bindgen]
 impl TaploWasmLsp {
     pub fn send(&self, message: JsValue) -> Result<(), JsError> {
-        let message: lsp_async_stub::rpc::Message = serde_wasm_bindgen::from_value(message)?;
+        let message: lsp_async_stub::rpc::Message = message.into_serde()?;
         let world = self.world.clone();
         let writer = self.lsp_interface.clone();
 
@@ -41,7 +41,7 @@ pub(crate) struct WasmLspInterface {
 impl From<JsValue> for WasmLspInterface {
     fn from(val: JsValue) -> Self {
         Self {
-            js_on_message: js_sys::Reflect::get(&val, &JsValue::from_str("js_now"))
+            js_on_message: js_sys::Reflect::get(&val, &JsValue::from_str("js_on_message"))
                 .unwrap()
                 .into(),
         }
@@ -64,7 +64,7 @@ impl Sink<rpc::Message> for WasmLspInterface {
     ) -> Result<(), Self::Error> {
         let this = JsValue::null();
         self.js_on_message
-            .call1(&this, &serde_wasm_bindgen::to_value(&message).unwrap())
+            .call1(&this, &JsValue::from_serde(&message).unwrap())
             .unwrap();
         Ok(())
     }

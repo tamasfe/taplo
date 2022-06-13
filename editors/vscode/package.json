@@ -282,7 +282,7 @@
     "build": "rm -rf dist && rollup -c rollup.config.js"
   },
   "dependencies": {
-    "@taplo/lsp": "^0.3.0-alpha.4",
+    "@taplo/lsp": "^0.3.0-alpha.5",
     "deep-equal": "^2.0.5",
     "encoding": "^0.1.13",
     "fast-glob": "^3.2.11",

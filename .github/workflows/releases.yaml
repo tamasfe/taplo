@@ -43,7 +43,7 @@ jobs:
         uses: nick-fields/retry@v2
         with:
           max_attempts: 3
-          retry_wait_seconds: 60
+          retry_wait_seconds: 300
           timeout_minutes: 60
           command: cd crates/taplo && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
@@ -71,7 +71,7 @@ jobs:
         uses: nick-fields/retry@v2
         with:
           max_attempts: 3
-          retry_wait_seconds: 60
+          retry_wait_seconds: 300
           timeout_minutes: 60
           command: cd crates/taplo-cli && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
@@ -99,7 +99,7 @@ jobs:
         uses: nick-fields/retry@v2
         with:
           max_attempts: 3
-          retry_wait_seconds: 60
+          retry_wait_seconds: 300
           timeout_minutes: 60
           command: cd crates/taplo-common && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
@@ -127,7 +127,7 @@ jobs:
         uses: nick-fields/retry@v2
         with:
           max_attempts: 3
-          retry_wait_seconds: 60
+          retry_wait_seconds: 300
           timeout_minutes: 60
           command: cd crates/taplo-lsp && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
@@ -155,7 +155,7 @@ jobs:
         uses: nick-fields/retry@v2
         with:
           max_attempts: 3
-          retry_wait_seconds: 60
+          retry_wait_seconds: 300
           timeout_minutes: 60
           command: cd crates/lsp-async-stub && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:

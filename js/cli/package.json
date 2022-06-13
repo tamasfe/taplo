@@ -16,6 +16,9 @@
     "url": "https://github.com/tamasfe"
   },
   "license": "MIT",
+  "autoTag": {
+    "enabled": true
+  },
   "devDependencies": {
     "@taplo/core": "^0.1.0",
     "@rollup/plugin-commonjs": "^22.0.0",

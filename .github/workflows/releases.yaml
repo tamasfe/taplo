@@ -28,11 +28,6 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-0')
     steps:
       - uses: actions/checkout@v3
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -56,11 +51,6 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
     steps:
       - uses: actions/checkout@v3
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -84,11 +74,6 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-common-0')
     steps:
       - uses: actions/checkout@v3
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -112,11 +97,6 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-lsp-0')
     steps:
       - uses: actions/checkout@v3
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -140,11 +120,6 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-lsp-async-stub-0')
     steps:
       - uses: actions/checkout@v3
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -160,10 +135,94 @@ jobs:
           command: cd crates/lsp-async-stub && cargo publish --allow-dirty --token $CRATES_IO_TOKEN
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-  
+
+  npm_publish_taplo_core:
+    name: NPM publish @taplo/core
+    runs-on: ubuntu-latest
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__core-0')
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: yarn
+          registry-url: "https://registry.npmjs.org"
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Publish to Crates.io
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_wait_seconds: 300
+          timeout_minutes: 60
+          command: cd js/core && yarn install && yarn npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  npm_publish_taplo_lsp:
+    name: NPM publish @taplo/lsp
+    runs-on: ubuntu-latest
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__lsp-0')
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: yarn
+          registry-url: "https://registry.npmjs.org"
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Publish to Crates.io
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_wait_seconds: 300
+          timeout_minutes: 60
+          command: cd js/lsp && yarn install && yarn npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  npm_publish_taplo_lib:
+    name: NPM publish @taplo/lib
+    runs-on: ubuntu-latest
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__lib-0')
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: yarn
+          registry-url: "https://registry.npmjs.org"
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Publish to Crates.io
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_wait_seconds: 300
+          timeout_minutes: 60
+          command: cd js/lib && yarn install && yarn npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   cli_binaries:
     name: Publish and release Taplo CLI binaries
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-cli-0')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
     strategy:
       fail-fast: false
       matrix:
@@ -189,7 +248,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Retrieve release version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-cli-})" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-taplo-cli-})" >> $GITHUB_ENV
 
       - name: Install dependencies
         if: ${{ matrix.target == 'x86_64-pc-windows-gnu' }}

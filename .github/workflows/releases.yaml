@@ -160,7 +160,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 300
           timeout_minutes: 60
-          command: cd js/core && yarn install && yarn npm publish
+          command: cd js/core && yarn install && yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -188,7 +188,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 300
           timeout_minutes: 60
-          command: cd js/cli && yarn install && yarn npm publish
+          command: cd js/cli && yarn install && yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -216,7 +216,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 300
           timeout_minutes: 60
-          command: cd js/lsp && yarn install && yarn npm publish
+          command: cd js/lsp && yarn install && yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -244,7 +244,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 300
           timeout_minutes: 60
-          command: cd js/lib && yarn install && yarn npm publish
+          command: cd js/lib && yarn install && yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

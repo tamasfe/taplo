@@ -282,12 +282,12 @@
     "build": "rm -rf dist && rollup -c rollup.config.js"
   },
   "dependencies": {
-    "@taplo/lsp": "^0.3.0-alpha.5",
+    "@taplo/lsp": "^0.3.0-alpha.6",
     "deep-equal": "^2.0.5",
     "encoding": "^0.1.13",
     "fast-glob": "^3.2.11",
     "node-fetch": "^3.2.6",
-    "vscode-languageclient": "^8.0.1",
+    "vscode-languageclient": "8.0.2-next.5",
     "which": "^2.0.2"
   },
   "devDependencies": {

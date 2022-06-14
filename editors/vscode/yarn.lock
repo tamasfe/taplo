@@ -220,12 +220,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@taplo/lsp@npm:^0.3.0-alpha.5":
-  version: 0.3.0-alpha.5
-  resolution: "@taplo/lsp@npm:0.3.0-alpha.5"
+"@taplo/lsp@npm:^0.3.0-alpha.6":
+  version: 0.3.0-alpha.6
+  resolution: "@taplo/lsp@npm:0.3.0-alpha.6"
   dependencies:
     "@taplo/core": ^0.1.0
-  checksum: 7f40e83c82e7295b9fa86a11b63e00c15933fd1864d9e777cb2d8fc8b9c4e0df98c3a9d5ce678e0a194ba0759a534205b277870017d96f956205ca298db3e7d7
+  checksum: 19ffc5dd1033c582554b28b0c656a198fb0b4bf45f44b02bb8ce1f5c9ffd6e16e06580538e4f4b4a2edd370b05e817c261c3ba514ca03c93c6c8734bb5dfa670
   languageName: node
   linkType: hard
 
@@ -788,7 +788,7 @@ __metadata:
   dependencies:
     "@rollup/plugin-commonjs": ^22.0.0
     "@rollup/plugin-node-resolve": ^13.3.0
-    "@taplo/lsp": ^0.3.0-alpha.5
+    "@taplo/lsp": ^0.3.0-alpha.6
     "@types/deep-equal": ^1.0.1
     "@types/node": ^17.0.42
     "@types/vscode": ^1.68.0
@@ -802,7 +802,7 @@ __metadata:
     rollup-plugin-typescript2: ^0.32.1
     ts-node: ^10.8.1
     typescript: ^4.7.3
-    vscode-languageclient: ^8.0.1
+    vscode-languageclient: 8.0.2-next.5
     which: ^2.0.2
   languageName: unknown
   linkType: soft
@@ -2352,38 +2352,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-jsonrpc@npm:8.0.1":
-  version: 8.0.1
-  resolution: "vscode-jsonrpc@npm:8.0.1"
-  checksum: bf88444bf7523614c799fe66f9576a5610d98632d5fe2745beb49bd1c2d8dafe801a1c047fea0c9f10aec2c5fa568863b4bb0048dba09b00ba58ebb727544468
+"vscode-jsonrpc@npm:8.0.2-next.1":
+  version: 8.0.2-next.1
+  resolution: "vscode-jsonrpc@npm:8.0.2-next.1"
+  checksum: ca39484ee226d2b5d2d3dbfb318551756581f9ad317b8a0371d85b83f855b8dfd797b43780959ee305d7bf1ac91981d6b2a2fb05830e37026353c6f558fe236f
   languageName: node
   linkType: hard
 
-"vscode-languageclient@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "vscode-languageclient@npm:8.0.1"
+"vscode-languageclient@npm:8.0.2-next.5":
+  version: 8.0.2-next.5
+  resolution: "vscode-languageclient@npm:8.0.2-next.5"
   dependencies:
     minimatch: ^3.0.4
     semver: ^7.3.5
-    vscode-languageserver-protocol: 3.17.1
-  checksum: 52c9fd7108a0b36f49352986ba67e28fde9e14321b27ae121688a3b35378fce4157f866d0560f77743840f99617d342495f5d99ae91c702d0818b9ae20ddb14d
+    vscode-languageserver-protocol: 3.17.2-next.6
+  checksum: be6ec056065ba1921cb932948e6dafec32b83133028325f2d6c47dfe57c0cce160d03ea3a5a29d5e2c078696ec1a9770d144a3f300cb35724b68b3796404dbdc
   languageName: node
   linkType: hard
 
-"vscode-languageserver-protocol@npm:3.17.1":
-  version: 3.17.1
-  resolution: "vscode-languageserver-protocol@npm:3.17.1"
+"vscode-languageserver-protocol@npm:3.17.2-next.6":
+  version: 3.17.2-next.6
+  resolution: "vscode-languageserver-protocol@npm:3.17.2-next.6"
   dependencies:
-    vscode-jsonrpc: 8.0.1
-    vscode-languageserver-types: 3.17.1
-  checksum: e1dd28e7dc7bbcfececd56ace1f271eadf70b014e4bc091e04c509324a68a005f3515eb77611c507bf9193f9dbf0f0e04d723349cbc8c6827e844ae701f465ee
+    vscode-jsonrpc: 8.0.2-next.1
+    vscode-languageserver-types: 3.17.2-next.2
+  checksum: f214d6933e7496649037d3f18f29c21860f1f14465d0a5483059b4222b725d71232f14466a32c4e86d800854122fadff82999341d659a2b4b6e997f9163d1bb7
   languageName: node
   linkType: hard
 
-"vscode-languageserver-types@npm:3.17.1":
-  version: 3.17.1
-  resolution: "vscode-languageserver-types@npm:3.17.1"
-  checksum: ceb4145dfd840e026a51a6059af6ca2ced606763d945ab24851b1871bf8614f12e7f6fdb1f865ba6ea26f62db066ef188b183b1c830e0f38f28e08b584136464
+"vscode-languageserver-types@npm:3.17.2-next.2":
+  version: 3.17.2-next.2
+  resolution: "vscode-languageserver-types@npm:3.17.2-next.2"
+  checksum: 6f6318a32fbad7e2bc9745665f4fddedcadd8aa685309577120ff98833f88926c9ecd8c118b209d34468cdb6bccbdf83105d22913e69198b4f7edf4200fd9a64
   languageName: node
   linkType: hard
 

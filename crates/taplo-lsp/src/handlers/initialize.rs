@@ -50,10 +50,6 @@ pub async fn initialize<E: Environment>(
         }
     }
 
-    context
-        .env
-        .spawn_local(update_configuration(context.clone()));
-
     Ok(InitializeResult {
         capabilities: ServerCapabilities {
             workspace: Some(WorkspaceServerCapabilities {
@@ -113,8 +109,10 @@ pub async fn initialize<E: Environment>(
 
 #[tracing::instrument(skip_all)]
 pub async fn initialized<E: Environment>(
-    _context: Context<World<E>>,
+    context: Context<World<E>>,
     _params: Params<InitializedParams>,
 ) {
-    // stub to silence warnings.
+    context
+        .env
+        .spawn_local(update_configuration(context.clone()));
 }

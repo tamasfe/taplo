@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.15.1
+
+### Fixes
+
+- Fixed default formatting options.
+
 ## 0.15.0
 
 ### Features

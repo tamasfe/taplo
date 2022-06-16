@@ -2,7 +2,7 @@
   "name": "even-better-toml",
   "displayName": "Even Better TOML",
   "description": "Fully-featured TOML support",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "autoTag": {
     "enabled": true
   },
@@ -277,142 +277,97 @@
         },
         "evenBetterToml.formatter.alignEntries": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Align entries vertically. Entries that have table headers, comments, or blank lines between them are not aligned."
         },
         "evenBetterToml.formatter.alignComments": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Align consecutive comments after entries and items vertically. This applies to comments that are after entries or array items"
         },
         "evenBetterToml.formatter.arrayTrailingComma": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Put trailing commas for multiline arrays."
         },
         "evenBetterToml.formatter.arrayAutoExpand": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Automatically expand arrays to multiple lines"
         },
         "evenBetterToml.formatter.arrayAutoCollapse": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Automatically collapse arrays if they fit in one line."
         },
         "evenBetterToml.formatter.compactArrays": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Omit whitespace padding inside single-line arrays."
         },
         "evenBetterToml.formatter.compactInlineTables": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Omit whitespace padding inside inline tables."
         },
         "evenBetterToml.formatter.compactEntries": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Omit whitespace around `=`."
         },
         "evenBetterToml.formatter.columnWidth": {
           "scope": "resource",
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": "boolean",
+          "default": null,
           "description": "Target maximum column width after which arrays are expanded into new lines."
         },
         "evenBetterToml.formatter.indentTables": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Indent subtables if they come in order."
         },
         "evenBetterToml.formatter.indentEntries": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Indent entries under tables."
         },
         "evenBetterToml.formatter.indentString": {
           "scope": "resource",
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": "string",
+          "default": null,
           "description": "Indentation to use, should be tabs or spaces but technically could be anything."
         },
         "evenBetterToml.formatter.trailingNewline": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Add trailing newline to the source."
         },
         "evenBetterToml.formatter.reorderKeys": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Alphabetically reorder keys that are not separated by blank lines."
         },
         "evenBetterToml.formatter.allowedBlankLines": {
           "scope": "resource",
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": "boolean",
+          "default": null,
           "description": "The maximum amount of consecutive blank lines allowed."
         },
         "evenBetterToml.formatter.crlf": {
           "scope": "resource",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": null,
           "description": "Use CRLF line endings."
         }

@@ -32,5 +32,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site/.vitepress/dest
+          publish_dir: ./site/site/.vitepress/dist
           cname: taplo.tamasfe.dev

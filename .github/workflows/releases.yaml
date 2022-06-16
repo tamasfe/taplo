@@ -254,6 +254,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Retrieve release version
+        id: version
         run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-taplo-cli-})" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -271,7 +272,7 @@ jobs:
           context: "."
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: tamasfe/taplo:latest,tamasfe/taplo:{{ env.RELEASE_VERSION }},tamasfe/taplo:{{ env.RELEASE_VERSION }}-alpine
+          tags: tamasfe/taplo:latest,tamasfe/taplo:${{ env.RELEASE_VERSION }},tamasfe/taplo:${{ env.RELEASE_VERSION }}-alpine
       - name: Build and push CLI Full alpine
         uses: docker/build-push-action@v3
         with:
@@ -279,7 +280,7 @@ jobs:
           context: "."
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: tamasfe/taplo:full,tamasfe/taplo:{{ env.RELEASE_VERSION }}-full,tamasfe/taplo:{{ env.RELEASE_VERSION }}-full-alpine
+          tags: tamasfe/taplo:full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full-alpine
       - name: Update repo description
         uses: peter-evans/dockerhub-description@v2
         with:
@@ -367,7 +368,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref }}
-          name: Taplo CLI ${{ env.RELEASE_VERSION }}
+          name: Taplo CLI $${{ env.RELEASE_VERSION }}
           # Only for merging three releases
           draft: true
           prerelease: false

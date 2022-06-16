@@ -1,0 +1,81 @@
+{
+  "schemas": [
+    {
+      "title": "Cargo.toml",
+      "description": "A schema for Cargo.toml.",
+      "updated": "2022-05-31T15:58:42Z",
+      "url": "https://taplo.tamasfe.dev/schemas/Cargo.toml.json",
+      "urlHash": "3ed009cdcaf131eb02b45955163cfe796dc6f5bc6ee19b43c389f1eb22222dfd",
+      "authors": ["tamasfe (https://github.com/tamasfe)"],
+      "patterns": ["^(.*(/|\\\\)Cargo\\.toml|Cargo\\.toml)$"]
+    },
+    {
+      "title": "Fly.io config schema (fly.toml)",
+      "description": "https://fly.io/docs/reference/configuration",
+      "updated": "2022-04-23T11:17:43Z",
+      "url": "https://taplo.tamasfe.dev/schemas/fly.toml.json",
+      "urlHash": "4ceead61dcd22250a3f733b753d3a35019a51d21f21526d4f0a571ff49df540c",
+      "authors": ["Joshua Sierles (https://github.com/jsierles)"],
+      "patterns": ["\\.*fly(.*)?\\.toml?$"]
+    },
+    {
+      "title": "dein.vim",
+      "description": "A schema for config of dein.vim (https://github.com/Shougo/dein.vim/blob/f93be8c/doc/dein.txt#L963)",
+      "updated": "2022-04-23T11:09:07Z",
+      "url": "https://taplo.tamasfe.dev/schemas/dein.toml.json",
+      "urlHash": "00a4ca5feb2062a435740e266c93fe7f40338daafc76273d59f42f1196b3aa0c",
+      "authors": [
+        "kkiyama117 (https://github.com/kkiyama117)",
+        "raa0121 (https://github.com/raa0121)",
+        "Hibiki (https://github.com/4513ECHO)"
+      ],
+      "version": "0.1.0",
+      "patterns": ["^(.*(/|\\\\)\\.*dein.*\\.toml|\\.*dein.*\\.toml)$"]
+    },
+    {
+      "title": "Schema for rust-toolchain.toml",
+      "description": "https://rust-lang.github.io/rustup/overrides.html#the-toolchain-file",
+      "updated": "2022-03-27T01:15:46Z",
+      "url": "https://taplo.tamasfe.dev/schemas/rust-toolchain.toml.json",
+      "urlHash": "40d805f98b67107f496c353eba536d48a2b141a6876b5b4f0ce8387048ac55e8",
+      "authors": ["ian-h-chamberlain (https://github.com/ian-h-chamberlain)"],
+      "patterns": ["^(.*(/|\\\\)rust-toolchain([.]toml)?)$"]
+    },
+    {
+      "title": "rustfmt schema",
+      "description": "https://rust-lang.github.io/rustfmt",
+      "updated": "2022-03-14T22:59:27Z",
+      "url": "https://taplo.tamasfe.dev/schemas/rustfmt.toml.json",
+      "urlHash": "7b54a6432b1b59cd3755d9e20e8cee5852e007763af5ea7e94311efd50539af4",
+      "authors": ["Aloso (https://github.com/Aloso)"],
+      "patterns": ["^(.*(/|\\\\)\\.?rustfmt\\.toml|rustfmt\\.toml)$"]
+    },
+    {
+      "title": "Repl.it config schema (.replit)",
+      "description": "https://docs.replit.com/programming-ide/configuring-repl",
+      "updated": "2022-02-19T06:43:45Z",
+      "url": "https://taplo.tamasfe.dev/schemas/replit.toml.json",
+      "urlHash": "f16805ba96e85df10957eccefcfe71b3cf84114dde19e98ddf150e6031d15765",
+      "authors": ["Emily Grace Seville (https://github.com/EmilySeville7cfg)"],
+      "patterns": ["\\.replit(?:\\.toml)?$"]
+    },
+    {
+      "title": "Makefile.toml",
+      "description": "A schema for cargo-make makefiles",
+      "updated": "2021-09-06T13:03:37Z",
+      "url": "https://taplo.tamasfe.dev/schemas/makefile.toml.json",
+      "urlHash": "69ceae6b01fc0d8f1fca57cc3d812da6805c2ceaa4435c6749963006ae5f8610",
+      "authors": ["Kathryn Long (https://github.com/starkat99)"],
+      "version": "0.35.0",
+      "patterns": ["^(.*(/|\\\\)Makefile\\.toml|Makefile\\.toml)$"]
+    },
+    {
+      "title": "pyproject.toml",
+      "updated": "2020-12-25T18:39:37Z",
+      "url": "https://taplo.tamasfe.dev/schemas/pyproject.toml.json",
+      "urlHash": "d3bc40f82541aaaa1e61a27bccc8c0bd70192f44978696e3f05d9bffd2fc704a",
+      "authors": ["zevisert (https://github.com/zevisert)"],
+      "patterns": ["^(.*(/|\\\\)pyproject\\.toml|pyproject\\.toml)$"]
+    }
+  ]
+}

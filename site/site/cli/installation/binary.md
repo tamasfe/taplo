@@ -12,8 +12,8 @@ The default build with commonly-used features.
 
 #### Download
 
-- [Linux (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-x86_64-apple-darwin-gnu.tar.gz)
-- [macOS (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-x86_64-unknown-linux-gnu.tar.gz)
+- [Linux (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-x86_64-unknown-linux-gnu.tar.gz)
+- [macOS (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-x86_64-apple-darwin-gnu.tar.gz)
 - Windows coming soon...
 
 ### Full Build
@@ -25,6 +25,6 @@ The full build contains the following additional features:
 
 #### Download
 
-- [Linux (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-full-x86_64-apple-darwin-gnu.tar.gz)
-- [macOS (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-full-x86_64-unknown-linux-gnu.tar.gz)
+- [Linux (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-full-x86_64-unknown-linux-gnu.tar.gz)
+- [macOS (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-full-x86_64-apple-darwin-gnu.tar.gz)
 - Windows coming soon...

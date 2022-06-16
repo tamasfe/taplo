@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Taplo
-titleTemplate: A Versatile TOML Toolkit.
+titleTemplate: A versatile TOML toolkit.
 ---
 
 <script setup>

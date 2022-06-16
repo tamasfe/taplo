@@ -5,6 +5,10 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
   title: "Taplo",
   description: "A versatile TOML toolkit",
   lastUpdated: true,
+  head: [
+    ['link', { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png"}],
+    ['link', { rel: "icon", type: "image/svg+xml", href: "/favicon.svg"}],
+  ],
   themeConfig: {
     nav: [
       // TODO: unhide editor

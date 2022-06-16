@@ -270,7 +270,7 @@ jobs:
         with:
           file: "docker/cli-alpine.Dockerfile"
           context: "."
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: tamasfe/taplo:latest,tamasfe/taplo:${{ env.RELEASE_VERSION }},tamasfe/taplo:${{ env.RELEASE_VERSION }}-alpine
       - name: Build and push CLI Full alpine
@@ -278,7 +278,7 @@ jobs:
         with:
           file: "docker/cli-full-alpine.Dockerfile"
           context: "."
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: tamasfe/taplo:full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full-alpine
       - name: Update repo description

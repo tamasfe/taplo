@@ -248,6 +248,47 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  cli_docker:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    steps:
+      - uses: actions/checkout@v3
+      - name: Retrieve release version
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-taplo-cli-})" >> $GITHUB_ENV
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build and push CLI alpine
+        uses: docker/build-push-action@v3
+        with:
+          file: "docker/cli-alpine.Dockerfile"
+          context: "."
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: tamasfe/taplo:latest,tamasfe/taplo:{{ env.RELEASE_VERSION }},tamasfe/taplo:{{ env.RELEASE_VERSION }}-alpine
+      - name: Build and push CLI Full alpine
+        uses: docker/build-push-action@v3
+        with:
+          file: "docker/cli-full-alpine.Dockerfile"
+          context: "."
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: tamasfe/taplo:full,tamasfe/taplo:{{ env.RELEASE_VERSION }}-full,tamasfe/taplo:{{ env.RELEASE_VERSION }}-full-alpine
+      - name: Update repo description
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: tamasfe/taplo
+          short-description: Portable images for Taplo.
+          readme-path: ./docker/README.md
+
   cli_binaries:
     name: Publish and release Taplo CLI binaries
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')

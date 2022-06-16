@@ -371,3 +371,45 @@ jobs:
             taplo-*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish_vscode_extension:
+    name: Publish VSCode Extension
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-even-better-toml-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Retrieve release version
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-even-better-toml-})" >> $GITHUB_ENV
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Extension NPM Install
+        run: yarn
+        working-directory: editors/vscode
+      - name: Install vsce
+        run: npm install -g vsce
+      - name: Package Extension
+        run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode/images
+        working-directory: editors/vscode
+        env:
+          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+      - name: Publish extension to microsoft marketplace
+        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode/images -p $VSCE_TOKEN
+        working-directory: editors/vscode
+        env:
+          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+      - name: Install ovsx
+        run: npm install -g ovsx
+      - name: Publish Open VSX Extension 
+        run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode/images -p $OPEN_VSX_TOKEN "even-better-toml-$RELEASE_VERSION.vsix"
+        working-directory: editors/vscode
+        env:
+          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}          

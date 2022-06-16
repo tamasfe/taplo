@@ -1,15 +1,15 @@
 # Change Log
 
-## next
+## 0.15.0
 
 ### Features
 
-- Support for `tomlValidation` for schemas.
-- Wide-range JSON schema support
-- Support for schema store
+- Wide-range JSON schema Draft 4 support
+- Support for schema store schemas
 - Support for multiple workspaces
-- It is now possible to specify schemas with either `#:schema <URL>` or `$schema = "<URL>"` in TOML files
+- It is now possible to specify schemas with either `#:schema <URL>` or `"$schema" = "<URL>"` in TOML files
 - Added rename feature that lets you rename keys that appear at multiple locations
+- Added support for `tomlValidation` in extensions
 
 ### Other
 

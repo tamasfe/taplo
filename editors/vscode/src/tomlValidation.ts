@@ -24,7 +24,7 @@ export function syncExtensionSchemas(
       }
 
       let fileMatch = rule.fileMatch;
-      let patterns = rule.patterns;
+      let regexMatch = rule.regexMatch;
 
       if (!Array.isArray(fileMatch)) {
         fileMatch = [fileMatch];
@@ -51,11 +51,11 @@ export function syncExtensionSchemas(
         });
       }
 
-      if (!Array.isArray(patterns)) {
-        patterns = [patterns];
+      if (!Array.isArray(regexMatch)) {
+        regexMatch = [regexMatch];
       }
 
-      for (const m of patterns) {
+      for (const m of regexMatch) {
         if (typeof m !== "string") {
           continue;
         }

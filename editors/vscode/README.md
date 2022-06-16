@@ -7,15 +7,15 @@ It is currently a **preview extension**, it might contain bugs, or might even cr
 - [Features](#features)
   - [TOML version 1.0.0 support](#toml-version-100-support)
   - [Syntax highlighting](#syntax-highlighting)
-    - [Extended Colors](#extended-colors)
+    - [Additional Syntax Colors](#additional-syntax-colors)
   - [Semantic highlighting](#semantic-highlighting)
   - [Validation](#validation)
   - [Folding](#folding)
   - [Symbol tree and navigation](#symbol-tree-and-navigation)
+  - [Refactors](#refactors)
+    - [Renaming](#renaming)
   - [Formatting](#formatting)
   - [Completion and Validation with JSON Schema](#completion-and-validation-with-json-schema)
-    - [Built-in schemas](#built-in-schemas)
-    - [Remote Schemas](#remote-schemas)
   - [Commands](#commands)
 - [Configuration File](#configuration-file)
 - [Special Thanks](#special-thanks)
@@ -32,7 +32,7 @@ Syntax highlighting for TOML documents with TextMate grammar.
 
 ![Syntax Highlighting](images/highlight.png)
 
-### Extended Colors
+### Additional Syntax Colors
 
 The extension defines custom scopes for array headers and arrays of tables.
 
@@ -97,6 +97,12 @@ Works even for tables not in order.
 
 ![Symbols](images/symbols.gif)
 
+## Refactors
+
+### Renaming
+
+![Rename](images/rename.gif)
+
 ## Formatting
 
 The formatter is rather conservative by default, additional features can be enabled in the settings. If you're missing a configuration option, feel free to open an issue about it!
@@ -109,19 +115,9 @@ There is support for completion, hover text, links and validation.
 
 Schemas can be associated with document URIs with the `evenBetterToml.schema.associations` configuration.
 
-You can provide your own schemas or use the ones provided with the extension. More details [here](https://taplo.tamasfe.dev/configuration/#schemas). Schema submissions and fixes are welcome!
+You can provide your own schemas or use existing schemas from the [JSON Schema Store](https://www.schemastore.org/json/). More details [here](https://taplo.tamasfe.dev/configuration/using-schemas.html#using-schemas).
 
 ![Schema](images/schema.gif)
-
-### Built-in schemas
-
-Several schemas are bundled with the extension, these can be turned off individually by removing their associations.
-
-More information on the [website](https://taplo.tamasfe.dev/configuration/#official-schemas).
-
-### Remote Schemas
-
-Schemas can be submitted to and used from an online repository, more information [here](https://taplo.tamasfe.dev/configuration/#schema-repository). Submissions are always welcome!
 
 ## Commands
 
@@ -129,7 +125,7 @@ The extension provides commands for easy JSON<->TOML conversions.
 
 # Configuration File
 
-Taplo CLI's [configuration file](https://taplo.tamasfe.dev/configuration/#configuration-file) is supported and automatically found in workspace roots, or can be manually set in the VS Code configuration.
+Taplo CLI's [configuration file](https://taplo.tamasfe.dev/configuration/file) is supported and automatically found in workspace roots, or can be manually set in the VS Code configuration.
 
 # Special Thanks
 

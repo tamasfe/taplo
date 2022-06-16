@@ -5,7 +5,6 @@ on:
     branches:
       - master
     paths:
-      - "schemas/**/*"
       - "site/**/*"
   workflow_dispatch: {}
 
@@ -22,21 +21,16 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: Update Schema Repository
-        run: |
-          cargo run --manifest-path ./util/schema-index/Cargo.toml -- -o site/static/schema_index.json --url https://taplo.tamasfe.dev/schemas --schema-store ./schemas || exit 1
-          rm -rf site/static/schemas || exit 1
-          cp -r schemas site/static || exit 1
       - name: Setup Node
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@v3
         with:
-          node-version: "12.x"
+          node-version: "16"
       - name: Build Site
-        run: yarn && yarn build
+        run: yarn && yarn site:build
         working-directory: site
       - name: Deploy Site
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site/public
+          publish_dir: ./site/.vitepress/dest
           cname: taplo.tamasfe.dev

@@ -22,8 +22,8 @@ pub mod priority {
     pub const CONFIG: usize = 50;
     pub const CONFIG_RULE: usize = 51;
     pub const LSP_CONFIG: usize = 60;
-    pub const DIRECTIVE: usize = 70;
-    pub const SCHEMA_FIELD: usize = 75;
+    pub const SCHEMA_FIELD: usize = 70;
+    pub const DIRECTIVE: usize = 75;
     pub const MAX: usize = usize::MAX;
 }
 
@@ -32,8 +32,8 @@ pub mod source {
     pub const CONFIG: &str = "config";
     pub const LSP_CONFIG: &str = "lsp_config";
     pub const MANUAL: &str = "manual";
-    pub const DIRECTIVE: &str = "directive";
     pub const SCHEMA_FIELD: &str = "$schema";
+    pub const DIRECTIVE: &str = "directive";
 }
 
 #[derive(Clone)]

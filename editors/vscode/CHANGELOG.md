@@ -1,10 +1,16 @@
 # Change Log
 
+## 0.15.2
+
+### Fixes
+
+- Extension readme images
+
 ## 0.15.1
 
 ### Fixes
 
-- Fixed default formatting options.
+- Fixed default formatting options
 
 ## 0.15.0
 

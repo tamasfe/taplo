@@ -7,6 +7,3 @@ keys = ["dependencies", "*-dependencies"]
 
 [rule.formatting]
 reorder_keys = true
-
-[plugins.crates.settings]
-all_crates = false

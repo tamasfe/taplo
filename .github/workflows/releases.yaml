@@ -397,19 +397,19 @@ jobs:
       - name: Install vsce
         run: npm install -g vsce
       - name: Package Extension
-        run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode/images
+        run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode
         working-directory: editors/vscode
         env:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
       - name: Publish extension to microsoft marketplace
-        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode/images -p $VSCE_TOKEN
+        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode -p $VSCE_TOKEN
         working-directory: editors/vscode
         env:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
       - name: Install ovsx
         run: npm install -g ovsx
       - name: Publish Open VSX Extension 
-        run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode/images -p $OPEN_VSX_TOKEN "even-better-toml-$RELEASE_VERSION.vsix"
+        run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode -p $OPEN_VSX_TOKEN "even-better-toml-$RELEASE_VERSION.vsix"
         working-directory: editors/vscode
         env:
           OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}          

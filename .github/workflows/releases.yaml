@@ -282,14 +282,6 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: tamasfe/taplo:full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full-alpine
-      - name: Update repo description
-        uses: peter-evans/dockerhub-description@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          repository: tamasfe/taplo
-          short-description: Portable images for Taplo.
-          readme-path: ./docker/README.md
 
   cli_binaries:
     name: Publish and release Taplo CLI binaries
@@ -356,12 +348,12 @@ jobs:
           cd target/${{ matrix.target }}/release
           if [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]
           then
-            zip "../../../taplo-$RELEASE_VERSION-${{ matrix.name }}" ${{ matrix.base }}
+            zip "../../../taplo-${{ matrix.name }}" ${{ matrix.base }}
           else
-            tar czvf "../../../taplo-$RELEASE_VERSION-${{ matrix.name }}" ${{ matrix.base }}
+            tar czvf "../../../taplo-${{ matrix.name }}" ${{ matrix.base }}
             rm taplo
             mv taplo-full taplo
-            tar czvf "../../../taplo-full-$RELEASE_VERSION-${{ matrix.name }}" ${{ matrix.base }}
+            tar czvf "../../../taplo-full-${{ matrix.name }}" ${{ matrix.base }}
           fi
           cd -
 
@@ -370,7 +362,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref }}
-          name: Taplo CLI $${{ env.RELEASE_VERSION }}
+          name: Taplo CLI ${{ env.RELEASE_VERSION }}
           # Only for merging three releases
           draft: true
           prerelease: false

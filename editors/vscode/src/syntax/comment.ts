@@ -14,13 +14,13 @@ export const comment = {
 export const commentDirective = {
     captures: {
         1: {
-            name: 'comment.line.number-sign.toml',
+            name: 'meta.preprocessor.toml',
         },
         2: {
-            name: 'meta.preprocessor.toml',
+            name: 'punctuation.definition.meta.preprocessor.toml',
         },
     },
     comment: 'Comments',
-    match: '\\s*((#).*)$',
+    match: '\\s*((#):.*)$',
 }
 

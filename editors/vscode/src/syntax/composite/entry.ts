@@ -1,6 +1,6 @@
 export const entryBegin = {
   name: "meta.entry.toml",
-  match: "\\s*((?<!\\s*=\\s*)[^\\[{,=#]*)\\s*(=)",
+  match: "\\s*([^\\[{,=#]*)\\s*(=)",
   captures: {
     1: {
       patterns: [

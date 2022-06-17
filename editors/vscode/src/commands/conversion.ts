@@ -11,9 +11,9 @@ export function register(
     vscode.commands.registerTextEditorCommand(
       "evenBetterToml.copyAsJson",
       async editor => {
-        const document = editor.document;
+        const document = editor?.document;
         // Avoid accidental copying of nothing
-        if (editor.selection.isEmpty) {
+        if (!document || editor.selection.isEmpty) {
           return;
         }
 
@@ -79,9 +79,9 @@ export function register(
     vscode.commands.registerTextEditorCommand(
       "evenBetterToml.copyAsToml",
       async editor => {
-        const document = editor.document;
+        const document = editor?.document;
         // Avoid accidental copying of nothing
-        if (editor.selection.isEmpty) {
+        if (!document || editor.selection.isEmpty) {
           return;
         }
 

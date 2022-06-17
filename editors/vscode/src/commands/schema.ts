@@ -9,6 +9,10 @@ export function register(
     vscode.commands.registerTextEditorCommand(
       "evenBetterToml.selectSchema",
       async editor => {
+        if (!editor) {
+          return;
+        }
+
         const schemasResp: { schemas: { url: string; meta?: any }[] } =
           await c.sendRequest("taplo/listSchemas", {
             documentUri: editor.document.uri.toString(),

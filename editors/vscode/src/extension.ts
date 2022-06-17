@@ -32,7 +32,7 @@ export async function activate(context: vscode.ExtensionContext) {
       showMessage(params, c)
     ),
     vscode.window.onDidChangeActiveTextEditor(editor => {
-      if (editor.document.languageId === "toml") {
+      if (editor?.document.languageId === "toml") {
         schemaIndicator.show();
       } else {
         schemaIndicator.hide();

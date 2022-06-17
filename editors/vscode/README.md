@@ -48,13 +48,13 @@ You might also want to set a color for dates and times, as they don't have have 
   "editor.tokenColorCustomizations": {
       "textMateRules": [
           {
-              "scope": "variable.key.table",
+              "scope": "support.type.property-name.table",
               "settings": {
                   "foreground": "#4EC9B0",
               },
           },
           {
-              "scope": "variable.key.array",
+              "scope": "support.type.property-name.array",
               "settings": {
                   "foreground": "#569CD6",
               }

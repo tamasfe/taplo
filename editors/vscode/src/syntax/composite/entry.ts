@@ -1,12 +1,12 @@
 export const entryBegin = {
   name: "meta.entry.toml",
-  match: "\\s*([^\\[{,=#]*)\\s*(=)",
+  match: `\\s*((?:(?:(?:[A-Za-z0-9_+-]+)|(?:"[^"]+")|(?:'[^']+'))\\s*\\.?\\s*)+)\\s*(=)`,
   captures: {
     1: {
       patterns: [
         {
-          match: "[^\\s.]+",
-          name: "variable.key.toml",
+          match: `(?:[A-Za-z0-9_+-]+)|(?:"[^"]+")|(?:'[^']+')`,
+          name: "support.type.property-name.toml",
         },
         {
           match: "\\.",

@@ -1,6 +1,6 @@
 const tableBasic = {
   name: "meta.table.toml",
-  match: "^\\s*(\\[)([^\\[\\]]*)(\\])",
+  match: `^\\s*(\\[)\\s*((?:(?:(?:[A-Za-z0-9_+-]+)|(?:"[^"]+")|(?:'[^']+'))\\s*\\.?\\s*)+)\\s*(\\])`,
   captures: {
     1: {
       name: "punctuation.definition.table.toml",
@@ -8,12 +8,12 @@ const tableBasic = {
     2: {
       patterns: [
         {
-          match: "[^\\s.]+",
-          name: "variable.key.table.toml",
+          match: `(?:[A-Za-z0-9_+-]+)|(?:"[^"]+")|(?:'[^']+')`,
+          name: "support.type.property-name.table.toml",
         },
         {
           match: "\\.",
-          name: "punctuation.separator.dot",
+          name: "punctuation.separator.dot.toml",
         },
       ],
     },
@@ -25,7 +25,7 @@ const tableBasic = {
 
 const tableArray = {
   name: "meta.array.table.toml",
-  match: "^\\s*(\\[\\[)([^\\[\\]]*)(\\]\\])",
+  match:  `^\\s*(\\[\\[)\\s*((?:(?:(?:[A-Za-z0-9_+-]+)|(?:"[^"]+")|(?:'[^']+'))\\s*\\.?\\s*)+)\\s*(\\]\\])`,
   captures: {
     1: {
       name: "punctuation.definition.array.table.toml",
@@ -33,8 +33,8 @@ const tableArray = {
     2: {
       patterns: [
         {
-          match: "[^\\s.]+",
-          name: "variable.key.array.table.toml",
+          match: `(?:[A-Za-z0-9_+-]+)|(?:"[^"]+")|(?:'[^']+')`,
+          name: "support.type.property-name.array.toml",
         },
         {
           match: "\\.",
@@ -49,7 +49,6 @@ const tableArray = {
 };
 
 export const tableInline = {
-  // match: "(\\{)(.*)(\\})",
   begin: "(\\{)",
   end: "(\\})",
   name: "meta.table.inline.toml",
@@ -78,31 +77,6 @@ export const tableInline = {
       include: "#value",
     },
   ],
-  // captures: {
-  //   1: {
-  //     name: "punctuation.definition.table.inline.toml",
-  //   },
-  //   2: {
-  //     patterns: [
-  //       {
-  //         include: "#comment",
-  //       },
-  //       {
-  //         match: ",",
-  //         name: "punctuation.separator.table.inline.toml",
-  //       },
-  //       {
-  //         include: "#entryBegin",
-  //       },
-  //       {
-  //         include: "#value",
-  //       },
-  //     ],
-  //   },
-  //   3: {
-  //     name: "punctuation.definition.table.inline.toml",
-  //   },
-  // },
 };
 
 export const table = {

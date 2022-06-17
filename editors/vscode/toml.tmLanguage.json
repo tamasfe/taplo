@@ -3,7 +3,7 @@
   "scopeName": "source.toml",
   "uuid": "8b4e5008-c50d-11ea-a91b-54ee75aeeb97",
   "information_for_contributors": [
-    "Originally was maintained by aster (galaster@foxmail.com). This notice is only kept here for the record, please don't send e-mails about problems and issues."
+    "Originally was maintained by aster (galaster@foxmail.com). This notice is only kept here for the record, please don't send e-mails about bugs and other issues."
   ],
   "patterns": [
     {
@@ -51,7 +51,7 @@
       "patterns": [
         {
           "name": "meta.table.toml",
-          "match": "^\\s*(\\[)([^\\[\\]]*)(\\])",
+          "match": "^\\s*(\\[)\\s*((?:(?:(?:[A-Za-z0-9_+-]+)|(?:\"[^\"]+\")|(?:'[^']+'))\\s*\\.?\\s*)+)\\s*(\\])",
           "captures": {
             "1": {
               "name": "punctuation.definition.table.toml"
@@ -59,12 +59,12 @@
             "2": {
               "patterns": [
                 {
-                  "match": "[^\\s.]+",
-                  "name": "variable.key.table.toml"
+                  "match": "(?:[A-Za-z0-9_+-]+)|(?:\"[^\"]+\")|(?:'[^']+')",
+                  "name": "support.type.property-name.table.toml"
                 },
                 {
                   "match": "\\.",
-                  "name": "punctuation.separator.dot"
+                  "name": "punctuation.separator.dot.toml"
                 }
               ]
             },
@@ -75,7 +75,7 @@
         },
         {
           "name": "meta.array.table.toml",
-          "match": "^\\s*(\\[\\[)([^\\[\\]]*)(\\]\\])",
+          "match": "^\\s*(\\[\\[)\\s*((?:(?:(?:[A-Za-z0-9_+-]+)|(?:\"[^\"]+\")|(?:'[^']+'))\\s*\\.?\\s*)+)\\s*(\\]\\])",
           "captures": {
             "1": {
               "name": "punctuation.definition.array.table.toml"
@@ -83,8 +83,8 @@
             "2": {
               "patterns": [
                 {
-                  "match": "[^\\s.]+",
-                  "name": "variable.key.array.table.toml"
+                  "match": "(?:[A-Za-z0-9_+-]+)|(?:\"[^\"]+\")|(?:'[^']+')",
+                  "name": "support.type.property-name.array.toml"
                 },
                 {
                   "match": "\\.",
@@ -131,13 +131,13 @@
     },
     "entryBegin": {
       "name": "meta.entry.toml",
-      "match": "\\s*([^\\[{,=#]*)\\s*(=)",
+      "match": "\\s*((?:(?:(?:[A-Za-z0-9_+-]+)|(?:\"[^\"]+\")|(?:'[^']+'))\\s*\\.?\\s*)+)\\s*(=)",
       "captures": {
         "1": {
           "patterns": [
             {
-              "match": "[^\\s.]+",
-              "name": "variable.key.toml"
+              "match": "(?:[A-Za-z0-9_+-]+)|(?:\"[^\"]+\")|(?:'[^']+')",
+              "name": "support.type.property-name.toml"
             },
             {
               "match": "\\.",

@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.16.0
+
+### Changes
+
+- Changed syntax highlight scopes for table and array of tables keys
+
+### Fixes
+
+- Syntax highlight enhancements and bug fixes
+
 ## 0.15.2
 
 ### Fixes

@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.16.1
+
+### Fixes
+
+- Even more syntax highlight fixes
+- Configuration parameter fixes
+
 ## 0.16.0
 
 ### Changes

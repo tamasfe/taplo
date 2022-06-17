@@ -2,7 +2,7 @@
   "name": "even-better-toml",
   "displayName": "Even Better TOML",
   "description": "Fully-featured TOML support",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "autoTag": {
     "enabled": true
   },
@@ -150,10 +150,10 @@
       {
         "scopes": {
           "tomlArrayKey": [
-            "variable.key.array.toml"
+            "support.type.property-name.array.toml"
           ],
           "tomlTableKey": [
-            "variable.key.table.toml"
+            "support.type.property-name.table.toml"
           ]
         }
       }
@@ -325,7 +325,7 @@
         },
         "evenBetterToml.formatter.columnWidth": {
           "scope": "resource",
-          "type": "boolean",
+          "type": "number",
           "default": null,
           "description": "Target maximum column width after which arrays are expanded into new lines."
         },
@@ -361,7 +361,7 @@
         },
         "evenBetterToml.formatter.allowedBlankLines": {
           "scope": "resource",
-          "type": "boolean",
+          "type": "number",
           "default": null,
           "description": "The maximum amount of consecutive blank lines allowed."
         },

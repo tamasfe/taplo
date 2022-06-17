@@ -2,6 +2,7 @@ use crate::world::{WorkspaceState, World};
 use lsp_async_stub::{Context, Params};
 use lsp_types::DidChangeWorkspaceFoldersParams;
 use taplo_common::environment::Environment;
+use super::update_configuration;
 
 pub async fn workspace_change<E: Environment>(
     context: Context<World<E>>,
@@ -32,4 +33,7 @@ pub async fn workspace_change<E: Environment>(
             tracing::error!(?error, "failed to initialize workspace");
         }
     }
+
+    drop(workspaces);
+    update_configuration(context).await;
 }

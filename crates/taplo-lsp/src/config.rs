@@ -94,7 +94,7 @@ impl Default for SchemaConfig {
                 .iter()
                 .map(|c| c.parse().unwrap())
                 .collect(),
-            links: true,
+            links: false,
             cache: Default::default(),
         }
     }

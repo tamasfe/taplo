@@ -2,11 +2,17 @@
 
 ## 0.16.3
 
+### Fixes
+
+- Fixed wrong configuration for multiple workspaces
+
+## 0.16.2
+
 ### Other
 
 - Web extension compatibility
 
-## 0.16.2
+## 0.16.1
 
 ### Fixes
 

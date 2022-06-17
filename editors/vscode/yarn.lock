@@ -189,12 +189,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@taplo/lsp@npm:^0.3.0-alpha.67":
-  version: 0.3.0-alpha.67
-  resolution: "@taplo/lsp@npm:0.3.0-alpha.67"
+"@taplo/lsp@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@taplo/lsp@npm:0.3.0"
   dependencies:
     "@taplo/core": ^0.1.0
-  checksum: 0d7d49741cbad5cb3d48070518a4a5702eeefa3cd96ccc68149128a7b089dddb5012ce4ea583f8293931745a280c8b03092347c015c24bb8d35e0736ff6d7222
+  checksum: d990c68cbcf2137782409bb8acca92ed4aaae50754aa4410b0d1ce48680825565fd8205a5fa9df1c3a38384e60426ac465c543452d1ad2de0259d4609fa9ece6
   languageName: node
   linkType: hard
 
@@ -261,10 +261,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^17.0.42":
-  version: 17.0.42
-  resolution: "@types/node@npm:17.0.42"
-  checksum: a200cd87e4f12d4d5682a893ad6e1140720c6c074a2cd075f254b3b8306d6174f5a3630e5d2347efb5e9b80d420404b5fafc8fe3c7d4c81998cd914c50b19f75
+"@types/node@npm:^18.0.0":
+  version: 18.0.0
+  resolution: "@types/node@npm:18.0.0"
+  checksum: aab2b325727a2599f6d25ebe0dedf58c40fb66a51ce4ca9c0226ceb70fcda2d3afccdca29db5942eb48b158ee8585a274a1e3750c718bbd5399d7f41d62dfdcc
   languageName: node
   linkType: hard
 
@@ -1208,9 +1208,9 @@ __metadata:
     "@rollup/plugin-commonjs": ^22.0.0
     "@rollup/plugin-node-resolve": ^13.3.0
     "@rollup/plugin-replace": ^4.0.0
-    "@taplo/lsp": ^0.3.0-alpha.67
+    "@taplo/lsp": ^0.3.0
     "@types/deep-equal": ^1.0.1
-    "@types/node": ^17.0.42
+    "@types/node": ^18.0.0
     "@types/vscode": ^1.68.0
     "@types/which": ^2.0.1
     "@vscode/test-web": ^0.0.24
@@ -1222,7 +1222,7 @@ __metadata:
     rollup: ^2.75.6
     rollup-plugin-esbuild: ^4.9.1
     ts-node: ^10.8.1
-    typescript: ^4.7.3
+    typescript: ^4.7.4
     vscode-languageclient: 8.0.2-next.5
     which: ^2.0.2
   languageName: unknown
@@ -3027,23 +3027,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^4.7.3":
-  version: 4.7.3
-  resolution: "typescript@npm:4.7.3"
+"typescript@npm:^4.7.4":
+  version: 4.7.4
+  resolution: "typescript@npm:4.7.4"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: fd13a1ce53790a36bb8350e1f5e5e384b5f6cb9b0635114a6d01d49cb99916abdcfbc13c7521cdae2f2d3f6d8bc4a8ae7625edf645a04ee940588cd5e7597b2f
+  checksum: 5750181b1cd7e6482c4195825547e70f944114fb47e58e4aa7553e62f11b3f3173766aef9c281783edfd881f7b8299cf35e3ca8caebe73d8464528c907a164df
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@^4.7.3#~builtin<compat/typescript>":
-  version: 4.7.3
-  resolution: "typescript@patch:typescript@npm%3A4.7.3#~builtin<compat/typescript>::version=4.7.3&hash=7ad353"
+"typescript@patch:typescript@^4.7.4#~builtin<compat/typescript>":
+  version: 4.7.4
+  resolution: "typescript@patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=7ad353"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 137d18a77f52254a284960b16ab53d0619f57b69b5d585804b8413f798a1175ce3e774fb95e6a101868577aafe357d8fcfc9171f0dc9fc0c210e9ae59d107cc0
+  checksum: 9096d8f6c16cb80ef3bf96fcbbd055bf1c4a43bd14f3b7be45a9fbe7ada46ec977f604d5feed3263b4f2aa7d4c7477ce5f9cd87de0d6feedec69a983f3a4f93e
   languageName: node
   linkType: hard
 

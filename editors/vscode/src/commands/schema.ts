@@ -1,10 +1,7 @@
 import * as vscode from "vscode";
-import * as client from "vscode-languageclient/node";
+import { BaseLanguageClient } from "vscode-languageclient";
 
-export function register(
-  ctx: vscode.ExtensionContext,
-  c: client.LanguageClient
-) {
+export function register(ctx: vscode.ExtensionContext, c: BaseLanguageClient) {
   ctx.subscriptions.push(
     vscode.commands.registerTextEditorCommand(
       "evenBetterToml.selectSchema",

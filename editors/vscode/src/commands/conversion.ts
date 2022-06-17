@@ -1,12 +1,9 @@
 import * as vscode from "vscode";
-import * as client from "vscode-languageclient/node";
 import { getOutput } from "../util";
+import { BaseLanguageClient } from "vscode-languageclient";
 
 // FIXME: this could be a bit more DRY.
-export function register(
-  ctx: vscode.ExtensionContext,
-  c: client.LanguageClient
-) {
+export function register(ctx: vscode.ExtensionContext, c: BaseLanguageClient) {
   ctx.subscriptions.push(
     vscode.commands.registerTextEditorCommand(
       "evenBetterToml.copyAsJson",

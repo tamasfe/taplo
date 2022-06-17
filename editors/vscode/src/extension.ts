@@ -1,9 +1,8 @@
 import * as vscode from "vscode";
-import * as client from "vscode-languageclient/node";
 import { registerCommands } from "./commands";
 import { createClient } from "./client";
 import { syncExtensionSchemas } from "./tomlValidation";
-import { getOutput } from "./util";
+import { getOutput, showMessage } from "./util";
 
 export async function activate(context: vscode.ExtensionContext) {
   const schemaIndicator = vscode.window.createStatusBarItem(
@@ -59,32 +58,4 @@ export async function activate(context: vscode.ExtensionContext) {
       }
     )
   );
-}
-
-export async function showMessage(
-  params: { kind: "info" | "warn" | "error"; message: string },
-  c: client.LanguageClient
-) {
-  let show: string | undefined;
-  switch (params.kind) {
-    case "info":
-      show = await vscode.window.showInformationMessage(
-        params.message,
-        "Show Details"
-      );
-    case "warn":
-      show = await vscode.window.showWarningMessage(
-        params.message,
-        "Show Details"
-      );
-    case "error":
-      show = await vscode.window.showErrorMessage(
-        params.message,
-        "Show Details"
-      );
-  }
-
-  if (show) {
-    c.outputChannel.show();
-  }
 }

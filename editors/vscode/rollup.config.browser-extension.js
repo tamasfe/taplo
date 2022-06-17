@@ -29,8 +29,7 @@ const onwarn = (warning, rollupWarn) => {
 const options = {
   onwarn,
   input: {
-    server: "src/server.ts",
-    extension: "src/extension.ts",
+    "browser-extension": "src/extension.ts",
   },
   output: {
     sourcemap: false,
@@ -44,12 +43,13 @@ const options = {
   plugins: [
     replace({
       preventAssignment: true,
-      "import.meta.env.BROWSER": "false",
+      "import.meta.env.BROWSER": "true",
     }),
     esbuild({ minify: true }),
     commonjs(),
     resolve({
       preferBuiltins: true,
+      browser: true,
     }),
   ],
 };

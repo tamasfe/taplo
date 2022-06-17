@@ -1,6 +1,12 @@
 # Change Log
 
-## 0.16.1
+## 0.16.3
+
+### Other
+
+- Web extension compatibility
+
+## 0.16.2
 
 ### Fixes
 

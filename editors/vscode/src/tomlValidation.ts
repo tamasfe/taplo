@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
-import * as client from "vscode-languageclient/node";
+import { BaseLanguageClient } from "vscode-languageclient";
 
 export function syncExtensionSchemas(
   _ctx: vscode.ExtensionContext,
-  c: client.LanguageClient
+  c: BaseLanguageClient
 ) {
   for (const ext of vscode.extensions.all) {
     const tomlValidation = ext.packageJSON?.contributes?.tomlValidation;

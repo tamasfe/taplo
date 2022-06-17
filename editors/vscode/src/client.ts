@@ -1,25 +1,53 @@
 import * as vscode from "vscode";
-import * as client from "vscode-languageclient/node";
-import * as path from "path";
+import * as node from "vscode-languageclient/node";
+import * as browser from "vscode-languageclient/browser";
 import which from "which";
 import { getOutput } from "./util";
+import { BaseLanguageClient } from "vscode-languageclient";
 
 export async function createClient(
   context: vscode.ExtensionContext
-): Promise<client.LanguageClient> {
+): Promise<BaseLanguageClient> {
+  console.log(import.meta.env.BROWSER);
+
+  if (import.meta.env.BROWSER) {
+    return await createBrowserClient(context);
+  } else {
+    return await createNodeClient(context);
+  }
+}
+
+async function createBrowserClient(context: vscode.ExtensionContext) {
+  const serverMain = vscode.Uri.joinPath(
+    context.extensionUri,
+    "dist/server-worker.js"
+  );
+  const worker = new Worker(serverMain.toString(true));
+  return new browser.LanguageClient(
+    "taplo-lsp",
+    "Taplo LSP",
+    await clientOpts(context),
+    worker
+  );
+}
+
+async function createNodeClient(context: vscode.ExtensionContext) {
   const out = getOutput();
 
   const bundled = !!vscode.workspace
     .getConfiguration()
     .get("evenBetterToml.taplo.bundled");
 
-  let serverOpts: client.ServerOptions;
+  let serverOpts: node.ServerOptions;
   if (bundled) {
-    const taploPath = context.asAbsolutePath(path.join("dist", "server.js"));
+    const taploPath = vscode.Uri.joinPath(
+      context.extensionUri,
+      "dist/server.js"
+    ).fsPath;
 
-    const run: client.NodeModule = {
+    const run: node.NodeModule = {
       module: taploPath,
-      transport: client.TransportKind.ipc,
+      transport: node.TransportKind.ipc,
     };
 
     serverOpts = {
@@ -48,7 +76,7 @@ export async function createClient(
       a => typeof a === "string"
     );
 
-    const run: client.Executable = {
+    const run: node.Executable = {
       command: taploPath,
       args: ["lsp", "stdio", ...args],
       options: {
@@ -65,7 +93,7 @@ export async function createClient(
     };
   }
 
-  return new client.LanguageClient(
+  return new node.LanguageClient(
     "evenBetterToml",
     "Even Better TOML LSP",
     serverOpts,
@@ -73,9 +101,7 @@ export async function createClient(
   );
 }
 
-async function clientOpts(
-  context: vscode.ExtensionContext
-): Promise<client.LanguageClientOptions> {
+async function clientOpts(context: vscode.ExtensionContext): Promise<any> {
   await vscode.workspace.fs.createDirectory(context.globalStorageUri);
 
   return {

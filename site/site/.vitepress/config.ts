@@ -96,6 +96,10 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
               text: "Conversion and Extraction",
               link: "/cli/usage/conversion-and-extraction",
             },
+            {
+              text: "Language Server",
+              link: "/cli/usage/language-server",
+            },
           ],
         },
       ],

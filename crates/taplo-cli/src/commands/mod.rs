@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use taplo_common::environment::Environment;
 
 use crate::{
@@ -25,8 +26,18 @@ impl<E: Environment> Taplo<E> {
 
         match taplo.cmd {
             TaploCommand::Format(fmt) => self.execute_format(fmt).await,
-            #[cfg(feature = "lsp")]
-            TaploCommand::Lsp { cmd } => self.execute_lsp(cmd).await,
+            TaploCommand::Lsp { cmd } => {
+                #[cfg(feature = "lsp")]
+                {
+                    self.execute_lsp(cmd).await
+                }
+                #[cfg(not(feature = "lsp"))]
+                {
+                    let _ = cmd;
+                    return Err(anyhow!("the LSP is not part of this build, please consult the documentation about enabling the functionality"));
+                }
+            }
+
             #[cfg(feature = "toml-test")]
             TaploCommand::TomlTest {} => self.execute_toml_test().await,
             TaploCommand::Lint(cmd) => self.execute_lint(cmd).await,

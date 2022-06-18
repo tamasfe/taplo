@@ -55,7 +55,6 @@ pub enum TaploCommand {
     #[clap(visible_aliases = &["fmt"])]
     Format(FormatCommand),
     /// Language server operations.
-    #[cfg(feature = "lsp")]
     Lsp {
         #[clap(subcommand)]
         cmd: LspCommand,
@@ -105,7 +104,6 @@ pub struct FormatCommand {
     pub stdin_filepath: Option<String>,
 }
 
-#[cfg(feature = "lsp")]
 #[derive(Clone, Subcommand)]
 pub enum LspCommand {
     /// Run the language server and listen on a TCP address.

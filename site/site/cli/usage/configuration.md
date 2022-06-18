@@ -2,9 +2,10 @@
 
 ## Log Level
 
-Taplo uses the Rust `tracing` library for configurable logging features and respects the `RUST_LOG` environment variable.
+Taplo uses the Rust `tracing` library for configurable logging features and respects the `RUST_LOG` environment variable. All logs regardless of log level are printed to the standard error output.
 
-In most cases you might wish to disable logging after a certain log level, for example if you wish to only see error messages, you can do the following:
+In most cases you might wish to disable logging below a certain log level.
+As an example if you wish to only see error messages, you can do the following:
 
 ```sh
 RUST_LOG=error taplo lint foo.toml

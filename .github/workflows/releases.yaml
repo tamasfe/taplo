@@ -182,6 +182,9 @@ jobs:
           toolchain: stable
           target: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
+      - name: Build Core
+        working-directory: js/core
+        run: yarn install && yarn build
       - name: Publish to NPM
         uses: nick-fields/retry@v2
         with:
@@ -210,6 +213,9 @@ jobs:
           toolchain: stable
           target: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
+      - name: Build Core
+        working-directory: js/core
+        run: yarn install && yarn build
       - name: Publish to NPM
         uses: nick-fields/retry@v2
         with:
@@ -238,6 +244,9 @@ jobs:
           toolchain: stable
           target: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
+      - name: Build Core
+        working-directory: js/core
+        run: yarn install && yarn build
       - name: Publish to NPM
         uses: nick-fields/retry@v2
         with:

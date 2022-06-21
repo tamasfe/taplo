@@ -14,7 +14,7 @@ use crate::{environment::Environment, util::GlobRule, HashMap};
 
 pub const CONFIG_FILE_NAMES: &[&str] = &[".taplo.toml", "taplo.toml"];
 
-#[derive(Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     /// Files to include.
@@ -53,24 +53,6 @@ pub struct Config {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plugins: Option<HashMap<String, Plugin>>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            include: Default::default(),
-            exclude: Default::default(),
-            rule: Default::default(),
-            global_options: Options {
-                formatting: Some(taplo::formatter::OptionsIncomplete::from_options(
-                    taplo::formatter::Options::default(),
-                )),
-                ..Default::default()
-            },
-            file_rule: Default::default(),
-            plugins: None,
-        }
-    }
 }
 
 impl Debug for Config {

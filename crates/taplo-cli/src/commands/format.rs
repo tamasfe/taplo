@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{mem, path::Path};
 
 use crate::{args::FormatCommand, Taplo};
 use anyhow::anyhow;
@@ -35,8 +35,7 @@ impl<E: Environment> Taplo<E> {
             }
         }
 
-        let mut format_opts = self.format_options(&config, &cmd)?;
-        config.update_format_options(Path::new(display_path), &mut format_opts);
+        let format_opts = self.format_options(&config, &cmd, Path::new(display_path))?;
 
         let error_ranges = p.errors.iter().map(|e| e.range).collect::<Vec<_>>();
 
@@ -64,7 +63,7 @@ impl<E: Environment> Taplo<E> {
     }
 
     #[tracing::instrument(skip_all)]
-    async fn format_files(&mut self, cmd: FormatCommand) -> Result<(), anyhow::Error> {
+    async fn format_files(&mut self, mut cmd: FormatCommand) -> Result<(), anyhow::Error> {
         if cmd.stdin_filepath.is_some() {
             tracing::warn!("using `--stdin-filepath` has no effect unless input comes from stdin")
         }
@@ -76,17 +75,14 @@ impl<E: Environment> Taplo<E> {
             .cwd()
             .ok_or_else(|| anyhow!("could not figure the current working directory"))?;
 
-        let format_opts = self.format_options(&config, &cmd)?;
-
         let files = self
-            .collect_files(&cwd, &config, cmd.files.into_iter())
+            .collect_files(&cwd, &config, mem::take(&mut cmd.files).into_iter())
             .await?;
 
         let mut result = Ok(());
 
         for path in files {
-            let mut format_opts = format_opts.clone();
-            config.update_format_options(&path, &mut format_opts);
+            let format_opts = self.format_options(&config, &cmd, &path)?;
 
             let f = self.env.read_file(&path).await?;
             let source = String::from_utf8_lossy(&f).into_owned();
@@ -137,12 +133,10 @@ impl<E: Environment> Taplo<E> {
         &self,
         config: &Config,
         cmd: &FormatCommand,
+        path: &Path,
     ) -> Result<formatter::Options, anyhow::Error> {
         let mut format_opts = formatter::Options::default();
-
-        if let Some(opts) = config.global_options.formatting.clone() {
-            format_opts.update(opts);
-        }
+        config.update_format_options(path, &mut format_opts);
 
         format_opts.update_from_str(cmd.options.iter().filter_map(|s| {
             let mut split = s.split('=');

@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use taplo_common::environment::Environment;
 
 use crate::{
@@ -34,7 +33,7 @@ impl<E: Environment> Taplo<E> {
                 #[cfg(not(feature = "lsp"))]
                 {
                     let _ = cmd;
-                    return Err(anyhow!("the LSP is not part of this build, please consult the documentation about enabling the functionality"));
+                    return Err(anyhow::anyhow!("the LSP is not part of this build, please consult the documentation about enabling the functionality"));
                 }
             }
 

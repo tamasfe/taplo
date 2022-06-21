@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.16.4
+
+### Fixes
+
+- Fixed incorrect default formatting options
+- Changed auto-closing behaviour ([#273](https://github.com/tamasfe/taplo/pull/273))
+
 ## 0.16.3
 
 ### Fixes

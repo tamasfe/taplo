@@ -189,12 +189,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@taplo/lsp@npm:^0.3.1":
-  version: 0.3.1
-  resolution: "@taplo/lsp@npm:0.3.1"
+"@taplo/lsp@npm:^0.3.3":
+  version: 0.3.3
+  resolution: "@taplo/lsp@npm:0.3.3"
   dependencies:
     "@taplo/core": ^0.1.0
-  checksum: 060155c2701188b60c830ffe507244920f22d60e6b85e88b556a3679b77fe058548d2db2477a7ed22de95fdd1226dbf046f14ee9f62fc1b6a80d72567aa18113
+  checksum: bf481ebfecc13d73ea75e0911dcaff809a233fb908cd876a8a9be1ca3ff8e38c6691ec71f4a0473198470c2e7204812b95154595386204c6e72a3e2bdc1e9f3f
   languageName: node
   linkType: hard
 
@@ -1208,7 +1208,7 @@ __metadata:
     "@rollup/plugin-commonjs": ^22.0.0
     "@rollup/plugin-node-resolve": ^13.3.0
     "@rollup/plugin-replace": ^4.0.0
-    "@taplo/lsp": ^0.3.1
+    "@taplo/lsp": ^0.3.3
     "@types/deep-equal": ^1.0.1
     "@types/node": ^18.0.0
     "@types/vscode": ^1.68.0

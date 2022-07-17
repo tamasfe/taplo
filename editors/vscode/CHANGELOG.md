@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.16.5
+
+### Fixes
+
+- Fixed the language server ignoring the given path to the configuration file in `evenBetterToml.taplo.configFile.path`
+- Environment variables are now correctly passed to the bundled language server
+
 ## 0.16.4
 
 ### Fixes

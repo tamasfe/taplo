@@ -231,8 +231,21 @@ impl<E: Environment> WorkspaceState<E> {
         let root_path = env
             .to_file_path(&self.root)
             .ok_or_else(|| anyhow!("invalid root URL"))?;
-        if let Some(config_path) = env.find_config_file(&root_path).await {
-            tracing::info!(path = ?config_path, "found config file");
+
+        let config_path = if let Some(p) = &self.config.taplo.config_file.path {
+            tracing::info!(path = ?p, "using config file at specified path");
+
+            if env.is_absolute(&p) {
+                Some(p.clone())
+            } else {
+                Some(root_path.join(p))
+            }
+        } else {
+            env.find_config_file(&root_path).await
+        };
+
+        if let Some(config_path) = config_path {
+            tracing::info!(path = ?config_path, "using config file");
             self.taplo_config = toml::from_slice(&env.read_file(&config_path).await?)?;
 
             // This is different from the path we found the config in, in this case
@@ -242,6 +255,7 @@ impl<E: Environment> WorkspaceState<E> {
 
             tracing::debug!("using config: {:#?}", self.taplo_config);
         }
+
         Ok(())
     }
 

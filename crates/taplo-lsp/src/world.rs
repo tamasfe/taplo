@@ -153,8 +153,12 @@ impl<E: Environment> WorkspaceState<E> {
         context: Context<World<E>>,
         env: &impl Environment,
     ) -> Result<(), anyhow::Error> {
-        self.load_config(env, &*context.world().default_config.load())
-            .await?;
+        if let Err(error) = self
+            .load_config(env, &*context.world().default_config.load())
+            .await
+        {
+            tracing::warn!(%error, "failed to load workspace configuration");
+        }
 
         self.schemas
             .associations()
@@ -233,15 +237,21 @@ impl<E: Environment> WorkspaceState<E> {
             .ok_or_else(|| anyhow!("invalid root URL"))?;
 
         let config_path = if let Some(p) = &self.config.taplo.config_file.path {
-            tracing::info!(path = ?p, "using config file at specified path");
+            tracing::debug!(path = ?p, "using config file at specified path");
 
             if env.is_absolute(&p) {
                 Some(p.clone())
-            } else {
+            } else if self.root != *DEFAULT_WORKSPACE_URL {
                 Some(root_path.join(p))
+            } else {
+                tracing::debug!("relative config path is not valid for detached workspace");
+                None
             }
-        } else {
+        } else if self.root != *DEFAULT_WORKSPACE_URL {
+            tracing::debug!("discovering config file in workspace");
             env.find_config_file(&root_path).await
+        } else {
+            None
         };
 
         if let Some(config_path) = config_path {

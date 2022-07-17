@@ -48,6 +48,12 @@ async function createNodeClient(context: vscode.ExtensionContext) {
     const run: node.NodeModule = {
       module: taploPath,
       transport: node.TransportKind.ipc,
+      options: {
+        env:
+          vscode.workspace
+            .getConfiguration()
+            .get("evenBetterToml.taplo.environment") ?? undefined,
+      },
     };
 
     serverOpts = {

@@ -32,10 +32,10 @@ pub(crate) async fn format<E: Environment>(
         format_opts.trailing_newline = v;
     }
 
+    format_opts.update_camel(ws.config.formatter.clone());
+
     ws.taplo_config
         .update_format_options(doc_path, &mut format_opts);
-
-    format_opts.update_camel(ws.config.formatter.clone());
 
     Ok(Some(vec![TextEdit {
         range: doc.mapper.all_range().into_lsp(),

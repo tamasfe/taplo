@@ -73,4 +73,10 @@ pub trait Environment: Clone + Send + Sync + 'static {
     fn to_file_path_normalized(&self, url: &Url) -> Option<PathBuf> {
         self.to_file_path(url).map(Normalize::normalize)
     }
+
+    /// Same as [`Self::find_config_file`], but the returned path is
+    /// [normalized](Normalize:normalize) in addition.
+    async fn find_config_file_normalized(&self, from: &Path) -> Option<PathBuf> {
+        self.find_config_file(from).await.map(Normalize::normalize)
+    }
 }

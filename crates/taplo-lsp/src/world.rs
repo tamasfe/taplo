@@ -249,7 +249,7 @@ impl<E: Environment> WorkspaceState<E> {
             }
         } else if self.root != *DEFAULT_WORKSPACE_URL {
             tracing::debug!("discovering config file in workspace");
-            env.find_config_file(&root_path).await
+            env.find_config_file_normalized(&root_path).await
         } else {
             None
         };

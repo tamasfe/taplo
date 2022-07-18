@@ -141,9 +141,15 @@ pub(crate) async fn hover<E: Environment>(
                         s += desc;
                     }
 
+                    let link_title = if let Some(s) = schema["title"].as_str() {
+                        s
+                    } else {
+                        "..."
+                    };
+
                     if links_in_hover {
                         if let Some(link) = &ext_links.key {
-                            s = format!("[...]({link})\n\n{s}");
+                            s = format!("[{link_title}]({link})\n\n{s}");
                         }
                     }
 
@@ -204,10 +210,19 @@ pub(crate) async fn hover<E: Environment>(
                                 if val == &value {
                                     if let Some(enum_docs) = enum_docs.get(idx).cloned().flatten() {
                                         if links_in_hover {
+                                            let link_title =
+                                                if let Some(s) = schema["title"].as_str() {
+                                                    s
+                                                } else {
+                                                    "..."
+                                                };
+
                                             if let Some(enum_link) =
                                                 enum_links.get(idx).and_then(Option::as_ref)
                                             {
-                                                return format!("[...]({enum_link})\n\n{enum_docs}");
+                                                return format!(
+                                                    "[{link_title}]({enum_link})\n\n{enum_docs}"
+                                                );
                                             }
                                         }
 

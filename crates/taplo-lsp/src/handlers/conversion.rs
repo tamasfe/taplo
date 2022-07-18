@@ -62,7 +62,7 @@ pub(crate) async fn convert_to_toml<E: Environment>(
     };
 
     Ok(ConvertToTomlResponse {
-        text: Some(dom.to_toml(false)),
+        text: Some(dom.to_toml(false, false)),
         error: None,
     })
 }

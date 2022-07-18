@@ -4,7 +4,8 @@ exclude = ["util/test-gen", "util/schema-index", "crates/taplo-wasm"]
 
 [profile.release]
 codegen-units = 1
-lto = "thin"
+# lto = "thin"
+lto = 'thin'
 opt-level = 3
 strip = "debuginfo"
 

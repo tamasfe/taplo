@@ -9,7 +9,7 @@ mod escape;
 pub mod syntax;
 
 pub use escape::check_escape;
-pub use escape::unescape;
+pub use escape::{escape, unescape};
 
 pub(crate) mod allowed_chars {
     pub(crate) fn comment(s: &str) -> Result<(), Vec<usize>> {

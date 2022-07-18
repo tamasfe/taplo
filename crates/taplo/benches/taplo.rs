@@ -41,7 +41,7 @@ pub fn conversion(c: &mut Criterion) {
         b.iter(|| {
             serde_json::from_value::<Node>(black_box(v.clone()))
                 .unwrap()
-                .to_toml(false)
+                .to_toml(false, false)
         })
     });
 }

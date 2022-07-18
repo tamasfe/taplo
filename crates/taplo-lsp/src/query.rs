@@ -6,13 +6,7 @@ use taplo::{
         FromSyntax, KeyOrIndex, Keys, Node,
     },
     rowan::{Direction, TextRange, TextSize},
-    syntax::{
-        SyntaxKind::{
-            ARRAY, BRACE_END, BRACKET_END, BRACKET_START, COMMENT, ENTRY, EQ, INLINE_TABLE, KEY,
-            NEWLINE, TABLE_ARRAY_HEADER, TABLE_HEADER, VALUE, WHITESPACE,
-        },
-        SyntaxNode, SyntaxToken,
-    },
+    syntax::{SyntaxKind::*, SyntaxNode, SyntaxToken},
     util::join_ranges,
 };
 
@@ -354,6 +348,13 @@ impl Query {
                 _ => Some(false),
             })
             .unwrap_or(false)
+    }
+
+    pub fn is_single_quote_value(&self) -> bool {
+        self.entry_value().map_or(false, |v| {
+            v.descendants_with_tokens()
+                .any(|t| matches!(t.kind(), STRING_LITERAL | MULTI_LINE_STRING_LITERAL))
+        })
     }
 
     #[must_use]

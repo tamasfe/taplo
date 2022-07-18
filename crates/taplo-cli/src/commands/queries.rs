@@ -157,7 +157,7 @@ impl<E: Environment> Taplo<E> {
                     }
 
                     if nodes.len() == 1 {
-                        let mut buf = nodes.next().unwrap().1.to_toml(false);
+                        let mut buf = nodes.next().unwrap().1.to_toml(false, false);
 
                         if cmd.strip_newline {
                             if buf.ends_with('\n') {
@@ -175,7 +175,7 @@ impl<E: Environment> Taplo<E> {
 
                         for (_, node) in nodes {
                             buf += "  ";
-                            buf += &node.to_toml(true);
+                            buf += &node.to_toml(true, false);
                             buf += ",\n";
                         }
 
@@ -195,7 +195,7 @@ impl<E: Environment> Taplo<E> {
                     }
                     stdout.flush().await?;
                 } else {
-                    let mut buf = node.to_toml(false);
+                    let mut buf = node.to_toml(false, false);
 
                     if cmd.strip_newline {
                         if buf.ends_with('\n') {

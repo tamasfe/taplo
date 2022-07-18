@@ -1,3 +1,5 @@
+use crate::util::escape;
+
 use super::{
     node::{ArrayKind, DomNode, IntegerRepr, IntegerValue, TableKind},
     Keys, Node,
@@ -5,14 +7,20 @@ use super::{
 use std::fmt::{Formatter, Write};
 
 impl Node {
-    pub fn to_toml(&self, inline: bool) -> String {
+    pub fn to_toml(&self, inline: bool, prefer_single_quote: bool) -> String {
         let mut s = String::new();
-        self.to_toml_fmt(&mut s, inline).unwrap();
+        self.to_toml_fmt(&mut s, inline, prefer_single_quote)
+            .unwrap();
         s
     }
 
-    pub fn to_toml_fmt(&self, f: &mut impl Write, inline: bool) -> core::fmt::Result {
-        self.to_toml_impl(f, Keys::empty(), inline, false)
+    pub fn to_toml_fmt(
+        &self,
+        f: &mut impl Write,
+        inline: bool,
+        prefer_single_quote: bool,
+    ) -> core::fmt::Result {
+        self.to_toml_impl(f, Keys::empty(), inline, false, prefer_single_quote)
     }
 
     fn to_toml_impl(
@@ -21,6 +29,7 @@ impl Node {
         parent_keys: Keys,
         inline: bool,
         no_header: bool,
+        prefer_single_quote: bool,
     ) -> core::fmt::Result {
         if let Node::Bool(_) | Node::Str(_) | Node::Integer(_) | Node::Float(_) | Node::Date(_) =
             self
@@ -53,7 +62,7 @@ impl Node {
                         if !first {
                             f.write_str(", ")?;
                         }
-                        node.to_toml_impl(f, key.clone().into(), true, false)?;
+                        node.to_toml_impl(f, key.clone().into(), true, false, prefer_single_quote)?;
                         first = false;
                     }
 
@@ -76,7 +85,13 @@ impl Node {
                                 .map(|n| n.inner.kind == ArrayKind::Tables)
                                 .unwrap_or(false)
                     }) {
-                        node.to_toml_impl(f, key.clone().into(), false, false)?;
+                        node.to_toml_impl(
+                            f,
+                            key.clone().into(),
+                            false,
+                            false,
+                            prefer_single_quote,
+                        )?;
                         f.write_char('\n')?;
                     }
 
@@ -87,7 +102,13 @@ impl Node {
                                 .map(|n| n.inner.kind == ArrayKind::Tables)
                                 .unwrap_or(false)
                     }) {
-                        node.to_toml_impl(f, parent_keys.join(key.clone()), false, false)?;
+                        node.to_toml_impl(
+                            f,
+                            parent_keys.join(key.clone()),
+                            false,
+                            false,
+                            prefer_single_quote,
+                        )?;
                     }
                 }
             }
@@ -107,7 +128,7 @@ impl Node {
                         if !first {
                             f.write_str(", ")?;
                         }
-                        node.to_toml_impl(f, Keys::empty(), true, false)?;
+                        node.to_toml_impl(f, Keys::empty(), true, false, prefer_single_quote)?;
                         first = false;
                     }
 
@@ -119,13 +140,29 @@ impl Node {
                         f.write_str("[[")?;
                         f.write_str(parent_keys.dotted())?;
                         f.write_str("]]\n")?;
-                        node.to_toml_impl(f, parent_keys.clone(), false, true)?;
+                        node.to_toml_impl(
+                            f,
+                            parent_keys.clone(),
+                            false,
+                            true,
+                            prefer_single_quote,
+                        )?;
                     }
                 }
             }
             Node::Bool(b) => write!(f, "{}", b.value())?,
             Node::Str(s) => {
-                write!(f, "{}", serde_json::to_string(s.value()).unwrap())?;
+                if let Some(syntax) = s.syntax() {
+                    write!(f, "{}", syntax)?;
+                } else {
+                    let escaped = escape(s.value());
+
+                    if prefer_single_quote && escaped == s.value() {
+                        write!(f, "'{}'", s.value())?;
+                    } else {
+                        write!(f, r#""{escaped}""#)?;
+                    }
+                }
             }
             Node::Integer(i) => match i.inner.repr {
                 IntegerRepr::Dec => match i.value() {
@@ -149,6 +186,6 @@ impl Node {
 
 impl core::fmt::Display for Node {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.to_toml_impl(f, Keys::empty(), false, false)
+        self.to_toml_impl(f, Keys::empty(), false, false, false)
     }
 }

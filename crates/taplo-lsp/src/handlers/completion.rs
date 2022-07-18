@@ -217,7 +217,7 @@ pub async fn completion<E: Environment>(
                     kind: Some(CompletionItemKind::VARIABLE),
                     documentation: documentation(&schema),
                     insert_text_format: Some(InsertTextFormat::SNIPPET),
-                    insert_text: Some(new_entry_snippet(&relative_keys, &schema)),
+                    insert_text: Some(new_entry_snippet(&relative_keys, &schema, false)),
                     ..Default::default()
                 })
                 .collect(),
@@ -269,14 +269,14 @@ pub async fn completion<E: Environment>(
                             new_text: if has_eq {
                                 relative_keys.to_string() + " "
                             } else {
-                                new_entry_snippet(&relative_keys, &schema)
+                                new_entry_snippet(&relative_keys, &schema, false)
                             },
                         })
                     }),
                     insert_text: Some(if has_eq {
                         relative_keys.to_string() + " "
                     } else {
-                        new_entry_snippet(&relative_keys, &schema)
+                        new_entry_snippet(&relative_keys, &schema, false)
                     }),
                     insert_text_format: if has_eq {
                         None
@@ -325,7 +325,7 @@ pub async fn completion<E: Environment>(
                         kind: Some(CompletionItemKind::VARIABLE),
                         documentation: documentation(&schema),
                         insert_text_format: Some(InsertTextFormat::SNIPPET),
-                        insert_text: Some(new_entry_snippet(&relative_keys, &schema)),
+                        insert_text: Some(new_entry_snippet(&relative_keys, &schema, false)),
                         ..Default::default()
                     })
                     .collect(),
@@ -370,7 +370,12 @@ pub async fn completion<E: Environment>(
         let mut completions = Vec::new();
 
         for (_, _, schema) in schemas {
-            add_value_completions(&schema, range, &mut completions);
+            add_value_completions(
+                &schema,
+                range,
+                &mut completions,
+                query.is_single_quote_value(),
+            );
         }
 
         return Ok(Some(CompletionResponse::Array(completions)));
@@ -426,7 +431,7 @@ pub async fn completion<E: Environment>(
                         .range(entry_keys.all_text_range())
                         .unwrap()
                         .into_lsp(),
-                    new_text: new_entry_snippet(&relative_keys, &schema),
+                    new_text: new_entry_snippet(&relative_keys, &schema, false),
                 })),
                 ..Default::default()
             })
@@ -460,6 +465,7 @@ fn add_value_completions(
     schema: &Value,
     range: Option<Range>,
     completions: &mut Vec<CompletionItem>,
+    single_quote: bool,
 ) {
     let ext = schema_ext_of(schema).unwrap_or_default();
     let ext_docs = ext.docs.unwrap_or_default();
@@ -479,7 +485,7 @@ fn add_value_completions(
                 }
             };
 
-            let toml_value = node.to_toml(true);
+            let toml_value = node.to_toml(true, single_quote);
 
             completions.push(CompletionItem {
                 label: toml_value.clone(),
@@ -513,7 +519,7 @@ fn add_value_completions(
 
     if let Some(const_value) = schema.get("const") {
         let node: Node = serde_json::from_value(const_value.clone()).unwrap();
-        let toml_value = node.to_toml(true);
+        let toml_value = node.to_toml(true, single_quote);
         completions.push(CompletionItem {
             label: toml_value.clone(),
             kind: Some(match node {
@@ -542,7 +548,7 @@ fn add_value_completions(
 
     if let Some(default_value) = schema.get("default") {
         let node: Node = serde_json::from_value(default_value.clone()).unwrap();
-        let toml_value = node.to_toml(true);
+        let toml_value = node.to_toml(true, single_quote);
         completions.push(CompletionItem {
             label: toml_value.clone(),
             kind: Some(match node {
@@ -672,20 +678,24 @@ fn add_value_completions(
     }
 }
 
-fn new_entry_snippet(keys: &Keys, schema: &Value) -> String {
-    let value = default_value_snippet(schema, 0);
+fn new_entry_snippet(keys: &Keys, schema: &Value, single_quote: bool) -> String {
+    let value = default_value_snippet(schema, 0, single_quote);
     format!("{keys} = {value}")
 }
 
-fn default_value_snippet(schema: &Value, cursor_count: usize) -> Cow<'static, str> {
+fn default_value_snippet(
+    schema: &Value,
+    cursor_count: usize,
+    single_quote: bool,
+) -> Cow<'static, str> {
     if let Some(const_value) = schema.get("const") {
         let node: Node = serde_json::from_value(const_value.clone()).unwrap();
-        return format!("${{{}:{}}}", cursor_count, node.to_toml(true)).into();
+        return format!("${{{}:{}}}", cursor_count, node.to_toml(true, single_quote)).into();
     }
 
     if let Some(default_value) = schema.get("default") {
         let node: Node = serde_json::from_value(default_value.clone()).unwrap();
-        return format!("${{{}:{}}}", cursor_count, node.to_toml(true)).into();
+        return format!("${{{}:{}}}", cursor_count, node.to_toml(true, single_quote)).into();
     }
 
     if schema.get("enum").is_some() {
@@ -720,7 +730,11 @@ fn default_value_snippet(schema: &Value, cursor_count: usize) -> Cow<'static, st
             write!(
                 s,
                 "{init_key} = {}",
-                default_value_snippet(&schema["properties"][init_key], cursor_count + 1)
+                default_value_snippet(
+                    &schema["properties"][init_key],
+                    cursor_count + 1,
+                    single_quote
+                )
             )
             .unwrap();
         }

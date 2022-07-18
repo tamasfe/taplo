@@ -1,5 +1,15 @@
 # Change Log
 
+## next
+
+### Features
+
+- The language server now accepts Taplo rules in the `evenBetterToml.rules` setting
+
+### Fixes
+
+- Fixed path handling on Windows
+
 ## 0.16.5
 
 ### Fixes

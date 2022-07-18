@@ -13,8 +13,8 @@ use tokio::sync::Semaphore;
 use url::Url;
 
 pub const DEFAULT_CATALOGS: &[&str] = &[
-    "https://taplo.tamasfe.dev/schema_index.json",
     "https://www.schemastore.org/api/json/catalog.json",
+    "https://taplo.tamasfe.dev/schema_index.json",
 ];
 
 pub mod priority {

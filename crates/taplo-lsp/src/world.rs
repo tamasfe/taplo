@@ -255,12 +255,13 @@ impl<E: Environment> WorkspaceState<E> {
             if let Some(config_path) = config_path {
                 tracing::info!(path = ?config_path, "using config file");
                 self.taplo_config = toml::from_slice(&env.read_file(&config_path).await?)?;
-                tracing::debug!("using config: {:#?}", self.taplo_config);
             }
         }
 
         self.taplo_config.rule.extend(self.config.rules.clone());
         self.taplo_config.prepare(env, &root_path)?;
+
+        tracing::debug!("using config: {:#?}", self.taplo_config);
 
         Ok(())
     }

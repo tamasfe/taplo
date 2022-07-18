@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use taplo_common::{config::Config, environment::Environment, schema::Schemas};
+use taplo_common::{config::Config, environment::Environment, schema::Schemas, util::Normalize};
 
 pub mod args;
 pub mod commands;
@@ -94,7 +94,7 @@ impl<E: Environment> Taplo<E> {
         let mut patterns: Vec<String> = arg_patterns
             .map(|pat| {
                 if !self.env.is_absolute(Path::new(&pat)) {
-                    cwd.join(&pat).to_string_lossy().into_owned()
+                    cwd.join(&pat).normalize().to_string_lossy().into_owned()
                 } else {
                     pat
                 }
@@ -104,7 +104,11 @@ impl<E: Environment> Taplo<E> {
         if patterns.is_empty() {
             patterns = match config.include.clone() {
                 Some(patterns) => patterns,
-                None => Vec::from([cwd.join("**/*.toml").to_string_lossy().into_owned()]),
+                None => Vec::from([cwd
+                    .join("**/*.toml")
+                    .normalize()
+                    .to_string_lossy()
+                    .into_owned()]),
             };
         };
 

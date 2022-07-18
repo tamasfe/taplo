@@ -233,7 +233,7 @@ impl<E: Environment> WorkspaceState<E> {
         }
 
         let root_path = env
-            .to_file_path(&self.root)
+            .to_file_path_normalized(&self.root)
             .ok_or_else(|| anyhow!("invalid root URL"))?;
 
         let config_path = if let Some(p) = &self.config.taplo.config_file.path {
@@ -249,7 +249,7 @@ impl<E: Environment> WorkspaceState<E> {
             }
         } else if self.root != *DEFAULT_WORKSPACE_URL {
             tracing::debug!("discovering config file in workspace");
-            env.find_config_file(&root_path).await
+            env.find_config_file_normalized(&root_path).await
         } else {
             None
         };

@@ -1,5 +1,5 @@
 use super::cache::Cache;
-use crate::{config::Config, environment::Environment, util::GlobRule, IndexMap};
+use crate::{config::Config, environment::Environment, util::{GlobRule, normalize_str}, IndexMap};
 use anyhow::anyhow;
 use parking_lot::{RwLock, RwLockReadGuard};
 use regex::Regex;
@@ -327,7 +327,7 @@ impl<E: Environment> SchemaAssociations<E> {
                     .env
                     .read_file(
                         self.env
-                            .to_file_path(index_url)
+                            .to_file_path_normalized(index_url)
                             .ok_or_else(|| anyhow!("invalid file path"))?
                             .as_ref(),
                     )
@@ -370,9 +370,11 @@ impl From<GlobRule> for AssociationRule {
 impl AssociationRule {
     #[must_use]
     pub fn is_match(&self, text: &str) -> bool {
+        let text = normalize_str(text);
+
         match self {
-            AssociationRule::Glob(g) => g.is_match(text),
-            AssociationRule::Regex(r) => r.is_match(text),
+            AssociationRule::Glob(g) => g.is_match(&*text),
+            AssociationRule::Regex(r) => r.is_match(&text),
             AssociationRule::Url(u) => u.as_str() == text,
         }
     }

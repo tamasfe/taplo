@@ -10,7 +10,11 @@ use serde_json::Value;
 use taplo::formatter;
 use url::Url;
 
-use crate::{environment::Environment, util::GlobRule, HashMap};
+use crate::{
+    environment::Environment,
+    util::{GlobRule, Normalize},
+    HashMap,
+};
 
 pub const CONFIG_FILE_NAMES: &[&str] = &[".taplo.toml", "taplo.toml"];
 
@@ -176,7 +180,11 @@ impl Config {
         if let Some(included) = &mut self.include {
             for pat in included {
                 if !e.is_absolute(Path::new(pat)) {
-                    *pat = base.join(pat.as_str()).to_string_lossy().into_owned();
+                    *pat = base
+                        .join(pat.as_str())
+                        .normalize()
+                        .to_string_lossy()
+                        .into_owned();
                 }
             }
         }
@@ -184,7 +192,11 @@ impl Config {
         if let Some(excluded) = &mut self.exclude {
             for pat in excluded {
                 if !e.is_absolute(Path::new(pat)) {
-                    *pat = base.join(pat.as_str()).to_string_lossy().into_owned();
+                    *pat = base
+                        .join(pat.as_str())
+                        .normalize()
+                        .to_string_lossy()
+                        .into_owned();
                 }
             }
         }
@@ -193,7 +205,11 @@ impl Config {
             if let Some(included) = &mut rule.include {
                 for pat in included {
                     if !e.is_absolute(Path::new(pat)) {
-                        *pat = base.join(pat.as_str()).to_string_lossy().into_owned();
+                        *pat = base
+                            .join(pat.as_str())
+                            .normalize()
+                            .to_string_lossy()
+                            .into_owned();
                     }
                 }
             }
@@ -201,7 +217,11 @@ impl Config {
             if let Some(excluded) = &mut rule.exclude {
                 for pat in excluded {
                     if !e.is_absolute(Path::new(pat)) {
-                        *pat = base.join(pat.as_str()).to_string_lossy().into_owned();
+                        *pat = base
+                            .join(pat.as_str())
+                            .normalize()
+                            .to_string_lossy()
+                            .into_owned();
                     }
                 }
             }
@@ -226,7 +246,7 @@ impl Options {
                     let p = if e.is_absolute(Path::new(&p)) {
                         PathBuf::from(p)
                     } else {
-                        base.join(p)
+                        base.join(p).normalize()
                     };
 
                     let s = p.to_string_lossy();

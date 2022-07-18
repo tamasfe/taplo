@@ -1,8 +1,8 @@
 use lsp_async_stub::{rpc::Error, util::LspExt, Context, Params};
 use lsp_types::{DocumentFormattingParams, TextEdit};
-use std::path::Path;
+use std::path::PathBuf;
 use taplo::formatter;
-use taplo_common::environment::Environment;
+use taplo_common::{environment::Environment, util::Normalize};
 
 use crate::World;
 
@@ -17,7 +17,7 @@ pub(crate) async fn format<E: Environment>(
     let ws = workspaces.by_document(&p.text_document.uri);
     let doc = ws.document(&p.text_document.uri)?;
 
-    let doc_path = Path::new(p.text_document.uri.as_str());
+    let doc_path = PathBuf::from(p.text_document.uri.as_str()).normalize();
 
     let mut format_opts = formatter::Options {
         indent_string: if p.options.insert_spaces {
@@ -35,7 +35,7 @@ pub(crate) async fn format<E: Environment>(
     format_opts.update_camel(ws.config.formatter.clone());
 
     ws.taplo_config
-        .update_format_options(doc_path, &mut format_opts);
+        .update_format_options(&doc_path, &mut format_opts);
 
     Ok(Some(vec![TextEdit {
         range: doc.mapper.all_range().into_lsp(),
@@ -47,7 +47,7 @@ pub(crate) async fn format<E: Environment>(
                 .iter()
                 .map(|err| err.range)
                 .collect::<Vec<_>>(),
-            ws.taplo_config.format_scopes(doc_path),
+            ws.taplo_config.format_scopes(&doc_path),
         )
         .map_err(|err| {
             tracing::error!(error = %err, "invalid key pattern");

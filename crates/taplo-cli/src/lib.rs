@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use taplo_common::{config::Config, environment::Environment, schema::Schemas};
+use taplo_common::{config::Config, environment::Environment, schema::Schemas, util::Normalize};
 
 pub mod args;
 pub mod commands;
@@ -46,8 +46,8 @@ impl<E: Environment> Taplo<E> {
         let mut config_path = general.config.clone();
 
         if config_path.is_none() && !general.no_auto_config {
-            if let Some(cwd) = self.env.cwd() {
-                config_path = self.env.find_config_file(&cwd).await
+            if let Some(cwd) = self.env.cwd_normalized() {
+                config_path = self.env.find_config_file_normalized(&cwd).await
             }
         }
 
@@ -72,7 +72,7 @@ impl<E: Environment> Taplo<E> {
                 &self.env,
                 &self
                     .env
-                    .cwd()
+                    .cwd_normalized()
                     .ok_or_else(|| anyhow!("working directory is required"))?,
             )
             .context("invalid configuration")?;
@@ -94,7 +94,7 @@ impl<E: Environment> Taplo<E> {
         let mut patterns: Vec<String> = arg_patterns
             .map(|pat| {
                 if !self.env.is_absolute(Path::new(&pat)) {
-                    cwd.join(&pat).to_string_lossy().into_owned()
+                    cwd.join(&pat).normalize().to_string_lossy().into_owned()
                 } else {
                     pat
                 }
@@ -104,7 +104,11 @@ impl<E: Environment> Taplo<E> {
         if patterns.is_empty() {
             patterns = match config.include.clone() {
                 Some(patterns) => patterns,
-                None => Vec::from([cwd.join("**/*.toml").to_string_lossy().into_owned()]),
+                None => Vec::from([cwd
+                    .join("**/*.toml")
+                    .normalize()
+                    .to_string_lossy()
+                    .into_owned()]),
             };
         };
 
@@ -116,7 +120,7 @@ impl<E: Environment> Taplo<E> {
 
         let files = patterns
             .into_iter()
-            .map(|pat| self.env.glob_files(&pat))
+            .map(|pat| self.env.glob_files_normalized(&pat))
             .collect::<Result<Vec<_>, _>>()
             .into_iter()
             .flatten()

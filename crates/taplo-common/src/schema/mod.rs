@@ -254,7 +254,7 @@ impl<E: Environment> Schemas<E> {
                     .env
                     .read_file(
                         self.env
-                            .to_file_path(schema_url)
+                            .to_file_path_normalized(schema_url)
                             .ok_or_else(|| anyhow!("invalid file path"))?
                             .as_ref(),
                     )

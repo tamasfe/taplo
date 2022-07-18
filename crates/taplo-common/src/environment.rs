@@ -5,6 +5,8 @@ use time::OffsetDateTime;
 use tokio::io::{AsyncRead, AsyncWrite};
 use url::Url;
 
+use crate::util::Normalize;
+
 #[cfg(not(target_family = "wasm"))]
 pub mod native;
 
@@ -49,4 +51,26 @@ pub trait Environment: Clone + Send + Sync + 'static {
     fn cwd(&self) -> Option<PathBuf>;
 
     async fn find_config_file(&self, from: &Path) -> Option<PathBuf>;
+
+    /// Same as [`Self::glob_files`], but the returned paths are
+    /// [normalized](Normalize:normalize) in addition.
+    fn glob_files_normalized(&self, glob: &str) -> Result<Vec<PathBuf>, anyhow::Error> {
+        Ok(self
+            .glob_files(glob)?
+            .into_iter()
+            .map(Normalize::normalize)
+            .collect())
+    }
+
+    /// Same as [`Self::cwd`], but the returned path is
+    /// [normalized](Normalize:normalize) in addition.
+    fn cwd_normalized(&self) -> Option<PathBuf> {
+        self.cwd().map(Normalize::normalize)
+    }
+
+    /// Same as [`Self::to_file_path`], but the returned path is
+    /// [normalized](Normalize:normalize) in addition.
+    fn to_file_path_normalized(&self, url: &Url) -> Option<PathBuf> {
+        self.to_file_path(url).map(Normalize::normalize)
+    }
 }

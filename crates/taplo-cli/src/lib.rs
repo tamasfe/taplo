@@ -46,7 +46,7 @@ impl<E: Environment> Taplo<E> {
         let mut config_path = general.config.clone();
 
         if config_path.is_none() && !general.no_auto_config {
-            if let Some(cwd) = self.env.cwd() {
+            if let Some(cwd) = self.env.cwd_normalized() {
                 config_path = self.env.find_config_file(&cwd).await
             }
         }
@@ -72,7 +72,7 @@ impl<E: Environment> Taplo<E> {
                 &self.env,
                 &self
                     .env
-                    .cwd()
+                    .cwd_normalized()
                     .ok_or_else(|| anyhow!("working directory is required"))?,
             )
             .context("invalid configuration")?;
@@ -116,7 +116,7 @@ impl<E: Environment> Taplo<E> {
 
         let files = patterns
             .into_iter()
-            .map(|pat| self.env.glob_files(&pat))
+            .map(|pat| self.env.glob_files_normalized(&pat))
             .collect::<Result<Vec<_>, _>>()
             .into_iter()
             .flatten()

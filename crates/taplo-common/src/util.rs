@@ -1,8 +1,9 @@
 use globset::{Glob, GlobSetBuilder};
+use percent_encoding::percent_decode_str;
 use serde_json::Value;
 use std::{
     hash::{Hash, Hasher},
-    path::Path,
+    path::{Path, PathBuf},
     sync::Arc,
 };
 
@@ -84,6 +85,33 @@ impl<'v> Hash for HashValue<'v> {
                     HashValue(v).hash(state);
                 }
             }
+        }
+    }
+}
+
+pub trait Normalize {
+    /// Normalizing in the context of Taplo the following:
+    ///
+    /// - replaces `\` with `/` on windows
+    /// - decodes all percent-encoded characters
+    #[must_use]
+    fn normalize(self) -> Self;
+}
+
+impl Normalize for PathBuf {
+    fn normalize(self) -> Self {
+        let percent_decoded = match self
+            .to_str()
+            .and_then(|p| percent_decode_str(p).decode_utf8().ok())
+        {
+            Some(p) => p,
+            None => return self,
+        };
+
+        if cfg!(windows) {
+            percent_decoded.replace('\\', "/").into()
+        } else {
+            (*percent_decoded).into()
         }
     }
 }

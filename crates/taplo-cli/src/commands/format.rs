@@ -1,10 +1,13 @@
-use std::{mem, path::Path};
+use std::{
+    mem,
+    path::{Path, PathBuf},
+};
 
 use crate::{args::FormatCommand, Taplo};
 use anyhow::anyhow;
 use codespan_reporting::files::SimpleFile;
 use taplo::{formatter, parser};
-use taplo_common::{config::Config, environment::Environment};
+use taplo_common::{config::Config, environment::Environment, util::Normalize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 impl<E: Environment> Taplo<E> {
@@ -45,7 +48,7 @@ impl<E: Environment> Taplo<E> {
             dom,
             format_opts,
             &error_ranges,
-            config.format_scopes(Path::new(display_path)),
+            config.format_scopes(&PathBuf::from(display_path).normalize()),
         )
         .map_err(|err| anyhow!("invalid key pattern: {err}"))?;
 
@@ -72,7 +75,7 @@ impl<E: Environment> Taplo<E> {
 
         let cwd = self
             .env
-            .cwd()
+            .cwd_normalized()
             .ok_or_else(|| anyhow!("could not figure the current working directory"))?;
 
         let files = self

@@ -233,7 +233,7 @@ impl<E: Environment> WorkspaceState<E> {
         }
 
         let root_path = env
-            .to_file_path(&self.root)
+            .to_file_path_normalized(&self.root)
             .ok_or_else(|| anyhow!("invalid root URL"))?;
 
         let config_path = if let Some(p) = &self.config.taplo.config_file.path {

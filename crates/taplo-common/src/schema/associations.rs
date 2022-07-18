@@ -327,7 +327,7 @@ impl<E: Environment> SchemaAssociations<E> {
                     .env
                     .read_file(
                         self.env
-                            .to_file_path(index_url)
+                            .to_file_path_normalized(index_url)
                             .ok_or_else(|| anyhow!("invalid file path"))?
                             .as_ref(),
                     )

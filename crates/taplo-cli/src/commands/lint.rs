@@ -73,7 +73,7 @@ impl<E: Environment> Taplo<E> {
 
         let cwd = self
             .env
-            .cwd()
+            .cwd_normalized()
             .ok_or_else(|| anyhow!("could not figure the current working directory"))?;
 
         let files = self

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::PathBuf;
 use taplo_common::{
+    config::Rule,
     schema::{associations::DEFAULT_CATALOGS, cache::DEFAULT_LRU_CACHE_EXPIRATION_TIME},
     HashMap,
 };
@@ -37,6 +38,7 @@ pub struct LspConfig {
     pub completion: CompletionConfig,
     pub syntax: SyntaxConfig,
     pub formatter: taplo::formatter::OptionsIncompleteCamel,
+    pub rules: Vec<Rule>,
 }
 
 impl LspConfig {

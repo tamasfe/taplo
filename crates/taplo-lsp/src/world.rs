@@ -9,7 +9,7 @@ use lsp_types::Url;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde_json::json;
-use std::{path::Path, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use taplo::{dom::Node, parser::Parse};
 use taplo_common::{
     config::Config,
@@ -227,44 +227,40 @@ impl<E: Environment> WorkspaceState<E> {
         env: &impl Environment,
         default_config: &Config,
     ) -> Result<(), anyhow::Error> {
-        if !self.config.taplo.config_file.enabled {
-            self.taplo_config = default_config.clone();
-            return Ok(());
-        }
+        self.taplo_config = default_config.clone();
 
         let root_path = env
             .to_file_path_normalized(&self.root)
             .ok_or_else(|| anyhow!("invalid root URL"))?;
 
-        let config_path = if let Some(p) = &self.config.taplo.config_file.path {
-            tracing::debug!(path = ?p, "using config file at specified path");
+        if self.config.taplo.config_file.enabled {
+            let config_path = if let Some(p) = &self.config.taplo.config_file.path {
+                tracing::debug!(path = ?p, "using config file at specified path");
 
-            if env.is_absolute(&p) {
-                Some(p.clone())
+                if env.is_absolute(&p) {
+                    Some(p.clone())
+                } else if self.root != *DEFAULT_WORKSPACE_URL {
+                    Some(root_path.join(p))
+                } else {
+                    tracing::debug!("relative config path is not valid for detached workspace");
+                    None
+                }
             } else if self.root != *DEFAULT_WORKSPACE_URL {
-                Some(root_path.join(p))
+                tracing::debug!("discovering config file in workspace");
+                env.find_config_file_normalized(&root_path).await
             } else {
-                tracing::debug!("relative config path is not valid for detached workspace");
                 None
+            };
+
+            if let Some(config_path) = config_path {
+                tracing::info!(path = ?config_path, "using config file");
+                self.taplo_config = toml::from_slice(&env.read_file(&config_path).await?)?;
+                tracing::debug!("using config: {:#?}", self.taplo_config);
             }
-        } else if self.root != *DEFAULT_WORKSPACE_URL {
-            tracing::debug!("discovering config file in workspace");
-            env.find_config_file_normalized(&root_path).await
-        } else {
-            None
-        };
-
-        if let Some(config_path) = config_path {
-            tracing::info!(path = ?config_path, "using config file");
-            self.taplo_config = toml::from_slice(&env.read_file(&config_path).await?)?;
-
-            // This is different from the path we found the config in, in this case
-            // we wish to keep the scheme of the path.
-            let base_path = Path::new(self.root.as_str());
-            self.taplo_config.prepare(env, base_path)?;
-
-            tracing::debug!("using config: {:#?}", self.taplo_config);
         }
+
+        self.taplo_config.rule.extend(self.config.rules.clone());
+        self.taplo_config.prepare(env, &root_path)?;
 
         Ok(())
     }

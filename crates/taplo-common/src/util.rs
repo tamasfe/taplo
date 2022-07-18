@@ -2,6 +2,7 @@ use globset::{Glob, GlobSetBuilder};
 use percent_encoding::percent_decode_str;
 use serde_json::Value;
 use std::{
+    borrow::Cow,
     hash::{Hash, Hasher},
     path::{Path, PathBuf},
     sync::Arc,
@@ -100,18 +101,22 @@ pub trait Normalize {
 
 impl Normalize for PathBuf {
     fn normalize(self) -> Self {
-        let percent_decoded = match self
-            .to_str()
-            .and_then(|p| percent_decode_str(p).decode_utf8().ok())
-        {
-            Some(p) => p,
-            None => return self,
-        };
-
-        if cfg!(windows) {
-            percent_decoded.replace('\\', "/").into()
-        } else {
-            (*percent_decoded).into()
+        match self.to_str() {
+            Some(s) => (*normalize_str(s)).into(),
+            None => self,
         }
+    }
+}
+
+pub(crate) fn normalize_str(s: &str) -> Cow<str> {
+    let percent_decoded = match percent_decode_str(s).decode_utf8().ok() {
+        Some(s) => s,
+        None => return s.into(),
+    };
+
+    if cfg!(windows) {
+        percent_decoded.replace('\\', "/").into()
+    } else {
+        percent_decoded
     }
 }

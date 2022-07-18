@@ -1,5 +1,5 @@
 use super::cache::Cache;
-use crate::{config::Config, environment::Environment, util::GlobRule, IndexMap};
+use crate::{config::Config, environment::Environment, util::{GlobRule, normalize_str}, IndexMap};
 use anyhow::anyhow;
 use parking_lot::{RwLock, RwLockReadGuard};
 use regex::Regex;
@@ -370,9 +370,11 @@ impl From<GlobRule> for AssociationRule {
 impl AssociationRule {
     #[must_use]
     pub fn is_match(&self, text: &str) -> bool {
+        let text = normalize_str(text);
+
         match self {
-            AssociationRule::Glob(g) => g.is_match(text),
-            AssociationRule::Regex(r) => r.is_match(text),
+            AssociationRule::Glob(g) => g.is_match(&*text),
+            AssociationRule::Regex(r) => r.is_match(&text),
             AssociationRule::Url(u) => u.as_str() == text,
         }
     }

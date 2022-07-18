@@ -291,6 +291,7 @@ pub async fn completion<E: Environment>(
 
     if query.in_entry_value() {
         let (path, _) = query.dom_node().unwrap();
+
         // Pretty much same as the entry on an empty line
         if query.in_inline_table() {
             let schemas = match ws
@@ -337,7 +338,7 @@ pub async fn completion<E: Environment>(
         } else {
             let parent = query.parent_table_or_array_table(&doc.dom);
             let entry_key = query.entry_keys();
-            parent.0.extend(entry_key)
+            lookup_keys(doc.dom.clone(), &parent.0.extend(entry_key))
         };
 
         let schemas = match ws

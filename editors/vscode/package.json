@@ -202,6 +202,7 @@
         "evenBetterToml.taplo.configFile.path": {
           "description": "An absolute, or workspace relative path to the Taplo configuration file.",
           "type": "string",
+          "default": null,
           "scope": "resource"
         },
         "evenBetterToml.taplo.configFile.enabled": {

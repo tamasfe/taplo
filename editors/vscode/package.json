@@ -237,8 +237,7 @@
             "type": "string"
           },
           "default": [
-            "https://www.schemastore.org/api/json/catalog.json",
-            "https://taplo.tamasfe.dev/schema_index.json"
+            "https://www.schemastore.org/api/json/catalog.json"
           ]
         },
         "evenBetterToml.schema.associations": {

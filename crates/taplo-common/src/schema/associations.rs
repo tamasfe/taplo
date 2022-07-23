@@ -145,7 +145,11 @@ impl<E: Environment> SchemaAssociations<E> {
     /// Adds the schema from either a directive, or a `$schema` key in the root.
     pub fn add_from_document(&self, doc_url: &Url, root: &Node) {
         self.retain(|(rule, assoc)| match rule {
-            AssociationRule::Url(u) => !(u == doc_url && assoc.meta["source"] == source::DIRECTIVE),
+            AssociationRule::Url(u) => {
+                !(u == doc_url
+                    && (assoc.meta["source"] == source::DIRECTIVE
+                        || assoc.meta["source"] == source::SCHEMA_FIELD))
+            }
             _ => true,
         });
 

@@ -85,16 +85,6 @@ pub(crate) async fn document_change<E: Environment>(
     if ws.config.schema.enabled {
         ws.schemas
             .associations()
-            .retain(|(rule, assoc)| match rule {
-                AssociationRule::Url(u) => {
-                    !(u == &p.text_document.uri
-                        && (assoc.meta["source"] != source::DIRECTIVE
-                            || assoc.meta["source"] != source::SCHEMA_FIELD))
-                }
-                _ => true,
-            });
-        ws.schemas
-            .associations()
             .add_from_document(&p.text_document.uri, &dom);
         ws.emit_associations(context.clone()).await;
     }

@@ -160,10 +160,6 @@ impl<E: Environment> WorkspaceState<E> {
             tracing::warn!(%error, "failed to load workspace configuration");
         }
 
-        self.schemas
-            .associations()
-            .retain(|(_, assoc)| assoc.meta["source"] == "manual");
-
         if !self.config.schema.enabled {
             return Ok(());
         }

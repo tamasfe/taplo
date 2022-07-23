@@ -1,4 +1,4 @@
-use self::{associations::SchemaAssociations, cache::Cache};
+use self::{associations::SchemaAssociations, builtins::builtin_schema, cache::Cache};
 use crate::{environment::Environment, util::ArcHashValue, LruCache};
 use anyhow::{anyhow, Context};
 use async_recursion::async_recursion;
@@ -18,6 +18,28 @@ use url::Url;
 pub mod associations;
 pub mod cache;
 pub mod ext;
+
+pub mod builtins {
+    use reqwest::Url;
+    use serde_json::Value;
+    use std::sync::Arc;
+
+    pub const TAPLO_CONFIG_URL: &str = "taplo://taplo.toml";
+
+    #[must_use]
+    pub fn taplo_config_schema() -> Arc<Value> {
+        Arc::new(serde_json::to_value(&schemars::schema_for!(crate::config::Config)).unwrap())
+    }
+
+    #[must_use]
+    pub fn builtin_schema(url: &Url) -> Option<Arc<Value>> {
+        if url.as_str() == TAPLO_CONFIG_URL {
+            Some(taplo_config_schema())
+        } else {
+            None
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct Schemas<E: Environment> {
@@ -168,15 +190,19 @@ impl<E: Environment> Schemas<E> {
             return Ok(s);
         }
 
-        let schema = match self.fetch_external(schema_url).await {
-            Ok(s) => Arc::new(s),
-            Err(error) => {
-                tracing::warn!(?error, "failed to fetch remote schema");
-                if let Ok(s) = self.cache.load(schema_url, true).await {
-                    tracing::debug!(%schema_url, "expired schema was found in cache");
-                    return Ok(s);
+        let schema = if let Some(builtin) = builtin_schema(schema_url) {
+            builtin
+        } else {
+            match self.fetch_external(schema_url).await {
+                Ok(s) => Arc::new(s),
+                Err(error) => {
+                    tracing::warn!(?error, "failed to fetch remote schema");
+                    if let Ok(s) = self.cache.load(schema_url, true).await {
+                        tracing::debug!(%schema_url, "expired schema was found in cache");
+                        return Ok(s);
+                    }
+                    return Err(error);
                 }
-                return Err(error);
             }
         };
 

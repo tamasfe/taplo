@@ -1,4 +1,4 @@
-use super::cache::Cache;
+use super::{builtins, cache::Cache};
 use crate::{
     config::Config,
     environment::Environment,
@@ -20,7 +20,8 @@ use url::Url;
 pub const DEFAULT_CATALOGS: &[&str] = &["https://www.schemastore.org/api/json/catalog.json"];
 
 pub mod priority {
-    pub const CATALOG: usize = 0;
+    pub const BUILTIN: usize = 10;
+    pub const CATALOG: usize = 25;
     pub const CONFIG: usize = 50;
     pub const CONFIG_RULE: usize = 51;
     pub const LSP_CONFIG: usize = 60;
@@ -30,6 +31,7 @@ pub mod priority {
 }
 
 pub mod source {
+    pub const BUILTIN: &str = "builtin";
     pub const CATALOG: &str = "catalog";
     pub const CONFIG: &str = "config";
     pub const LSP_CONFIG: &str = "lsp_config";
@@ -49,13 +51,15 @@ pub struct SchemaAssociations<E: Environment> {
 
 impl<E: Environment> SchemaAssociations<E> {
     pub(crate) fn new(env: E, cache: Cache<E>, http: reqwest::Client) -> Self {
-        Self {
+        let this = Self {
             concurrent_requests: Arc::new(Semaphore::new(10)),
             cache,
             env,
             http,
             associations: Default::default(),
-        }
+        };
+        this.add_builtins();
+        this
     }
 
     pub fn add(&self, rule: AssociationRule, assoc: SchemaAssociation) {
@@ -70,8 +74,29 @@ impl<E: Environment> SchemaAssociations<E> {
         self.associations.read()
     }
 
+    /// Clear all associations.
+    ///
+    /// Note that this will completely remove all associations,
+    /// even built-in ones that will have to be added again.
     pub fn clear(&self) {
         self.associations.write().clear();
+    }
+
+    pub fn add_builtins(&self) {
+        self.retain(|(_, assoc)| assoc.meta["source"] != source::BUILTIN);
+
+        self.associations.write().push((
+            AssociationRule::Regex(Regex::new(r#".*\.?taplo\.toml$"#).unwrap()),
+            SchemaAssociation {
+                url: builtins::TAPLO_CONFIG_URL.parse().unwrap(),
+                meta: json!({
+                    "name": "Taplo",
+                    "description": "Taplo configuration file.",
+                    "source": source::BUILTIN
+                }),
+                priority: priority::BUILTIN,
+            },
+        ));
     }
 
     pub async fn add_from_catalog(&self, url: &Url) -> Result<(), anyhow::Error> {

@@ -1,6 +1,6 @@
 [workspace]
 members = ["crates/*"]
-exclude = ["util/test-gen", "util/schema-index", "crates/taplo-wasm"]
+exclude = ["util/test-gen", "crates/taplo-wasm"]
 
 [profile.release]
 codegen-units = 1

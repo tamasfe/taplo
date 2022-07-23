@@ -1,5 +1,10 @@
 use super::cache::Cache;
-use crate::{config::Config, environment::Environment, util::{GlobRule, normalize_str}, IndexMap};
+use crate::{
+    config::Config,
+    environment::Environment,
+    util::{normalize_str, GlobRule},
+    IndexMap,
+};
 use anyhow::anyhow;
 use parking_lot::{RwLock, RwLockReadGuard};
 use regex::Regex;
@@ -12,10 +17,7 @@ use taplo::dom::Node;
 use tokio::sync::Semaphore;
 use url::Url;
 
-pub const DEFAULT_CATALOGS: &[&str] = &[
-    "https://www.schemastore.org/api/json/catalog.json",
-    "https://taplo.tamasfe.dev/schema_index.json",
-];
+pub const DEFAULT_CATALOGS: &[&str] = &["https://www.schemastore.org/api/json/catalog.json"];
 
 pub mod priority {
     pub const CATALOG: usize = 0;

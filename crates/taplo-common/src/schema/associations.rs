@@ -180,20 +180,34 @@ impl<E: Environment> SchemaAssociations<E> {
 
         for comment in root.header_comments() {
             if let Some("schema") = comment.directive() {
-                let schema_url: Url = if comment.value().starts_with('.') {
-                    match doc_url.join(comment.value()) {
-                        Ok(s) => s,
-                        Err(error) => {
-                            tracing::error!(%error, "invalid schema directive");
-                            continue;
-                        }
-                    }
-                } else {
-                    match comment.value().parse() {
-                        Ok(s) => s,
-                        Err(error) => {
-                            tracing::error!(%error, "invalid schema directive");
-                            continue;
+                let value = comment.value();
+
+                if value.is_empty() {
+                    tracing::warn!("empty schema directive");
+                    continue;
+                }
+
+                let schema_url: Url = match value.parse() {
+                    Ok(url) => url,
+                    Err(error) => {
+                        tracing::debug!(%error, "invalid url in directive, assuming file path instead");
+
+                        if self.env.is_absolute(Path::new(value)) {
+                            match format!("file://{}", value).parse() {
+                                Ok(u) => u,
+                                Err(error) => {
+                                    tracing::error!(%error, "invalid schema directive");
+                                    continue;
+                                }
+                            }
+                        } else {
+                            match doc_url.join(value) {
+                                Ok(u) => u,
+                                Err(error) => {
+                                    tracing::error!(%error, "invalid schema directive");
+                                    continue;
+                                }
+                            }
                         }
                     }
                 };

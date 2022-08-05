@@ -196,7 +196,7 @@ impl<E: Environment> Schemas<E> {
             match self.fetch_external(schema_url).await {
                 Ok(s) => Arc::new(s),
                 Err(error) => {
-                    tracing::warn!(?error, "failed to fetch remote schema");
+                    tracing::warn!(?error, "failed to fetch schema");
                     if let Ok(s) = self.cache.load(schema_url, true).await {
                         tracing::debug!(%schema_url, "expired schema was found in cache");
                         return Ok(s);

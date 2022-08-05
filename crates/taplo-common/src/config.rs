@@ -243,15 +243,19 @@ impl Options {
         if let Some(schema_opts) = &mut self.schema {
             let url = match schema_opts.path.take() {
                 Some(p) => {
-                    let p = if e.is_absolute(Path::new(&p)) {
-                        PathBuf::from(p)
+                    if let Ok(url) = p.parse() {
+                        Some(url)
                     } else {
-                        base.join(p).normalize()
-                    };
+                        let p = if e.is_absolute(Path::new(&p)) {
+                            PathBuf::from(p)
+                        } else {
+                            base.join(p).normalize()
+                        };
 
-                    let s = p.to_string_lossy();
+                        let s = p.to_string_lossy();
 
-                    Some(Url::parse(&format!("file://{s}")).context("invalid schema path")?)
+                        Some(Url::parse(&format!("file://{s}")).context("invalid schema path")?)
+                    }
                 }
                 None => schema_opts.url.take(),
             };
@@ -359,10 +363,12 @@ pub struct SchemaOptions {
 
     /// A local file path to the schema, overrides `url` if set.
     ///
-    /// For URLs, please use `url` instead.
+    /// URLs are also accepted here, but it's not a guarantee and might
+    /// change in newer releases.
+    /// Please use the `url` field instead whenever possible.
     pub path: Option<String>,
 
-    /// A full absolute Url to the schema.
+    /// A full absolute URL to the schema.
     ///
     /// The url of the schema, supported schemes are `http`, `https`, `file` and `taplo`.
     pub url: Option<Url>,

@@ -350,6 +350,7 @@ impl Query {
             .unwrap_or(false)
     }
 
+    #[must_use]
     pub fn is_single_quote_value(&self) -> bool {
         self.entry_value().map_or(false, |v| {
             v.descendants_with_tokens()

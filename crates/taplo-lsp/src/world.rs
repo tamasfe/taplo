@@ -233,7 +233,7 @@ impl<E: Environment> WorkspaceState<E> {
             let config_path = if let Some(p) = &self.config.taplo.config_file.path {
                 tracing::debug!(path = ?p, "using config file at specified path");
 
-                if env.is_absolute(&p) {
+                if env.is_absolute(p) {
                     Some(p.clone())
                 } else if self.root != *DEFAULT_WORKSPACE_URL {
                     Some(root_path.join(p))

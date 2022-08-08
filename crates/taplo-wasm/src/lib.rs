@@ -159,7 +159,7 @@ pub fn to_json(toml: &str) -> Result<String, JsError> {
 #[wasm_bindgen]
 pub fn from_json(json: &str) -> Result<String, JsError> {
     let dom: Node = serde_json::from_str(json)?;
-    Ok(dom.to_toml(false))
+    Ok(dom.to_toml(false, false))
 }
 
 #[cfg(feature = "cli")]

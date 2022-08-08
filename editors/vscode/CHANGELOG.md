@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.17.1
+
+### Fixes
+
+- The bundled language server was not updated in `0.17.0`.
+
 ## 0.17.0
 
 ### Features

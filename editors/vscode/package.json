@@ -2,7 +2,7 @@
   "name": "even-better-toml",
   "displayName": "Even Better TOML",
   "description": "Fully-featured TOML support",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "autoTag": {
     "enabled": true
   },
@@ -392,7 +392,7 @@
     "build": "rm -rf dist && yarn build:syntax && yarn build:node && yarn build:browser-extension && yarn build:browser-server"
   },
   "dependencies": {
-    "@taplo/lsp": "^0.3.3",
+    "@taplo/lsp": "0.3.5",
     "deep-equal": "^2.0.5",
     "encoding": "^0.1.13",
     "fast-glob": "^3.2.11",

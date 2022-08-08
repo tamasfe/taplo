@@ -9,7 +9,7 @@ license = "MIT"
 name = "taplo"
 readme = false
 repository = "https://github.com/tamasfe/taplo"
-version = "0.9.0"
+version = "0.10.0"
 
 [features]
 default = ["serde"]

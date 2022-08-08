@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.10.0
+
+### Features
+
+- Basic escaping of strings is now supported.
+
+### Breaking Changes
+
+- DOM nodes can be printed with literal strings, and a preference option must be passed to `to_toml` and `to_toml_fmt`.
+
 ## 0.9.0
 
 TODO

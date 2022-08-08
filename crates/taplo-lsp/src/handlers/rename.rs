@@ -22,7 +22,13 @@ pub async fn prepare_rename<E: Environment>(
 
     let workspaces = context.workspaces.write().await;
     let ws = workspaces.by_document(&document_uri);
-    let doc = ws.document(&document_uri)?;
+    let doc = match ws.document(&document_uri) {
+        Ok(d) => d,
+        Err(error) => {
+            tracing::debug!(%error, "failed to get document from workspace");
+            return Ok(None);
+        }
+    };
 
     let position = p.position;
     let offset = match doc.mapper.offset(Position::from_lsp(position)) {
@@ -73,7 +79,13 @@ pub async fn rename<E: Environment>(
 
     let workspaces = context.workspaces.write().await;
     let ws = workspaces.by_document(&document_uri);
-    let doc = ws.document(&document_uri)?;
+    let doc = match ws.document(&document_uri) {
+        Ok(d) => d,
+        Err(error) => {
+            tracing::debug!(%error, "failed to get document from workspace");
+            return Ok(None);
+        }
+    };
 
     let position = p.text_document_position.position;
     let offset = match doc.mapper.offset(Position::from_lsp(position)) {

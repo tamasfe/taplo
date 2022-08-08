@@ -15,7 +15,13 @@ pub(crate) async fn format<E: Environment>(
 
     let workspaces = context.workspaces.read().await;
     let ws = workspaces.by_document(&p.text_document.uri);
-    let doc = ws.document(&p.text_document.uri)?;
+    let doc = match ws.document(&p.text_document.uri) {
+        Ok(d) => d,
+        Err(error) => {
+            tracing::debug!(%error, "failed to get document from workspace");
+            return Ok(None);
+        }
+    };
 
     let doc_path = PathBuf::from(p.text_document.uri.as_str()).normalize();
 

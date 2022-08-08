@@ -31,7 +31,13 @@ pub(crate) async fn hover<E: Environment>(
 
     let workspaces = context.workspaces.read().await;
     let ws = workspaces.by_document(&document_uri);
-    let doc = ws.document(&document_uri)?;
+    let doc = match ws.document(&document_uri) {
+        Ok(d) => d,
+        Err(error) => {
+            tracing::debug!(%error, "failed to get document from workspace");
+            return Ok(None);
+        }
+    };
 
     let position = p.text_document_position_params.position;
     let offset = match doc.mapper.offset(Position::from_lsp(position)) {

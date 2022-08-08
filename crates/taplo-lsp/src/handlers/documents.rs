@@ -1,7 +1,8 @@
-use lsp_async_stub::{util::Mapper, Context, Params};
+use lsp_async_stub::{util::Mapper, Context, Params, RequestWriter};
 use lsp_types::{
-    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-    DidSaveTextDocumentParams,
+    notification, Diagnostic, DiagnosticSeverity, DidChangeTextDocumentParams,
+    DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+    PublishDiagnosticsParams,
 };
 use taplo_common::{
     environment::Environment,
@@ -15,7 +16,7 @@ use crate::{
 
 #[tracing::instrument(skip_all)]
 pub(crate) async fn document_open<E: Environment>(
-    context: Context<World<E>>,
+    mut context: Context<World<E>>,
     params: Params<DidOpenTextDocumentParams>,
 ) {
     let p = match params.optional() {
@@ -23,11 +24,38 @@ pub(crate) async fn document_open<E: Environment>(
         Some(p) => p,
     };
 
-    let parse = taplo::parser::parse(&p.text_document.text);
-    let mapper = Mapper::new_utf16(&p.text_document.text, false);
-
     let mut workspaces = context.workspaces.write().await;
     let ws = workspaces.by_document_mut(&p.text_document.uri);
+
+    if let Some(pth) = context.env.to_file_path_normalized(&p.text_document.uri) {
+        if !ws.taplo_config.is_included(&pth) {
+            drop(workspaces);
+            context
+                .write_notification::<notification::PublishDiagnostics, _>(Some(
+                    PublishDiagnosticsParams {
+                        uri: p.text_document.uri.clone(),
+                        diagnostics: vec![Diagnostic {
+                            range: Default::default(),
+                            severity: Some(DiagnosticSeverity::HINT),
+                            code: None,
+                            code_description: None,
+                            source: Some("Even Better TOML".into()),
+                            message: "this document has been excluded".into(),
+                            related_information: None,
+                            tags: None,
+                            data: None,
+                        }],
+                        version: None,
+                    },
+                ))
+                .await
+                .unwrap_or_else(|err| tracing::error!("{err}"));
+            return;
+        }
+    }
+
+    let parse = taplo::parser::parse(&p.text_document.text);
+    let mapper = Mapper::new_utf16(&p.text_document.text, false);
 
     let dom = parse.clone().into_dom();
 
@@ -60,7 +88,7 @@ pub(crate) async fn document_open<E: Environment>(
 
 #[tracing::instrument(skip_all)]
 pub(crate) async fn document_change<E: Environment>(
-    context: Context<World<E>>,
+    mut context: Context<World<E>>,
     params: Params<DidChangeTextDocumentParams>,
 ) {
     let mut p = match params.optional() {
@@ -74,11 +102,38 @@ pub(crate) async fn document_change<E: Environment>(
         Some(c) => c,
     };
 
-    let parse = taplo::parser::parse(&change.text);
-    let mapper = Mapper::new_utf16(&change.text, false);
-
     let mut workspaces = context.workspaces.write().await;
     let ws = workspaces.by_document_mut(&p.text_document.uri);
+
+    if let Some(pth) = context.env.to_file_path_normalized(&p.text_document.uri) {
+        if !ws.taplo_config.is_included(&pth) {
+            drop(workspaces);
+            context
+                .write_notification::<notification::PublishDiagnostics, _>(Some(
+                    PublishDiagnosticsParams {
+                        uri: p.text_document.uri.clone(),
+                        diagnostics: vec![Diagnostic {
+                            range: Default::default(),
+                            severity: Some(DiagnosticSeverity::HINT),
+                            code: None,
+                            code_description: None,
+                            source: Some("Even Better TOML".into()),
+                            message: "this document has been excluded".into(),
+                            related_information: None,
+                            tags: None,
+                            data: None,
+                        }],
+                        version: None,
+                    },
+                ))
+                .await
+                .unwrap_or_else(|err| tracing::error!("{err}"));
+            return;
+        }
+    }
+
+    let parse = taplo::parser::parse(&change.text);
+    let mapper = Mapper::new_utf16(&change.text, false);
 
     let dom = parse.clone().into_dom();
 

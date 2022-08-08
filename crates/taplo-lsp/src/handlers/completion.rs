@@ -38,7 +38,13 @@ pub async fn completion<E: Environment>(
         return Ok(None);
     }
 
-    let doc = ws.document(&document_uri)?;
+    let doc = match ws.document(&document_uri) {
+        Ok(d) => d,
+        Err(error) => {
+            tracing::debug!(%error, "failed to get document from workspace");
+            return Ok(None);
+        }
+    };
 
     let schema_association = match ws.schemas.associations().association_for(&document_uri) {
         Some(ass) => ass,

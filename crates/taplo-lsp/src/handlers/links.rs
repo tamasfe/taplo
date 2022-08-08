@@ -21,7 +21,13 @@ pub async fn links<E: Environment>(
         return Ok(None);
     }
 
-    let doc = ws.document(&p.text_document.uri)?;
+    let doc = match ws.document(&p.text_document.uri) {
+        Ok(d) => d,
+        Err(error) => {
+            tracing::debug!(%error, "failed to get document from workspace");
+            return Ok(None);
+        }
+    };
 
     let mut links = Vec::new();
 

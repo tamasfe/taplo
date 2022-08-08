@@ -302,11 +302,7 @@ async fn collect_schema_errors<E: Environment>(
         return;
     }
 
-    if let Some(schema_association) = ws
-        .schemas
-        .associations()
-        .association_for(document_url)
-    {
+    if let Some(schema_association) = ws.schemas.associations().association_for(document_url) {
         tracing::debug!(
             schema.url = %schema_association.url,
             schema.name = schema_association.meta["name"].as_str().unwrap_or(""),

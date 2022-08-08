@@ -32,7 +32,13 @@ pub(crate) async fn semantic_tokens<E: Environment>(
         return Ok(None);
     }
 
-    let doc = ws.document(&p.text_document.uri)?;
+    let doc = match ws.document(&p.text_document.uri) {
+        Ok(d) => d,
+        Err(error) => {
+            tracing::debug!(%error, "failed to get document from workspace");
+            return Ok(None);
+        }
+    };
 
     Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
         result_id: None,

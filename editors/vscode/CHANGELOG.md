@@ -1,14 +1,22 @@
 # Change Log
 
-## next
+## 0.17.0
 
 ### Features
 
 - The language server now accepts Taplo rules in the `evenBetterToml.rules` setting
+- Show schema title in hover
+- Added builtin schema for `taplo.toml`
 
 ### Fixes
 
 - Fixed path handling on Windows
+- Completion of literal strings now works
+- Schema directives now should work more reliably
+
+### Other
+
+- Schemas now will only be fetched from the [schema store](https://schemastore.org) by default
 
 ## 0.16.5
 

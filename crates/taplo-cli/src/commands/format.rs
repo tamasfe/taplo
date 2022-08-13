@@ -3,9 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{args::FormatCommand, Taplo};
+use crate::{args::{FormatCommand, self}, Taplo};
 use anyhow::anyhow;
 use codespan_reporting::files::SimpleFile;
+use prettydiff::basic::DiffOp;
 use taplo::{formatter, parser};
 use taplo_common::{config::Config, environment::Environment, util::Normalize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -122,6 +123,51 @@ impl<E: Environment> Taplo<E> {
             if cmd.check {
                 if source != formatted {
                     tracing::error!(?path, "the file is not properly formatted");
+
+                    println!("diff --git a/{path} b/{path}", path = path.display());
+                    println!("--- a/{path}", path = path.display());
+                    println!("+++ b/{path}", path = path.display());
+
+                    const CONTEXT_LINES: usize = 7;
+                    let hunks = prettydiff::diff_lines(&source, &formatted);
+                    let hunks = hunks.diff();
+                    let hunkcount = hunks.len();
+                    let mut acc = Vec::<String>::with_capacity(hunkcount);
+                    for (idx, diff_op) in hunks.into_iter().enumerate() {
+                        use prettydiff::basic::DiffOp;
+                        use ansi_term::Colour::{self, Red, Green};
+
+                        fn apply_color<'a>(s: &'a [&'a str], prefix: &'a str, color: Colour) -> impl IntoIterator<Item=String> +'a {
+                            s.iter().map(move |&s| color.paint(prefix.to_owned() + s).to_string())
+                        }
+
+                        match diff_op {
+                            DiffOp::Equal(slices) => {
+                                if slices.len() < 2+CONTEXT_LINES*2 && idx > 0 && idx+1 < hunkcount {
+                                    acc.extend(slices[0..usize::max(CONTEXT_LINES,slices.len())].into_iter().map(ToOwned::to_owned).map(ToOwned::to_owned));
+                                } else {
+                                    if idx > 0 {
+                                        acc.extend(slices[0..usize::max(CONTEXT_LINES,slices.len())].into_iter().map(ToOwned::to_owned).map(ToOwned::to_owned));
+                                    }
+                                    if idx+1 < hunkcount {
+                                        acc.extend(slices[(slices.len().saturating_sub(CONTEXT_LINES))..].into_iter().map(ToOwned::to_owned).map(ToOwned::to_owned));
+                                    }
+                                }
+                            }
+                            DiffOp::Insert(ins) => {
+                                acc.extend(apply_color(ins, "+", Green));
+                            }
+                            DiffOp::Remove(rem) => {
+                                acc.extend(apply_color(rem, "-", Red));
+                            }
+                            DiffOp::Replace(rem, ins) => {
+                                acc.extend(apply_color(rem, "-", Red));
+                                acc.extend(apply_color(ins, "+", Green));
+                            }
+                        }
+                    }
+                    println!("{}", acc.join("\n"));
+
                     result = Err(anyhow!("some files were not properly formatted"));
                 }
             } else if source != formatted {

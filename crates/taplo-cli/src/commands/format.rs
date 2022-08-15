@@ -147,8 +147,6 @@ impl<E: Environment> Taplo<E> {
 
             pre_line += pre_length;
             post_line += post_length;
-            post_length = 0;
-            pre_length = 0;
             println!("{}", acc.join("\n"));
             acc.clear();
         }

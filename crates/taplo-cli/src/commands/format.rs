@@ -66,6 +66,86 @@ impl<E: Environment> Taplo<E> {
         Ok(())
     }
 
+    fn print_diff(original: &str, formatted: &str) {
+        println!("diff a/{path} b/{path}", path = path.display());
+        println!("--- a/{path}", path = path.display());
+        println!("+++ b/{path}", path = path.display());
+
+        // How many lines of context to print:
+        const CONTEXT_LINES: usize = 7;
+
+        let hunks = prettydiff::diff_lines(&source, &formatted);
+        let hunks = hunks.diff();
+        let hunkcount = hunks.len();
+        let mut acc = Vec::<String>::with_capacity(hunkcount);
+
+        let mut pre_line = 0_usize;
+        let mut post_line = 0_usize;
+        for (idx, diff_op) in hunks.into_iter().enumerate() {
+            use ansi_term::Colour::{self, Green, Red};
+            use prettydiff::basic::DiffOp;
+
+            // apply the given color and prefix to the set of strings `s`
+            fn apply_color<'a>(
+                s: &'a [&'a str],
+                prefix: &'a str,
+                color: Colour,
+            ) -> impl IntoIterator<Item = String> + 'a {
+                s.iter()
+                    .map(move |&s| color.paint(prefix.to_owned() + s).to_string())
+            }
+
+            let mut pre_length = 0_usize;
+            let mut post_length = 0_usize;
+
+            // length of a net diff op
+            match diff_op {
+                DiffOp::Equal(slices) => {
+                    if slices.len() < CONTEXT_LINES * 2 && idx > 0 && idx + 1 < hunkcount {
+                        let end = usize::min(CONTEXT_LINES, slices.len());
+                        acc.extend(slices[0..end].into_iter().map(|&s| s.to_owned()));
+                        pre_length += end;
+                    } else {
+                        if idx > 0 {
+                            let end = usize::min(CONTEXT_LINES, slices.len());
+                            acc.extend(slices[0..end].into_iter().map(|&s| s.to_owned()));
+                            pre_length += end;
+                        }
+                        // context before the hunk within the file
+
+                        // context after the hunk within the file
+                        if idx + 1 < hunkcount {
+                            let skip = (slices.len().saturating_sub(CONTEXT_LINES));
+                            acc.extend(slices[skip..].into_iter().map(|&s| s.to_owned()));
+                            pre_length += (skip..slices.len()).len();
+                        }
+                    }
+                }
+                DiffOp::Insert(ins) => {
+                    acc.extend(apply_color(ins, "+", Green));
+                    post_length += ins.len();
+                }
+                DiffOp::Remove(rem) => {
+                    acc.extend(apply_color(rem, "-", Red));
+                    pre_length += rem.len();
+                }
+                DiffOp::Replace(rem, ins) => {
+                    acc.extend(apply_color(rem, "-", Red));
+                    acc.extend(apply_color(ins, "+", Green));
+                    pre_length += rem.len();
+                    post_length += ins.len();
+                }
+            };
+        }
+        println!(
+            "@@ -{},{} +{},{} @@",
+            pre_line, pre_length, post_line, post_length
+        );
+        println!("{}", acc.join("\n"));
+        pre_line += pre_length;
+        post_line += post_length;
+    }
+
     #[tracing::instrument(skip_all)]
     async fn format_files(&mut self, mut cmd: FormatCommand) -> Result<(), anyhow::Error> {
         if cmd.stdin_filepath.is_some() {
@@ -124,72 +204,7 @@ impl<E: Environment> Taplo<E> {
                 if source != formatted {
                     tracing::error!(?path, "the file is not properly formatted");
 
-                    println!("diff --git a/{path} b/{path}", path = path.display());
-                    println!("--- a/{path}", path = path.display());
-                    println!("+++ b/{path}", path = path.display());
-
-                    const CONTEXT_LINES: usize = 7;
-                    let hunks = prettydiff::diff_lines(&source, &formatted);
-                    let hunks = hunks.diff();
-                    let hunkcount = hunks.len();
-                    let mut acc = Vec::<String>::with_capacity(hunkcount);
-                    for (idx, diff_op) in hunks.into_iter().enumerate() {
-                        use ansi_term::Colour::{self, Green, Red};
-                        use prettydiff::basic::DiffOp;
-
-                        fn apply_color<'a>(
-                            s: &'a [&'a str],
-                            prefix: &'a str,
-                            color: Colour,
-                        ) -> impl IntoIterator<Item = String> + 'a {
-                            s.iter()
-                                .map(move |&s| color.paint(prefix.to_owned() + s).to_string())
-                        }
-
-                        match diff_op {
-                            DiffOp::Equal(slices) => {
-                                if slices.len() < 2 + CONTEXT_LINES * 2
-                                    && idx > 0
-                                    && idx + 1 < hunkcount
-                                {
-                                    acc.extend(
-                                        slices[0..usize::max(CONTEXT_LINES, slices.len())]
-                                            .into_iter()
-                                            .map(ToOwned::to_owned)
-                                            .map(ToOwned::to_owned),
-                                    );
-                                } else {
-                                    if idx > 0 {
-                                        acc.extend(
-                                            slices[0..usize::max(CONTEXT_LINES, slices.len())]
-                                                .into_iter()
-                                                .map(ToOwned::to_owned)
-                                                .map(ToOwned::to_owned),
-                                        );
-                                    }
-                                    if idx + 1 < hunkcount {
-                                        acc.extend(
-                                            slices[(slices.len().saturating_sub(CONTEXT_LINES))..]
-                                                .into_iter()
-                                                .map(ToOwned::to_owned)
-                                                .map(ToOwned::to_owned),
-                                        );
-                                    }
-                                }
-                            }
-                            DiffOp::Insert(ins) => {
-                                acc.extend(apply_color(ins, "+", Green));
-                            }
-                            DiffOp::Remove(rem) => {
-                                acc.extend(apply_color(rem, "-", Red));
-                            }
-                            DiffOp::Replace(rem, ins) => {
-                                acc.extend(apply_color(rem, "-", Red));
-                                acc.extend(apply_color(ins, "+", Green));
-                            }
-                        }
-                    }
-                    println!("{}", acc.join("\n"));
+                    print_diff(source, formatted);
 
                     result = Err(anyhow!("some files were not properly formatted"));
                 }

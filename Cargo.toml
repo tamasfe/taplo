@@ -1,13 +1,28 @@
 [workspace]
 members = ["crates/*"]
-exclude = ["util/test-gen", "crates/taplo-wasm"]
+  exclude = ["util/test-gen", "crates/taplo-wasm"]
 
 [profile.release]
 codegen-units = 1
-lto = "thin"
-opt-level = 3
+      opt-level = 3
+lto           = "thin"
 strip = "debuginfo"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 [profile.bench]
 lto = true
-opt-level = 3
+         opt-level = 3

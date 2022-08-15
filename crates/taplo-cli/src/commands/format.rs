@@ -66,7 +66,8 @@ impl<E: Environment> Taplo<E> {
         Ok(())
     }
 
-    fn print_diff(original: &str, formatted: &str) {
+    fn print_diff(path: impl AsRef<Path>, original: &str, formatted: &str) {
+        let path = path.as_ref();
         println!("diff a/{path} b/{path}", path = path.display());
         println!("--- a/{path}", path = path.display());
         println!("+++ b/{path}", path = path.display());
@@ -74,7 +75,7 @@ impl<E: Environment> Taplo<E> {
         // How many lines of context to print:
         const CONTEXT_LINES: usize = 7;
 
-        let hunks = prettydiff::diff_lines(&source, &formatted);
+        let hunks = prettydiff::diff_lines(&original, &formatted);
         let hunks = hunks.diff();
         let hunkcount = hunks.len();
         let mut acc = Vec::<String>::with_capacity(hunkcount);
@@ -102,22 +103,25 @@ impl<E: Environment> Taplo<E> {
             match diff_op {
                 DiffOp::Equal(slices) => {
                     if slices.len() < CONTEXT_LINES * 2 && idx > 0 && idx + 1 < hunkcount {
-                        let end = usize::min(CONTEXT_LINES, slices.len());
-                        acc.extend(slices[0..end].into_iter().map(|&s| s.to_owned()));
-                        pre_length += end;
+                        acc.extend(slices[..].into_iter().map(|&s| s.to_owned()));
+                        pre_length += slices.len();
+                        post_length += slices.len();
                     } else {
                         if idx > 0 {
                             let end = usize::min(CONTEXT_LINES, slices.len());
                             acc.extend(slices[0..end].into_iter().map(|&s| s.to_owned()));
                             pre_length += end;
+                            post_length += end;
                         }
                         // context before the hunk within the file
 
                         // context after the hunk within the file
                         if idx + 1 < hunkcount {
-                            let skip = (slices.len().saturating_sub(CONTEXT_LINES));
+                            let skip = slices.len().saturating_sub(CONTEXT_LINES);
                             acc.extend(slices[skip..].into_iter().map(|&s| s.to_owned()));
-                            pre_length += (skip..slices.len()).len();
+                            let delta = slices.len().saturating_sub(skip);
+                            pre_length += delta;
+                            post_length += delta;
                         }
                     }
                 }
@@ -136,14 +140,18 @@ impl<E: Environment> Taplo<E> {
                     post_length += ins.len();
                 }
             };
+            println!(
+                "@@ -{},{} +{},{} @@",
+                pre_line, pre_length, post_line, post_length
+            );
+
+            pre_line += pre_length;
+            post_line += post_length;
+            post_length = 0;
+            pre_length = 0;
+            println!("{}", acc.join("\n"));
+            acc.clear();
         }
-        println!(
-            "@@ -{},{} +{},{} @@",
-            pre_line, pre_length, post_line, post_length
-        );
-        println!("{}", acc.join("\n"));
-        pre_line += pre_length;
-        post_line += post_length;
     }
 
     #[tracing::instrument(skip_all)]
@@ -200,16 +208,16 @@ impl<E: Environment> Taplo<E> {
             )
             .map_err(|err| anyhow!("invalid key pattern: {err}"))?;
 
-            if cmd.check {
-                if source != formatted {
+            if source != formatted {
+                if cmd.check {
                     tracing::error!(?path, "the file is not properly formatted");
 
-                    print_diff(source, formatted);
+                    Self::print_diff(path, &source, &formatted);
 
                     result = Err(anyhow!("some files were not properly formatted"));
+                } else {
+                    self.env.write_file(&path, formatted.as_bytes()).await?;
                 }
-            } else if source != formatted {
-                self.env.write_file(&path, formatted.as_bytes()).await?;
             }
         }
 

@@ -3,10 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{args::{FormatCommand, self}, Taplo};
+use crate::{args::FormatCommand, Taplo};
 use anyhow::anyhow;
 use codespan_reporting::files::SimpleFile;
-use prettydiff::basic::DiffOp;
+
 use taplo::{formatter, parser};
 use taplo_common::{config::Config, environment::Environment, util::Normalize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -134,23 +134,46 @@ impl<E: Environment> Taplo<E> {
                     let hunkcount = hunks.len();
                     let mut acc = Vec::<String>::with_capacity(hunkcount);
                     for (idx, diff_op) in hunks.into_iter().enumerate() {
+                        use ansi_term::Colour::{self, Green, Red};
                         use prettydiff::basic::DiffOp;
-                        use ansi_term::Colour::{self, Red, Green};
 
-                        fn apply_color<'a>(s: &'a [&'a str], prefix: &'a str, color: Colour) -> impl IntoIterator<Item=String> +'a {
-                            s.iter().map(move |&s| color.paint(prefix.to_owned() + s).to_string())
+                        fn apply_color<'a>(
+                            s: &'a [&'a str],
+                            prefix: &'a str,
+                            color: Colour,
+                        ) -> impl IntoIterator<Item = String> + 'a {
+                            s.iter()
+                                .map(move |&s| color.paint(prefix.to_owned() + s).to_string())
                         }
 
                         match diff_op {
                             DiffOp::Equal(slices) => {
-                                if slices.len() < 2+CONTEXT_LINES*2 && idx > 0 && idx+1 < hunkcount {
-                                    acc.extend(slices[0..usize::max(CONTEXT_LINES,slices.len())].into_iter().map(ToOwned::to_owned).map(ToOwned::to_owned));
+                                if slices.len() < 2 + CONTEXT_LINES * 2
+                                    && idx > 0
+                                    && idx + 1 < hunkcount
+                                {
+                                    acc.extend(
+                                        slices[0..usize::max(CONTEXT_LINES, slices.len())]
+                                            .into_iter()
+                                            .map(ToOwned::to_owned)
+                                            .map(ToOwned::to_owned),
+                                    );
                                 } else {
                                     if idx > 0 {
-                                        acc.extend(slices[0..usize::max(CONTEXT_LINES,slices.len())].into_iter().map(ToOwned::to_owned).map(ToOwned::to_owned));
+                                        acc.extend(
+                                            slices[0..usize::max(CONTEXT_LINES, slices.len())]
+                                                .into_iter()
+                                                .map(ToOwned::to_owned)
+                                                .map(ToOwned::to_owned),
+                                        );
                                     }
-                                    if idx+1 < hunkcount {
-                                        acc.extend(slices[(slices.len().saturating_sub(CONTEXT_LINES))..].into_iter().map(ToOwned::to_owned).map(ToOwned::to_owned));
+                                    if idx + 1 < hunkcount {
+                                        acc.extend(
+                                            slices[(slices.len().saturating_sub(CONTEXT_LINES))..]
+                                                .into_iter()
+                                                .map(ToOwned::to_owned)
+                                                .map(ToOwned::to_owned),
+                                        );
                                     }
                                 }
                             }

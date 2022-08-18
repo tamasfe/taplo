@@ -66,16 +66,22 @@ impl<E: Environment> Taplo<E> {
         Ok(())
     }
 
-    async fn print_diff(&self, path: impl AsRef<Path>, original: &str, formatted: &str) {
+    async fn print_diff(
+        &self,
+        path: impl AsRef<Path>,
+        original: &str,
+        formatted: &str,
+    ) -> Result<(), anyhow::Error> {
         let path = path.as_ref();
 
         // print to stdout
         macro_rules! echo {
             ($($args:tt)*) => {
-                self.env.stdout().write_all_buf(&mut &std::format_args!($($args)*));
-                self.env.stdout().write_all_buf(&mut "\n");
+                let msg = format!("{}\n", std::format_args!($($args)*));
+                self.env.stdout().write_all_buf(&mut msg.as_str().as_bytes()).await?;
             }
         }
+
         echo!("diff a/{path} b/{path}", path = path.display());
         echo!("--- a/{path}", path = path.display());
         echo!("+++ b/{path}", path = path.display());
@@ -90,6 +96,7 @@ impl<E: Environment> Taplo<E> {
 
         let mut pre_line = 0_usize;
         let mut post_line = 0_usize;
+
         for (idx, diff_op) in hunks.into_iter().enumerate() {
             use ansi_term::Colour::{self, Green, Red};
             use prettydiff::basic::DiffOp;
@@ -158,6 +165,7 @@ impl<E: Environment> Taplo<E> {
             post_line += post_length;
             acc.clear();
         }
+        Ok(())
     }
 
     #[tracing::instrument(skip_all)]
@@ -216,7 +224,16 @@ impl<E: Environment> Taplo<E> {
 
             if source != formatted {
                 if cmd.diff {
-                    self.print_diff(path, &source, &formatted);
+                    if let Err(e) = self.print_diff(&path, &source, &formatted).await {
+                        self.env
+                            .stderr()
+                            .write_all(
+                                format!("Failed to write diff to stdout: {:?}", e)
+                                    .as_str()
+                                    .as_bytes(),
+                            )
+                            .await?;
+                    }
                 }
 
                 if cmd.check {

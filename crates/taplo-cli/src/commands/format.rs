@@ -157,7 +157,10 @@ impl<E: Environment> Taplo<E> {
             };
             echo!(
                 "@@ -{},{} +{},{} @@",
-                pre_line, pre_length, post_line, post_length
+                pre_line,
+                pre_length,
+                post_line,
+                post_length
             );
             echo!("{}", acc.join("\n"));
 

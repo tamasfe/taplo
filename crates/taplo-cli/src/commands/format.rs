@@ -215,11 +215,12 @@ impl<E: Environment> Taplo<E> {
             .map_err(|err| anyhow!("invalid key pattern: {err}"))?;
 
             if source != formatted {
+                if cmd.diff {
+                    self.print_diff(path, &source, &formatted);
+                }
+
                 if cmd.check {
                     tracing::error!(?path, "the file is not properly formatted");
-
-                    Self::print_diff(path, &source, &formatted);
-
                     result = Err(anyhow!("some files were not properly formatted"));
                 } else {
                     self.env.write_file(&path, formatted.as_bytes()).await?;

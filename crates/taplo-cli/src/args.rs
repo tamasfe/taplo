@@ -91,6 +91,10 @@ pub struct FormatCommand {
     #[clap(long)]
     pub check: bool,
 
+    /// Print the differences in patch formatting to `stdout`
+    #[clap(long)]
+    pub diff: bool,
+
     /// Paths or glob patterns to TOML documents.
     ///
     /// If the only argument is "-", the standard input will be used.

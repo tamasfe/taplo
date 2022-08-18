@@ -66,11 +66,19 @@ impl<E: Environment> Taplo<E> {
         Ok(())
     }
 
-    fn print_diff(path: impl AsRef<Path>, original: &str, formatted: &str) {
+    async fn print_diff(&self, path: impl AsRef<Path>, original: &str, formatted: &str) {
         let path = path.as_ref();
-        println!("diff a/{path} b/{path}", path = path.display());
-        println!("--- a/{path}", path = path.display());
-        println!("+++ b/{path}", path = path.display());
+
+        // print to stdout
+        macro_rules! echo {
+            ($($args:tt)*) => {
+                self.env.stdout().write_all_buf(&mut &std::format_args!($($args)*));
+                self.env.stdout().write_all_buf(&mut "\n");
+            }
+        }
+        echo!("diff a/{path} b/{path}", path = path.display());
+        echo!("--- a/{path}", path = path.display());
+        echo!("+++ b/{path}", path = path.display());
 
         // How many lines of context to print:
         const CONTEXT_LINES: usize = 7;
@@ -140,14 +148,14 @@ impl<E: Environment> Taplo<E> {
                     post_length += ins.len();
                 }
             };
-            println!(
+            echo!(
                 "@@ -{},{} +{},{} @@",
                 pre_line, pre_length, post_line, post_length
             );
+            echo!("{}", acc.join("\n"));
 
             pre_line += pre_length;
             post_line += post_length;
-            println!("{}", acc.join("\n"));
             acc.clear();
         }
     }

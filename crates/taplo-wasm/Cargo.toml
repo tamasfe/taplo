@@ -15,6 +15,7 @@ async-trait = "0.1.56"
 clap = { version = "3.1.18", features = ["derive"] }
 console_error_panic_hook = "0.1.7"
 futures = "0.3.21"
+indexmap = "~1.6"
 js-sys = "0.3.57"
 lsp-async-stub = { path = "../lsp-async-stub" }
 serde = { version = "1.0.137", features = ["derive"] }
@@ -29,7 +30,6 @@ tracing = "0.1.35"
 url = "2.2.2"
 wasm-bindgen = { version = "0.2.80", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4.30"
-indexmap = "~1.6"
 
 [features]
 default = ["lsp", "cli"]

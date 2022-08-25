@@ -2,7 +2,7 @@ FROM rust:1.61-alpine3.16 as build
 
 WORKDIR /build
 
-RUN apk add --no-cache musl-dev libressl-dev
+RUN apk add --no-cache musl-dev
 
 COPY . .
 

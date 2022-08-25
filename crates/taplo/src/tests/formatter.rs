@@ -954,3 +954,20 @@ fn table_indents() {
     assert_format!(src, &formatted);
 }
 
+#[test]
+fn no_expand_inline_table() {
+    let src = r#"
+very_long_inline_table = { array = ["aaaaa", "aaaaa", "aaaaa", "aaaaa", "aaaaa", "aaaaa", "aaaaa", "aaaaa", "aaaaa"] }
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            indent_string: "  ".into(),
+            inline_table_expand: false,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}

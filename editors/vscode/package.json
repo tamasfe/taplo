@@ -297,7 +297,13 @@
           "scope": "resource",
           "type": "boolean",
           "default": null,
-          "description": "Automatically expand arrays to multiple lines"
+          "description": "Automatically expand arrays to multiple lines."
+        },
+        "evenBetterToml.formatter.inlineTableExpand": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": null,
+          "description": "Expand values inside in line tables."
         },
         "evenBetterToml.formatter.arrayAutoCollapse": {
           "scope": "resource",

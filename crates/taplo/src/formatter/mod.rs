@@ -59,6 +59,10 @@ create_options!(
         /// if they're too long.
         pub array_auto_expand: bool,
 
+        /// Expand values (e.g.) inside inline tables
+        /// where possible.
+        pub inline_table_expand: bool,
+
         /// Automatically collapse arrays if they
         /// fit in one line.
         ///
@@ -147,6 +151,7 @@ impl Default for Options {
             column_width: 80,
             indent_tables: false,
             indent_entries: false,
+            inline_table_expand: true,
             trailing_newline: true,
             allowed_blank_lines: 2,
             indent_string: "  ".into(),
@@ -843,6 +848,12 @@ fn format_inline_table(
 ) -> impl FormattedItem {
     let mut formatted = String::new();
     let mut comment = None;
+
+    let mut context = context.clone();
+    if context.force_multiline {
+        context.force_multiline = options.inline_table_expand;
+    }
+    let context = &context;
 
     let child_count = node.children().count();
 

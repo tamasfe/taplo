@@ -1,20 +1,6 @@
 module.exports = {
   prefix: "tw-",
   content: ["./site/.vitepress/**/*.{js,ts,vue}", "./site/**/*.md"],
-  plugins: [require("daisyui")],
-  daisyui: {
-    base: false,
-    darkTheme: "dark",
-    themes: [
-      {
-        taplo: {
-          primary: "#DE591B",
-          secondary: "#1BA0DE",
-          accent: "#1BDEBB",
-        },
-      },
-    ],
-  },
   theme: {
     extend: {
       colors: {

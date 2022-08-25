@@ -28,7 +28,6 @@
     "@types/node": "^18.0.0",
     "@vueuse/core": "^8.6.0",
     "codemirror": "^6.0.0",
-    "daisyui": "^2.15.4",
     "marked": "^4.0.17",
     "vscode-languageserver-protocol": "^3.17.1",
     "vue-codemirror": "^6.0.0"

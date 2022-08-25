@@ -46,7 +46,7 @@ pub enum SyntaxKind {
     #[regex(r#"'''"#, lex_multi_line_string_literal)]
     MULTI_LINE_STRING_LITERAL,
 
-    #[regex(r"[+-]?[0-9_]+", priority = 4)]
+    #[regex(r"[+-]?[1-9][0-9_]+", priority = 4)]
     INTEGER,
 
     #[regex(r"0x[0-9A-Fa-f_]+")]

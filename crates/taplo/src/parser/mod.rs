@@ -613,6 +613,11 @@ impl<'p> Parser<'p> {
                 }
             }
             FLOAT => {
+                // FIXME: probably another logos bug.
+                if self.lexer.slice().contains(':') {
+                    return self.token_as(TIME);
+                }
+
                 let int_slice = if self.lexer.slice().contains('.') {
                     self.lexer.slice().split('.').next().unwrap()
                 } else {

@@ -89,7 +89,7 @@ impl<E: Environment> Taplo<E> {
         // How many lines of context to print:
         const CONTEXT_LINES: usize = 7;
 
-        let hunks = prettydiff::diff_lines(&original, &formatted);
+        let hunks = prettydiff::diff_lines(original, formatted);
         let hunks = hunks.diff();
         let hunkcount = hunks.len();
         let mut acc = Vec::<String>::with_capacity(hunkcount);
@@ -118,13 +118,13 @@ impl<E: Environment> Taplo<E> {
             match diff_op {
                 DiffOp::Equal(slices) => {
                     if slices.len() < CONTEXT_LINES * 2 && idx > 0 && idx + 1 < hunkcount {
-                        acc.extend(slices[..].into_iter().map(|&s| s.to_owned()));
+                        acc.extend(slices[..].iter().map(|&s| s.to_owned()));
                         pre_length += slices.len();
                         post_length += slices.len();
                     } else {
                         if idx > 0 {
                             let end = usize::min(CONTEXT_LINES, slices.len());
-                            acc.extend(slices[0..end].into_iter().map(|&s| s.to_owned()));
+                            acc.extend(slices[0..end].iter().map(|&s| s.to_owned()));
                             pre_length += end;
                             post_length += end;
                         }
@@ -133,7 +133,7 @@ impl<E: Environment> Taplo<E> {
                         // context after the hunk within the file
                         if idx + 1 < hunkcount {
                             let skip = slices.len().saturating_sub(CONTEXT_LINES);
-                            acc.extend(slices[skip..].into_iter().map(|&s| s.to_owned()));
+                            acc.extend(slices[skip..].iter().map(|&s| s.to_owned()));
                             let delta = slices.len().saturating_sub(skip);
                             pre_length += delta;
                             post_length += delta;

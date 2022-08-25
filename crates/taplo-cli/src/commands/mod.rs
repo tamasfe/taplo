@@ -33,7 +33,7 @@ impl<E: Environment> Taplo<E> {
                 #[cfg(not(feature = "lsp"))]
                 {
                     let _ = cmd;
-                    return Err(anyhow::anyhow!("the LSP is not part of this build, please consult the documentation about enabling the functionality"));
+                    Err(anyhow::anyhow!("the LSP is not part of this build, please consult the documentation about enabling the functionality"))
                 }
             }
 

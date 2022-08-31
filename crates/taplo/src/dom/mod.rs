@@ -335,8 +335,7 @@ impl Comment {
                     let text = t.text();
 
                     if let Some(directive_content) = text.strip_prefix("#:") {
-                        let mut directive_content =
-                            directive_content.split_whitespace();
+                        let mut directive_content = directive_content.split_whitespace();
                         let directive_name = directive_content.next().unwrap_or("");
                         let directive_value = directive_content.next().unwrap_or("");
                         return CommentValue::Directive {

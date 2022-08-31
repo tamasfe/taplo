@@ -114,7 +114,7 @@ impl Node {
     pub fn get_matches(
         &self,
         pattern: &str,
-    ) -> Result<impl Iterator<Item = (KeyOrIndex, Node)> + ExactSizeIterator, Error>  {
+    ) -> Result<impl Iterator<Item = (KeyOrIndex, Node)> + ExactSizeIterator, Error> {
         let glob = globset::Glob::new(pattern)
             .map_err(QueryError::from)?
             .compile_matcher();

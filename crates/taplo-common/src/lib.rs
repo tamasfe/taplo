@@ -14,9 +14,9 @@
 pub mod config;
 pub mod convert;
 pub mod environment;
+pub mod log;
 pub mod schema;
 pub mod util;
-pub mod log;
 
 pub type HashMap<K, V> = std::collections::HashMap<K, V, ahash::RandomState>;
 pub type IndexMap<K, V> = indexmap::IndexMap<K, V, ahash::RandomState>;

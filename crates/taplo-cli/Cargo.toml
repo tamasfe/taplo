@@ -50,14 +50,14 @@ tokio = { version = "1.19.2", features = [
   "io-std",
   "rt-multi-thread",
   "parking_lot",
-] }
+], default-features = false }
 lsp-async-stub = { version = "0.6.0", path = "../lsp-async-stub", features = [
   "tokio-tcp",
   "tokio-stdio",
 ] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-tokio = { version = "1.19.2", features = ["sync", "parking_lot", "io-util"] }
+tokio = { version = "1.19.2", features = ["sync", "parking_lot", "io-util"] , default-features = false }
 
 [package.metadata.auto-tag]
 enabled = true

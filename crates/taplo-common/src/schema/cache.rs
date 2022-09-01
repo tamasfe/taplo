@@ -31,7 +31,7 @@ impl<E: Environment> Cache<E> {
             )))),
             lru_expires_by: Arc::new(Mutex::new(env.now() + DEFAULT_LRU_CACHE_EXPIRATION_TIME)),
             env,
-            schemas: Arc::new(Mutex::new(LruCache::new(10))),
+            schemas: Arc::new(Mutex::new(LruCache::with_hasher(10, ahash::RandomState::new()))),
             cache_path: Default::default(),
         }
     }

@@ -61,7 +61,10 @@ impl<E: Environment> Schemas<E> {
             env,
             concurrent_requests: Arc::new(Semaphore::new(10)),
             http,
-            validators: Arc::new(Mutex::new(LruCache::new(3))),
+            validators: Arc::new(Mutex::new(LruCache::with_hasher(
+                3,
+                ahash::RandomState::new(),
+            ))),
         }
     }
 

@@ -525,60 +525,64 @@ fn add_value_completions(
     }
 
     if let Some(const_value) = schema.get("const") {
-        let node: Node = serde_json::from_value(const_value.clone()).unwrap();
-        let toml_value = node.to_toml(true, single_quote);
-        completions.push(CompletionItem {
-            label: toml_value.clone(),
-            kind: Some(match node {
-                Node::Table(_) => CompletionItemKind::STRUCT,
-                _ => CompletionItemKind::VALUE,
-            }),
-            documentation: ext_docs
-                .const_value
-                .or_else(|| schema_docs.clone())
-                .map(|value| {
-                    Documentation::MarkupContent(MarkupContent {
-                        kind: lsp_types::MarkupKind::Markdown,
-                        value,
+        if !const_value.is_null() {
+            let node: Node = serde_json::from_value(const_value.clone()).unwrap();
+            let toml_value = node.to_toml(true, single_quote);
+            completions.push(CompletionItem {
+                label: toml_value.clone(),
+                kind: Some(match node {
+                    Node::Table(_) => CompletionItemKind::STRUCT,
+                    _ => CompletionItemKind::VALUE,
+                }),
+                documentation: ext_docs
+                    .const_value
+                    .or_else(|| schema_docs.clone())
+                    .map(|value| {
+                        Documentation::MarkupContent(MarkupContent {
+                            kind: lsp_types::MarkupKind::Markdown,
+                            value,
+                        })
+                    }),
+                text_edit: range.map(|range| {
+                    CompletionTextEdit::Edit(TextEdit {
+                        range,
+                        new_text: toml_value,
                     })
                 }),
-            text_edit: range.map(|range| {
-                CompletionTextEdit::Edit(TextEdit {
-                    range,
-                    new_text: toml_value,
-                })
-            }),
-            ..Default::default()
-        });
+                ..Default::default()
+            });
+        }
+
         return;
     }
 
     if let Some(default_value) = schema.get("default") {
-        let node: Node = serde_json::from_value(default_value.clone()).unwrap();
-        let toml_value = node.to_toml(true, single_quote);
-        completions.push(CompletionItem {
-            label: toml_value.clone(),
-            kind: Some(match node {
-                Node::Table(_) => CompletionItemKind::STRUCT,
-                _ => CompletionItemKind::VALUE,
-            }),
-            documentation: ext_docs
-                .default_value
-                .or_else(|| schema_docs.clone())
-                .map(|value| {
-                    Documentation::MarkupContent(MarkupContent {
-                        kind: lsp_types::MarkupKind::Markdown,
-                        value,
+        if !default_value.is_null() {
+            let node: Node = serde_json::from_value(default_value.clone()).unwrap();
+            let toml_value = node.to_toml(true, single_quote);
+            completions.push(CompletionItem {
+                label: toml_value.clone(),
+                kind: Some(match node {
+                    Node::Table(_) => CompletionItemKind::STRUCT,
+                    _ => CompletionItemKind::VALUE,
+                }),
+                documentation: ext_docs.default_value.or_else(|| schema_docs.clone()).map(
+                    |value| {
+                        Documentation::MarkupContent(MarkupContent {
+                            kind: lsp_types::MarkupKind::Markdown,
+                            value,
+                        })
+                    },
+                ),
+                text_edit: range.map(|range| {
+                    CompletionTextEdit::Edit(TextEdit {
+                        range,
+                        new_text: toml_value,
                     })
                 }),
-            text_edit: range.map(|range| {
-                CompletionTextEdit::Edit(TextEdit {
-                    range,
-                    new_text: toml_value,
-                })
-            }),
-            ..Default::default()
-        });
+                ..Default::default()
+            });
+        }
     }
 
     let types = match schema["type"].clone() {
@@ -696,13 +700,17 @@ fn default_value_snippet(
     single_quote: bool,
 ) -> Cow<'static, str> {
     if let Some(const_value) = schema.get("const") {
-        let node: Node = serde_json::from_value(const_value.clone()).unwrap();
-        return format!("${{{}:{}}}", cursor_count, node.to_toml(true, single_quote)).into();
+        if !const_value.is_null() {
+            let node: Node = serde_json::from_value(const_value.clone()).unwrap();
+            return format!("${{{}:{}}}", cursor_count, node.to_toml(true, single_quote)).into();
+        }
     }
 
     if let Some(default_value) = schema.get("default") {
-        let node: Node = serde_json::from_value(default_value.clone()).unwrap();
-        return format!("${{{}:{}}}", cursor_count, node.to_toml(true, single_quote)).into();
+        if !default_value.is_null() {
+            let node: Node = serde_json::from_value(default_value.clone()).unwrap();
+            return format!("${{{}:{}}}", cursor_count, node.to_toml(true, single_quote)).into();
+        }
     }
 
     if schema.get("enum").is_some() {

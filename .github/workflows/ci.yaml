@@ -48,6 +48,23 @@ jobs:
         with:
           command: test
           args: -p taplo
+
+  check_wasm32:
+    name: Check on WASM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          target: wasm32-unknown-unknown
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v1
+      - working-directory: crates/taplo-wasm
+        run: cargo check --target wasm32-unknown-unknown
+
   toml_test:
     name: Run toml-test
     runs-on: ubuntu-latest

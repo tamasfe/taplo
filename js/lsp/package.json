@@ -1,6 +1,6 @@
 {
   "name": "@taplo/lsp",
-  "version": "0.3.5",
+  "version": "0.4.0",
   "description": "A JavaScript wrapper for the Taplo TOML language server.",
   "scripts": {
     "build": "yarn rollup --silent -c rollup.config.js",

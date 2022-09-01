@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.11.0
+
+### Features
+
+- `inline_table_expand` formatting option can be used to control whether to expand values in inline tables.
+
+### Fixes
+
+- Time values were sometimes incorrectly parsed as integers.
+
 ## 0.10.0
 
 ### Features

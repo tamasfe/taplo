@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.18.0
+
+### Features
+
+- Added `evenBetterToml.formatter.inlineTableExpand` option.
+
+### Fixes
+
+- Fixed some filepath-related issues on windows.
+- Fixed completion crashes on `null` default values.
+
 ## 0.17.1
 
 ### Fixes

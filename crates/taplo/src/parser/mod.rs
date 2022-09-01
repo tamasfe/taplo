@@ -579,6 +579,11 @@ impl<'p> Parser<'p> {
                     return self.token_as(DATE);
                 }
 
+                // FIXME: probably another logos bug.
+                if self.lexer.slice().contains(':') {
+                    return self.token_as(TIME);
+                }
+
                 // This could've been done more elegantly probably.
                 if (self.lexer.slice().starts_with('0') && self.lexer.slice() != "0")
                     || (self.lexer.slice().starts_with("+0") && self.lexer.slice() != "+0")

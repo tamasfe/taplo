@@ -66,6 +66,18 @@ impl<E: Environment> Taplo<E> {
         Ok(())
     }
 
+    #[cfg(target_arch = "wasm32")]
+    async fn print_diff(
+        &self,
+        _path: impl AsRef<Path>,
+        _original: &str,
+        _formatted: &str,
+    ) -> Result<(), anyhow::Error> {
+        tracing::warn!("the `--diff` flag is not available in this build yet");
+        Ok(())
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     async fn print_diff(
         &self,
         path: impl AsRef<Path>,
@@ -81,99 +93,92 @@ impl<E: Environment> Taplo<E> {
                 self.env.stdout().write_all_buf(&mut msg.as_str().as_bytes()).await?;
             }
         }
-        #[cfg(target_arch = "wasm32")]
-        {
-            echo!("The `--diff` flag is not available on wasm32, yet")
-        }
 
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            echo!("diff a/{path} b/{path}", path = path.display());
-            echo!("--- a/{path}", path = path.display());
-            echo!("+++ b/{path}", path = path.display());
+        echo!("diff a/{path} b/{path}", path = path.display());
+        echo!("--- a/{path}", path = path.display());
+        echo!("+++ b/{path}", path = path.display());
 
-            // How many lines of context to print:
-            const CONTEXT_LINES: usize = 7;
+        // How many lines of context to print:
+        const CONTEXT_LINES: usize = 7;
 
-            let hunks = prettydiff::diff_lines(original, formatted);
-            let hunks = hunks.diff();
-            let hunkcount = hunks.len();
-            let mut acc = Vec::<String>::with_capacity(hunkcount);
+        let hunks = prettydiff::diff_lines(original, formatted);
+        let hunks = hunks.diff();
+        let hunkcount = hunks.len();
+        let mut acc = Vec::<String>::with_capacity(hunkcount);
 
-            let mut pre_line = 0_usize;
-            let mut post_line = 0_usize;
+        let mut pre_line = 0_usize;
+        let mut post_line = 0_usize;
 
-            for (idx, diff_op) in hunks.into_iter().enumerate() {
-                use ansi_term::Colour::{self, Green, Red};
-                use prettydiff::basic::DiffOp;
+        for (idx, diff_op) in hunks.into_iter().enumerate() {
+            use ansi_term::Colour::{self, Green, Red};
+            use prettydiff::basic::DiffOp;
 
-                // apply the given color and prefix to the set of strings `s`
-                fn apply_color<'a>(
-                    s: &'a [&'a str],
-                    prefix: &'a str,
-                    color: Colour,
-                ) -> impl IntoIterator<Item = String> + 'a {
-                    s.iter()
-                        .map(move |&s| color.paint(prefix.to_owned() + s).to_string())
-                }
+            // apply the given color and prefix to the set of strings `s`
+            fn apply_color<'a>(
+                s: &'a [&'a str],
+                prefix: &'a str,
+                color: Colour,
+            ) -> impl IntoIterator<Item = String> + 'a {
+                s.iter()
+                    .map(move |&s| color.paint(prefix.to_owned() + s).to_string())
+            }
 
-                let mut pre_length = 0_usize;
-                let mut post_length = 0_usize;
+            let mut pre_length = 0_usize;
+            let mut post_length = 0_usize;
 
-                // length of a net diff op
-                match diff_op {
-                    DiffOp::Equal(slices) => {
-                        if slices.len() < CONTEXT_LINES * 2 && idx > 0 && idx + 1 < hunkcount {
-                            acc.extend(slices[..].iter().map(|&s| s.to_owned()));
-                            pre_length += slices.len();
-                            post_length += slices.len();
-                        } else {
-                            if idx > 0 {
-                                let end = usize::min(CONTEXT_LINES, slices.len());
-                                acc.extend(slices[0..end].iter().map(|&s| s.to_owned()));
-                                pre_length += end;
-                                post_length += end;
-                            }
-                            // context before the hunk within the file
+            // length of a net diff op
+            match diff_op {
+                DiffOp::Equal(slices) => {
+                    if slices.len() < CONTEXT_LINES * 2 && idx > 0 && idx + 1 < hunkcount {
+                        acc.extend(slices[..].iter().map(|&s| s.to_owned()));
+                        pre_length += slices.len();
+                        post_length += slices.len();
+                    } else {
+                        if idx > 0 {
+                            let end = usize::min(CONTEXT_LINES, slices.len());
+                            acc.extend(slices[0..end].iter().map(|&s| s.to_owned()));
+                            pre_length += end;
+                            post_length += end;
+                        }
+                        // context before the hunk within the file
 
-                            // context after the hunk within the file
-                            if idx + 1 < hunkcount {
-                                let skip = slices.len().saturating_sub(CONTEXT_LINES);
-                                acc.extend(slices[skip..].iter().map(|&s| s.to_owned()));
-                                let delta = slices.len().saturating_sub(skip);
-                                pre_length += delta;
-                                post_length += delta;
-                            }
+                        // context after the hunk within the file
+                        if idx + 1 < hunkcount {
+                            let skip = slices.len().saturating_sub(CONTEXT_LINES);
+                            acc.extend(slices[skip..].iter().map(|&s| s.to_owned()));
+                            let delta = slices.len().saturating_sub(skip);
+                            pre_length += delta;
+                            post_length += delta;
                         }
                     }
-                    DiffOp::Insert(ins) => {
-                        acc.extend(apply_color(ins, "+", Green));
-                        post_length += ins.len();
-                    }
-                    DiffOp::Remove(rem) => {
-                        acc.extend(apply_color(rem, "-", Red));
-                        pre_length += rem.len();
-                    }
-                    DiffOp::Replace(rem, ins) => {
-                        acc.extend(apply_color(rem, "-", Red));
-                        acc.extend(apply_color(ins, "+", Green));
-                        pre_length += rem.len();
-                        post_length += ins.len();
-                    }
-                };
-                echo!(
-                    "@@ -{},{} +{},{} @@",
-                    pre_line,
-                    pre_length,
-                    post_line,
-                    post_length
-                );
-                echo!("{}", acc.join("\n"));
+                }
+                DiffOp::Insert(ins) => {
+                    acc.extend(apply_color(ins, "+", Green));
+                    post_length += ins.len();
+                }
+                DiffOp::Remove(rem) => {
+                    acc.extend(apply_color(rem, "-", Red));
+                    pre_length += rem.len();
+                }
+                DiffOp::Replace(rem, ins) => {
+                    acc.extend(apply_color(rem, "-", Red));
+                    acc.extend(apply_color(ins, "+", Green));
+                    pre_length += rem.len();
+                    post_length += ins.len();
+                }
+            };
+            echo!(
+                "@@ -{},{} +{},{} @@",
+                pre_line,
+                pre_length,
+                post_line,
+                post_length
+            );
+            echo!("{}", acc.join("\n"));
 
-                pre_line += pre_length;
-                post_line += post_length;
-                acc.clear();
-            }
+            pre_line += pre_length;
+            post_line += post_length;
+            acc.clear();
         }
         Ok(())
     }

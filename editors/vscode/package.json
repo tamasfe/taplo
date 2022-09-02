@@ -2,7 +2,7 @@
   "name": "even-better-toml",
   "displayName": "Even Better TOML",
   "description": "Fully-featured TOML support",
-  "version": "0.18.0",
+  "version": "0.18.1",
   "autoTag": {
     "enabled": true
   },

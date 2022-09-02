@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.18.1
+
+### Fixes
+
+- Fixed the language server crashing on startup.
+
 ## 0.18.0
 
 ### Features

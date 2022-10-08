@@ -1,5 +1,10 @@
 use super::{builtins, cache::Cache};
-use crate::{config::Config, environment::Environment, util::GlobRule, IndexMap};
+use crate::{
+    config::Config,
+    environment::Environment,
+    util::{normalize_str, GlobRule},
+    IndexMap,
+};
 use anyhow::anyhow;
 use parking_lot::{RwLock, RwLockReadGuard};
 use regex::Regex;
@@ -417,14 +422,14 @@ impl AssociationRule {
             //
             // So in order to be a match, we need to
             // strip the scheme from the URL.
-            AssociationRule::Glob(g) => g.is_match(
+            AssociationRule::Glob(g) => g.is_match(&*normalize_str(
                 url.as_str()
                     .strip_prefix(url.scheme())
                     .unwrap()
                     .strip_prefix("://")
                     .unwrap(),
-            ),
-            AssociationRule::Regex(r) => r.is_match(url.as_str()),
+            )),
+            AssociationRule::Regex(r) => r.is_match(&normalize_str(url.as_str())),
             AssociationRule::Url(u) => u == url,
         }
     }

@@ -1,10 +1,5 @@
 use super::{builtins, cache::Cache};
-use crate::{
-    config::Config,
-    environment::Environment,
-    util::{normalize_str, GlobRule},
-    IndexMap,
-};
+use crate::{config::Config, environment::Environment, util::GlobRule, IndexMap};
 use anyhow::anyhow;
 use parking_lot::{RwLock, RwLockReadGuard};
 use regex::Regex;
@@ -307,7 +302,7 @@ impl<E: Environment> SchemaAssociations<E> {
             .read()
             .iter()
             .filter_map(|(rule, assoc)| {
-                if rule.is_match(file.as_str()) {
+                if rule.is_match(file) {
                     Some(assoc.clone())
                 } else {
                     None
@@ -414,13 +409,23 @@ impl From<GlobRule> for AssociationRule {
 
 impl AssociationRule {
     #[must_use]
-    pub fn is_match(&self, text: &str) -> bool {
-        let text = normalize_str(text);
-
+    pub fn is_match(&self, url: &Url) -> bool {
         match self {
-            AssociationRule::Glob(g) => g.is_match(&*text),
-            AssociationRule::Regex(r) => r.is_match(&text),
-            AssociationRule::Url(u) => u.as_str() == text,
+            // Glob associations typically come from config files
+            // with a glob pattern that is an absolute file path
+            // without a scheme.
+            //
+            // So in order to be a match, we need to
+            // strip the scheme from the URL.
+            AssociationRule::Glob(g) => g.is_match(
+                url.as_str()
+                    .strip_prefix(url.scheme())
+                    .unwrap()
+                    .strip_prefix("://")
+                    .unwrap(),
+            ),
+            AssociationRule::Regex(r) => r.is_match(url.as_str()),
+            AssociationRule::Url(u) => u == url,
         }
     }
 }

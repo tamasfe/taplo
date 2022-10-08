@@ -167,6 +167,7 @@ impl AsyncWrite for JsAsyncWrite {
 pub(crate) struct WasmEnvironment {
     js_now: Function,
     js_env_var: Function,
+    js_env_vars: Function,
     js_atty_stderr: Function,
     js_on_stdin: Function,
     js_on_stdout: Function,
@@ -187,6 +188,9 @@ impl From<JsValue> for WasmEnvironment {
                 .unwrap()
                 .into(),
             js_env_var: js_sys::Reflect::get(&val, &JsValue::from_str("js_env_var"))
+                .unwrap()
+                .into(),
+            js_env_vars: js_sys::Reflect::get(&val, &JsValue::from_str("js_env_vars"))
                 .unwrap()
                 .into(),
             js_atty_stderr: js_sys::Reflect::get(&val, &JsValue::from_str("js_atty_stderr"))
@@ -272,6 +276,14 @@ impl Environment for WasmEnvironment {
             .call1(&this, &JsValue::from_str(name))
             .unwrap();
         res.as_string()
+    }
+
+    fn env_vars(&self) -> Vec<(String, String)> {
+        let this = JsValue::null();
+        let res: JsValue = self.js_env_vars.call0(&this).unwrap();
+        res.into_serde()
+            .map_err(|err| anyhow!("{err}"))
+            .unwrap_or_default()
     }
 
     fn atty_stderr(&self) -> bool {

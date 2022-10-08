@@ -15,6 +15,10 @@ export interface Environment {
    */
   envVar: (name: string) => string | undefined;
   /**
+   * Return all environment variables as `[key, value]` pairs.
+   */
+  envVars: () => Array<[string, string]>;
+  /**
    * Return whether the standard error output is a tty or not.
    */
   stdErrAtty: () => boolean;
@@ -117,6 +121,7 @@ export function convertEnv(env: Environment): any {
   return {
     js_now: env.now,
     js_env_var: env.envVar,
+    js_env_vars: env.envVars,
     js_atty_stderr: env.stdErrAtty,
     js_on_stdin: stdin,
     js_on_stdout: stdout,
@@ -188,7 +193,6 @@ function streamToReadCb(stream: Readable): (n: bigint) => Promise<Uint8Array> {
 
       stream.once("error", err => {
         if (!done) {
-          console.log("error");
           done = true;
           reject(err);
         }

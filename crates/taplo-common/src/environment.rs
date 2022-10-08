@@ -32,6 +32,8 @@ pub trait Environment: Clone + Send + Sync + 'static {
 
     fn env_var(&self, name: &str) -> Option<String>;
 
+    fn env_vars(&self) -> Vec<(String, String)>;
+
     fn atty_stderr(&self) -> bool;
     fn stdin(&self) -> Self::Stdin;
     fn stdout(&self) -> Self::Stdout;

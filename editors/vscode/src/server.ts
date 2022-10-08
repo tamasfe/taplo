@@ -18,6 +18,7 @@ process.on("message", async (d: RpcMessage) => {
       {
         cwd: () => process.cwd(),
         envVar: name => process.env[name],
+        envVars: () => Object.entries(process.env),
         findConfigFile: from => {
           const fileNames = [".taplo.toml", "taplo.toml"];
 

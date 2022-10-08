@@ -1,6 +1,6 @@
 {
   "name": "@taplo/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Commonly used types for Taplo",
   "author": {
     "name": "tamasfe",

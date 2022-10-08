@@ -55,6 +55,10 @@ impl Environment for NativeEnvironment {
         std::env::var(name).ok()
     }
 
+    fn env_vars(&self) -> Vec<(String, String)> {
+        std::env::vars().collect()
+    }
+
     fn atty_stderr(&self) -> bool {
         atty::is(atty::Stream::Stderr)
     }

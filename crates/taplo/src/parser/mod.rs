@@ -240,7 +240,17 @@ impl<'p> Parser<'p> {
         }
     }
 
+    /// This function implicitly calls `step`,
+    /// it was definitely not a good design decision
+    /// but changing this behaviour involves a
+    /// different syntax tree and breakages down the line.
     fn token_as(&mut self, kind: SyntaxKind) -> ParserResult<()> {
+        self.token_as_no_step(kind)?;
+        self.step();
+        Ok(())
+    }
+
+    fn token_as_no_step(&mut self, kind: SyntaxKind) -> ParserResult<()> {
         match self.get_token() {
             Err(_) => return Err(()),
             Ok(_) => {
@@ -248,7 +258,6 @@ impl<'p> Parser<'p> {
             }
         }
 
-        self.step();
         Ok(())
     }
 
@@ -389,13 +398,28 @@ impl<'p> Parser<'p> {
     }
 
     fn parse_table_array_header(&mut self) -> ParserResult<()> {
+        self.skip_whitespace = false;
         self.must_token_or(BRACKET_START, r#"expected "[[""#)?;
         self.must_token_or(BRACKET_START, r#"expected "[[""#)?;
+        self.skip_whitespace = true;
         let _ = with_node!(self.builder, KEY, self.parse_key());
         self.skip_whitespace = false;
         let _ = self.must_token_or(BRACKET_END, r#"expected "]]""#);
-        let _ = self.must_token_or(BRACKET_END, r#"expected "]]""#);
+
+        // Hack in order to avoid calling `step` after
+        // the second closing bracket.
+        let token = self.get_token()?;
+        match token {
+            BRACKET_END => {
+                self.token_as_no_step(token)?;
+            }
+            _ => {
+                self.error(r#"expected "]]"#)?;
+            }
+        }
         self.skip_whitespace = true;
+
+        self.step();
 
         Ok(())
     }

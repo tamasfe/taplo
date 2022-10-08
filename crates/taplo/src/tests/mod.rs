@@ -16,3 +16,14 @@ fn time_in_arrays() {
 
     assert!(errors.is_empty(), "{:#?}", errors);
 }
+
+#[test]
+fn comments_after_tables() {
+    let src = r#"
+[[array]] # foo
+[table] # foo
+"#;
+    let errors = parse(src).errors;
+
+    assert!(errors.is_empty(), "{:#?}", errors);
+}

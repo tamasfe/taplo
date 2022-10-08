@@ -292,94 +292,182 @@ jobs:
           push: true
           tags: tamasfe/taplo:full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full-alpine
 
-  cli_binaries:
-    name: Publish and release Taplo CLI binaries
+  build_cli_windows:
+    name: ${{ matrix.triple }}
+    runs-on: windows-latest
     needs: ["wait_for_ci"]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
     strategy:
       fail-fast: false
       matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-          # - x86_64-pc-windows-gnu
-          - x86_64-apple-darwin
         include:
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            base: taplo
-            name: x86_64-unknown-linux-gnu.tar.gz
-          # - target: x86_64-pc-windows-gnu
-          #   os: ubuntu-latest
-          #   base: taplo.exe
-          #   name: x86_64-pc-windows-gnu.zip
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            base: taplo
-            name: x86_64-apple-darwin-gnu.tar.gz
-    runs-on: ${{matrix.os}}
+          - triple: i686-pc-windows-msvc
+            platform: x86
+          - triple: x86_64-pc-windows-msvc
+            platform: x86_64
+          # https://github.com/briansmith/ring/issues/1167
+          # - triple: aarch64-pc-windows-msvc
+          #   platform: aarch64
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v2
+
+      - run: rustup update
+      - run: rustup target add ${{ matrix.triple }}
+
+      - name: Build taplo
+        run: |
+          cargo build --verbose --release --bin taplo --target ${{ matrix.triple }}
+          Compress-Archive -Path ./target/${{ matrix.triple }}/release/taplo.exe -DestinationPath ./taplo-windows-${{ matrix.platform }}.zip
+
+      - name: Build taplo-full
+        run: |
+          cargo build --verbose --release --bin taplo --target ${{ matrix.triple }} --features toml-test,lsp
+          gzip -c ./target/${{ matrix.triple }}/release/taplo.exe > ./taplo-full-windows-${{ matrix.platform }}.gz
+          Compress-Archive -Path ./target/${{ matrix.triple }}/release/taplo.exe -DestinationPath ./taplo-full-windows-${{ matrix.platform }}.zip
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: taplo-windows-${{ matrix.platform }}
+          path: |
+            ./taplo-*.gz
+            ./taplo-*.zip
+          retention-days: 1
+
+  build_cli_linux_musl:
+    name: ${{ matrix.triple }}
+    runs-on: ubuntu-latest
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    env:
+      CROSS_SYSROOT: /mnt/alpine-${{ matrix.platform }}
+      PACKAGES: >
+        zlib-static freetype-static fontconfig-static
+        libgit2-static libssh2-static openssl-libs-static
+        libssl3 gtk+3.0-dev http-parser-dev curl
+        build-base openssl-dev git lld clang
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - triple: i686-unknown-linux-musl
+            platform: x86
+          - triple: x86_64-unknown-linux-musl
+            platform: x86_64
+          - triple: aarch64-unknown-linux-musl
+            platform: aarch64
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Alpine Linux for ${{ matrix.platform }} (target arch)
+        id: alpine-target
+        uses: jirutka/setup-alpine@v1
+        with:
+          arch: ${{ matrix.platform }}
+          branch: edge
+          packages: ${{ env.PACKAGES }}
+          shell-name: alpine-target.sh
+
+      - name: Set up Alpine Linux for x86_64 (build arch)
+        uses: jirutka/setup-alpine@v1
+        with:
+          arch: x86_64
+          packages: ${{ env.PACKAGES }}
+          volumes: ${{ steps.alpine-target.outputs.root-path }}:${{ env.CROSS_SYSROOT }}
+          shell-name: alpine.sh
+
+      # rustup-init is not available for x86
+      - run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --target ${{ matrix.triple }} --default-toolchain stable --profile minimal -y
+        shell: alpine.sh {0}
+
+      - name: Build ${{ matrix.triple }}
+        shell: alpine.sh {0}
+        env:
+          LIBZ_SYS_STATIC: 1
+          LIBSSH2_STATIC: 1
+          LIBGIT2_STATIC: 1
+          OPENSSL_STATIC: 1
+          OPENSSL_DIR: ${{ env.CROSS_SYSROOT }}/usr # static/dynamic lib workaround <3
+          OPENSSL_NO_VENDOR: 1 # don't even try to build without it on musl
+          PKG_CONFIG_ALL_STATIC: 1
+          PKG_CONFIG_LIBDIR: ${{ env.CROSS_SYSROOT }}/usr/lib/pkgconfig
+          RUSTFLAGS: -C target-feature=+crt-static -C linker=/usr/bin/ld.lld # link runtime static, use universal linker
+          CARGO_BUILD_TARGET: ${{ matrix.triple }}
+          SYSROOT: /dummy # workaround for https://github.com/rust-lang/pkg-config-rs/issues/102
+          CC: clang
+        run: |
+          # Workaround for https://github.com/rust-lang/pkg-config-rs/issues/102
+          echo -e '#!/bin/sh\nPKG_CONFIG_SYSROOT_DIR=${{ env.CROSS_SYSROOT }} exec pkgconf "$@"' \
+              | install -m755 /dev/stdin pkg-config
+          export PKG_CONFIG="$(pwd)/pkg-config"
+
+          cargo build --verbose --release --bin taplo
+          gzip -c ./target/${{ matrix.triple }}/release/taplo > ./taplo-linux-${{ matrix.platform }}.gz
+
+          cargo build --verbose --release --bin taplo --features toml-test,lsp
+          gzip -c ./target/${{ matrix.triple }}/release/taplo > ./taplo-full-linux-${{ matrix.platform }}.gz
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: taplo-linux-${{ matrix.platform }}
+          path: |
+            ./taplo-*.gz
+          retention-days: 1
+
+  build_cli_macos:
+    name: ${{ matrix.triple }}
+    runs-on: macos-11
+    needs: ["wait_for_ci"]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - triple: x86_64-apple-darwin
+            platform: x86_64
+          - triple: aarch64-apple-darwin
+            platform: aarch64
+    steps:
+      - uses: actions/checkout@v2
+
+      - run: rustup update
+      - run: rustup target add ${{ matrix.triple }}
+
+      - name: Build taplo
+        run: |
+          cargo build --verbose --release --bins --target ${{ matrix.triple }}
+          gzip -c ./target/${{ matrix.triple }}/release/taplo > ./taplo-darwin-${{ matrix.platform }}.gz
+
+      - name: Build taplo-full
+        run: |
+          cargo build --verbose --release --bins --target ${{ matrix.triple }} --features toml-test,lsp
+          gzip -c ./target/${{ matrix.triple }}/release/taplo > ./taplo-full-darwin-${{ matrix.platform }}.gz
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: taplo-macos-${{ matrix.platform }}
+          path: |
+            ./taplo-*.gz
+          retention-days: 1
+
+  publish_cli:
+    name: Release Taplo CLI binaries
+    needs: [build_cli_windows, build_cli_linux_musl, build_cli_macos]
+    runs-on: ubuntu-latest
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DEBUG: api
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+
       - name: Retrieve release version
         run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-taplo-cli-})" >> $GITHUB_ENV
 
-      - name: Install dependencies
-        if: ${{ matrix.target == 'x86_64-pc-windows-gnu' }}
-        run: |
-          sudo apt update && sudo apt install mingw-w64
-
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: ${{ matrix.target }}
-
-      - name: Build full binary
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --bin taplo --features "toml-test lsp" --target=${{ matrix.target }}
-
-      - name: Rename full binary
-        run: |
-          mv target/${{ matrix.target }}/release/taplo target/${{ matrix.target }}/release/taplo-full
-
-      - name: Build default binary
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --bin taplo --target=${{ matrix.target }}
-
-      - name: Package
-        shell: bash
-        run: |
-          cd target/${{ matrix.target }}/release
-          if [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]
-          then
-            zip "../../../taplo-${{ matrix.name }}" ${{ matrix.base }}
-          else
-            tar czvf "../../../taplo-${{ matrix.name }}" ${{ matrix.base }}
-            rm taplo
-            mv taplo-full taplo
-            tar czvf "../../../taplo-full-${{ matrix.name }}" ${{ matrix.base }}
-          fi
-          cd -
-
-      - name: Create release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref }}
-          name: Taplo CLI ${{ env.RELEASE_VERSION }}
-          # Only for merging three releases
-          draft: true
-          prerelease: false
-          files: |
-            taplo-*.tar.gz
-            taplo-*.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: |
+          gh release create --draft ${{ env.RELEASE_VERSION }} --title "Taplo CLI ${{ env.RELEASE_VERSION }}" --target $GITHUB_SHA taplo-windows-*/* taplo-macos-*/* taplo-linux-*/*
 
   publish_vscode_extension:
     name: Publish VSCode Extension
@@ -417,8 +505,8 @@ jobs:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
       - name: Install ovsx
         run: npm install -g ovsx
-      - name: Publish Open VSX Extension 
+      - name: Publish Open VSX Extension
         run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode -p $OPEN_VSX_TOKEN "even-better-toml-$RELEASE_VERSION.vsix"
         working-directory: editors/vscode
         env:
-          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}          
+          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}

@@ -169,9 +169,7 @@ impl<E: Environment> Schemas<E> {
 
                     // Retrieve external schemas, and return on the first failure.
                     while let Some(external_schema_result) = external_schema_requests.next().await {
-                        if let Err(err) = external_schema_result {
-                            return Err(err);
-                        }
+                        external_schema_result?;
                     }
 
                     // Try validation again, now with external schemas

@@ -155,13 +155,7 @@ impl SyntaxExt for SyntaxNode {
     }
 
     fn find(&self, kind: SyntaxKind) -> Option<SyntaxElement> {
-        for d in self.descendants_with_tokens() {
-            if d.kind() == kind {
-                return Some(d);
-            }
-        }
-
-        None
+        self.descendants_with_tokens().find(|d| d.kind() == kind)
     }
 }
 

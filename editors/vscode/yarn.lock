@@ -121,17 +121,17 @@
     estree-walker "^2.0.1"
     picomatch "^2.2.2"
 
-"@taplo/core@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@taplo/core/-/core-0.1.0.tgz#ab4c2208ec054ac73c224f3e498a0263092aaa7e"
-  integrity sha512-3cxIoYx6wChiFbsv+rdlt77QdPVjOSv9DeJeg9iuM/Qhj6pIvX5/NPSwUd6WOGXwD1ex/9x9qtAUjfeaKFsHTA==
+"@taplo/core@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@taplo/core/-/core-0.1.1.tgz#28a301d6ea141249ff712f8a2b9fce6d4e813d41"
+  integrity sha512-BG/zLGf5wiNXGEVPvUAAX/4ilB3PwDUY2o0MV0y47mZbDZ9ad9UK/cIQsILat3bqbPJsALVbU6k3cskNZ3vAQg==
 
-"@taplo/lsp@0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@taplo/lsp/-/lsp-0.4.1.tgz#783b902d82cb0cfe4775a102541762fab1eef25c"
-  integrity sha512-/jyqdmvH+a8HF22Py7WHbBaLSdp/rBYvf03Uilk+7EKZpPPqtw61Ybb+lKCjfXeHoim6pDzyCIEDh6b95mhYow==
+"@taplo/lsp@0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@taplo/lsp/-/lsp-0.5.1.tgz#9b1ae947cdaf73382ae8702f5c395edb16330b92"
+  integrity sha512-jp6hTw0NPPSWpkN9jKyD7KAU1vvIGTfAueKtRJlvG3bgEfvlUHwm6FcmB8g6M3aChzz9DfHWinlvCCGJ8cqH0g==
   dependencies:
-    "@taplo/core" "^0.1.0"
+    "@taplo/core" "^0.1.1"
 
 "@tootallnate/once@2":
   version "2.0.0"

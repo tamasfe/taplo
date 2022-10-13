@@ -28,7 +28,6 @@ percent-encoding = "2.1.0"
 regex = "1.5.4"
 reqwest = { version = "0.11.9", default-features = false, features = [
   "json",
-  "rustls-tls",
 ] }
 schemars = { version = "0.8.8", features = ["url"] }
 semver = { version = "1.0.5", features = ["serde"] }
@@ -60,6 +59,9 @@ tokio = { version = "1.19.2", features = [
 ], default-features = false }
 
 [features]
+# default-tls enables native-tls but without enabling native-tls specific features.
+native-tls = ["reqwest/default-tls"]
+rustls-tls = ["reqwest/rustls-tls"]
 
 [package.metadata.auto-tag]
 enabled = true

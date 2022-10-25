@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.18.2
+
+### Fixes
+
+- Fixed TOML parser issues.
+- Fixed rules being ignored.
+- `HTTP(S)_PROXY` environment variables are now respected.
+
 ## 0.18.1
 
 ### Fixes

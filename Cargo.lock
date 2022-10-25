@@ -2256,7 +2256,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-common"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "ahash 0.7.6",
  "anyhow",

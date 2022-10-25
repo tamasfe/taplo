@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.18.3
+
+### Fixed
+
+- Fixed crash caused by setting environment variables in WASM. Unfortunately this reverted `HTTP_PROXY` support.
+
 ## 0.18.2
 
 ### Fixes

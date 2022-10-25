@@ -1,6 +1,6 @@
 {
   "name": "@taplo/cli",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "A TOML utility tool.",
   "bin": {
     "taplo": "dist/cli.js"

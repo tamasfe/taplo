@@ -2198,7 +2198,7 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "taplo"
-version = "0.11.0"
+version = "0.11.1"
 dependencies = [
  "ahash 0.7.6",
  "arc-swap",

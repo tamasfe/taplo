@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.11.1
+
+### Fixes
+
+- Fixed incorrectly disallowing comments after table headers.
+
 ## 0.11.0
 
 ### Features

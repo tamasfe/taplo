@@ -218,9 +218,9 @@ pub fn create_lsp(env: JsValue, lsp_interface: JsValue) -> lsp::TaploWasmLsp {
 
     let env = WasmEnvironment::from(env);
 
-    for (key, value) in env.env_vars() {
-        std::env::set_var(key, value);
-    }
+    // for (key, value) in env.env_vars() {
+    //     std::env::set_var(key, value);
+    // }
 
     setup_stderr_logging(env.clone(), false, false, None);
 

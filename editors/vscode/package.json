@@ -365,6 +365,12 @@
           "default": null,
           "description": "Alphabetically reorder keys that are not separated by blank lines."
         },
+        "evenBetterToml.formatter.reorderArrays": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": null,
+          "description": "Alphabetically reorder array values that are not separated by blank lines."
+        },
         "evenBetterToml.formatter.allowedBlankLines": {
           "scope": "resource",
           "type": "number",

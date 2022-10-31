@@ -953,7 +953,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
             value_group.sort_unstable_by(|x, y| x.0.cmp(&y.0));
         }
 
-        for (has_comma, p) in commas_group.drain(0..).zip(value_group.into_iter()) {
+        for (has_comma, p) in commas_group.drain(0..).zip(value_group.iter_mut()) {
             if has_comma {
                 p.0 += ","
             };

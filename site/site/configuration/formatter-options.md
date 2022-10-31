@@ -25,5 +25,6 @@ In some environments (e.g. in Visual Studio Code and JavaScript) the option keys
 |     indent_string     |                        Indentation to use, should be tabs or spaces but technically could be anything.                         | 2 spaces (" ") |
 |   trailing_newline    |                                              Add trailing newline to the source.                                               |      true      |
 |     reorder_keys      |                               Alphabetically reorder keys that are not separated by blank lines.                               |     false      |
+|    reorder_arrays     |                           Alphabetically reorder array values that are not separated by blank lines.                           |     false      |
 |  allowed_blank_lines  |                                     The maximum amount of consecutive blank lines allowed.                                     |       2        |
 |         crlf          |                                                     Use CRLF line endings.                                                     |     false      |

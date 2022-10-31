@@ -101,6 +101,9 @@ create_options!(
         /// Alphabetically reorder keys that are not separated by blank lines.
         pub reorder_keys: bool,
 
+        /// Alphabetically reorder array values that are not separated by blank lines.
+        pub reorder_arrays: bool,
+
         /// The maximum amount of consecutive blank lines allowed.
         pub allowed_blank_lines: usize,
 
@@ -156,6 +159,7 @@ impl Default for Options {
             allowed_blank_lines: 2,
             indent_string: "  ".into(),
             reorder_keys: false,
+            reorder_arrays: false,
             crlf: false,
         }
     }
@@ -933,15 +937,27 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
     // We use the same strategy as for entries, refer to [`format_root`].
     let mut skip_newlines = 0;
 
-    // Formatted value, and optional trailing comment.
-    // The value should also include the comma at the end if needed.
+    // Formatted value, optional trailing comment
+    // The value must not include the comma at the end.
     let mut value_group: Vec<(String, Option<String>)> = Vec::new();
+    let mut commas_group: Vec<bool> = Vec::new();
 
     let add_values = |value_group: &mut Vec<(String, Option<String>)>,
+                      commas_group: &mut Vec<bool>,
                       formatted: &mut String,
                       context: &Context|
      -> bool {
         let were_values = !value_group.is_empty();
+
+        if options.reorder_arrays {
+            value_group.sort_unstable_by(|x, y| x.0.cmp(&y.0));
+        }
+
+        for (has_comma, p) in commas_group.drain(0..).zip(value_group.into_iter()) {
+            if has_comma {
+                p.0 += ","
+            };
+        }
 
         if !multiline {
             for (idx, (val, comment)) in value_group.drain(0..).enumerate() {
@@ -1010,9 +1026,9 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
 
                     val.write_to(&mut val_string, options);
 
-                    if node_index < node_count - 1 || (multiline && options.array_trailing_comma) {
-                        val_string += ",";
-                    }
+                    let has_comma =
+                        node_index < node_count - 1 || (multiline && options.array_trailing_comma);
+                    commas_group.push(has_comma);
 
                     value_group.push((val_string, val.trailing_comment()));
                     skip_newlines += 1;
@@ -1033,7 +1049,12 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                     }
                 }
                 BRACKET_END => {
-                    add_values(&mut value_group, &mut formatted, &inner_context);
+                    add_values(
+                        &mut value_group,
+                        &mut commas_group,
+                        &mut formatted,
+                        &inner_context,
+                    );
 
                     if multiline {
                         if !formatted.ends_with('\n') {
@@ -1065,7 +1086,12 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                     }
 
                     if newline_count > 1 {
-                        add_values(&mut value_group, &mut formatted, &inner_context);
+                        add_values(
+                            &mut value_group,
+                            &mut commas_group,
+                            &mut formatted,
+                            &inner_context,
+                        );
                         skip_newlines = 0;
                     }
 
@@ -1088,7 +1114,12 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                         continue;
                     }
 
-                    if add_values(&mut value_group, &mut formatted, &inner_context) {
+                    if add_values(
+                        &mut value_group,
+                        &mut commas_group,
+                        &mut formatted,
+                        &inner_context,
+                    ) {
                         formatted += options.newline();
                         skip_newlines = 0;
                     }

@@ -971,3 +971,56 @@ very_long_inline_table = { array = ["aaaaa", "aaaaa", "aaaaa", "aaaaa", "aaaaa",
 
     assert_format!(src, &formatted);
 }
+
+#[test]
+fn test_sorted_groupings_in_array() {
+    let src = r#"
+foo = [
+  "b",
+  "a",
+  "c",
+
+  2021-01-01,
+  1979-05-27,
+
+  ["x", "a"],
+  { b = 2, a = 1 },
+
+  3,
+  1,
+  2,
+  10, # due to the lexicographic order
+  3
+]
+"#;
+
+    let expected = r#"
+foo = [
+  "a",
+  "b",
+  "c",
+
+  1979-05-27,
+  2021-01-01,
+
+  ["a", "x"],
+  { b = 2, a = 1 },
+
+  1,
+  10, # due to the lexicographic order
+  2,
+  3,
+  3,
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            reorder_arrays: true,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}

@@ -6,7 +6,7 @@ RUN apk add --no-cache musl-dev
 
 COPY . .
 
-RUN cargo build -p taplo-cli --release --all-features
+RUN cargo build -p taplo-cli --release --features toml-test,lsp
 
 FROM alpine:3.16
 

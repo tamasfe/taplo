@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.19.0
+
+### Features
+
+- Added `reorder_arrays` (`evenBetterToml.formatter.reorderArrays`) formatter option that allows for sorting values within arrays. ([#343](https://github.com/tamasfe/taplo/pull/343))
+
 ## 0.18.3
 
 ### Fixed

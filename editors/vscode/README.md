@@ -105,6 +105,16 @@ Works even for tables not in order.
 
 ## Formatting
 
+To enable automatic formatting, add the following to your `settings.json` file.
+
+```json
+{
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
+  }
+}
+```
+
 The formatter is rather conservative by default, additional features can be enabled in the settings. If you're missing a configuration option, feel free to open an issue about it!
 
 ![Formatting](images/formatting.gif)

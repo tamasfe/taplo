@@ -33,16 +33,16 @@ Here's a quick overview so that everything is easier to find:
 
 Scripts for development, this might be the most useful if you're about to ask `how do I...`, it's almost certain there's a script that does what you want.
 
-### [taplo](taplo)
+### [taplo](crates/taplo)
 
 This is the main Rust library, that contains the parser, formatter, and DOM, and every utility that is required for the core features.
 Every other package (with the exception of [lsp-async-stub](lsp-async-stub)) depends on it in this repository.
 
-### [taplo-cli](taplo-cli)
+### [taplo-cli](crates/taplo-cli)
 
 A CLI tool that uses Taplo, it is the home of `taplo.config` as well.
 
-### [taplo-ide](taplo-ide)
+### [taplo-ide](crates/taplo-ide)
 
 An IDE-agnostic language server, right now it expects to run within a `wasm32` environment only, however other than that it contains no IDE-specific code or settings.
 Originally designed to run alongside a VSCode extension, but with minimal work it can be made into a standalone executable.
@@ -53,15 +53,15 @@ Directory containing everything related to Node.js and JavaScript.
 
 #### [vscode](js/vscode)
 
-The VSCode extension, and a Node.js wrapper for [taplo-ide](taplo-ide).
+The VSCode extension, and a Node.js wrapper for [taplo-ide](crates/taplo-ide).
 
 #### [cli](js/cli)
 
-A Node.js wrapper over [taplo-cli](taplo-cli).
+A Node.js wrapper over [taplo-cli](crates/taplo-cli).
 
 #### [lib](js/lib)
 
-A JavaScript wrapper over the core [taplo](taplo) library exposing a high-level API.
+A JavaScript wrapper over the core [taplo](crates/taplo) library exposing a high-level API.
 
 ### [util](util)
 

@@ -47,7 +47,7 @@ url = "2.2.2"
 prettydiff = "0.6.1"
 ansi_term = "0.12"
 atty = "0.2.14"
-tokio = { version = "1.19.2", features = [
+tokio = { version = "1.23.1", features = [
   "sync",
   "fs",
   "time",
@@ -61,7 +61,7 @@ lsp-async-stub = { version = "0.6.0", path = "../lsp-async-stub", features = [
 ] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-tokio = { version = "1.19.2", features = [
+tokio = { version = "1.23.1", features = [
   "sync",
   "parking_lot",
   "io-util",

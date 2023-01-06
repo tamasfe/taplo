@@ -1706,7 +1706,7 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "taplo"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "ahash",
  "arc-swap",
@@ -1726,7 +1726,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-cli"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -1757,7 +1757,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-common"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "ahash",
  "anyhow",
@@ -1795,7 +1795,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-lsp"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -1954,9 +1954,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.20.1"
+version = "1.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a8325f63a7d4774dd041e363b2409ed1c5cbbd0f867795e661df066b2b0a581"
+checksum = "664cf6576f16c0ad68184998f3c2d4be9903ede6b291a5b5cfc97d29e0057283"
 dependencies = [
  "autocfg",
  "bytes",
@@ -1964,7 +1964,6 @@ dependencies = [
  "memchr",
  "mio",
  "num_cpus",
- "once_cell",
  "parking_lot",
  "pin-project-lite",
  "socket2",

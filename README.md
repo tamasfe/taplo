@@ -10,10 +10,13 @@
 
 This is the repository for Taplo, a TOML v1.0.0 toolkit, more details on the [website](https://taplo.tamasfe.dev).
 
-
 - [Taplo](#taplo)
   - [Status](#status)
   - [Contributing](#contributing)
+
+## Integrations
+
+- [Trunk Check](https://trunk.io/products/check), a universal linter/formatter (available as a [CLI](https://docs.trunk.io/docs/initialize-trunk-in-a-git-repo), [VSCode extension](https://marketplace.visualstudio.com/items?itemName=Trunk.io), and [GitHub Action](https://github.com/trunk-io/trunk-action))
 
 ## Status
 

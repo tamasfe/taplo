@@ -52,6 +52,7 @@
                       "rustfmt",
                       "rust-std",
                       "rust-docs",
+                      "rust-analyzer",
                       "rls",
                       "clippy",
                       "miri",

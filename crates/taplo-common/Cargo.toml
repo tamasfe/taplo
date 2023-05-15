@@ -33,7 +33,7 @@ schemars = { version = "0.8.8", features = ["url"] }
 semver = { version = "1.0.5", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1.0.78", features = ["preserve_order"] }
-sha-1 = "0.10.0"
+sha1 = "0.10.5"
 tap = "1.0.1"
 taplo = { version = "0.12.0", path = "../taplo", features = ["schema"] }
 thiserror = "1.0.30"

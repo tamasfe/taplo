@@ -204,9 +204,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.11.0"
+version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1ad822118d20d2c234f427000d5acc36eabe1e29a348c89b63dd60b13f28e5d"
+checksum = "0d261e256854913907f67ed06efbc3338dfe6179796deefc1ff763fc1aee5535"
 
 [[package]]
 name = "bytecount"
@@ -1706,7 +1706,7 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "taplo"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "ahash",
  "arc-swap",
@@ -1726,7 +1726,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-cli"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -1757,7 +1757,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-common"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "ahash",
  "anyhow",
@@ -1795,7 +1795,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-lsp"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "arc-swap",

@@ -64,8 +64,6 @@ impl<W: Clone + 'static> Server<W> {
                                     drop(output);
                                     drop(input);
                                     break;
-                                } else if msg.method.as_ref().map(|m| m == "shutdown").unwrap_or(false) {
-                                    continue;
                                 }
 
                                 let task_fut = self.handle_message(

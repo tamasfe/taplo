@@ -43,7 +43,7 @@ tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
 url = { version = "2.2.2", features = ["serde"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.19.2", features = [
+tokio = { version = "1.24.2", features = [
   "sync",
   "fs",
   "time",
@@ -52,7 +52,7 @@ tokio = { version = "1.19.2", features = [
 ] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-tokio = { version = "1.19.2", features = [
+tokio = { version = "1.24.2", features = [
   "sync",
   "parking_lot",
   "io-util",

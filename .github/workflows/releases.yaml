@@ -329,8 +329,7 @@ jobs:
           $archive = [System.IO.File]::Create('.\taplo-full-windows-${{ matrix.platform }}.gz')
           $compressor = [System.IO.Compression.GZipStream]::new($archive, [System.IO.Compression.CompressionMode]::Compress)
           $file.CopyTo($compressor)
-          Start-Sleep -Seconds 2
-          $compressor.close()
+          $compressor.Close()
 
       - uses: actions/upload-artifact@v3
         with:

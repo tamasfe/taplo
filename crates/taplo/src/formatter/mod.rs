@@ -182,6 +182,10 @@ impl Options {
     fn newlines(&self, count: usize) -> impl Iterator<Item = &'static str> {
         repeat(self.newline()).take(usize::min(count, self.allowed_blank_lines + 1))
     }
+
+    fn should_align_comments(&self, comment_count: usize) -> bool {
+        (comment_count != 1 || self.align_single_comments) && self.align_comments
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -722,8 +726,7 @@ fn add_entries(
         })
         .collect::<Vec<_>>();
 
-    let align_comments =
-        (comment_count != 1 || options.align_single_comments) && options.align_comments;
+    let align_comments = options.should_align_comments(comment_count);
     *formatted += &format_rows(
         if !options.align_entries && !align_comments {
             0..0
@@ -998,8 +1001,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
             })
             .collect::<Vec<_>>();
 
-        let align_comments =
-            (comment_count != 1 || options.align_single_comments) && options.align_comments;
+        let align_comments = options.should_align_comments(comment_count);
         *formatted += &format_rows(
             if align_comments { 0..usize::MAX } else { 0..0 },
             1..usize::MAX,

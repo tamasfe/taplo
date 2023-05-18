@@ -51,6 +51,10 @@ create_options!(
         /// This applies to comments that are after entries or array items.
         pub align_comments: bool,
 
+        /// If `align_comments` is true, apply the alignment in cases where
+        /// there's only one comment.
+        pub align_single_comments: bool,
+
         /// Put trailing commas for multiline
         /// arrays.
         pub array_trailing_comma: bool,
@@ -145,6 +149,7 @@ impl Default for Options {
         Options {
             align_entries: false,
             align_comments: true,
+            align_single_comments: true,
             array_trailing_comma: true,
             array_auto_expand: true,
             array_auto_collapse: true,
@@ -697,6 +702,7 @@ fn add_entries(
         }
     }
 
+    let mut comment_count = 0;
     // Transform the entries into generic rows that can be aligned.
     let rows = entry_group
         .drain(0..)
@@ -709,18 +715,21 @@ fn add_entries(
             row.push(e.value);
             if let Some(c) = e.comment {
                 row.push(c);
+                comment_count += 1;
             }
 
             row
         })
         .collect::<Vec<_>>();
 
+    let align_comments =
+        (comment_count != 1 || options.align_single_comments) && options.align_comments;
     *formatted += &format_rows(
-        if !options.align_entries && !options.align_comments {
+        if !options.align_entries && !align_comments {
             0..0
-        } else if !options.align_entries && options.align_comments {
+        } else if !options.align_entries && align_comments {
             3..usize::MAX
-        } else if options.align_entries && !options.align_comments {
+        } else if options.align_entries && !align_comments {
             0..3
         } else {
             0..usize::MAX
@@ -972,6 +981,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
             return were_values;
         }
 
+        let mut comment_count = 0;
         let rows = value_group
             .drain(0..)
             .map(|(value, comment)| {
@@ -981,18 +991,17 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                 row.push(value);
                 if let Some(c) = comment {
                     row.push(c);
+                    comment_count += 1;
                 }
 
                 row
             })
             .collect::<Vec<_>>();
 
+        let align_comments =
+            (comment_count != 1 || options.align_single_comments) && options.align_comments;
         *formatted += &format_rows(
-            if options.align_comments {
-                0..usize::MAX
-            } else {
-                0..0
-            },
+            if align_comments { 0..usize::MAX } else { 0..0 },
             1..usize::MAX,
             &rows,
             options.newline(),

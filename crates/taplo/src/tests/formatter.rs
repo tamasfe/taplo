@@ -1026,7 +1026,7 @@ foo = [
 }
 
 #[test]
-fn test_single_comment_alignment() {
+fn test_single_comment_no_alignment() {
     let src = r#"
 entry1 = "string"  # trailing comment
 entry2 = "longer_string"
@@ -1042,7 +1042,7 @@ my_array = [
 "#;
 
     let expected = r#"
-entry1 = "string"  # trailing comment
+entry1 = "string" # trailing comment
 entry2 = "longer_string"
 
 my_array = [
@@ -1060,6 +1060,48 @@ my_array = [
         formatter::Options {
             align_comments: true,
             align_single_comments: false,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn test_single_comment_alignment() {
+    let src = r#"
+entry1 = "string"  # trailing comment
+entry2 = "longer_string"
+
+my_array = [
+  #Items
+  "abc",
+  "b", # Some comment
+  "caa",
+ # comment
+  # Other stuff
+]
+"#;
+
+    let expected = r#"
+entry1 = "string"        # trailing comment
+entry2 = "longer_string"
+
+my_array = [
+  #Items
+  "abc",
+  "b",   # Some comment
+  "caa",
+  # comment
+  # Other stuff
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            align_comments: true,
+            align_single_comments: true,
             ..Default::default()
         },
     );

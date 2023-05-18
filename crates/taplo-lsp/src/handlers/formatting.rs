@@ -50,11 +50,11 @@ pub(crate) async fn format<E: Environment>(
     ws.taplo_config
         .update_format_options(&doc_path, &mut format_opts);
 
-    let scopes = ws.taplo_config.format_scopes(&doc_path).collect::<Vec<_>>();
+    let scopes = ws.taplo_config.format_scopes(&doc_path);
     tracing::trace!(
         ?doc_path,
         ?format_opts,
-        ?scopes,
+        scopes = ?scopes.clone().collect::<Vec<_>>(),
         all_rules = ?ws.taplo_config.rule,
         matched_rules = ?ws.taplo_config.rules_for(&doc_path).collect::<Vec<_>>(),
     );

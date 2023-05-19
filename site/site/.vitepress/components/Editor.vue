@@ -24,7 +24,7 @@
 <script setup lang="ts">
 // TODO: find a proper way to connect with the LSP web worker.
 // import createLspWorker from "../lsp-worker?worker";
-import { Codemirror } from "vue-codemirror";
+import { VueCodemirror } from "vue-codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { computed, nextTick, ref, watch } from "vue";
 import { toml } from "@codemirror/legacy-modes/mode/toml";

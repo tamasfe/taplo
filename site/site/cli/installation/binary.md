@@ -17,7 +17,7 @@ The default build with commonly-used features.
 - [Linux (ARM64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-aarch64.gz)
 - [macOS (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-darwin-x86_64.gz)
 - [macOS (ARM64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-darwin-aarch64.gz)
-- [Windows (x86)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-windows-x86_64.zip)
+- [Windows (x86)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-windows-x86.zip)
 - [Windows (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-windows-x86_64.zip)
 
 ### Full Build

@@ -1,1 +1,0 @@
-import{_ as a,o as t,c as e}from"./app.3f800dbf.js";const l=JSON.parse('{"title":"","description":"","frontmatter":{},"headers":[],"relativePath":"lib/javascript.md","lastUpdated":1655402809000}'),r={name:"lib/javascript.md"};function s(c,o,p,i,n,d){return t(),e("div")}var m=a(r,[["render",s]]);export{l as __pageData,m as default};

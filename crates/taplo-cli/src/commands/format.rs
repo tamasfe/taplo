@@ -26,20 +26,34 @@ impl<E: Environment> Taplo<E> {
         self.env.stdin().read_to_string(&mut source).await?;
 
         let config = self.load_config(&cmd.general).await?;
-        let display_path = cmd.stdin_filepath.as_deref().unwrap_or("-");
-
+        let display_path = match cmd.stdin_filepath.as_deref() {
+            Some(filepath) if self.env.is_absolute(filepath.as_ref()) => {
+                PathBuf::from(filepath).normalize()
+            }
+            Some(filepath) => {
+                let cwd = self
+                    .env
+                    .cwd_normalized()
+                    .ok_or_else(|| anyhow!("could not figure the current working directory"))?;
+                cwd.join(filepath).normalize()
+            }
+            None => PathBuf::from("-"),
+        };
         let p = parser::parse(&source);
 
         if !p.errors.is_empty() {
-            self.print_parse_errors(&SimpleFile::new(display_path, source.as_str()), &p.errors)
-                .await?;
+            self.print_parse_errors(
+                &SimpleFile::new(&display_path.to_string_lossy(), source.as_str()),
+                &p.errors,
+            )
+            .await?;
 
             if !cmd.force {
                 return Err(anyhow!("no formatting was done due to syntax errors"));
             }
         }
 
-        let format_opts = self.format_options(&config, &cmd, Path::new(display_path))?;
+        let format_opts = self.format_options(&config, &cmd, &display_path)?;
 
         let error_ranges = p.errors.iter().map(|e| e.range).collect::<Vec<_>>();
 
@@ -49,7 +63,7 @@ impl<E: Environment> Taplo<E> {
             dom,
             format_opts,
             &error_ranges,
-            config.format_scopes(&PathBuf::from(display_path).normalize()),
+            config.format_scopes(&display_path),
         )
         .map_err(|err| anyhow!("invalid key pattern: {err}"))?;
 

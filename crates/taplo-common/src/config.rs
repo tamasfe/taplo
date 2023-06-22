@@ -108,7 +108,7 @@ impl Config {
     pub fn rules_for<'r>(
         &'r self,
         path: &'r Path,
-    ) -> impl DoubleEndedIterator<Item = &'r Rule> + 'r {
+    ) -> impl DoubleEndedIterator<Item = &'r Rule> + Clone + 'r {
         self.rule.iter().filter(|r| r.is_included(path))
     }
 
@@ -129,7 +129,7 @@ impl Config {
     pub fn format_scopes<'s>(
         &'s self,
         path: &'s Path,
-    ) -> impl Iterator<Item = (&String, taplo::formatter::OptionsIncomplete)> + 's {
+    ) -> impl Iterator<Item = (&String, taplo::formatter::OptionsIncomplete)> + Clone + 's {
         self.rules_for(path)
             .filter_map(|rule| match (&rule.keys, &rule.options.formatting) {
                 (Some(keys), Some(opts)) => Some(keys.iter().map(move |k| (k, opts.clone()))),

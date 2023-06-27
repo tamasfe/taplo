@@ -99,12 +99,13 @@ impl<E: Environment> Taplo<E> {
         formatted: &str,
     ) -> Result<(), anyhow::Error> {
         let path = path.as_ref();
+        let mut stdout = self.env.stdout();
 
         // print to stdout
         macro_rules! echo {
             ($($args:tt)*) => {
                 let msg = format!("{}\n", std::format_args!($($args)*));
-                self.env.stdout().write_all_buf(&mut msg.as_str().as_bytes()).await?;
+                stdout.write_all_buf(&mut msg.as_str().as_bytes()).await?;
             }
         }
 
@@ -194,6 +195,8 @@ impl<E: Environment> Taplo<E> {
             post_line += post_length;
             acc.clear();
         }
+
+        stdout.flush().await?;
         Ok(())
     }
 

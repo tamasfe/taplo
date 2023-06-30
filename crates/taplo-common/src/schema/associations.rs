@@ -444,25 +444,9 @@ pub enum SchemaCatalog {
 
 impl SchemaCatalog {
     fn transform_paths(&mut self) {
-        // Common extensions that can be replaced with "toml".
-        const COMMON_EXTENSIONS: &[&str] = &["yaml", "yml", "json"];
-
         if let SchemaCatalog::SchemaStore(index) = self {
             for s in &mut index.schemas {
                 for fm in &mut s.file_match {
-                    // Replace extensions with toml.
-                    if Path::new(fm).extension().is_some() {
-                        let ext = fm.rsplit('.').next().unwrap();
-                        let ext_len = ext.len();
-                        if COMMON_EXTENSIONS
-                            .iter()
-                            .any(|common_ext| ext.eq_ignore_ascii_case(common_ext))
-                        {
-                            fm.truncate(fm.len() - ext_len);
-                            *fm += "toml";
-                        }
-                    }
-
                     if !fm.starts_with("**/") {
                         *fm = String::from("**/") + fm.as_str();
                     }

@@ -126,10 +126,10 @@
   resolved "https://registry.yarnpkg.com/@taplo/core/-/core-0.1.1.tgz#28a301d6ea141249ff712f8a2b9fce6d4e813d41"
   integrity sha512-BG/zLGf5wiNXGEVPvUAAX/4ilB3PwDUY2o0MV0y47mZbDZ9ad9UK/cIQsILat3bqbPJsALVbU6k3cskNZ3vAQg==
 
-"@taplo/lsp@0.5.1":
-  version "0.5.1"
-  resolved "https://registry.yarnpkg.com/@taplo/lsp/-/lsp-0.5.1.tgz#9b1ae947cdaf73382ae8702f5c395edb16330b92"
-  integrity sha512-jp6hTw0NPPSWpkN9jKyD7KAU1vvIGTfAueKtRJlvG3bgEfvlUHwm6FcmB8g6M3aChzz9DfHWinlvCCGJ8cqH0g==
+"@taplo/lsp@0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@taplo/lsp/-/lsp-0.6.0.tgz#d97858ba51390a5ccd0762a9f1b1e67527d85457"
+  integrity sha512-xvniH3J7lQi9wJJpzYVElhutZn+zRSvRYBkqT7Cf0JO91+XdueS1b3nv441XR4NV9KNqG7j96wA/8GVa8LXATQ==
   dependencies:
     "@taplo/core" "^0.1.1"
 
@@ -1662,9 +1662,9 @@ seek-bzip@^1.0.5:
     commander "^2.8.1"
 
 semver@^7.3.5:
-  version "7.3.7"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-7.3.7.tgz#12c5b649afdbf9049707796e22a4028814ce523f"
-  integrity sha512-QlYTucUYOews+WeEujDoEGziz4K6c47V/Bd+LjSSYcA94p+DmINdf7ncaUinThfvZyu13lN9OY1XDxt8C0Tw0g==
+  version "7.5.3"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-7.5.3.tgz#161ce8c2c6b4b3bdca6caadc9fa3317a4c4fe88e"
+  integrity sha512-QBlUtyVk/5EeHbi7X0fw6liDZc7BBmEaSYn01fMU1OUYbf6GPsbTtd8WmnqbI20SeycoHSeiybkE/q1Q+qlThQ==
   dependencies:
     lru-cache "^6.0.0"
 

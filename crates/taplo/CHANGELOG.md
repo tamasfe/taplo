@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.12.1
+
+### Features
+
+- Added `align_single_comments` formatter setting ([#409](https://github.com/tamasfe/taplo/pull/409))
+
 ## 0.12.0
 
 ### Features

@@ -1,5 +1,19 @@
 # Change Log
 
+## 0.19.1
+
+### Features
+
+- Added `align_single_comments` formatter setting ([#409](https://github.com/tamasfe/taplo/pull/409))
+
+### Fixes
+
+- Fixed incorrectly modifying file extensions in catalog rules ([#426](https://github.com/tamasfe/taplo/pull/426))
+- Fixed non-deterministic `--diff` output ([#424](https://github.com/tamasfe/taplo/pull/424))
+- Fixed incorrect path handling of `--stdin-filepath` ([#418](https://github.com/tamasfe/taplo/pull/418))
+- Fixed incorrect path handling in LSP rule matching ([#378](https://github.com/tamasfe/taplo/pull/378))
+- Fixed incorrect support of LSP shutdown requests ([#354](https://github.com/tamasfe/taplo/pull/354))
+
 ## 0.19.0
 
 ### Features

@@ -409,7 +409,7 @@
     "encoding": "^0.1.13",
     "fast-glob": "^3.2.11",
     "node-fetch": "^3.2.6",
-    "vscode-languageclient": "8.0.2-next.5",
+    "vscode-languageclient": "8.1.0",
     "which": "^2.0.2"
   },
   "devDependencies": {

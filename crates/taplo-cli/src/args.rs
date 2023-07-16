@@ -24,7 +24,7 @@ pub struct GeneralArgs {
     /// Path to the Taplo configuration file.
     ///
     /// Configuration file can be specified in $TAPLO_CONFIG
-    #[clap(long, short)]
+    #[clap(long, short, env = "TAPLO_CONFIG")]
     pub config: Option<PathBuf>,
 
     /// Set a cache path.

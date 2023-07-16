@@ -20,7 +20,7 @@ toml-test = []
 [dependencies]
 anyhow = { version = "1", features = ["backtrace"] }
 async-ctrlc = { version = "1.2.0", features = ["stream"], optional = true }
-clap = { version = "3.0.0", features = ["derive", "cargo"] }
+clap = { version = "3.0.0", features = ["derive", "cargo", "env"] }
 codespan-reporting = "0.11.1"
 futures = "0.3"
 glob = "0.3"

@@ -22,8 +22,6 @@ pub struct TaploArgs {
 #[derive(Clone, Args)]
 pub struct GeneralArgs {
     /// Path to the Taplo configuration file.
-    ///
-    /// Configuration file can be specified in $TAPLO_CONFIG
     #[clap(long, short, env = "TAPLO_CONFIG")]
     pub config: Option<PathBuf>,
 

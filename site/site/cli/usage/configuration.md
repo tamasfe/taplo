@@ -23,4 +23,4 @@ The available log levels:
 
 <!-- TODO: config link -->
 
-Taplo CLI by default searches for a Taplo config file in the current working directory, this behaviour can be disabled by either supplying `--no-auto-config` or `--config <path>` flags.
+Taplo CLI, by default, searches the current working directory for a Taplo configuration file. This behaviour can be disabled by either supplying `--no-auto-config` or `--config <path>` flags. The `TAPLO_CONFIG` environmental variable can also be used to set the configuration, but the `--config` flag will take precedence.

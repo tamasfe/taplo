@@ -22,7 +22,7 @@ pub struct TaploArgs {
 #[derive(Clone, Args)]
 pub struct GeneralArgs {
     /// Path to the Taplo configuration file.
-    #[clap(long, short)]
+    #[clap(long, short, env = "TAPLO_CONFIG")]
     pub config: Option<PathBuf>,
 
     /// Set a cache path.

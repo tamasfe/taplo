@@ -429,7 +429,6 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
     let mut context = context.clone();
 
     // Table key for determining indents
-    let mut last_table_key = None;
     let mut table_key_indent_history: Vec<(Keys, usize)> = Vec::new();
 
     fn add_comments(
@@ -479,21 +478,14 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                     }
 
                     if let Some(key) = node.first_child().map(Into::into).map(Keys::from_syntax) {
-                        if let Some(last_key) = last_table_key {
-                            if scoped_options.indent_tables {
-                                context.indent_level = table_indent_level(
-                                    &table_key_indent_history,
-                                    &last_key,
-                                    &key,
-                                    context.indent_level,
-                                    if scoped_options.indent_entries { 1 } else { 0 },
-                                );
-                            }
+                        if scoped_options.indent_tables {
+                            context.indent_level = table_indent_level(
+                                &table_key_indent_history,
+                                &key,
+                                if scoped_options.indent_entries { 1 } else { 0 },
+                            );
                         }
-
                         table_key_indent_history.push((key.clone(), context.indent_level));
-
-                        last_table_key = Some(key);
                     }
 
                     let mut header_context = context.clone();
@@ -599,36 +591,23 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
     formatted
 }
 
-/// Determine the indentation level based on 2 consecutive table keys.
+/// Determine the indentation level using the indentation history.
+///
+/// The latest key that is a strict prefix is used and indented. If none is found, the default
+/// indentation is used.
 fn table_indent_level(
     history: &[(Keys, usize)],
-    previous_key: &Keys,
     current_key: &Keys,
-    indent: usize,
     default_indent: usize,
 ) -> usize {
-    if previous_key == current_key {
-        return indent;
-    }
-
-    if previous_key.common_prefix_count(current_key) > 0 && current_key.contains(previous_key) {
-        return indent + 1;
-    } else if previous_key.common_prefix_count(current_key) > 0
-        && current_key.len() >= previous_key.len()
-    {
-        return indent;
-    }
-
-    if !previous_key.part_of(current_key) && !previous_key.contains(current_key) {
-        return default_indent;
-    }
-
-    // Find a table with the same name, likely to be on the same level.
-    if let Some((_, indent)) = history.iter().rev().find(|(key, _)| key == current_key) {
-        return *indent;
-    }
-
-    indent.saturating_sub(1)
+    history
+        .iter()
+        .rev()
+        .find_map(|(previous_key, indent)| {
+            (current_key.contains(previous_key) && current_key != previous_key)
+                .then_some(*indent + 1)
+        })
+        .unwrap_or(default_indent)
 }
 
 /// Add entries to the formatted string.

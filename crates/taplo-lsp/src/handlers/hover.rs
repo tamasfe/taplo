@@ -259,6 +259,8 @@ pub(crate) async fn hover<E: Environment>(
                         docs
                     } else if let Some(desc) = schema["description"].as_str() {
                         desc.to_string()
+                    } else if let Some(title) = schema["title"].as_str() {
+                        title.to_string()
                     } else {
                         "".to_string()
                     }

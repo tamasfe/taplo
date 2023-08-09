@@ -6,6 +6,8 @@ This page contains a list of formatting options the formatter accepts.
 
 In some environments (e.g. in Visual Studio Code and JavaScript) the option keys are _camelCase_ to better fit the conventions. For example `align_entries` becomes `alignEntries`.
 
+In some environments (e.g., Visual Studio Code), one needs to reload the extension to let the settings take effect.
+
 :::
 
 |        option         |                                                          description                                                           | default value  |

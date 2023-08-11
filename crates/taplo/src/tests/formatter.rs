@@ -1108,3 +1108,26 @@ my_array = [
 
     assert_format!(expected, &formatted);
 }
+
+#[test]
+fn test_comment_with_brackets() {
+    let src = r#"
+my_array = [
+  # [x]
+  "y",
+]
+"#;
+
+    let expected = r#"
+my_array = [
+  # [x]
+  "y",
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src, Default::default()
+    );
+
+    assert_format!(expected, &formatted);
+}

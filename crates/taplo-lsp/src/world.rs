@@ -18,7 +18,6 @@ use taplo_common::{
         associations::{priority, source, AssociationRule, SchemaAssociation},
         Schemas,
     },
-    util::get_reqwest_client,
     AsyncRwLock, HashMap, IndexMap,
 };
 
@@ -125,7 +124,7 @@ impl<E: Environment> WorkspaceState<E> {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            client = get_reqwest_client(Duration::from_secs(10)).unwrap();
+            client = taplo_common::util::get_reqwest_client(Duration::from_secs(10)).unwrap();
         }
 
         Self {

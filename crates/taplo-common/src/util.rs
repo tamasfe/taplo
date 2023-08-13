@@ -121,6 +121,7 @@ pub(crate) fn normalize_str(s: &str) -> Cow<str> {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 #[tracing::instrument]
 pub fn get_reqwest_client(timeout: std::time::Duration) -> Result<reqwest::Client, reqwest::Error> {
     fn get_cert(path: impl AsRef<Path>) -> Result<reqwest::Certificate, anyhow::Error> {

@@ -9,3 +9,5 @@ JSON schemas can be assigned to TOML documents according to the following in pri
 1. default schema set in the [configuration file](./file#schema)
 1. contributed by an [extension](./developing-schemas.md#visual-studio-code-extensions) *(Visual Studio Code only)*
 1. an association based on a [schema catalog](./developing-schemas.md#publishing)
+
+Extra root CA certificate could be added by specifying with the TAPLO_EXTRA_CA_CERTS environment. The provided paths must be absolute paths. For example, `TAPLO_EXTRA_CA_CERTS=/home/taplo-user/custom-ca.pem`

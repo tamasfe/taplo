@@ -123,24 +123,31 @@ pub(crate) fn normalize_str(s: &str) -> Cow<str> {
 
 #[tracing::instrument]
 pub fn get_reqwest_client(timeout: std::time::Duration) -> Result<reqwest::Client, reqwest::Error> {
-    fn get_cert() -> Result<reqwest::Certificate, anyhow::Error> {
-        let path = std::env::var("TAPLO_EXTRA_CA_CERTS")?;
-        let path = Path::new(&path);
-        let ext = path.extension().and_then(|ext| ext.to_str());
+    fn get_cert(path: impl AsRef<Path>) -> Result<reqwest::Certificate, anyhow::Error> {
+        let path = path.as_ref();
+        let is_der = path.extension().map_or(false, |ext| ext == "der");
         let buf = std::fs::read(path)?;
         tracing::info!(
             "Found a custom CA {}. Reading the CA...",
             path.to_string_lossy()
         );
-        match ext {
-            Some("der") => Ok(reqwest::Certificate::from_der(&buf)?),
-            _ => Ok(reqwest::Certificate::from_pem(&buf)?),
+        if is_der {
+            Ok(reqwest::Certificate::from_der(&buf)?)
+        } else {
+            Ok(reqwest::Certificate::from_pem(&buf)?)
         }
     }
     let mut builder = reqwest::Client::builder().timeout(timeout);
-    if let Ok(cert) = get_cert() {
-        builder = builder.add_root_certificate(cert);
-        tracing::info!("Added the custom CA");
+    if let Some(path) = std::env::var_os("TAPLO_EXTRA_CA_CERTS") {
+        match get_cert(&path) {
+            Ok(cert) => {
+                builder = builder.add_root_certificate(cert);
+                tracing::info!(?path, "Added the custom CA");
+            }
+            Err(err) => {
+                tracing::error!(error = %err, "Could not parse the custom CA");
+            }
+        }
     }
     builder.build()
 }

@@ -1106,10 +1106,8 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                         skip_newlines = 0;
                     }
 
-                    if !formatted.ends_with(']') {
-                        formatted
-                            .extend(options.newlines(newline_count.saturating_sub(skip_newlines)));
-                    }
+                    formatted
+                        .extend(options.newlines(newline_count.saturating_sub(skip_newlines)));
                 }
                 COMMENT => {
                     let newline_before = t

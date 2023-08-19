@@ -25,15 +25,14 @@ checksum = "fcb51a0695d8f838b1ee009b3fbf66bda078cd64590202a864a8f3e8c4315c47"
 dependencies = [
  "getrandom 0.2.8",
  "once_cell",
- "serde",
  "version_check",
 ]
 
 [[package]]
 name = "ahash"
-version = "0.8.0"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57e6e951cfbb2db8de1828d49073a113a29fd7117b1596caa781a258c7e38d72"
+checksum = "2c99f64d1e06488f620f932677e24bc6e2897582980441ae90a671415bd7ec2f"
 dependencies = [
  "cfg-if",
  "getrandom 0.2.8",
@@ -1078,7 +1077,7 @@ version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a071f4f7efc9a9118dfb627a0a94ef247986e1ab8606a4c806ae2b3aa3b6978"
 dependencies = [
- "ahash 0.8.0",
+ "ahash 0.8.3",
  "anyhow",
  "base64 0.21.2",
  "bytecount",
@@ -2206,7 +2205,7 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 name = "taplo"
 version = "0.12.1"
 dependencies = [
- "ahash 0.7.6",
+ "ahash 0.8.3",
  "arc-swap",
  "assert-json-diff",
  "criterion",
@@ -2264,7 +2263,7 @@ dependencies = [
 name = "taplo-common"
 version = "0.4.1"
 dependencies = [
- "ahash 0.7.6",
+ "ahash 0.8.3",
  "anyhow",
  "arc-swap",
  "async-recursion",

@@ -120,3 +120,35 @@ pub(crate) fn normalize_str(s: &str) -> Cow<str> {
         percent_decoded
     }
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+#[tracing::instrument]
+pub fn get_reqwest_client(timeout: std::time::Duration) -> Result<reqwest::Client, reqwest::Error> {
+    fn get_cert(path: impl AsRef<Path>) -> Result<reqwest::Certificate, anyhow::Error> {
+        let path = path.as_ref();
+        let is_der = path.extension().map_or(false, |ext| ext == "der");
+        let buf = std::fs::read(path)?;
+        tracing::info!(
+            "Found a custom CA {}. Reading the CA...",
+            path.to_string_lossy()
+        );
+        if is_der {
+            Ok(reqwest::Certificate::from_der(&buf)?)
+        } else {
+            Ok(reqwest::Certificate::from_pem(&buf)?)
+        }
+    }
+    let mut builder = reqwest::Client::builder().timeout(timeout);
+    if let Some(path) = std::env::var_os("TAPLO_EXTRA_CA_CERTS") {
+        match get_cert(&path) {
+            Ok(cert) => {
+                builder = builder.add_root_certificate(cert);
+                tracing::info!(?path, "Added the custom CA");
+            }
+            Err(err) => {
+                tracing::error!(error = %err, "Could not parse the custom CA");
+            }
+        }
+    }
+    builder.build()
+}

@@ -21,10 +21,8 @@ pub struct Taplo<E: Environment> {
 impl<E: Environment> Taplo<E> {
     pub fn new(env: E) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
-        let http = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(5))
-            .build()
-            .unwrap();
+        let http =
+            taplo_common::util::get_reqwest_client(std::time::Duration::from_secs(5)).unwrap();
 
         #[cfg(target_arch = "wasm32")]
         let http = reqwest::Client::default();

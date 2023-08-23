@@ -73,6 +73,7 @@ export default defineConfigWithTheme<DefaultTheme.Config>({
               link: "/cli/installation/binary",
             },
             { text: "Cargo", link: "/cli/installation/cargo" },
+            { text: "Homebrew", link: "/cli/installation/homebrew" },
             { text: "NPM", link: "/cli/installation/npm" },
             { text: "Docker", link: "/cli/installation/docker" },
           ],

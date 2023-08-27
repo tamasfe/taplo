@@ -2,26 +2,32 @@
 
 The [default](./binary.md#default-build) build of Taplo is published to NPM as [`@taplo/cli`](https://www.npmjs.com/package/@taplo/cli). You will need [Node.js](https://nodejs.org/en/) (tested with 16 and up) in order to use it.
 
-## Installation via npm
+## Install with npm
 
 ```sh
 npm install -g @taplo/cli
 ```
 
-This will install the `taplo` executable globally.
-
-## Installation via yarn
+## Install with Yarn
 
 ```sh
 yarn global add @taplo/cli
 ```
 
-This will also install the `taplo` executable globally.
+## Install with pnpm
 
-## Run with npx
+```sh
+pnpm install -g @taplo/cli
+```
 
-Alternatively you can run it once "without installing" via npx:
+## Run without installing
+
+Alternatively you can run it once "without installing":
 
 ```sh
 npx @taplo/cli --help
+```
+
+```sh
+pnpm dlx @taplo/cli --help
 ```

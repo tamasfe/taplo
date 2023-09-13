@@ -31,7 +31,7 @@ pub struct ScopedOptions(Vec<(TextRange, OptionsIncomplete)>);
 
 impl FromIterator<(TextRange, OptionsIncomplete)> for ScopedOptions {
     fn from_iter<T: IntoIterator<Item = (TextRange, OptionsIncomplete)>>(iter: T) -> Self {
-        Self(Vec::from_iter(iter.into_iter()))
+        Self(Vec::from_iter(iter))
     }
 }
 

@@ -7,6 +7,7 @@ use std::{
     pin::Pin,
     task::{self, Poll},
 };
+use taplo_common::environment::Environment;
 use time::OffsetDateTime;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use url::Url;

@@ -90,7 +90,7 @@ impl<E: Environment> Schemas<E> {
         schema_url: &Url,
         root: &dom::Node,
     ) -> Result<Vec<NodeValidationError>, anyhow::Error> {
-        let value = serde_json::to_value(&root)?;
+        let value = serde_json::to_value(root)?;
         self.validate(schema_url, &value)
             .await?
             .into_iter()
@@ -474,7 +474,7 @@ impl<E: Environment> Schemas<E> {
         for (path, schema) in schemas {
             self.collect_child_schemas(
                 schema_url,
-                &*schema,
+                &schema,
                 &path,
                 &Keys::empty(),
                 max_depth,

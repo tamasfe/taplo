@@ -1125,9 +1125,7 @@ my_array = [
 ]
 "#;
 
-    let formatted = crate::formatter::format(
-        src, Default::default()
-    );
+    let formatted = crate::formatter::format(src, Default::default());
 
     assert_format!(expected, &formatted);
 }

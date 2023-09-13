@@ -193,7 +193,7 @@ impl<E: Environment> SchemaAssociations<E> {
                         tracing::debug!(%error, "invalid url in directive, assuming file path instead");
 
                         if self.env.is_absolute(Path::new(value)) {
-                            match format!("file://{}", value).parse() {
+                            match format!("file://{value}").parse() {
                                 Ok(u) => u,
                                 Err(error) => {
                                     tracing::error!(%error, "invalid schema directive");
@@ -392,7 +392,7 @@ pub enum AssociationRule {
 
 impl AssociationRule {
     pub fn glob(pattern: &str) -> Result<Self, anyhow::Error> {
-        Ok(Self::Glob(GlobRule::new(&[pattern], &[] as &[&str])?))
+        Ok(Self::Glob(GlobRule::new([pattern], &[] as &[&str])?))
     }
 
     pub fn regex(regex: &str) -> Result<Self, anyhow::Error> {
@@ -520,8 +520,7 @@ impl<'de> Deserialize<'de> for SchemaStoreCatalogSchema {
 
         if s != SCHEMA_STORE_CATALOG_SCHEMA_URL {
             return Err(Error::custom(format!(
-                "expected $schema to be {}",
-                SCHEMA_STORE_CATALOG_SCHEMA_URL
+                "expected $schema to be {SCHEMA_STORE_CATALOG_SCHEMA_URL}"
             )));
         }
 

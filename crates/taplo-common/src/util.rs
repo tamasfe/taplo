@@ -49,7 +49,7 @@ pub struct ArcHashValue(pub Arc<Value>);
 
 impl Hash for ArcHashValue {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        HashValue(&*self.0).hash(state);
+        HashValue(&self.0).hash(state);
     }
 }
 

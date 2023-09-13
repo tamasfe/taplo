@@ -95,7 +95,7 @@ impl<E: Environment> Taplo<E> {
     async fn lint_file(&self, file: &Path) -> Result<(), anyhow::Error> {
         let source = self.env.read_file(file).await?;
         let source = String::from_utf8(source)?;
-        self.lint_source(&*file.to_string_lossy(), &source).await
+        self.lint_source(&file.to_string_lossy(), &source).await
     }
 
     async fn lint_source(&self, file_path: &str, source: &str) -> Result<(), anyhow::Error> {

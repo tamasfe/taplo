@@ -317,7 +317,7 @@ where
         let matched = dom.find_all_matches(keys, false)?;
 
         for (_, node) in matched {
-            s.extend(node.text_ranges().into_iter().map(|r| (r, opts.clone())));
+            s.extend(node.text_ranges().map(|r| (r, opts.clone())));
         }
     }
 
@@ -365,9 +365,8 @@ struct FormattedEntry {
 impl PartialEq for FormattedEntry {
     fn eq(&self, other: &Self) -> bool {
         self.key
-            .replace('\'', "")
-            .replace('"', "")
-            .eq(&other.key.replace('\'', "").replace('"', ""))
+            .replace(['\'', '"'], "")
+            .eq(&other.key.replace(['\'', '"'], ""))
     }
 }
 
@@ -376,18 +375,16 @@ impl Eq for FormattedEntry {}
 impl PartialOrd for FormattedEntry {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
         self.key
-            .replace('\'', "")
-            .replace('"', "")
-            .partial_cmp(&other.key.replace('\'', "").replace('"', ""))
+            .replace(['\'', '"'], "")
+            .partial_cmp(&other.key.replace(['\'', '"'], ""))
     }
 }
 
 impl Ord for FormattedEntry {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
         self.key
-            .replace('\'', "")
-            .replace('"', "")
-            .cmp(&other.key.replace('\'', "").replace('"', ""))
+            .replace(['\'', '"'], "")
+            .cmp(&other.key.replace(['\'', '"'], ""))
     }
 }
 
@@ -1085,8 +1082,7 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                         skip_newlines = 0;
                     }
 
-                    formatted
-                        .extend(options.newlines(newline_count.saturating_sub(skip_newlines)));
+                    formatted.extend(options.newlines(newline_count.saturating_sub(skip_newlines)));
                 }
                 COMMENT => {
                     let newline_before = t

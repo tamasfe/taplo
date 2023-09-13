@@ -262,7 +262,7 @@ pub(crate) async fn hover<E: Environment>(
                     } else if let Some(title) = schema["title"].as_str() {
                         title.to_string()
                     } else {
-                        "".to_string()
+                        String::new()
                     }
                 })
                 .join("\n");

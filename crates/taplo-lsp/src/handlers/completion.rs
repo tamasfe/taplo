@@ -155,13 +155,10 @@ pub async fn completion<E: Environment>(
             }
         };
 
-        let key_range = query.header_key().map(|k| k.text_range()).and_then(|r| {
-            if r.is_empty() {
-                None
-            } else {
-                Some(r)
-            }
-        });
+        let key_range = query
+            .header_key()
+            .map(|k| k.text_range())
+            .filter(|r| !r.is_empty());
 
         return Ok(Some(CompletionResponse::Array(
             array_of_objects_schemas

@@ -33,15 +33,14 @@ pub struct ExtLinks {
 
 #[must_use]
 pub fn schema_ext_of(schema: &Value) -> Option<TaploSchemaExt> {
-    schema.get(EXTENSION_KEY).and_then(|val| {
-        if val.is_object() {
+    schema
+        .get(EXTENSION_KEY)
+        .filter(|v| v.is_object())
+        .and_then(|val| {
             serde_json::from_value(val.clone())
                 .tap_err(
                     |error| tracing::warn!(key = EXTENSION_KEY, %error, "invalid schema extension"),
                 )
                 .ok()
-        } else {
-            None
-        }
-    })
+        })
 }

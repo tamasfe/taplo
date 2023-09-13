@@ -44,13 +44,7 @@ pub async fn prepare_rename<E: Environment>(
         .filter(|p| p.syntax.kind() == SyntaxKind::IDENT)
     {
         Some(before) => before,
-        None => match query.after.and_then(|p| {
-            if p.syntax.kind() == SyntaxKind::IDENT {
-                Some(p)
-            } else {
-                None
-            }
-        }) {
+        None => match query.after.filter(|p| p.syntax.kind() == SyntaxKind::IDENT) {
             Some(after) => after,
             None => return Ok(None),
         },

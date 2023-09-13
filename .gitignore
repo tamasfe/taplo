@@ -4,3 +4,4 @@ target
 .vscode/settings.json
 .cargo/config.toml
 yarn-error.log
+/.idea

@@ -45,10 +45,7 @@ pub async fn associate_schema<E: Environment>(
     context: Context<World<E>>,
     params: Params<AssociateSchemaParams>,
 ) {
-    let p = match params.required() {
-        Ok(p) => p,
-        Err(_) => return,
-    };
+    let Ok(p) = params.required() else { return };
 
     let workspaces = context.workspaces.read().await;
 

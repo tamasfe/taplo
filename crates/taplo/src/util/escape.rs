@@ -54,17 +54,18 @@ pub enum Escape {
 use Escape::*;
 
 /// Escape values in a given string.
+#[allow(clippy::needless_raw_string_hashes)]
 pub fn escape(s: &str) -> String {
     let mut escaped = String::with_capacity(s.len());
 
     for c in s.chars() {
         match c {
-            '\u{0008}' => escaped.push_str(r"\b"),
-            '\u{0009}' => escaped.push_str(r"\t"),
-            '\u{000A}' => escaped.push_str(r"\n"),
-            '\u{000C}' => escaped.push_str(r"\f"),
-            '\u{000D}' => escaped.push_str(r"\r"),
-            '\u{0022}' => escaped.push_str(r"\\"),
+            '\u{0008}' => escaped.push_str(r#"\b"#),
+            '\u{0009}' => escaped.push_str(r#"\t"#),
+            '\u{000A}' => escaped.push_str(r#"\n"#),
+            '\u{000C}' => escaped.push_str(r#"\f"#),
+            '\u{000D}' => escaped.push_str(r#"\r"#),
+            '\u{0022}' => escaped.push_str(r#"\""#),
             '\u{005C}' => escaped.push_str(r#"\\"#),
             _ => {
                 escaped.push(c);

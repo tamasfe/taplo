@@ -40,31 +40,24 @@ pub(crate) async fn hover<E: Environment>(
     };
 
     let position = p.text_document_position_params.position;
-    let offset = match doc.mapper.offset(Position::from_lsp(position)) {
-        Some(ofs) => ofs,
-        None => {
-            tracing::error!(?position, "document position not found");
-            return Ok(None);
-        }
+    let Some(offset) = doc.mapper.offset(Position::from_lsp(position)) else {
+        tracing::error!(?position, "document position not found");
+        return Ok(None);
     };
 
     let query = Query::at(&doc.dom, offset);
 
-    let position_info = match query.before.clone().and_then(|p| {
-        if p.syntax.kind() == IDENT || is_primitive(p.syntax.kind()) {
-            Some(p)
-        } else {
-            None
-        }
-    }) {
+    let position_info = match query
+        .before
+        .clone()
+        .filter(|p| p.syntax.kind() == IDENT || is_primitive(p.syntax.kind()))
+    {
         Some(before) => before,
-        None => match query.after.clone().and_then(|p| {
-            if p.syntax.kind() == IDENT || is_primitive(p.syntax.kind()) {
-                Some(p)
-            } else {
-                None
-            }
-        }) {
+        None => match query
+            .after
+            .clone()
+            .filter(|p| p.syntax.kind() == IDENT || is_primitive(p.syntax.kind()))
+        {
             Some(after) => after,
             None => return Ok(None),
         },
@@ -86,9 +79,8 @@ pub(crate) async fn hover<E: Environment>(
             }
         };
 
-        let (keys, _) = match &position_info.dom_node {
-            Some(n) => n,
-            None => return Ok(None),
+        let Some((keys, _)) = &position_info.dom_node else {
+            return Ok(None);
         };
 
         let links_in_hover = !ws.config.schema.links;
@@ -108,9 +100,8 @@ pub(crate) async fn hover<E: Environment>(
             );
         }
 
-        let node = match doc.dom.path(&keys) {
-            Some(n) => n,
-            None => return Ok(None),
+        let Some(node) = doc.dom.path(&keys) else {
+            return Ok(None);
         };
 
         if position_info.syntax.kind() == SyntaxKind::IDENT {

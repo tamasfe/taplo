@@ -59,6 +59,7 @@ pub struct Config {
     pub plugins: Option<HashMap<String, Plugin>>,
 }
 
+#[allow(clippy::missing_fields_in_debug)]
 impl Debug for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Config")
@@ -316,6 +317,7 @@ pub struct Rule {
     pub file_rule: Option<GlobRule>,
 }
 
+#[allow(clippy::missing_fields_in_debug)]
 impl Debug for Rule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Rule")

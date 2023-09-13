@@ -368,14 +368,11 @@ impl<E: Environment> Schemas<E> {
 
         let include_self = schema["allOf"].is_null();
 
-        let key = match path.iter().next() {
-            Some(k) => k,
-            None => {
-                if include_self {
-                    schemas.push((full_path.clone(), Arc::new(schema.clone())));
-                }
-                return Ok(());
+        let Some(key) = path.iter().next() else {
+            if include_self {
+                schemas.push((full_path.clone(), Arc::new(schema.clone())));
             }
+            return Ok(());
         };
 
         let child_path = path.skip_left(1);

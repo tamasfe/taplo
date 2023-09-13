@@ -46,18 +46,14 @@ pub async fn completion<E: Environment>(
         }
     };
 
-    let schema_association = match ws.schemas.associations().association_for(&document_uri) {
-        Some(ass) => ass,
-        None => return Ok(None),
+    let Some(schema_association) = ws.schemas.associations().association_for(&document_uri) else {
+        return Ok(None);
     };
 
     let position = p.text_document_position.position;
-    let offset = match doc.mapper.offset(Position::from_lsp(position)) {
-        Some(ofs) => ofs,
-        None => {
-            tracing::error!(?position, "document position not found");
-            return Ok(None);
-        }
+    let Some(offset) = doc.mapper.offset(Position::from_lsp(position)) else {
+        tracing::error!(?position, "document position not found");
+        return Ok(None);
     };
 
     let query = Query::at(&doc.dom, offset);
@@ -98,13 +94,10 @@ pub async fn completion<E: Environment>(
             }
         };
 
-        let key_range = query.header_key().map(|k| k.text_range()).and_then(|r| {
-            if r.is_empty() {
-                None
-            } else {
-                Some(r)
-            }
-        });
+        let key_range = query
+            .header_key()
+            .map(|k| k.text_range())
+            .filter(|r| !r.is_empty());
 
         let node = query
             .dom_node()

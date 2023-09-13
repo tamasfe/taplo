@@ -7,7 +7,7 @@ use crate::{
 use logos::Lexer;
 use once_cell::unsync::OnceCell;
 use rowan::{NodeOrToken, TextRange};
-use std::{fmt::Write, iter::once, rc::Rc};
+use std::{fmt::Write, iter::once, sync::Arc};
 use time::macros::format_description;
 
 macro_rules! wrap_node {
@@ -19,7 +19,7 @@ macro_rules! wrap_node {
     ) => {
         $(#[$attrs])*
         $vis struct $name {
-            pub(crate) inner: Rc<$inner>,
+            pub(crate) inner: Arc<$inner>,
         }
 
         impl $crate::private::Sealed for $name {}
@@ -47,7 +47,7 @@ macro_rules! wrap_node {
         impl From<$inner> for $name {
             fn from(inner: $inner) -> $name {
                 $name {
-                    inner: Rc::new(inner)
+                    inner: Arc::new(inner)
                 }
             }
         }

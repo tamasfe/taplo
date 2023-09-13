@@ -31,23 +31,18 @@ pub async fn prepare_rename<E: Environment>(
     };
 
     let position = p.position;
-    let offset = match doc.mapper.offset(Position::from_lsp(position)) {
-        Some(ofs) => ofs,
-        None => {
-            tracing::error!(?position, "document position not found");
-            return Ok(None);
-        }
+    let Some(offset) = doc.mapper.offset(Position::from_lsp(position)) else {
+        tracing::error!(?position, "document position not found");
+        return Ok(None);
     };
 
     let query = Query::at(&doc.dom, offset);
 
-    let position_info = match query.before.clone().and_then(|p| {
-        if p.syntax.kind() == SyntaxKind::IDENT {
-            Some(p)
-        } else {
-            None
-        }
-    }) {
+    let position_info = match query
+        .before
+        .clone()
+        .filter(|p| p.syntax.kind() == SyntaxKind::IDENT)
+    {
         Some(before) => before,
         None => match query.after.and_then(|p| {
             if p.syntax.kind() == SyntaxKind::IDENT {
@@ -88,31 +83,24 @@ pub async fn rename<E: Environment>(
     };
 
     let position = p.text_document_position.position;
-    let offset = match doc.mapper.offset(Position::from_lsp(position)) {
-        Some(ofs) => ofs,
-        None => {
-            tracing::error!(?position, "document position not found");
-            return Ok(None);
-        }
+    let Some(offset) = doc.mapper.offset(Position::from_lsp(position)) else {
+        tracing::error!(?position, "document position not found");
+        return Ok(None);
     };
 
     let query = Query::at(&doc.dom, offset);
 
-    let position_info = match query.before.clone().and_then(|p| {
-        if p.syntax.kind() == SyntaxKind::IDENT {
-            Some(p)
-        } else {
-            None
-        }
-    }) {
+    let position_info = match query
+        .before
+        .clone()
+        .filter(|p| p.syntax.kind() == SyntaxKind::IDENT)
+    {
         Some(before) => before,
-        None => match query.after.clone().and_then(|p| {
-            if p.syntax.kind() == SyntaxKind::IDENT {
-                Some(p)
-            } else {
-                None
-            }
-        }) {
+        None => match query
+            .after
+            .clone()
+            .filter(|p| p.syntax.kind() == SyntaxKind::IDENT)
+        {
             Some(after) => after,
             None => return Ok(None),
         },

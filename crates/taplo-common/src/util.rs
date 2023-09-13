@@ -109,9 +109,8 @@ impl Normalize for PathBuf {
 }
 
 pub(crate) fn normalize_str(s: &str) -> Cow<str> {
-    let percent_decoded = match percent_decode_str(s).decode_utf8().ok() {
-        Some(s) => s,
-        None => return s.into(),
+    let Some(percent_decoded) = percent_decode_str(s).decode_utf8().ok() else {
+        return s.into();
     };
 
     if cfg!(windows) {

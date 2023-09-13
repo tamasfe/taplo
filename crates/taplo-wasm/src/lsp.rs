@@ -83,5 +83,3 @@ impl Sink<rpc::Message> for WasmLspInterface {
         std::task::Poll::Ready(Ok(()))
     }
 }
-
-unsafe impl Send for WasmLspInterface {}

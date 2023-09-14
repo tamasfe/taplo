@@ -32,7 +32,7 @@ impl Environment for NativeEnvironment {
     type Stdout = tokio::io::Stdout;
     type Stderr = tokio::io::Stderr;
 
-    fn now(&self) -> time::OffsetDateTime {
+    fn now(&self) -> OffsetDateTime {
         OffsetDateTime::now_utc()
     }
 

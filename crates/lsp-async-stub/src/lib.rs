@@ -14,6 +14,8 @@ use lsp_types::{
     NumberOrString,
 };
 use serde::{de::DeserializeOwned, Serialize};
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::{
     collections::HashMap,
     io, mem,
@@ -158,7 +160,7 @@ pub struct Context<W: Clone> {
     inner: Arc<AsyncMutex<Inner<W>>>,
     cancel_token: CancelToken,
     last_req_id: Option<rpc::RequestId>, // For cancellation
-    rw: Arc<AsyncMutex<Box<dyn MessageWriter>>>,
+    rw: Rc<RefCell<dyn MessageWriter>>,
     world: W,
     deferred: DeferredTasks,
 }
@@ -212,8 +214,6 @@ impl<W: Clone> RequestWriter for Context<W> {
         let req_id = inner.next_request_id;
         inner.next_request_id += 1;
 
-        let mut rw = self.rw.lock().await;
-
         let id = NumberOrString::Number(req_id);
 
         let request = rpc::Request::new()
@@ -222,8 +222,11 @@ impl<W: Clone> RequestWriter for Context<W> {
             .with_params(params);
 
         let span = tracing::debug_span!("sending request", ?request);
-
-        rw.send(request.into_message()).instrument(span).await?;
+        self.rw
+            .borrow_mut()
+            .send(request.into_message())
+            .instrument(span)
+            .await?;
 
         self.last_req_id = Some(id.clone());
 
@@ -249,14 +252,15 @@ impl<W: Clone> RequestWriter for Context<W> {
         &mut self,
         params: Option<N::Params>,
     ) -> Result<(), io::Error> {
-        let mut rw = self.rw.lock().await;
-        rw.send(
-            rpc::Request::new()
-                .with_method(N::METHOD)
-                .with_params(params)
-                .into_message(),
-        )
-        .await
+        self.rw
+            .borrow_mut()
+            .send(
+                rpc::Request::new()
+                    .with_method(N::METHOD)
+                    .with_params(params)
+                    .into_message(),
+            )
+            .await
     }
 
     async fn cancel(&mut self) -> Result<(), io::Error> {
@@ -269,8 +273,8 @@ impl<W: Clone> RequestWriter for Context<W> {
     }
 }
 
-pub trait MessageWriter: Sink<rpc::Message, Error = io::Error> + Unpin + Send {}
-impl<T: Sink<rpc::Message, Error = io::Error> + Unpin + Send> MessageWriter for T {}
+pub trait MessageWriter: Sink<rpc::Message, Error = io::Error> + Unpin {}
+impl<T: Sink<rpc::Message, Error = io::Error> + Unpin> MessageWriter for T {}
 
 struct Inner<W: Clone> {
     next_request_id: i32,
@@ -424,7 +428,7 @@ impl<W: Clone> Server<W> {
 
                 let ctx = Server::create_context(
                     inner.clone(),
-                    Arc::new(AsyncMutex::new(Box::new(writer.clone()))),
+                    Rc::new(RefCell::new(writer.clone())),
                     data,
                     &request,
                 )
@@ -506,13 +510,9 @@ impl<W: Clone> Server<W> {
                 let mut handler = s.handlers.get_mut(&request.method).unwrap().clone();
                 drop(s);
 
-                let ctx = Server::create_context(
-                    inner,
-                    Arc::new(AsyncMutex::new(Box::new(writer))),
-                    data,
-                    &request,
-                )
-                .await;
+                let ctx =
+                    Server::create_context(inner, Rc::new(RefCell::new(writer)), data, &request)
+                        .await;
 
                 let handler_span = tracing::trace_span!(
                     "notification handler",
@@ -549,7 +549,7 @@ impl<W: Clone> Server<W> {
 
     async fn create_context<D>(
         inner: Arc<AsyncMutex<Inner<W>>>,
-        rw: Arc<AsyncMutex<Box<dyn MessageWriter>>>,
+        rw: Rc<RefCell<dyn MessageWriter>>,
         world: W,
         req: &rpc::Request<D>,
     ) -> Context<W> {

@@ -77,10 +77,10 @@ jobs:
           toolchain: stable
           override: true
       - uses: Swatinem/rust-cache@v1
-      - name: Clippy and format
-        run: |
-          cargo clippy --all-features --all-targets -- -D warnings
-          cargo fmt -- --check
+      - name: Clippy
+        run: cargo clippy --all-features --all-targets -- -D warnings
+      - name: Format
+        run: cargo fmt -- --check
       - name: Retrieve toml-test
         run: |
           wget https://github.com/BurntSushi/toml-test/releases/download/v1.1.0/toml-test-v1.1.0-linux-amd64.gz

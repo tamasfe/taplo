@@ -20,7 +20,7 @@ globset = "0.4.8"
 hex = "0.4.3"
 indexmap = { version = "1.6.0", features = ["serde", "rayon"] }
 itertools = "0.10.3"
-json_value_merge = "1.1.2"
+json_value_merge = "2.0.0"
 jsonschema = { version = "0.17.1", default-features = false }
 lru = "0.7.2"
 parking_lot = "0.12.0"

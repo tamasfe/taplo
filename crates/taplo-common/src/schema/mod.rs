@@ -550,16 +550,13 @@ impl<E: Environment> Schemas<E> {
                 let mut merged_all_of = Value::Object(serde_json::Map::default());
 
                 for all_of in all_ofs {
-                    merged_all_of.merge(
-                        if let Some(schema) = self.ref_schema_value(root_url, all_of).await {
-                            Arc::try_unwrap(schema).unwrap()
-                        } else {
-                            all_of.clone()
-                        },
-                    );
+                    merged_all_of.merge(match self.ref_schema_value(root_url, all_of).await {
+                        Some(ref schema) => schema,
+                        None => all_of,
+                    });
                 }
 
-                merged_all_of.merge(schema);
+                merged_all_of.merge(&schema);
 
                 self.collect_child_schemas(
                     root_url,

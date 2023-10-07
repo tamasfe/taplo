@@ -878,9 +878,9 @@ dependencies = [
 
 [[package]]
 name = "json_value_merge"
-version = "1.1.2"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc92837e7e541ab4a529c8f145bf9bd00718f6e2823705403521ead6204a0e5e"
+checksum = "2b0a3aadd8aaadfe2be6fd22bbdb5dbc63494ce22b7c124211f684fd757b3215"
 dependencies = [
  "serde_json",
 ]
@@ -2311,9 +2311,9 @@ dependencies = [
 
 [[package]]
 name = "webpki"
-version = "0.22.0"
+version = "0.22.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f095d78192e208183081cc07bc5515ef55216397af48b873e5edcd72637fa1bd"
+checksum = "07ecc0cd7cac091bf682ec5efa18b1cff79d617b84181f38b3951dbe135f607f"
 dependencies = [
  "ring",
  "untrusted",

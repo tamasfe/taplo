@@ -211,6 +211,9 @@ pub struct GetCommand {
     /// - dependencies.tokio-*.version
     ///
     pub pattern: Option<String>,
+
+    #[clap(long)]
+    pub separator: Option<String>,
 }
 
 #[derive(Clone, Copy, ArgEnum)]

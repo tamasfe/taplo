@@ -1,6 +1,9 @@
-use std::borrow::Cow;
+use std::{borrow::Cow};
 
-use crate::{args::GetCommand, Taplo};
+use crate::{
+    args::{GetCommand, OutputFormat},
+    Taplo,
+};
 use anyhow::anyhow;
 use codespan_reporting::files::SimpleFile;
 use taplo::{
@@ -13,6 +16,11 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 impl<E: Environment> Taplo<E> {
     pub async fn execute_get(&self, cmd: GetCommand) -> Result<(), anyhow::Error> {
         let mut stdout = self.env.stdout();
+
+        // `--separator` should only be handled for a text output for mat
+        if cmd.separator.is_some() && !matches!(cmd.output_format, OutputFormat::Value) {
+            return Err(anyhow!("`--separator` is only value for text output"));
+        }
 
         let source = match &cmd.file_path {
             Some(p) => String::from_utf8(self.env.read_file(p).await?)?,
@@ -93,52 +101,35 @@ impl<E: Environment> Taplo<E> {
                 }
             }
             crate::args::OutputFormat::Value => {
+                let mut buf = String::new();
+                let separator = cmd.separator.unwrap_or("\n".to_string());
                 if let Some(p) = cmd.pattern {
                     let p = p.trim_start_matches('.');
 
-                    let keys = p
+                    let nodes = p
                         .parse::<Keys>()
-                        .map_err(|err| anyhow!("invalid pattern: {err}"))?;
-
-                    let nodes = node
-                        .find_all_matches(keys, false)
+                        .and_then(|keys| node.find_all_matches(keys, false))
                         .map_err(|err| anyhow!("invalid pattern: {err}"))?;
 
                     if nodes.len() == 0 {
                         return Err(anyhow!("no values matched the pattern"));
                     }
 
-                    let mut buf = String::new();
-                    for (_, node) in nodes {
-                        buf += &extract_value(&node)?;
-                        buf += "\n";
-                    }
-                    if cmd.strip_newline {
-                        if buf.ends_with('\n') {
-                            let new_len = buf.trim_end().len();
-                            buf.truncate(new_len);
-                        }
-                    } else if !buf.ends_with('\n') {
-                        buf += "\n";
-                    }
+                    let values = nodes
+                        .map(|(_, node)| extract_value(&node, &separator))
+                        .collect::<Result<Vec<String>, _>>()?;
 
-                    stdout.write_all(buf.as_bytes()).await?;
-                    stdout.flush().await?;
+                    buf += &values.join(&separator);
                 } else {
-                    let mut buf = extract_value(&node)?;
-
-                    if cmd.strip_newline {
-                        if buf.ends_with('\n') {
-                            let new_len = buf.trim_end().len();
-                            buf.truncate(new_len);
-                        }
-                    } else if !buf.ends_with('\n') {
-                        buf += "\n";
-                    }
-
-                    stdout.write_all(buf.as_bytes()).await?;
-                    stdout.flush().await?;
+                    buf = extract_value(&node, &separator)?;
                 }
+
+                if !cmd.strip_newline {
+                    buf += "\n";
+                }
+
+                stdout.write_all(buf.as_bytes()).await?;
+                stdout.flush().await?;
             }
             crate::args::OutputFormat::Toml => {
                 if let Some(p) = cmd.pattern {
@@ -216,7 +207,7 @@ impl<E: Environment> Taplo<E> {
     }
 }
 
-fn extract_value(node: &Node) -> Result<String, anyhow::Error> {
+fn extract_value(node: &Node, separator: &str) -> Result<String, anyhow::Error> {
     Ok(match node {
         Node::Table(_) => {
             return Err(anyhow!(
@@ -224,19 +215,13 @@ fn extract_value(node: &Node) -> Result<String, anyhow::Error> {
             ))
         }
         Node::Array(arr) => {
-            let mut s = String::new();
+            let mut values = Vec::new();
 
-            let mut start = true;
-            for item in &**arr.items().read() {
-                if !start {
-                    s += "\n";
-                }
-                start = false;
-
-                s += &extract_value(item)?;
+            for node in arr.items().read().iter() {
+                values.push(extract_value(node, separator)?);
             }
 
-            s
+            values.join(separator)
         }
         Node::Bool(b) => b.value().to_string(),
         Node::Str(s) => s.value().to_string(),

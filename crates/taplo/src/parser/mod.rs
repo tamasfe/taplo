@@ -918,7 +918,7 @@ fn check_underscores(s: &str, radix: u32) -> bool {
 
 /// The final results of a parsing.
 /// It contains the green tree, and
-/// the errors that ocurred during parsing.
+/// the errors that occurred during parsing.
 #[derive(Debug, Clone)]
 pub struct Parse {
     pub green_node: GreenNode,

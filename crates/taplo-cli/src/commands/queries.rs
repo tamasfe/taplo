@@ -19,7 +19,9 @@ impl<E: Environment> Taplo<E> {
 
         // `--separator` should only be handled for a text output format
         if cmd.separator.is_some() && !matches!(cmd.output_format, OutputFormat::Value) {
-            return Err(anyhow!("`--separator` is only value for text output"));
+            return Err(anyhow!(
+                "`--separator` is only valid for `--output-format value`"
+            ));
         }
 
         let source = match &cmd.file_path {

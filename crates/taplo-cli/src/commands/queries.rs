@@ -104,7 +104,7 @@ impl<E: Environment> Taplo<E> {
             }
             crate::args::OutputFormat::Value => {
                 let mut buf = String::new();
-                let separator = cmd.separator.unwrap_or("\n".to_string());
+                let separator = cmd.separator.as_deref().unwrap_or("\n");
                 if let Some(p) = cmd.pattern {
                     let p = p.trim_start_matches('.');
 

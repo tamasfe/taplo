@@ -1,4 +1,4 @@
-use std::{borrow::Cow};
+use std::borrow::Cow;
 
 use crate::{
     args::{GetCommand, OutputFormat},
@@ -17,7 +17,7 @@ impl<E: Environment> Taplo<E> {
     pub async fn execute_get(&self, cmd: GetCommand) -> Result<(), anyhow::Error> {
         let mut stdout = self.env.stdout();
 
-        // `--separator` should only be handled for a text output for mat
+        // `--separator` should only be handled for a text output format
         if cmd.separator.is_some() && !matches!(cmd.output_format, OutputFormat::Value) {
             return Err(anyhow!("`--separator` is only value for text output"));
         }

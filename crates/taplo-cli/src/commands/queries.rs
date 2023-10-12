@@ -103,9 +103,8 @@ impl<E: Environment> Taplo<E> {
                 }
             }
             crate::args::OutputFormat::Value => {
-                let mut buf = String::new();
                 let separator = cmd.separator.as_deref().unwrap_or("\n");
-                if let Some(p) = cmd.pattern {
+                let mut buf = if let Some(p) = cmd.pattern {
                     let p = p.trim_start_matches('.');
 
                     let nodes = p
@@ -118,13 +117,13 @@ impl<E: Environment> Taplo<E> {
                     }
 
                     let values = nodes
-                        .map(|(_, node)| extract_value(&node, &separator))
+                        .map(|(_, node)| extract_value(&node, separator))
                         .collect::<Result<Vec<String>, _>>()?;
 
-                    buf += &values.join(&separator);
+                    values.join(&separator)
                 } else {
-                    buf = extract_value(&node, &separator)?;
-                }
+                    extract_value(&node, separator)?
+                };
 
                 if !cmd.strip_newline {
                     buf += "\n";

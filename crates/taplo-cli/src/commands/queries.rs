@@ -120,7 +120,7 @@ impl<E: Environment> Taplo<E> {
                         .map(|(_, node)| extract_value(&node, separator))
                         .collect::<Result<Vec<String>, _>>()?;
 
-                    values.join(&separator)
+                    values.join(separator)
                 } else {
                     extract_value(&node, separator)?
                 };

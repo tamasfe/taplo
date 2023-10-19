@@ -211,6 +211,13 @@ pub struct GetCommand {
     /// - dependencies.tokio-*.version
     ///
     pub pattern: Option<String>,
+
+    /// A string that separates array values when printing to stdout.
+    ///
+    /// If `--separator` is specified with a non text output format,
+    /// the operation will fail.
+    #[clap(long)]
+    pub separator: Option<String>,
 }
 
 #[derive(Clone, Copy, ArgEnum)]

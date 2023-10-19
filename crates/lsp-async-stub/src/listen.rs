@@ -89,7 +89,8 @@ impl<W: Clone + 'static> Server<W> {
             } else {
                 Err(anyhow!("got exit message without shutdown notice"))
             }
-        }).await?;
+        })
+        .await?;
 
         Ok(())
     }

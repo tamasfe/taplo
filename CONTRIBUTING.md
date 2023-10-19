@@ -47,11 +47,11 @@ A CLI tool that uses Taplo, it is the home of `taplo.config` as well.
 An IDE-agnostic language server, right now it expects to run within a `wasm32` environment only, however other than that it contains no IDE-specific code or settings.
 Originally designed to run alongside a VSCode extension, but with minimal work it can be made into a standalone executable.
 
-### [js](node)
+### [js](js)
 
 Directory containing everything related to Node.js and JavaScript.
 
-#### [vscode](js/vscode)
+#### [vscode](editors/vscode)
 
 The VSCode extension, and a Node.js wrapper for [taplo-ide](crates/taplo-ide).
 

@@ -387,7 +387,7 @@
           "scope": "resource",
           "type": "array",
           "default": [],
-          "description": "Array of Taplo rules in JSON format, see [Configuration File - Rules](https://taplo.tamasfe.dev/configuration/file.html#rules). The rules given here are appended to existing rules from config files, if any. There is no conversion done, all object keys must be snake_case, including formatting rules."
+          "markdownDescription": "Array of Taplo rules in JSON format, see [Configuration File - Rules](https://taplo.tamasfe.dev/configuration/file.html#rules). The rules given here are appended to existing rules from config files, if any. There is no conversion done, all object keys must be snake_case, including formatting rules."
         }
       }
     }

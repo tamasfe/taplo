@@ -7,9 +7,9 @@
     - [taplo-cli](#taplo-cli)
     - [taplo-ide](#taplo-ide)
     - [js](#js)
-      - [vscode](#vscode)
       - [cli](#cli)
       - [lib](#lib)
+    - [vscode](#vscode)
     - [util](#util)
   - [Code of Conduct](#code-of-conduct)
 
@@ -51,10 +51,6 @@ Originally designed to run alongside a VSCode extension, but with minimal work i
 
 Directory containing everything related to Node.js and JavaScript.
 
-#### [vscode](editors/vscode)
-
-The VSCode extension, and a Node.js wrapper for [taplo-ide](crates/taplo-ide).
-
 #### [cli](js/cli)
 
 A Node.js wrapper over [taplo-cli](crates/taplo-cli).
@@ -62,6 +58,10 @@ A Node.js wrapper over [taplo-cli](crates/taplo-cli).
 #### [lib](js/lib)
 
 A JavaScript wrapper over the core [taplo](crates/taplo) library exposing a high-level API.
+
+### [vscode](editors/vscode)
+
+The VSCode extension, and a Node.js wrapper for [taplo-ide](crates/taplo-ide).
 
 ### [util](util)
 

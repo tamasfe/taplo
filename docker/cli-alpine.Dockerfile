@@ -1,4 +1,4 @@
-FROM rust:1.61-alpine3.16 as build
+FROM rust:1.73-alpine3.18 as build
 
 WORKDIR /build
 
@@ -8,7 +8,7 @@ COPY . .
 
 RUN cargo build -p taplo-cli --release
 
-FROM alpine:3.16
+FROM alpine:3.18
 
 COPY --from=build /build/target/release/taplo /usr/bin/taplo
 

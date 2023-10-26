@@ -261,6 +261,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    strategy:
+      matrix:
+        image:
+          - file: docker/cli-alpine.Dockerfile
+            tags: tamasfe/taplo:latest,tamasfe/taplo:${{ env.RELEASE_VERSION }},tamasfe/taplo:${{ env.RELEASE_VERSION }}-alpine
+          - file: docker/cli-full-alpine.Dockerfile
+            tags: tamasfe/taplo:full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full-alpine
     steps:
       - uses: actions/checkout@v3
       - name: Retrieve release version
@@ -275,22 +282,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build and push CLI alpine
+      - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          file: "docker/cli-alpine.Dockerfile"
-          context: "."
-          platforms: linux/amd64
+          file: ${{ matrix.image.file }}
+          context: .
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: tamasfe/taplo:latest,tamasfe/taplo:${{ env.RELEASE_VERSION }},tamasfe/taplo:${{ env.RELEASE_VERSION }}-alpine
-      - name: Build and push CLI Full alpine
-        uses: docker/build-push-action@v3
-        with:
-          file: "docker/cli-full-alpine.Dockerfile"
-          context: "."
-          platforms: linux/amd64
-          push: true
-          tags: tamasfe/taplo:full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full-alpine
+          tags: ${{ matrix.image.tags }}
 
   build_cli_windows:
     name: ${{ matrix.triple }}

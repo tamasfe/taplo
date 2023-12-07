@@ -11,7 +11,7 @@ categories = ["development-tools", "command-line-utilities"]
 keywords = ["toml", "linter", "formatter"]
 
 [features]
-default = ["rustls-tls"]
+default = ["rustls-tls", "lsp"]
 lsp = ["taplo-lsp", "async-ctrlc"]
 native-tls = ["taplo-common/native-tls"]
 rustls-tls = ["taplo-common/rustls-tls"]

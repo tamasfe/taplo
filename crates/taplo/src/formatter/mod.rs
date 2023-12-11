@@ -3,17 +3,19 @@
 //! The formatting can be done on documents that might
 //! contain invalid syntax. In that case the invalid part is skipped.
 
-use crate::{
-    dom::{self, node::DomNode, FromSyntax, Keys, Node},
-    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
-    util::overlaps,
-};
-use rowan::{GreenNode, NodeOrToken, TextRange};
-use std::{
-    cmp,
-    iter::{repeat, FromIterator},
-    ops::Range,
-    rc::Rc,
+use {
+    crate::{
+        dom::{self, node::DomNode, FromSyntax, Keys, Node},
+        syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
+        util::overlaps,
+    },
+    rowan::{GreenNode, NodeOrToken, TextRange},
+    std::{
+        cmp,
+        iter::{repeat, FromIterator},
+        ops::Range,
+        rc::Rc,
+    },
 };
 
 #[cfg(feature = "serde")]
@@ -378,7 +380,16 @@ impl PartialOrd for FormattedEntry {
         self.key
             .replace('\'', "")
             .replace('"', "")
-            .partial_cmp(&other.key.replace('\'', "").replace('"', ""))
+            .split('.')
+            .into_iter()
+            .partial_cmp(
+                &mut other
+                    .key
+                    .replace('\'', "")
+                    .replace('"', "")
+                    .split('.')
+                    .into_iter(),
+            )
     }
 }
 
@@ -387,7 +398,16 @@ impl Ord for FormattedEntry {
         self.key
             .replace('\'', "")
             .replace('"', "")
-            .cmp(&other.key.replace('\'', "").replace('"', ""))
+            .split('.')
+            .into_iter()
+            .cmp(
+                &mut other
+                    .key
+                    .replace('\'', "")
+                    .replace('"', "")
+                    .split('.')
+                    .into_iter(),
+            )
     }
 }
 

@@ -3,20 +3,18 @@
 //! The formatting can be done on documents that might
 //! contain invalid syntax. In that case the invalid part is skipped.
 
-use {
-    crate::{
-        dom::{self, node::DomNode, FromSyntax, Keys, Node},
-        syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
-        util::overlaps,
-    },
-    once_cell::unsync::OnceCell,
-    rowan::{GreenNode, NodeOrToken, TextRange},
-    std::{
-        cmp,
-        iter::{repeat, FromIterator},
-        ops::Range,
-        rc::Rc,
-    },
+use crate::{
+    dom::{self, node::DomNode, FromSyntax, Keys, Node},
+    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
+    util::overlaps,
+};
+use once_cell::unsync::OnceCell;
+use rowan::{GreenNode, NodeOrToken, TextRange};
+use std::{
+    cmp,
+    iter::{repeat, FromIterator},
+    ops::Range,
+    rc::Rc,
 };
 
 #[cfg(feature = "serde")]
@@ -386,7 +384,7 @@ impl PartialOrd for FormattedEntry {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
         self.cleaned_key()
             .split('.')
-            .partial_cmp(&mut other.cleaned_key().split('.'))
+            .partial_cmp(other.cleaned_key().split('.'))
     }
 }
 
@@ -394,7 +392,7 @@ impl Ord for FormattedEntry {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
         self.cleaned_key()
             .split('.')
-            .cmp(&mut other.cleaned_key().split('.'))
+            .cmp(other.cleaned_key().split('.'))
     }
 }
 

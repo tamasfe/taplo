@@ -358,40 +358,23 @@ fn format_impl(node: SyntaxNode, options: Options, context: Context) -> String {
     formatted
 }
 
-mod formatted_entry {
-    use super::{OnceCell, SyntaxElement};
+struct FormattedEntry {
+    syntax: SyntaxElement,
+    key: String,
+    // This field is used to cache the "cleaned" version of the key and should only
+    // be accessed through the `cleaned_key` helpers method.
+    private_cleaned_key: OnceCell<String>,
+    value: String,
+    comment: Option<String>,
+}
 
-    pub(super) struct FormattedEntry {
-        pub(super) syntax: SyntaxElement,
-        pub(super) key: String,
-        cleaned_key: OnceCell<String>,
-        pub(super) value: String,
-        pub(super) comment: Option<String>,
-    }
-
-    impl FormattedEntry {
-        pub(super) fn new(
-            syntax: SyntaxElement,
-            key: String,
-            value: String,
-            comment: Option<String>,
-        ) -> Self {
-            Self {
-                syntax,
-                key,
-                value,
-                comment,
-                cleaned_key: OnceCell::new(),
-            }
-        }
-        pub(super) fn cleaned_key(&self) -> &str {
-            &self
-                .cleaned_key
-                .get_or_init(|| self.key.replace('\'', "").replace('"', ""))
-        }
+impl FormattedEntry {
+    fn cleaned_key(&self) -> &str {
+        &self
+            .private_cleaned_key
+            .get_or_init(|| self.key.replace('\'', "").replace('"', ""))
     }
 }
-use formatted_entry::FormattedEntry;
 
 impl PartialEq for FormattedEntry {
     fn eq(&self, other: &Self) -> bool {
@@ -788,7 +771,13 @@ fn format_entry(node: SyntaxNode, options: &Options, context: &Context) -> Forma
         }
     }
 
-    FormattedEntry::new(node.into(), key, value, comment)
+    FormattedEntry {
+        syntax: node.into(),
+        key,
+        private_cleaned_key: OnceCell::new(),
+        value,
+        comment,
+    }
 }
 
 fn format_key(node: SyntaxNode, formatted: &mut String, _options: &Options, _context: &Context) {

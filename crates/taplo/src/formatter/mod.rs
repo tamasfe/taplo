@@ -3,18 +3,20 @@
 //! The formatting can be done on documents that might
 //! contain invalid syntax. In that case the invalid part is skipped.
 
-use crate::{
-    dom::{self, node::DomNode, FromSyntax, Keys, Node},
-    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
-    util::overlaps,
-};
-use once_cell::unsync::OnceCell;
-use rowan::{GreenNode, NodeOrToken, TextRange};
-use std::{
-    cmp,
-    iter::{repeat, FromIterator},
-    ops::Range,
-    rc::Rc,
+use {
+    crate::{
+        dom::{self, node::DomNode, FromSyntax, Keys, Node},
+        syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
+        util::overlaps,
+    },
+    once_cell::unsync::OnceCell,
+    rowan::{GreenNode, NodeOrToken, TextRange},
+    std::{
+        cmp,
+        iter::{repeat, FromIterator},
+        ops::Range,
+        rc::Rc,
+    },
 };
 
 #[cfg(feature = "serde")]
@@ -356,21 +358,40 @@ fn format_impl(node: SyntaxNode, options: Options, context: Context) -> String {
     formatted
 }
 
-struct FormattedEntry {
-    syntax: SyntaxElement,
-    key: String,
-    _cleaned_key: OnceCell<String>,
-    value: String,
-    comment: Option<String>,
-}
+mod formatted_entry {
+    use super::{OnceCell, SyntaxElement};
 
-impl FormattedEntry {
-    fn cleaned_key(&self) -> &str {
-        &self
-            ._cleaned_key
-            .get_or_init(|| self.key.replace('\'', "").replace('"', ""))
+    pub(super) struct FormattedEntry {
+        pub(super) syntax: SyntaxElement,
+        pub(super) key: String,
+        cleaned_key: OnceCell<String>,
+        pub(super) value: String,
+        pub(super) comment: Option<String>,
+    }
+
+    impl FormattedEntry {
+        pub(super) fn new(
+            syntax: SyntaxElement,
+            key: String,
+            value: String,
+            comment: Option<String>,
+        ) -> Self {
+            Self {
+                syntax,
+                key,
+                value,
+                comment,
+                cleaned_key: OnceCell::new(),
+            }
+        }
+        pub(super) fn cleaned_key(&self) -> &str {
+            &self
+                .cleaned_key
+                .get_or_init(|| self.key.replace('\'', "").replace('"', ""))
+        }
     }
 }
+use formatted_entry::FormattedEntry;
 
 impl PartialEq for FormattedEntry {
     fn eq(&self, other: &Self) -> bool {
@@ -382,9 +403,7 @@ impl Eq for FormattedEntry {}
 
 impl PartialOrd for FormattedEntry {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        self.cleaned_key()
-            .split('.')
-            .partial_cmp(other.cleaned_key().split('.'))
+        Some(self.cmp(other))
     }
 }
 
@@ -767,13 +786,7 @@ fn format_entry(node: SyntaxNode, options: &Options, context: &Context) -> Forma
         }
     }
 
-    FormattedEntry {
-        syntax: node.into(),
-        _cleaned_key: OnceCell::new(),
-        key,
-        value,
-        comment,
-    }
+    FormattedEntry::new(node.into(), key, value, comment)
 }
 
 fn format_key(node: SyntaxNode, formatted: &mut String, _options: &Options, _context: &Context) {

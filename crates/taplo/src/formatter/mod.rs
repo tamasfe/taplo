@@ -3,20 +3,18 @@
 //! The formatting can be done on documents that might
 //! contain invalid syntax. In that case the invalid part is skipped.
 
-use {
-    crate::{
-        dom::{self, node::DomNode, FromSyntax, Keys, Node},
-        syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
-        util::overlaps,
-    },
-    once_cell::unsync::OnceCell,
-    rowan::{GreenNode, NodeOrToken, TextRange},
-    std::{
-        cmp,
-        iter::{repeat, FromIterator},
-        ops::Range,
-        rc::Rc,
-    },
+use crate::{
+    dom::{self, node::DomNode, FromSyntax, Keys, Node},
+    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
+    util::overlaps,
+};
+use once_cell::unsync::OnceCell;
+use rowan::{GreenNode, NodeOrToken, TextRange};
+use std::{
+    cmp,
+    iter::{repeat, FromIterator},
+    ops::Range,
+    rc::Rc,
 };
 
 #[cfg(feature = "serde")]

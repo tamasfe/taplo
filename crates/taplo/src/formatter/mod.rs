@@ -395,7 +395,9 @@ use formatted_entry::FormattedEntry;
 
 impl PartialEq for FormattedEntry {
     fn eq(&self, other: &Self) -> bool {
-        self.cleaned_key().eq(other.cleaned_key())
+        self.cleaned_key()
+            .split('.')
+            .eq(other.cleaned_key().split('.'))
     }
 }
 

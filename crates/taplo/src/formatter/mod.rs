@@ -375,39 +375,22 @@ impl PartialEq for FormattedEntry {
 
 impl Eq for FormattedEntry {}
 
+fn cleaned_key(key: &str) -> String {
+    key.replace('\'', "").replace('"', "")
+}
+fn split_key<'a>(key: &'a str) -> std::str::Split<'a, char> {
+    key.split('.').into_iter()
+}
+
 impl PartialOrd for FormattedEntry {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        self.key
-            .replace('\'', "")
-            .replace('"', "")
-            .split('.')
-            .into_iter()
-            .partial_cmp(
-                &mut other
-                    .key
-                    .replace('\'', "")
-                    .replace('"', "")
-                    .split('.')
-                    .into_iter(),
-            )
+        split_key(&cleaned_key(&self.key)).partial_cmp(&mut split_key(&cleaned_key(&other.key)))
     }
 }
 
 impl Ord for FormattedEntry {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
-        self.key
-            .replace('\'', "")
-            .replace('"', "")
-            .split('.')
-            .into_iter()
-            .cmp(
-                &mut other
-                    .key
-                    .replace('\'', "")
-                    .replace('"', "")
-                    .split('.')
-                    .into_iter(),
-            )
+        split_key(&cleaned_key(&self.key)).cmp(&mut split_key(&cleaned_key(&other.key)))
     }
 }
 

@@ -360,37 +360,32 @@ fn format_impl(node: SyntaxNode, options: Options, context: Context) -> String {
 struct FormattedEntry {
     syntax: SyntaxElement,
     key: String,
+    cleaned_key: String,
     value: String,
     comment: Option<String>,
 }
 
 impl PartialEq for FormattedEntry {
     fn eq(&self, other: &Self) -> bool {
-        self.key
-            .replace('\'', "")
-            .replace('"', "")
-            .eq(&other.key.replace('\'', "").replace('"', ""))
+        self.cleaned_key.eq(&other.cleaned_key)
     }
 }
 
 impl Eq for FormattedEntry {}
 
-fn cleaned_key(key: &str) -> String {
-    key.replace('\'', "").replace('"', "")
-}
-fn split_key<'a>(key: &'a str) -> std::str::Split<'a, char> {
-    key.split('.').into_iter()
-}
-
 impl PartialOrd for FormattedEntry {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        split_key(&cleaned_key(&self.key)).partial_cmp(&mut split_key(&cleaned_key(&other.key)))
+        self.cleaned_key
+            .split('.')
+            .partial_cmp(&mut other.cleaned_key.split('.'))
     }
 }
 
 impl Ord for FormattedEntry {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
-        split_key(&cleaned_key(&self.key)).cmp(&mut split_key(&cleaned_key(&other.key)))
+        self.cleaned_key
+            .split('.')
+            .cmp(&mut other.cleaned_key.split('.'))
     }
 }
 
@@ -767,6 +762,7 @@ fn format_entry(node: SyntaxNode, options: &Options, context: &Context) -> Forma
 
     FormattedEntry {
         syntax: node.into(),
+        cleaned_key: key.replace('\'', "").replace('"', ""),
         key,
         value,
         comment,

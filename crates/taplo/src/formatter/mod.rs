@@ -364,14 +364,6 @@ struct FormattedEntry {
     comment: Option<String>,
 }
 
-impl PartialEq for FormattedEntry {
-    fn eq(&self, other: &Self) -> bool {
-        self.cleaned_key().eq(other.cleaned_key())
-    }
-}
-
-impl Eq for FormattedEntry {}
-
 impl FormattedEntry {
     fn cleaned_key(&self) -> &str {
         &self
@@ -379,6 +371,14 @@ impl FormattedEntry {
             .get_or_init(|| self.key.replace('\'', "").replace('"', ""))
     }
 }
+
+impl PartialEq for FormattedEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.cleaned_key().eq(other.cleaned_key())
+    }
+}
+
+impl Eq for FormattedEntry {}
 
 impl PartialOrd for FormattedEntry {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {

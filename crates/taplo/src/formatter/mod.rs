@@ -11,6 +11,7 @@ use {
     },
     rowan::{GreenNode, NodeOrToken, TextRange},
     std::{
+        cell::RefCell,
         cmp,
         iter::{repeat, FromIterator},
         ops::Range,
@@ -360,32 +361,57 @@ fn format_impl(node: SyntaxNode, options: Options, context: Context) -> String {
 struct FormattedEntry {
     syntax: SyntaxElement,
     key: String,
-    cleaned_key: String,
+    _cleaned_key: RefCell<Option<String>>,
     value: String,
     comment: Option<String>,
 }
 
 impl PartialEq for FormattedEntry {
     fn eq(&self, other: &Self) -> bool {
-        self.cleaned_key.eq(&other.cleaned_key)
+        self.cleaned_key().eq(&other.cleaned_key())
     }
 }
 
 impl Eq for FormattedEntry {}
 
+impl FormattedEntry {
+    fn cleaned_key<'a>(&'a self) -> std::cell::Ref<'a, Option<String>> {
+        self._cleaned_key
+            .borrow_mut()
+            .get_or_insert_with(|| self.key.replace('\'', "").replace('"', ""));
+        self._cleaned_key.borrow()
+    }
+}
+
 impl PartialOrd for FormattedEntry {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        self.cleaned_key
+        self.cleaned_key()
+            .as_deref()
+            .expect("Has been initialized")
             .split('.')
-            .partial_cmp(&mut other.cleaned_key.split('.'))
+            .partial_cmp(
+                &mut other
+                    .cleaned_key()
+                    .as_deref()
+                    .expect("Has been initialized")
+                    .split('.'),
+            )
     }
 }
 
 impl Ord for FormattedEntry {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
-        self.cleaned_key
+        self.cleaned_key()
+            .as_deref()
+            .expect("Has been initialized")
             .split('.')
-            .cmp(&mut other.cleaned_key.split('.'))
+            .cmp(
+                &mut other
+                    .cleaned_key()
+                    .as_deref()
+                    .expect("Has been initialized")
+                    .split('.'),
+            )
     }
 }
 
@@ -762,7 +788,7 @@ fn format_entry(node: SyntaxNode, options: &Options, context: &Context) -> Forma
 
     FormattedEntry {
         syntax: node.into(),
-        cleaned_key: key.replace('\'', "").replace('"', ""),
+        _cleaned_key: RefCell::new(None),
         key,
         value,
         comment,

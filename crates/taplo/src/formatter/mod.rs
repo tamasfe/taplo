@@ -3,18 +3,20 @@
 //! The formatting can be done on documents that might
 //! contain invalid syntax. In that case the invalid part is skipped.
 
-use crate::{
-    dom::{self, node::DomNode, FromSyntax, Keys, Node},
-    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
-    util::overlaps,
-};
-use once_cell::unsync::OnceCell;
-use rowan::{GreenNode, NodeOrToken, TextRange};
-use std::{
-    cmp,
-    iter::{repeat, FromIterator},
-    ops::Range,
-    rc::Rc,
+use {
+    crate::{
+        dom::{self, node::DomNode, FromSyntax, Keys, Node},
+        syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
+        util::overlaps,
+    },
+    once_cell::unsync::OnceCell,
+    rowan::{GreenNode, NodeOrToken, TextRange},
+    std::{
+        cmp,
+        iter::{repeat, FromIterator},
+        ops::Range,
+        rc::Rc,
+    },
 };
 
 #[cfg(feature = "serde")]
@@ -361,24 +363,26 @@ struct FormattedEntry {
     key: String,
     // This field is used to cache the "cleaned" version of the key and should only
     // be accessed through the `cleaned_key` helpers method.
-    private_cleaned_key: OnceCell<String>,
+    private_cleaned_key: OnceCell<Vec<String>>,
     value: String,
     comment: Option<String>,
 }
 
 impl FormattedEntry {
-    fn cleaned_key(&self) -> &str {
-        &self
-            .private_cleaned_key
-            .get_or_init(|| self.key.replace('\'', "").replace('"', ""))
+    fn cleaned_key(&self) -> &Vec<String> {
+        self.private_cleaned_key.get_or_init(|| {
+            self.key
+                .replace(['\'', '"'], "")
+                .split('.')
+                .map(ToOwned::to_owned)
+                .collect()
+        })
     }
 }
 
 impl PartialEq for FormattedEntry {
     fn eq(&self, other: &Self) -> bool {
-        self.cleaned_key()
-            .split('.')
-            .eq(other.cleaned_key().split('.'))
+        self.cleaned_key().eq(other.cleaned_key())
     }
 }
 
@@ -392,9 +396,7 @@ impl PartialOrd for FormattedEntry {
 
 impl Ord for FormattedEntry {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
-        self.cleaned_key()
-            .split('.')
-            .cmp(other.cleaned_key().split('.'))
+        self.cleaned_key().cmp(other.cleaned_key())
     }
 }
 

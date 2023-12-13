@@ -3,18 +3,20 @@
 //! The formatting can be done on documents that might
 //! contain invalid syntax. In that case the invalid part is skipped.
 
-use crate::{
-    dom::{self, node::DomNode, FromSyntax, Keys, Node},
-    syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
-    util::overlaps,
-};
-use once_cell::unsync::OnceCell;
-use rowan::{GreenNode, NodeOrToken, TextRange};
-use std::{
-    cmp,
-    iter::{repeat, FromIterator},
-    ops::Range,
-    rc::Rc,
+use {
+    crate::{
+        dom::{self, node::DomNode, FromSyntax, Keys, Node},
+        syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
+        util::overlaps,
+    },
+    once_cell::unsync::OnceCell,
+    rowan::{GreenNode, NodeOrToken, TextRange},
+    std::{
+        cmp,
+        iter::{repeat, FromIterator},
+        ops::Range,
+        rc::Rc,
+    },
 };
 
 #[cfg(feature = "serde")]
@@ -361,14 +363,14 @@ struct FormattedEntry {
     key: String,
     // This field is used to cache the "cleaned" version of the key and should only
     // be accessed through the `cleaned_key` helpers method.
-    private_cleaned_key: OnceCell<Vec<String>>,
+    cleaned_key: OnceCell<Vec<String>>,
     value: String,
     comment: Option<String>,
 }
 
 impl FormattedEntry {
     fn cleaned_key(&self) -> &Vec<String> {
-        self.private_cleaned_key.get_or_init(|| {
+        self.cleaned_key.get_or_init(|| {
             self.key
                 .replace(['\'', '"'], "")
                 .split('.')
@@ -772,7 +774,7 @@ fn format_entry(node: SyntaxNode, options: &Options, context: &Context) -> Forma
     FormattedEntry {
         syntax: node.into(),
         key,
-        private_cleaned_key: OnceCell::new(),
+        cleaned_key: OnceCell::new(),
         value,
         comment,
     }

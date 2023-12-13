@@ -8,6 +8,7 @@ use crate::{
     syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
     util::overlaps,
 };
+use once_cell::unsync::OnceCell;
 use rowan::{GreenNode, NodeOrToken, TextRange};
 use std::{
     cmp,
@@ -358,16 +359,28 @@ fn format_impl(node: SyntaxNode, options: Options, context: Context) -> String {
 struct FormattedEntry {
     syntax: SyntaxElement,
     key: String,
+    /// This field is used to cache the "cleaned" version of the key and should only
+    /// be accessed through the `cleaned_key` helpers method.
+    cleaned_key: OnceCell<Vec<String>>,
     value: String,
     comment: Option<String>,
 }
 
+impl FormattedEntry {
+    fn cleaned_key(&self) -> &Vec<String> {
+        self.cleaned_key.get_or_init(|| {
+            self.key
+                .replace(['\'', '"'], "")
+                .split('.')
+                .map(ToOwned::to_owned)
+                .collect()
+        })
+    }
+}
+
 impl PartialEq for FormattedEntry {
     fn eq(&self, other: &Self) -> bool {
-        self.key
-            .replace('\'', "")
-            .replace('"', "")
-            .eq(&other.key.replace('\'', "").replace('"', ""))
+        self.cleaned_key().eq(other.cleaned_key())
     }
 }
 
@@ -375,19 +388,13 @@ impl Eq for FormattedEntry {}
 
 impl PartialOrd for FormattedEntry {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        self.key
-            .replace('\'', "")
-            .replace('"', "")
-            .partial_cmp(&other.key.replace('\'', "").replace('"', ""))
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for FormattedEntry {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
-        self.key
-            .replace('\'', "")
-            .replace('"', "")
-            .cmp(&other.key.replace('\'', "").replace('"', ""))
+        self.cleaned_key().cmp(other.cleaned_key())
     }
 }
 
@@ -765,6 +772,7 @@ fn format_entry(node: SyntaxNode, options: &Options, context: &Context) -> Forma
     FormattedEntry {
         syntax: node.into(),
         key,
+        cleaned_key: OnceCell::new(),
         value,
         comment,
     }

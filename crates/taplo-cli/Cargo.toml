@@ -44,7 +44,8 @@ tracing-subscriber = { version = "0.3.7", features = ["env-filter"] }
 url = "2.2.2"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-prettydiff = "0.6.1"
+# `prettydiff` is also a CLI that pulls in `clap` by default
+prettydiff = { version = "0.6.1", default-features = false }
 ansi_term = "0.12"
 atty = "0.2.14"
 tokio = { version = "1.24.2", features = [

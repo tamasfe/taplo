@@ -342,6 +342,8 @@ impl<E: Environment> SchemaAssociations<E> {
             }
         };
 
+        index.transform_paths();
+
         if self.cache.is_cache_path_set() {
             if let Err(error) = self
                 .cache
@@ -351,8 +353,6 @@ impl<E: Environment> SchemaAssociations<E> {
                 tracing::warn!(%error, "failed to cache index");
             }
         }
-
-        index.transform_paths();
 
         Ok(index)
     }

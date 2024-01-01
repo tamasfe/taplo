@@ -15,7 +15,7 @@ In some environments (e.g., Visual Studio Code), one needs to reload the extensi
 |     align_entries     |       Align entries vertically. Entries that have table headers, comments, or blank lines between them are not aligned.        |     false      |
 |    align_comments     | Align consecutive comments after entries and items vertically. This applies to comments that are after entries or array items. |      true      |
 | array_trailing_comma  |                                           Put trailing commas for multiline arrays.                                            |      true      |
-|   array_auto_expand   |                                         Automatically expand arrays to multiple lines                                          |      true      |
+|   array_auto_expand   |                   Automatically expand arrays to multiple lines when they exceed `column_width` characters.                    |      true      |
 |  array_auto_collapse  |                                     Automatically collapse arrays if they fit in one line.                                     |      true      |
 |    compact_arrays     |                                       Omit whitespace padding inside single-line arrays.                                       |      true      |
 | compact_inline_tables |                                         Omit whitespace padding inside inline tables.                                          |     false      |

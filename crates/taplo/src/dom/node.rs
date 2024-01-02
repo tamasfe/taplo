@@ -244,6 +244,11 @@ impl Node {
         Ok(all.into_iter())
     }
 
+    /// Determine the portions of the source that correspond to this
+    /// `Node`.
+    ///
+    /// Since a symbol may appear in multiple places, a single node
+    /// may correspond to multiple `TextRange`s.
     pub fn text_ranges(&self) -> impl ExactSizeIterator<Item = TextRange> {
         let mut ranges = Vec::with_capacity(1);
 
@@ -256,7 +261,20 @@ impl Node {
                     ranges.extend(entry.text_ranges());
                 }
 
-                if let Some(mut r) = v.syntax().map(|s| s.text_range()) {
+                // consider both v.syntax() and its parent node when
+                // broadening the range. v.syntax() is only the
+                // TableHeader, where its parent is the full Table
+                // syntax node. Take a range which encompasses both.
+                let syntax_range = match (
+                    v.syntax().map(|n| n.text_range()),
+                    v.syntax().and_then(|h| h.parent()).map(|n| n.text_range()),
+                ) {
+                    (Some(child), Some(parent)) => Some(child.cover(parent)),
+                    (Some(child), None) => Some(child),
+                    (None, Some(parent)) => Some(parent),
+                    _ => None,
+                };
+                if let Some(mut r) = syntax_range {
                     for range in &ranges {
                         r = r.cover(*range);
                     }
@@ -657,5 +675,32 @@ impl From<Table> for Node {
 impl From<Invalid> for Node {
     fn from(v: Invalid) -> Self {
         Self::Invalid(v)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_dom_find_all_matches_includes_comments() {
+        let source = r#"
+[table]
+key = "value" # comment
+"#;
+        let dom = crate::parser::parse(source).into_dom();
+        let matches = dom
+            .find_all_matches("table".parse().unwrap(), false)
+            .unwrap()
+            .collect::<Vec<_>>();
+        assert_eq!(1, matches.len());
+        let (_, node) = matches.first().unwrap();
+
+        // Ensure that at least one of the resultant spans includes
+        // the comment.
+        let spans = node.text_ranges().map(|r| &source[r]).collect::<Vec<_>>();
+        assert!(
+            spans.iter().any(|s| s.contains('#')),
+            "expected one of {:?} to contain a comment",
+            &spans
+        );
     }
 }

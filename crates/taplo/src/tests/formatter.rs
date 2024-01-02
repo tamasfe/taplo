@@ -1025,6 +1025,41 @@ foo = [
     assert_format!(expected, &formatted);
 }
 
+/// See https://github.com/tamasfe/taplo/issues/464
+#[test]
+fn test_reorder_keys_trailing_comment() {
+    let src = r#"
+[mytable]
+a = "a"
+c = "c"
+b = "b" # ...
+"#;
+
+    let expected = r#"
+[mytable]
+a = "a"
+b = "b" # ...
+c = "c"
+"#;
+
+    let p = crate::parser::parse(src);
+    let formatted = crate::formatter::format_with_path_scopes(
+        p.into_dom(),
+        Default::default(),
+        &[],
+        vec![(
+            "mytable",
+            formatter::OptionsIncomplete {
+                reorder_keys: Some(true),
+                ..Default::default()
+            },
+        )],
+    )
+    .unwrap();
+
+    assert_format!(expected, &formatted);
+}
+
 #[test]
 fn test_single_comment_no_alignment() {
     let src = r#"

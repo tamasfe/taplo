@@ -460,17 +460,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@taplo/core@link:../../js/core::locator=even-better-toml%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@taplo/core@link:../../js/core::locator=even-better-toml%40workspace%3A."
+"@taplo/core@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "@taplo/core@npm:0.1.1"
+  checksum: c36f761431b2e959742d8e186e74306fb8991d84589e2f03b6481244cc407275fa448a217ef87b8aa1e226615fd7ba85c60e6f0221f01d891b90dd30b45cb13b
   languageName: node
-  linkType: soft
+  linkType: hard
 
-"@taplo/lsp@link:../../js/lsp::locator=even-better-toml%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@taplo/lsp@link:../../js/lsp::locator=even-better-toml%40workspace%3A."
+"@taplo/lsp@npm:^0.6.1":
+  version: 0.6.1
+  resolution: "@taplo/lsp@npm:0.6.1"
+  dependencies:
+    "@taplo/core": "npm:^0.1.1"
+  checksum: 8c09215a7b18466482b17fb541552d1e6f767bfd4380fb754240a27af26aac7b4edf8c7d58f26cff66bd27e86f92ab54ea467ddb9b057d2a3d0d0b12d7764a06
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@tsconfig/node10@npm:^1.0.7":
   version: 1.0.9
@@ -1211,8 +1215,7 @@ __metadata:
     "@rollup/plugin-commonjs": "npm:^25.0.7"
     "@rollup/plugin-node-resolve": "npm:^15.2.3"
     "@rollup/plugin-replace": "npm:^5.0.5"
-    "@taplo/core": "link:../../js/core"
-    "@taplo/lsp": "link:../../js/lsp"
+    "@taplo/lsp": "npm:^0.6.1"
     "@types/deep-equal": "npm:^1.0.4"
     "@types/node": "npm:^20.11.9"
     "@types/vscode": "npm:^1.85.0"

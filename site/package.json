@@ -1,36 +1,36 @@
 {
   "name": "taplo-vite",
   "scripts": {
-    "site:dev": "vitepress dev site",
+    "site:dev": "vitepress dev site --open",
     "site:build": "vitepress build site",
     "site:serve": "vitepress serve site"
   },
   "private": true,
-  "packageManager": "yarn@3.2.1",
+  "packageManager": "yarn@4.0.2",
   "devDependencies": {
-    "@mdi/svg": "^6.7.96",
-    "@open-rpc/client-js": "^1.7.1",
-    "autoprefixer": "^10.4.2",
-    "postcss": "^8.4.31",
-    "sass": "^1.52.3",
-    "tailwindcss": "^3.0.23",
-    "vite": "^2.9.16",
-    "vitepress": "^1.0.0-alpha.2",
-    "vue": "^3.2.37"
+    "@mdi/svg": "^6.9.96",
+    "@open-rpc/client-js": "^1.8.1",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.33",
+    "sass": "^1.70.0",
+    "tailwindcss": "^3.4.1",
+    "vite": "^2.9.17",
+    "vitepress": "^1.0.0-alpha.76",
+    "vue": "^3.4.15"
   },
   "dependencies": {
-    "@codemirror/language": "^6.0.0",
-    "@codemirror/legacy-modes": "^6.0.0",
-    "@codemirror/theme-one-dark": "^6.0.0",
+    "@codemirror/language": "^6.10.0",
+    "@codemirror/legacy-modes": "^6.3.3",
+    "@codemirror/theme-one-dark": "^6.1.2",
     "@taplo/lib": "^0.4.0-alpha.2",
-    "@taplo/lsp": "^0.3.0-alpha.67",
-    "@types/marked": "^4.0.3",
-    "@types/node": "^18.0.0",
-    "@vueuse/core": "^8.6.0",
-    "codemirror": "^6.0.0",
-    "marked": "^4.0.17",
-    "vscode-languageserver-protocol": "^3.17.1",
-    "vue-codemirror": "^6.0.0"
+    "@taplo/lsp": "^0.6.1",
+    "@types/marked": "^6.0.0",
+    "@types/node": "^20.11.9",
+    "@vueuse/core": "^8.9.4",
+    "codemirror": "^6.0.1",
+    "marked": "^4.3.0",
+    "vscode-languageserver-protocol": "^3.17.5",
+    "vue-codemirror": "^6.1.1"
   },
   "postcss": {
     "plugins": {

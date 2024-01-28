@@ -1,5 +1,17 @@
 # Change Log
 
+## 0.13.0
+
+### Features
+
+- Bump `toml` dependency to `0.7` ([#502](https://github.com/tamasfe/taplo/pull/502))
+
+### Fixes
+
+- Simplify and fix table indentation logic ([#450](https://github.com/tamasfe/taplo/pull/450))
+- Fix comments with brackets ([#456](https://github.com/tamasfe/taplo/pull/456))
+- Sort by crate lexicographical order ([#513](https://github.com/tamasfe/taplo/pull/513))
+
 ## 0.12.1
 
 ### Features

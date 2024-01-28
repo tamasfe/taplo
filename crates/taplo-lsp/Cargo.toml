@@ -39,7 +39,7 @@ tap = "1.0.1"
 taplo = { version = "0.13.0", path = "../taplo", features = ["serde"] }
 taplo-common = { version = "0.5.0", path = "../taplo-common" }
 time = { version = "0.3", features = ["formatting", "parsing"] }
-toml = "0.5"
+toml = "0.7"
 tracing = "0.1.29"
 
 [package.metadata.auto-tag]

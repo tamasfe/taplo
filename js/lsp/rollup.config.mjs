@@ -4,7 +4,7 @@ import rust from "@wasm-tool/rollup-plugin-rust";
 import path from "path";
 import process from "process";
 import { minify } from "rollup-plugin-esbuild";
-import typescript from "rollup-plugin-typescript2";
+import typescript from "rollup-plugin-ts";
 
 export default {
   input: {
@@ -23,6 +23,7 @@ export default {
       nodejs: true,
       inlineWasm: true,
       cargoArgs: ["--features", "lsp"],
+      verbose: process.env["VERBOSE"] === "true",
     }),
     commonjs(),
     resolve({

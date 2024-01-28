@@ -4,7 +4,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import path from "path";
 import process from "process";
 import { minify } from "rollup-plugin-esbuild";
-import typescript from "rollup-plugin-typescript2";
+import typescript from "rollup-plugin-ts";
 
 export default {
   input: {
@@ -22,6 +22,7 @@ export default {
       debug: process.env["RELEASE"] !== "true",
       nodejs: true,
       inlineWasm: true,
+      verbose: process.env["VERBOSE"] === "true",
     }),
     commonjs(),
     resolve({

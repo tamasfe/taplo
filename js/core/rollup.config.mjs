@@ -3,7 +3,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import path from "path";
 import process from "process";
 import { minify } from "rollup-plugin-esbuild";
-import typescript from "rollup-plugin-typescript2";
+import typescript from "rollup-plugin-ts";
 
 export default {
   input: {

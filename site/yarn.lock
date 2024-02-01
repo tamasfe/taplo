@@ -685,28 +685,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@taplo/core@npm:^0.1.0, @taplo/core@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "@taplo/core@npm:0.1.1"
-  checksum: c36f761431b2e959742d8e186e74306fb8991d84589e2f03b6481244cc407275fa448a217ef87b8aa1e226615fd7ba85c60e6f0221f01d891b90dd30b45cb13b
+"@taplo/core@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "@taplo/core@npm:0.2.0"
+  checksum: 4bbc3b696c49e267da2dfcd13e7812e5c09febda583856b35569773542e93f9c28a50dab69c635e1d5e11a4de6962ab08e006985fa38d2df1b3ef19d471efa05
   languageName: node
   linkType: hard
 
-"@taplo/lib@npm:^0.4.0-alpha.2":
-  version: 0.4.0-alpha.2
-  resolution: "@taplo/lib@npm:0.4.0-alpha.2"
+"@taplo/lib@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "@taplo/lib@npm:0.5.0"
   dependencies:
-    "@taplo/core": "npm:^0.1.0"
-  checksum: 650ed35ba949054eb8dcfbaf77d6154d9639f5d8fa96d89546c399a95e699d7e01f65e308f89478d41e0120baa3572f25595fe088d19e62cc56ad3eb2b5acbb5
+    "@taplo/core": "npm:^0.2.0"
+  checksum: 0d1ea190586cac09a1c28fc43f807ba843a3313329744aacf49200da909beacbc43e5ebb89677d608b821458ad9378bc3d398c2aa7eff7e567ad59f85cc5ed82
   languageName: node
   linkType: hard
 
-"@taplo/lsp@npm:^0.6.1":
-  version: 0.6.1
-  resolution: "@taplo/lsp@npm:0.6.1"
+"@taplo/lsp@npm:^0.8.0":
+  version: 0.8.0
+  resolution: "@taplo/lsp@npm:0.8.0"
   dependencies:
-    "@taplo/core": "npm:^0.1.1"
-  checksum: 8c09215a7b18466482b17fb541552d1e6f767bfd4380fb754240a27af26aac7b4edf8c7d58f26cff66bd27e86f92ab54ea467ddb9b057d2a3d0d0b12d7764a06
+    "@taplo/core": "npm:^0.2.0"
+  checksum: f556092473fdb7c0dd2bdd967768e855d7139aa82e169a97d1eaf0db580ac593fbbe77909fdea51c9faf4fa84c22855b33dec0dcf9464f015f5a80fe83bcd519
   languageName: node
   linkType: hard
 
@@ -719,12 +719,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.11.9":
-  version: 20.11.9
-  resolution: "@types/node@npm:20.11.9"
+"@types/node@npm:^20.11.15":
+  version: 20.11.15
+  resolution: "@types/node@npm:20.11.15"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: 72f32aa56e97863d0bfee0274ce450245c2e159104a15f0fb3ee389962dfec34de284a679323161f8cf6cdaae9141043e370571988215b94e653a40f9b60078a
+  checksum: 7dfab4208fedc02e9584c619551906f46ade7955bb929b1e32e354a50522eb532d6bfb2844fdaad2c8dca03be84a590674460c64cb101e1a33bb318e1ec448d4
   languageName: node
   linkType: hard
 
@@ -2861,10 +2861,10 @@ __metadata:
     "@codemirror/theme-one-dark": "npm:^6.1.2"
     "@mdi/svg": "npm:^6.9.96"
     "@open-rpc/client-js": "npm:^1.8.1"
-    "@taplo/lib": "npm:^0.4.0-alpha.2"
-    "@taplo/lsp": "npm:^0.6.1"
+    "@taplo/lib": "npm:^0.5.0"
+    "@taplo/lsp": "npm:^0.8.0"
     "@types/marked": "npm:^6.0.0"
-    "@types/node": "npm:^20.11.9"
+    "@types/node": "npm:^20.11.15"
     "@vueuse/core": "npm:^8.9.4"
     autoprefixer: "npm:^10.4.17"
     codemirror: "npm:^6.0.1"

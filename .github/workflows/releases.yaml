@@ -143,9 +143,9 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__core-0')
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: lts/*
           registry-url: "https://registry.npmjs.org"
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -171,9 +171,9 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__cli-0')
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: lts/*
           registry-url: "https://registry.npmjs.org"
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -202,9 +202,9 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__lsp-0')
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: lts/*
           registry-url: "https://registry.npmjs.org"
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -233,9 +233,9 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__lib-0')
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: lts/*
           registry-url: "https://registry.npmjs.org"
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -490,9 +490,9 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@v1
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: lts/*
       - name: Extension NPM Install
         run: yarn
         working-directory: editors/vscode

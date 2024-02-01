@@ -5,5 +5,9 @@
     "core",
     "lib",
     "lsp"
-  ]
+  ],
+  "packageManager": "yarn@4.0.2",
+  "scripts": {
+    "build": "yarn workspaces foreach -W run build"
+  }
 }

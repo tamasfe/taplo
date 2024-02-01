@@ -18,7 +18,7 @@ const onwarn = (warning, rollupWarn) => {
     !ignoredWarnings.some(
       ({ ignoredCode, ignoredPath }) =>
         warning.code === ignoredCode &&
-        warning.importer.includes(path.normalize(ignoredPath))
+        warning.ids.some(id => id.includes(path.normalize(ignoredPath)))
     )
   ) {
     rollupWarn(warning);

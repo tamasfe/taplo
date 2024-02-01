@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.20.0
+
+### Fixes
+
+- Fix VS Code LSP crash ([#462](https://github.com/tamasfe/taplo/pull/462))
+
 ## 0.19.1
 
 ### Features

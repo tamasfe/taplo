@@ -9,7 +9,7 @@ use lsp_types::Url;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde_json::json;
-use std::{sync::Arc, time::Duration};
+use std::{str, sync::Arc, time::Duration};
 use taplo::{dom::Node, parser::Parse};
 use taplo_common::{
     config::Config,
@@ -247,7 +247,7 @@ impl<E: Environment> WorkspaceState<E> {
 
             if let Some(config_path) = config_path {
                 tracing::info!(path = ?config_path, "using config file");
-                self.taplo_config = toml::from_slice(&env.read_file(&config_path).await?)?;
+                self.taplo_config = toml::from_str(str::from_utf8(&env.read_file(&config_path).await?)?)?;
             }
         }
 

@@ -9,7 +9,7 @@ license = "MIT"
 name = "taplo"
 readme = false
 repository = "https://github.com/tamasfe/taplo"
-version = "0.12.1"
+version = "0.13.0"
 
 [features]
 default = ["serde"]
@@ -38,7 +38,7 @@ criterion = "0.3"
 difference = "2.0.0"
 pprof = { version = "0.9.1", features = ["flamegraph", "criterion"] }
 serde_json = "1"
-toml = "0.5"
+toml = "0.7"
 
 [package.metadata.docs.rs]
 features = ["serde", "schema"]

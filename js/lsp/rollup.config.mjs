@@ -1,10 +1,10 @@
-import rust from "@wasm-tool/rollup-plugin-rust";
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
+import rust from "@wasm-tool/rollup-plugin-rust";
 import path from "path";
 import process from "process";
 import { minify } from "rollup-plugin-esbuild";
-import typescript from "rollup-plugin-typescript2";
+import typescript from "rollup-plugin-ts";
 
 export default {
   input: {
@@ -12,7 +12,7 @@ export default {
   },
   output: {
     sourcemap: false,
-    name: "taplo",
+    name: "taploLsp",
     format: "umd",
     dir: "dist",
   },
@@ -22,6 +22,8 @@ export default {
       debug: process.env["RELEASE"] !== "true",
       nodejs: true,
       inlineWasm: true,
+      cargoArgs: ["--features", "lsp"],
+      verbose: process.env["VERBOSE"] === "true",
     }),
     commonjs(),
     resolve({

@@ -1,6 +1,6 @@
 [package]
 name = "taplo-common"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2021"
 description = "Shared code for taplo utilities."
 license = "MIT"
@@ -35,7 +35,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1.0.78", features = ["preserve_order"] }
 sha1 = "0.10.5"
 tap = "1.0.1"
-taplo = { version = "0.12.1", path = "../taplo", features = ["schema"] }
+taplo = { version = "0.13.0", path = "../taplo", features = ["schema"] }
 thiserror = "1.0.30"
 time = { version = "0.3.7", features = ["serde"] }
 tracing = "0.1.29"

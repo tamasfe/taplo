@@ -4,5 +4,5 @@ util
 **/.local*
 *.tgz
 tsconfig.json
-rollup.config.js
+rollup.config.mjs
 yarn-error.log

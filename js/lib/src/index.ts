@@ -220,6 +220,7 @@ function browserEnvironment(): Environment {
   return {
     cwd: () => "",
     envVar: () => "",
+    envVars: () => [["", ""]],
     findConfigFile: () => undefined,
     glob: () => [],
     isAbsolute: () => true,

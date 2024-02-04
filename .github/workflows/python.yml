@@ -22,13 +22,26 @@ jobs:
           - x86_64
     steps:
       - uses: actions/checkout@v4
-      - name: Build wheels
+      - if: matrix.target == 'x86_64'
+        name: Build wheels (static openssl)
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --features vendored-openssl
+          sccache: "true"
+          manylinux: auto
+          before-script-linux: |
+            yum install -y perl-IPC-Cmd
+      - if: matrix.target == 'x86'
+        name: Build wheels (shared openssl)
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist
           sccache: "true"
           manylinux: auto
+          before-script-linux: |
+            yum install -y openssl-devel
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:

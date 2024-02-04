@@ -2,9 +2,7 @@ name: Python package
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: '*'
     tags:
       - release-*cli-*
   pull_request:

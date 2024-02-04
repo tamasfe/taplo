@@ -121,11 +121,32 @@ jobs:
           name: wheels
           path: wheels
 
+  test-pip:
+    needs: merge
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels
+          path: wheels
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install taplo --no-index --find-links wheels/
+      - run: taplo help
+
   release:
     name: Release
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
-    needs: merge
+    needs: test-pip
     steps:
       - uses: actions/download-artifact@v4
         with:

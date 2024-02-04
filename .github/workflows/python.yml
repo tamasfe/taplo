@@ -96,15 +96,29 @@ jobs:
           name: wheels-${{ github.job }}
           path: dist
 
-  release:
-    name: Release
+  merge:
+    name: Merge wheels
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
     needs: [linux, windows, macos, sdist]
     steps:
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
+          path: wheels
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels
+          path: wheels
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: merge
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels
           path: wheels
       - name: Publish to PyPI
         uses: PyO3/maturin-action@v1

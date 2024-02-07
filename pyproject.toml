@@ -3,7 +3,7 @@ requires      = ["maturin>=1.4,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "taplo-test"
+name = "taplo"
 requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 4 - Beta",

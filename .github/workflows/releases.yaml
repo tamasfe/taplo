@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - release-*
+  workflow_dispatch:
 
 # TODO: github doesn't support regex matching in if expressions for some reason,
 # so these jobs all expect zero-versioned release tags...
@@ -21,11 +22,28 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
 
+  get_version:
+    runs-on: ubuntu-latest
+    needs: ["wait_for_ci"]
+    outputs:
+      cli: ${{ steps.cli.outputs.version || '' }}
+      vscode-ext: ${{ steps.vscode-ext.outputs.version || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve release version
+        if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+        run: echo "version=$(echo ${GITHUB_REF#refs/tags/release-taplo-cli-})" >> $GITHUB_OUTPUT
+        id: cli
+      - name: Retrieve release version
+        if: startsWith(github.ref, 'refs/tags/release-even-better-toml-')
+        run: echo "version=$(echo ${GITHUB_REF#refs/tags/release-even-better-toml-})" >> $GITHUB_OUTPUT
+        id: vscode-ext
+
   cargo_publish_taplo:
     name: Cargo publish taplo
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-0')
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust toolchain
@@ -48,7 +66,7 @@ jobs:
     name: Cargo publish taplo-cli
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust toolchain
@@ -71,7 +89,7 @@ jobs:
     name: Cargo publish taplo-common
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-common-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-common-0')
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust toolchain
@@ -94,7 +112,7 @@ jobs:
     name: Cargo publish taplo-lsp
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-lsp-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-lsp-0')
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust toolchain
@@ -117,7 +135,7 @@ jobs:
     name: Cargo publish lsp-async-stub
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-lsp-async-stub-0')
+    if: startsWith(github.ref, 'refs/tags/release-lsp-async-stub-0')
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust toolchain
@@ -140,7 +158,7 @@ jobs:
     name: NPM publish @taplo/core
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__core-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo__core-0')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -168,7 +186,7 @@ jobs:
     name: NPM publish @taplo/cli
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo__cli-0')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -199,7 +217,7 @@ jobs:
     name: NPM publish @taplo/lsp
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__lsp-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo__lsp-0')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -230,7 +248,7 @@ jobs:
     name: NPM publish @taplo/lib
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo__lib-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo__lib-0')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -259,20 +277,17 @@ jobs:
 
   cli_docker:
     runs-on: ubuntu-latest
-    needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    needs: ["wait_for_ci", "get_version"]
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
     strategy:
       matrix:
         image:
           - file: docker/cli-alpine.Dockerfile
-            tags: tamasfe/taplo:latest,tamasfe/taplo:${{ env.RELEASE_VERSION }},tamasfe/taplo:${{ env.RELEASE_VERSION }}-alpine
+            tags: tamasfe/taplo:latest,tamasfe/taplo:${{ needs.get_version.outputs.cli }},tamasfe/taplo:${{ needs.get_version.outputs.cli }}-alpine
           - file: docker/cli-full-alpine.Dockerfile
-            tags: tamasfe/taplo:full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full,tamasfe/taplo:${{ env.RELEASE_VERSION }}-full-alpine
+            tags: tamasfe/taplo:full,tamasfe/taplo:${{ needs.get_version.outputs.cli }}-full,tamasfe/taplo:${{ needs.get_version.outputs.cli }}-full-alpine
     steps:
       - uses: actions/checkout@v4
-      - name: Retrieve release version
-        id: version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-taplo-cli-})" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -295,7 +310,7 @@ jobs:
     name: ${{ matrix.triple }}
     runs-on: windows-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
     strategy:
       fail-fast: false
       matrix:
@@ -342,7 +357,7 @@ jobs:
     name: ${{ matrix.triple }}
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
     env:
       CROSS_SYSROOT: /mnt/alpine-${{ matrix.platform }}
       PACKAGES: >
@@ -422,7 +437,7 @@ jobs:
     name: ${{ matrix.triple }}
     runs-on: macos-11
     needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
     strategy:
       fail-fast: false
       matrix:
@@ -456,7 +471,7 @@ jobs:
 
   publish_cli:
     name: Release Taplo CLI binaries
-    needs: [build_cli_windows, build_cli_linux_musl, build_cli_macos]
+    needs: [build_cli_windows, build_cli_linux_musl, build_cli_macos, get_version]
     runs-on: ubuntu-latest
     env:
       GH_REPO: ${{ github.repository }}
@@ -467,22 +482,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v3
-
-      - name: Retrieve release version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-taplo-cli-})" >> $GITHUB_ENV
-
       - run: |
-          gh release create --draft ${{ env.RELEASE_VERSION }} --title "Taplo CLI ${{ env.RELEASE_VERSION }}" --target $GITHUB_SHA taplo-windows-*/* taplo-macos-*/* taplo-linux-*/*
+          gh release create --draft ${{ needs.get_version.outputs.cli }} --title "Taplo CLI ${{ needs.get_version.outputs.cli }}" --target $GITHUB_SHA taplo-windows-*/* taplo-macos-*/* taplo-linux-*/*
 
   publish_vscode_extension:
     name: Publish VSCode Extension
-    needs: ["wait_for_ci"]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-even-better-toml-')
+    needs: ["wait_for_ci", "get_version"]
+    if: startsWith(github.ref, 'refs/tags/release-even-better-toml-')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Retrieve release version
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/tags/release-even-better-toml-})" >> $GITHUB_ENV
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -511,7 +520,7 @@ jobs:
       - name: Install ovsx
         run: npm install -g ovsx
       - name: Publish Open VSX Extension
-        run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode -p $OPEN_VSX_TOKEN "even-better-toml-$RELEASE_VERSION.vsix"
+        run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode -p $OPEN_VSX_TOKEN "even-better-toml-${{ needs.get_version.outputs.vscode-ext }}.vsix"
         working-directory: editors/vscode
         env:
           OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}

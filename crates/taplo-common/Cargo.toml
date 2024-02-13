@@ -27,7 +27,6 @@ parking_lot = "0.12.0"
 percent-encoding = "2.1.0"
 regex = "1.5.4"
 reqwest = { version = "0.11.9", default-features = false, features = [
-  "default-tls",
   "json",
 ] }
 schemars = { version = "0.8.8", features = ["url"] }
@@ -60,6 +59,10 @@ tokio = { version = "1.24.2", features = [
 ], default-features = false }
 
 [features]
+# We only set a default such that `cargo publish` doesn't complain. Crates
+# depending on taplo-common should disable default features and explicitly set
+# the features they need.
+default = ["rustls-tls"]
 # default-tls enables native-tls but without enabling native-tls specific features.
 native-tls = ["reqwest/default-tls"]
 rustls-tls = ["reqwest/rustls-tls"]

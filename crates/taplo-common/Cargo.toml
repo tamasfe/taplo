@@ -1,6 +1,6 @@
 [package]
 name = "taplo-common"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 description = "Shared code for taplo utilities."
 license = "MIT"

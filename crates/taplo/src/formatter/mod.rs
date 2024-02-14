@@ -60,8 +60,8 @@ create_options!(
         /// arrays.
         pub array_trailing_comma: bool,
 
-        /// Automatically expand arrays to multiple lines
-        /// if they're too long.
+        /// Automatically expand arrays to multiple lines once they
+        /// exceed the configured `column_width`.
         pub array_auto_expand: bool,
 
         /// Expand values (e.g.) inside inline tables

@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.9.1
+
+### Fixes
+
+- Do not enable default-tls unconditionally ([#554](https://github.com/tamasfe/taplo/pull/554))
+
 ## 0.9.0
 
 ### Features

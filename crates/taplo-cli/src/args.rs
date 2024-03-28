@@ -56,7 +56,7 @@ pub enum TaploCommand {
     Format(FormatCommand),
     /// Language server operations.
     Lsp {
-        #[clap(subcommand)]
+        #[clap(flatten)]
         cmd: LspCommand,
     },
     /// Operations with the Taplo config file.
@@ -108,8 +108,17 @@ pub struct FormatCommand {
     pub stdin_filepath: Option<String>,
 }
 
+#[derive(Clone, Args)]
+pub struct LspCommand {
+    #[clap(flatten)]
+    pub general: GeneralArgs,
+
+    #[clap(subcommand)]
+    pub io: LspCommandIo,
+}
+
 #[derive(Clone, Subcommand)]
-pub enum LspCommand {
+pub enum LspCommandIo {
     /// Run the language server and listen on a TCP address.
     Tcp {
         /// The address to listen on.

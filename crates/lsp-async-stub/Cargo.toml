@@ -5,6 +5,7 @@ edition = "2021"
 name = "lsp-async-stub"
 version = "0.6.3"
 license = "MIT"
+repository = "https://github.com/tamasfe/taplo"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

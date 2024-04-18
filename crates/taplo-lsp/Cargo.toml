@@ -2,11 +2,11 @@
 authors = ["tamasf97 <tamasf97@outlook.com>"]
 description = "Language server for Taplo"
 edition = "2021"
-name = "taplo-lsp"
-version = "0.7.1"
-license = "MIT"
 homepage = "https://taplo.tamasfe.dev"
+license = "MIT"
+name = "taplo-lsp"
 repository = "https://github.com/tamasfe/taplo"
+version = "0.7.1"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -17,30 +17,28 @@ native-tls = ["taplo-common/native-tls"]
 rustls-tls = ["taplo-common/rustls-tls"]
 
 [dependencies]
-anyhow = "1"
-arc-swap = "1.5.0"
-either = "1.6.1"
+anyhow = { workspace = true }
+arc-swap = { workspace = true }
+either = { workspace = true }
 figment = { version = "0.10.6", features = ["json"] }
-futures = "0.3.5"
+futures = { workspace = true }
 indexmap = { version = "1.6", features = ["serde"] }
-itertools = "0.10.3"
+itertools = { workspace = true }
 lsp-async-stub = { version = "0.6.3", path = "../lsp-async-stub" }
 lsp-types = { version = "0.93.0", features = ["proposed"] }
-once_cell = "1.5"
-parking_lot = "0.12.0"
-regex = "1.5.4"
-reqwest = { version = "0.11.9", default-features = false, features = [
-  "json",
-] }
-schemars = "0.8"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0", features = ["preserve_order"] }
-tap = "1.0.1"
+once_cell = { workspace = true }
+parking_lot = { workspace = true }
+regex = { workspace = true }
+reqwest = { version = "0.11.9", default-features = false, features = ["json"] }
+schemars = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, features = ["preserve_order"] }
+tap = { workspace = true }
 taplo = { version = "0.13.1", path = "../taplo", features = ["serde"] }
 taplo-common = { version = "0.5.1", path = "../taplo-common" }
 time = { version = "0.3", features = ["formatting", "parsing"] }
-toml = "0.7"
-tracing = "0.1.29"
+toml = { workspace = true }
+tracing = { workspace = true }
 
 [package.metadata.auto-tag]
 enabled = true

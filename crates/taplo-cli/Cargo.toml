@@ -1,14 +1,14 @@
 [package]
 authors = ["tamasfe"]
-description = "A CLI for Taplo TOML toolkit"
-license = "MIT"
-edition = "2021"
-name = "taplo-cli"
-version = "0.9.1"
-homepage = "https://taplo.tamasfe.dev"
-repository = "https://github.com/tamasfe/taplo"
 categories = ["development-tools", "command-line-utilities"]
+description = "A CLI for Taplo TOML toolkit"
+edition = "2021"
+homepage = "https://taplo.tamasfe.dev"
 keywords = ["toml", "linter", "formatter"]
+license = "MIT"
+name = "taplo-cli"
+repository = "https://github.com/tamasfe/taplo"
+version = "0.9.1"
 
 [features]
 default = ["rustls-tls"]
@@ -18,36 +18,38 @@ rustls-tls = ["taplo-common/rustls-tls"]
 toml-test = []
 
 [dependencies]
-anyhow = { version = "1", features = ["backtrace"] }
+anyhow = { workspace = true, features = ["backtrace"] }
 async-ctrlc = { version = "1.2.0", features = ["stream"], optional = true }
 clap = { version = "3.0.0", features = ["derive", "cargo", "env"] }
 codespan-reporting = "0.11.1"
-futures = "0.3"
-glob = "0.3"
-hex = "0.4"
-itertools = "0.10.3"
-once_cell = "1.4"
-regex = "1.4"
-reqwest = { version = "0.11.9", default-features = false, features = [
-  "json",
-] }
-schemars = "0.8"
-serde = "1"
-serde_json = "1"
+futures = { workspace = true }
+glob = { workspace = true }
+hex = { workspace = true }
+itertools = { workspace = true }
+once_cell = { workspace = true }
+regex = { workspace = true }
+reqwest = { version = "0.11.9", default-features = false, features = ["json"] }
+schemars = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 taplo = { version = "0.13.1", path = "../taplo", features = ["serde"] }
 taplo-common = { version = "0.5.1", path = "../taplo-common" }
 taplo-lsp = { version = "0.7.1", path = "../taplo-lsp", default-features = false, optional = true }
-time = { version = "0.3", features = ["parsing"] }
-toml = "0.7"
-tracing = "0.1.29"
-tracing-subscriber = { version = "0.3.7", features = ["env-filter"] }
-url = "2.2.2"
+time = { workspace = true, features = ["parsing"] }
+toml = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+url = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # `prettydiff` is also a CLI that pulls in `clap` by default
-prettydiff = { version = "0.6.1", default-features = false }
 ansi_term = "0.12"
 atty = "0.2.14"
+lsp-async-stub = { version = "0.6.0", path = "../lsp-async-stub", features = [
+  "tokio-tcp",
+  "tokio-stdio",
+] }
+prettydiff = { version = "0.6.1", default-features = false }
 tokio = { version = "1.24.2", features = [
   "sync",
   "fs",
@@ -56,10 +58,6 @@ tokio = { version = "1.24.2", features = [
   "rt-multi-thread",
   "parking_lot",
 ], default-features = false }
-lsp-async-stub = { version = "0.6.0", path = "../lsp-async-stub", features = [
-  "tokio-tcp",
-  "tokio-stdio",
-] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 tokio = { version = "1.24.2", features = [

@@ -1,8 +1,8 @@
 [package]
-name = "taplo-wasm"
-version = "0.2.1"
 edition = "2021"
+name = "taplo-wasm"
 publish = false
+version = "0.2.1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -33,10 +33,10 @@ wasm-bindgen = { version = "0.2.90", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4.40"
 
 [features]
-default = ["lsp", "cli"]
 cli = ["taplo-cli"]
+default = ["lsp", "cli"]
 lsp = ["taplo-lsp"]
 
 [profile.release]
-opt-level = 's'
 lto = true
+opt-level = 's'

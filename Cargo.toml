@@ -4,6 +4,33 @@ exclude = ["util/test-gen", "crates/taplo-wasm"]
 
 resolver = "2"
 
+[workspace.dependencies]
+ahash = { version = "0.8.3" }
+anyhow = { version = "1.0.53" }
+arc-swap = { version = "1.5.0" }
+async-trait = { version = "0.1.52" }
+either = { version = "1.6.1" }
+futures = { version = "0.3.5" }
+glob = { version = "0.3" }
+globset = { version = "0.4.8" }
+hex = { version = "0.4" }
+itertools = { version = "0.10.3" }
+once_cell = { version = "1.4" }
+parking_lot = { version = "0.12.0" }
+regex = { version = "1.5" }
+rowan = { version = "0.15.3" }
+schemars = { version = "0.8.3" }
+sha1 = { version = "0.10.5" }
+serde = { version = "1" }
+serde_json = { version = "1.0.78" }
+tap = { version = "1.0.1" }
+thiserror = { version = "1.0.30" }
+time = { version = "0.3.7" }
+toml = { version = "0.7" }
+tracing = { version = "0.1.30" }
+tracing-subscriber = { version = "0.3.7" }
+url = { version = "2.2.2" }
+
 [profile.release]
 codegen-units = 1
 opt-level = 3

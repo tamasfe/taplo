@@ -1,6 +1,6 @@
 [package]
 name = "taplo-common"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 description = "Shared code for taplo utilities."
 license = "MIT"
@@ -26,8 +26,7 @@ lru = "0.7.2"
 parking_lot = "0.12.0"
 percent-encoding = "2.1.0"
 regex = "1.5.4"
-reqwest = { version = "0.11.9", default-features = false, features = [
-  "default-tls",
+reqwest = { version = "0.11.24", default-features = false, features = [
   "json",
 ] }
 schemars = { version = "0.8.8", features = ["url"] }

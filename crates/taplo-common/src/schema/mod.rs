@@ -9,7 +9,7 @@ use jsonschema::{error::ValidationErrorKind, JSONSchema, SchemaResolver, Validat
 use parking_lot::Mutex;
 use regex::Regex;
 use serde_json::Value;
-use std::{borrow::Cow, sync::Arc};
+use std::{borrow::Cow, num::NonZeroUsize, sync::Arc};
 use taplo::dom::{self, node::Key, KeyOrIndex, Keys};
 use thiserror::Error;
 use tokio::sync::Semaphore;
@@ -62,7 +62,7 @@ impl<E: Environment> Schemas<E> {
             concurrent_requests: Arc::new(Semaphore::new(10)),
             http,
             validators: Arc::new(Mutex::new(LruCache::with_hasher(
-                3,
+                NonZeroUsize::new(3).unwrap(),
                 ahash::RandomState::new(),
             ))),
         }

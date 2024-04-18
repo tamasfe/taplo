@@ -1,44 +1,45 @@
 [package]
-authors = ["tamasfe"]
-categories = ["parser-implementations", "parsing"]
-description = "A TOML parser, analyzer and formatter library"
-edition = "2021"
-homepage = "https://taplo.tamasfe.dev"
-keywords = ["toml", "parser", "formatter", "linter"]
-license = "MIT"
-name = "taplo"
-readme = false
-repository = "https://github.com/tamasfe/taplo"
-version = "0.13.2"
+authors      = { workspace = true }
+categories   = ["parser-implementations", "parsing"]
+description  = "A TOML parser, analyzer and formatter library"
+edition      = { workspace = true }
+homepage     = { workspace = true }
+keywords     = ["toml", "parser", "formatter", "linter"]
+license      = { workspace = true }
+name         = "taplo"
+readme       = false
+repository   = { workspace = true }
+rust-version = "1.67"
+version      = "0.13.2"
 
 [features]
 default = ["serde"]
-schema = ["schemars"]
+schema  = ["schemars"]
 
 [dependencies]
-ahash = "0.8.3"
-arc-swap = "1.5.0"
-either = "1.6.1"
-globset = { version = "0.4.8" }
-itertools = "0.10.3"
-logos = "0.12.0"
-once_cell = "1.9.0"
-rowan = "0.15.3"
-serde_json = "1.0.79"
-thiserror = "1.0.30"
-time = { version = "0.3.3", features = ["parsing", "formatting", "macros"] }
-tracing = "0.1.30"
+ahash      = { workspace = true }
+arc-swap   = { workspace = true }
+either     = { workspace = true }
+globset    = { workspace = true }
+itertools  = { workspace = true }
+logos      = { version = "0.12.0" }
+once_cell  = { workspace = true }
+rowan      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+time       = { workspace = true, features = ["parsing", "formatting", "macros"] }
+tracing    = { workspace = true }
 
-schemars = { version = "0.8.3", optional = true }
-serde = { version = "1", features = ["derive"], optional = true }
+schemars = { workspace = true, optional = true }
+serde    = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]
 assert-json-diff = "2"
-criterion = "0.3"
-difference = "2.0.0"
-pprof = { version = "0.9.1", features = ["flamegraph", "criterion"] }
-serde_json = "1"
-toml = "0.7"
+criterion        = "0.3"
+difference       = "2.0.0"
+pprof            = { version = "0.9.1", features = ["flamegraph", "criterion"] }
+serde_json       = "1"
+toml             = "0.7"
 
 [package.metadata.docs.rs]
 features = ["serde", "schema"]
@@ -47,9 +48,9 @@ features = ["serde", "schema"]
 enabled = true
 
 [[bench]]
-name = "taplo"
 harness = false
+name    = "taplo"
 
 [[bench]]
-name = "profile"
 harness = false
+name    = "profile"

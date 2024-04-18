@@ -8,7 +8,9 @@ exclude = [
 
 [[rule]]
 include = ["**/Cargo.toml"]
-keys = ["dependencies", "*-dependencies"]
+keys = ["dependencies", "*-dependencies", "workspace"]
 
 [rule.formatting]
 reorder_keys = true
+align_entries = true
+align_comments = true

@@ -2872,7 +2872,7 @@ __metadata:
     postcss: "npm:^8.4.33"
     sass: "npm:^1.70.0"
     tailwindcss: "npm:^3.4.1"
-    vite: "npm:^2.9.17"
+    vite: "npm:^2.9.18"
     vitepress: "npm:^1.0.0-alpha.76"
     vscode-languageserver-protocol: "npm:^3.17.5"
     vue: "npm:^3.4.15"
@@ -2988,9 +2988,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^2.9.17":
-  version: 2.9.17
-  resolution: "vite@npm:2.9.17"
+"vite@npm:^2.9.18":
+  version: 2.9.18
+  resolution: "vite@npm:2.9.18"
   dependencies:
     esbuild: "npm:^0.14.27"
     fsevents: "npm:~2.3.2"
@@ -3013,7 +3013,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 3d555e1e9a099894a8a6843ca223a0edb4fcf1eaf794d6419243480f95a65dfe87b52d4ce2ee240f0ba8487a37d93ac708860684a8a24648ed79f5950162fbeb
+  checksum: 2325b272e473981d7c589f4b28485a60d641bad2a42bae387002ea92c6f8d9664f76b2d35aaf52c81feac5c642399db62598668f40db4198fce138a5df9a3e06
   languageName: node
   linkType: hard
 

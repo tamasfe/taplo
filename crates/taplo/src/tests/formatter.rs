@@ -1,6 +1,7 @@
 use difference::Changeset;
 
 use crate::formatter;
+use crate::formatter::Options;
 
 macro_rules! assert_format {
     ($expected:expr, $actual:expr) => {
@@ -1161,6 +1162,24 @@ my_array = [
 "#;
 
     let formatted = crate::formatter::format(src, Default::default());
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn test_comment_after_entry() {
+    let src = r#"
+a = "b" # comment
+"#;
+
+    let expected = r#"
+a = "b" # comment
+"#;
+    let opt = Options {
+        column_width: 1,
+        ..Default::default()
+    };
+    let formatted = crate::formatter::format(src, opt);
 
     assert_format!(expected, &formatted);
 }

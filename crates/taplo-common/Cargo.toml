@@ -4,6 +4,7 @@ version = "0.5.1"
 edition = "2021"
 description = "Shared code for taplo utilities."
 license = "MIT"
+repository = "https://github.com/tamasfe/taplo"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -260,6 +260,7 @@ impl<E: Environment> Schemas<E> {
             .with_resolver(CacheSchemaResolver {
                 cache: self.cache().clone(),
             })
+            .with_draft(jsonschema::Draft::Draft202012)
             .with_format("semver", formats::semver)
             .with_format("semver-requirement", formats::semver_req)
             .compile(schema)

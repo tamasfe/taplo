@@ -73,39 +73,36 @@ impl Query {
     pub fn in_table_header(&self) -> bool {
         match (&self.before, &self.after) {
             (Some(before), Some(after)) => {
-                let header_syntax = match before
+                let Some(header_syntax) = before
                     .syntax
                     .parent_ancestors()
                     .find(|s| s.kind() == TABLE_HEADER)
-                {
-                    Some(h) => h,
-                    None => return false,
+                else {
+                    return false;
                 };
 
                 if !after.syntax.parent_ancestors().any(|a| a == header_syntax) {
                     return false;
                 }
 
-                let bracket_start = match header_syntax.children_with_tokens().find_map(|t| {
+                let Some(bracket_start) = header_syntax.children_with_tokens().find_map(|t| {
                     if t.kind() == BRACKET_START {
                         t.into_token()
                     } else {
                         None
                     }
-                }) {
-                    Some(t) => t,
-                    None => return false,
+                }) else {
+                    return false;
                 };
 
-                let bracket_end = match header_syntax.children_with_tokens().find_map(|t| {
+                let Some(bracket_end) = header_syntax.children_with_tokens().find_map(|t| {
                     if t.kind() == BRACKET_END {
                         t.into_token()
                     } else {
                         None
                     }
-                }) {
-                    Some(t) => t,
-                    None => return false,
+                }) else {
+                    return false;
                 };
 
                 (before.syntax == bracket_start
@@ -121,20 +118,19 @@ impl Query {
     pub fn in_table_array_header(&self) -> bool {
         match (&self.before, &self.after) {
             (Some(before), Some(after)) => {
-                let header_syntax = match before
+                let Some(header_syntax) = before
                     .syntax
                     .parent_ancestors()
                     .find(|s| s.kind() == TABLE_ARRAY_HEADER)
-                {
-                    Some(h) => h,
-                    None => return false,
+                else {
+                    return false;
                 };
 
                 if !after.syntax.parent_ancestors().any(|a| a == header_syntax) {
                     return false;
                 }
 
-                let bracket_start = match header_syntax
+                let Some(bracket_start) = header_syntax
                     .children_with_tokens()
                     .filter_map(|t| {
                         if t.kind() == BRACKET_START {
@@ -144,20 +140,18 @@ impl Query {
                         }
                     })
                     .nth(1)
-                {
-                    Some(t) => t,
-                    None => return false,
+                else {
+                    return false;
                 };
 
-                let bracket_end = match header_syntax.children_with_tokens().find_map(|t| {
+                let Some(bracket_end) = header_syntax.children_with_tokens().find_map(|t| {
                     if t.kind() == BRACKET_END {
                         t.into_token()
                     } else {
                         None
                     }
-                }) {
-                    Some(t) => t,
-                    None => return false,
+                }) else {
+                    return false;
                 };
 
                 (before.syntax == bracket_start
@@ -173,14 +167,10 @@ impl Query {
     pub fn header_key(&self) -> Option<SyntaxNode> {
         match (&self.before, &self.after) {
             (Some(before), _) => {
-                let header_syntax = match before
+                let header_syntax = before
                     .syntax
                     .parent_ancestors()
-                    .find(|s| matches!(s.kind(), TABLE_ARRAY_HEADER | TABLE_HEADER))
-                {
-                    Some(h) => h,
-                    None => return None,
-                };
+                    .find(|s| matches!(s.kind(), TABLE_ARRAY_HEADER | TABLE_HEADER))?;
 
                 header_syntax.descendants().find(|n| n.kind() == KEY)
             }
@@ -195,14 +185,10 @@ impl Query {
             None => return None,
         };
 
-        let keys = match syntax
+        let keys = syntax
             .parent_ancestors()
             .find(|n| n.kind() == ENTRY)
-            .and_then(|entry| entry.children().find(|c| c.kind() == KEY))
-        {
-            Some(keys) => keys,
-            None => return None,
-        };
+            .and_then(|entry| entry.children().find(|c| c.kind() == KEY))?;
 
         Some(keys)
     }
@@ -214,14 +200,10 @@ impl Query {
             None => return None,
         };
 
-        let value = match syntax
+        let value = syntax
             .parent_ancestors()
             .find(|n| n.kind() == ENTRY)
-            .and_then(|entry| entry.children().find(|c| c.kind() == VALUE))
-        {
-            Some(value) => value,
-            None => return None,
-        };
+            .and_then(|entry| entry.children().find(|c| c.kind() == VALUE))?;
 
         Some(value)
     }
@@ -244,9 +226,8 @@ impl Query {
             .take_while(|n| n.text_range().end() <= syntax.text_range().end())
             .last();
 
-        let last_header = match last_header {
-            Some(h) => h,
-            None => return (Keys::empty(), root.clone()),
+        let Some(last_header) = last_header else {
+            return (Keys::empty(), root.clone());
         };
 
         let keys = Keys::from_syntax(
@@ -309,9 +290,8 @@ impl Query {
 
     #[must_use]
     pub fn entry_has_eq(&self) -> bool {
-        let key_syntax = match self.entry_key() {
-            Some(p) => p,
-            None => return false,
+        let Some(key_syntax) = self.entry_key() else {
+            return false;
         };
 
         key_syntax
@@ -474,16 +454,13 @@ pub struct PositionInfo {
 }
 
 fn full_range(keys: &Keys, node: &Node) -> TextRange {
-    let last_key = match keys
+    let Some(last_key) = keys
         .iter()
         .filter_map(KeyOrIndex::as_key)
         .last()
         .map(Key::text_ranges)
-    {
-        Some(k) => k,
-        None => {
-            return join_ranges(node.text_ranges());
-        }
+    else {
+        return join_ranges(node.text_ranges());
     };
 
     join_ranges(last_key.chain(node.text_ranges()))

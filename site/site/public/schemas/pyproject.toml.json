@@ -348,7 +348,6 @@
         }
       }
     },
-
     "BuildSystem": {
       "title": "Build System",
       "type": "object",
@@ -581,6 +580,239 @@
               }
             }
           }
+        },
+        "pdm": {
+          "type": "object",
+          "properties": {
+            "scripts": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "cmd": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ]
+                        },
+                        "shell": {
+                          "type": "string"
+                        },
+                        "call": {
+                          "type": "string"
+                        },
+                        "composite": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "env": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "env_file": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "override": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "working_dir": {
+                          "type": "string"
+                        },
+                        "site_packages": {
+                          "type": "boolean"
+                        },
+                        "help": {
+                          "type": "string"
+                        },
+                        "keep_going": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  ]
+                }
+              },
+              "properties": {
+                "_": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "dev-dependencies": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "source": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "url"],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "verify_ssl": {
+                    "type": "boolean"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "include_packages": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "exclude_packages": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "resolution": {
+              "type": "object",
+              "properties": {
+                "allow-prereleases": {
+                  "type": "boolean"
+                },
+                "respect-source-order": {
+                  "type": "boolean"
+                },
+                "overrides": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "excludes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "no-binary": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  ]
+                },
+                "only-binary": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  ]
+                },
+                "prefer-binary": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": true
+            },
+            "options": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z-]+$": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "patternProperties": {
+            "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "additionalProperties": true
         }
       }
     }

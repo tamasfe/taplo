@@ -1,6 +1,7 @@
 name: Releases (TEST)
 
 on:
+  push:
   workflow_dispatch:
 jobs:
   publish_vscode_extension:

@@ -43,7 +43,7 @@ pub fn format(
     let mut config = if config.is_undefined() {
         Config::default()
     } else {
-        config.into_serde()?
+        serde_wasm_bindgen::from_value(config)?
     };
 
     let env = WasmEnvironment::from(env);
@@ -51,7 +51,7 @@ pub fn format(
         .prepare(&env, Path::new("/"))
         .map_err(|err| JsError::new(&err.to_string()))?;
 
-    let camel_opts: formatter::OptionsIncompleteCamel = options.into_serde()?;
+    let camel_opts: formatter::OptionsIncompleteCamel = serde_wasm_bindgen::from_value(options)?;
     let mut options = formatter::Options::default();
     if let Some(cfg_opts) = config.global_options.formatting.clone() {
         options.update(cfg_opts);
@@ -74,7 +74,7 @@ pub async fn lint(env: JsValue, toml: String, config: JsValue) -> Result<JsValue
     let mut config = if config.is_undefined() {
         Config::default()
     } else {
-        config.into_serde()?
+        serde_wasm_bindgen::from_value(config)?
     };
     let env = WasmEnvironment::from(env);
     config
@@ -84,7 +84,7 @@ pub async fn lint(env: JsValue, toml: String, config: JsValue) -> Result<JsValue
     let syntax = parse(&toml);
 
     if !syntax.errors.is_empty() {
-        return Ok(JsValue::from_serde(&LintResult {
+        return Ok(serde_wasm_bindgen::to_value(&LintResult {
             errors: syntax
                 .errors
                 .into_iter()
@@ -103,7 +103,7 @@ pub async fn lint(env: JsValue, toml: String, config: JsValue) -> Result<JsValue
     let dom = syntax.into_dom();
 
     if let Err(errors) = dom.validate() {
-        return Ok(JsValue::from_serde(&LintResult {
+        return Ok(serde_wasm_bindgen::to_value(&LintResult {
             errors: errors
                 .map(|err| LintError {
                     range: None,
@@ -125,7 +125,7 @@ pub async fn lint(env: JsValue, toml: String, config: JsValue) -> Result<JsValue
             .await
             .map_err(|err| JsError::new(&err.to_string()))?;
 
-        return Ok(JsValue::from_serde(&LintResult {
+        return Ok(serde_wasm_bindgen::to_value(&LintResult {
             errors: schema_errors
                 .into_iter()
                 .map(|err| LintError {
@@ -176,7 +176,7 @@ pub async fn run_cli(env: JsValue, args: JsValue) -> Result<(), JsError> {
     use tracing::Instrument;
 
     let env = WasmEnvironment::from(env);
-    let args: Vec<String> = args.into_serde()?;
+    let args: Vec<String> = serde_wasm_bindgen::from_value(args)?;
 
     let cli = match TaploArgs::try_parse_from(args) {
         Ok(v) => v,

@@ -13,14 +13,15 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow                   = { version = "1.0.57" }
 async-trait              = { version = "0.1.56" }
-clap                     = { version = "3.1.18", features = ["derive"] }
+clap                     = { version = "4.5.8", features = ["derive"] }
 console_error_panic_hook = { version = "0.1.7" }
 futures                  = { version = "0.3.21" }
-getrandom                = { version = "0.2.8", features = ["js"] }
+getrandom                = { version = "0.2.15", features = ["js"] }
 indexmap                 = { version = "~1.6" }
-js-sys                   = { version = "0.3.57" }
+js-sys                   = { version = "0.3.69" }
 lsp-async-stub           = { path = "../lsp-async-stub" }
 serde                    = { version = "1.0.137", features = ["derive"] }
+serde-wasm-bindgen       = { version = "0.6.5" }
 serde_json               = { version = "1.0.81" }
 taplo                    = { path = "../taplo" }
 taplo-cli                = { path = "../taplo-cli", optional = true }
@@ -30,7 +31,7 @@ time                     = { version = "0.3.9", features = ["parsing"] }
 tokio                    = { version = "1.19.2", default-features = false }
 tracing                  = { version = "0.1.35" }
 url                      = { version = "2.2.2" }
-wasm-bindgen             = { version = "0.2.90", features = ["serde-serialize"] }
+wasm-bindgen             = { version = "0.2.92" }
 wasm-bindgen-futures     = { version = "0.4.40" }
 
 [features]

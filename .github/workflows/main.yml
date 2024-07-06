@@ -1,0 +1,40 @@
+name: Releases (TEST)
+
+on:
+  workflow_dispatch:
+jobs:
+  publish_vscode_extension:
+    name: Publish VSCode Extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Extension NPM Install
+        run: yarn
+        working-directory: editors/vscode
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Package Extension
+        run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode
+        working-directory: editors/vscode
+
+      - name: Upload artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-ext
+          path: |
+            ./even-better-toml-*.vsix
+          retention-days: 1

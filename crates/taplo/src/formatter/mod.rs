@@ -681,7 +681,9 @@ fn add_entries(
                     entry.value.clear();
 
                     if let Some(c) = value.trailing_comment() {
-                        debug_assert!(entry.comment.is_none() || entry.comment.clone().unwrap() == c);
+                        debug_assert!(
+                            entry.comment.is_none() || entry.comment.clone().unwrap() == c
+                        );
                         entry.comment = Some(c);
                     }
 

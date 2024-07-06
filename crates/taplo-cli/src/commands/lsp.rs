@@ -1,6 +1,9 @@
 use taplo_common::environment::{native::NativeEnvironment, Environment};
 
-use crate::{args::{LspCommand, LspCommandIo}, Taplo};
+use crate::{
+    args::{LspCommand, LspCommandIo},
+    Taplo,
+};
 
 impl<E: Environment> Taplo<E> {
     pub async fn execute_lsp(&mut self, cmd: LspCommand) -> Result<(), anyhow::Error> {

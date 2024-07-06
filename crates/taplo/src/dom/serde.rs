@@ -265,6 +265,6 @@ impl<'de> Deserialize<'de> for Node {
     where
         D: serde::Deserializer<'de>,
     {
-        de.deserialize_any(TomlVisitor::default())
+        de.deserialize_any(TomlVisitor)
     }
 }

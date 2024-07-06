@@ -86,7 +86,7 @@ impl<E: Environment> SchemaAssociations<E> {
         self.retain(|(_, assoc)| assoc.meta["source"] != source::BUILTIN);
 
         self.associations.write().push((
-            AssociationRule::Regex(Regex::new(r#".*\.?taplo\.toml$"#).unwrap()),
+            AssociationRule::Regex(Regex::new(r".*\.?taplo\.toml$").unwrap()),
             SchemaAssociation {
                 url: builtins::TAPLO_CONFIG_URL.parse().unwrap(),
                 meta: json!({
@@ -193,7 +193,7 @@ impl<E: Environment> SchemaAssociations<E> {
                         tracing::debug!(%error, "invalid url in directive, assuming file path instead");
 
                         if self.env.is_absolute(Path::new(value)) {
-                            match format!("file://{}", value).parse() {
+                            match format!("file://{value}").parse() {
                                 Ok(u) => u,
                                 Err(error) => {
                                     tracing::error!(%error, "invalid schema directive");
@@ -256,9 +256,8 @@ impl<E: Environment> SchemaAssociations<E> {
 
     pub fn add_from_config(&self, config: &Config) {
         for rule in &config.rule {
-            let file_rule = match rule.file_rule.clone() {
-                Some(rule) => rule,
-                None => continue,
+            let Some(file_rule) = rule.file_rule.clone() else {
+                continue;
             };
 
             if let Some(schema_opts) = &rule.options.schema {
@@ -279,9 +278,8 @@ impl<E: Environment> SchemaAssociations<E> {
             }
         }
 
-        let file_rule = match config.file_rule.clone() {
-            Some(rule) => rule,
-            None => return,
+        let Some(file_rule) = config.file_rule.clone() else {
+            return;
         };
 
         if let Some(schema_opts) = &config.global_options.schema {
@@ -392,7 +390,7 @@ pub enum AssociationRule {
 
 impl AssociationRule {
     pub fn glob(pattern: &str) -> Result<Self, anyhow::Error> {
-        Ok(Self::Glob(GlobRule::new(&[pattern], &[] as &[&str])?))
+        Ok(Self::Glob(GlobRule::new([pattern], &[] as &[&str])?))
     }
 
     pub fn regex(regex: &str) -> Result<Self, anyhow::Error> {
@@ -520,8 +518,7 @@ impl<'de> Deserialize<'de> for SchemaStoreCatalogSchema {
 
         if s != SCHEMA_STORE_CATALOG_SCHEMA_URL {
             return Err(Error::custom(format!(
-                "expected $schema to be {}",
-                SCHEMA_STORE_CATALOG_SCHEMA_URL
+                "expected $schema to be {SCHEMA_STORE_CATALOG_SCHEMA_URL}"
             )));
         }
 

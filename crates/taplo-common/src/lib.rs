@@ -7,6 +7,7 @@
     clippy::module_name_repetitions,
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
+    clippy::missing_fields_in_debug,
     clippy::similar_names,
     clippy::too_many_lines
 )]

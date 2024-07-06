@@ -49,7 +49,7 @@ pub struct ArcHashValue(pub Arc<Value>);
 
 impl Hash for ArcHashValue {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        HashValue(&*self.0).hash(state);
+        HashValue(&self.0).hash(state);
     }
 }
 
@@ -109,9 +109,8 @@ impl Normalize for PathBuf {
 }
 
 pub(crate) fn normalize_str(s: &str) -> Cow<str> {
-    let percent_decoded = match percent_decode_str(s).decode_utf8().ok() {
-        Some(s) => s,
-        None => return s.into(),
+    let Some(percent_decoded) = percent_decode_str(s).decode_utf8().ok() else {
+        return s.into();
     };
 
     if cfg!(windows) {
@@ -165,7 +164,7 @@ pub fn get_reqwest_client(timeout: std::time::Duration) -> Result<reqwest::Clien
 
     let mut builder = reqwest::Client::builder().timeout(timeout);
     if let Some(path) = std::env::var_os("TAPLO_EXTRA_CA_CERTS") {
-        builder = get_certs(builder, path)
+        builder = get_certs(builder, path);
     }
     builder.build()
 }

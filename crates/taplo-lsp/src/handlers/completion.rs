@@ -46,18 +46,14 @@ pub async fn completion<E: Environment>(
         }
     };
 
-    let schema_association = match ws.schemas.associations().association_for(&document_uri) {
-        Some(ass) => ass,
-        None => return Ok(None),
+    let Some(schema_association) = ws.schemas.associations().association_for(&document_uri) else {
+        return Ok(None);
     };
 
     let position = p.text_document_position.position;
-    let offset = match doc.mapper.offset(Position::from_lsp(position)) {
-        Some(ofs) => ofs,
-        None => {
-            tracing::error!(?position, "document position not found");
-            return Ok(None);
-        }
+    let Some(offset) = doc.mapper.offset(Position::from_lsp(position)) else {
+        tracing::error!(?position, "document position not found");
+        return Ok(None);
     };
 
     let query = Query::at(&doc.dom, offset);
@@ -615,7 +611,7 @@ fn add_value_completions(
                 }
                 "boolean" => {
                     completions.push(CompletionItem {
-                        label: r#"true"#.into(),
+                        label: r"true".into(),
                         kind: Some(CompletionItemKind::VALUE),
                         documentation: Some(Documentation::MarkupContent(MarkupContent {
                             kind: lsp_types::MarkupKind::Markdown,
@@ -625,13 +621,13 @@ fn add_value_completions(
                         text_edit: range.map(|range| {
                             CompletionTextEdit::Edit(TextEdit {
                                 range,
-                                new_text: r#"true$0"#.into(),
+                                new_text: r"true$0".into(),
                             })
                         }),
                         ..Default::default()
                     });
                     completions.push(CompletionItem {
-                        label: r#"false"#.into(),
+                        label: r"false".into(),
                         kind: Some(CompletionItemKind::VALUE),
                         documentation: Some(Documentation::MarkupContent(MarkupContent {
                             kind: lsp_types::MarkupKind::Markdown,
@@ -641,7 +637,7 @@ fn add_value_completions(
                         text_edit: range.map(|range| {
                             CompletionTextEdit::Edit(TextEdit {
                                 range,
-                                new_text: r#"false$0"#.into(),
+                                new_text: r"false$0".into(),
                             })
                         }),
                         ..Default::default()
@@ -649,7 +645,7 @@ fn add_value_completions(
                 }
                 "array" => {
                     completions.push(CompletionItem {
-                        label: r#"[]"#.into(),
+                        label: r"[]".into(),
                         kind: Some(CompletionItemKind::VALUE),
                         documentation: Some(Documentation::MarkupContent(MarkupContent {
                             kind: lsp_types::MarkupKind::Markdown,
@@ -659,7 +655,7 @@ fn add_value_completions(
                         text_edit: range.map(|range| {
                             CompletionTextEdit::Edit(TextEdit {
                                 range,
-                                new_text: r#"[$0]"#.into(),
+                                new_text: r"[$0]".into(),
                             })
                         }),
                         ..Default::default()
@@ -667,7 +663,7 @@ fn add_value_completions(
                 }
                 "object" => {
                     completions.push(CompletionItem {
-                        label: r#"{ }"#.into(),
+                        label: r"{ }".into(),
                         kind: Some(CompletionItemKind::VALUE),
                         documentation: Some(Documentation::MarkupContent(MarkupContent {
                             kind: lsp_types::MarkupKind::Markdown,
@@ -677,7 +673,7 @@ fn add_value_completions(
                         text_edit: range.map(|range| {
                             CompletionTextEdit::Edit(TextEdit {
                                 range,
-                                new_text: r#"{ $0 }"#.into(),
+                                new_text: r"{ $0 }".into(),
                             })
                         }),
                         ..Default::default()

@@ -40,5 +40,5 @@ jobs:
         with:
           name: vscode-ext
           path: |
-            ./even-better-toml-*.vsix
+            ./editors/vscode/even-better-toml-0.20.0.vsix
           retention-days: 1

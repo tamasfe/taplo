@@ -46,11 +46,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/release-taplo-0')
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v1
       - name: Publish to Crates.io
         uses: nick-fields/retry@v2
@@ -69,11 +66,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v1
       - name: Publish to Crates.io
         uses: nick-fields/retry@v2
@@ -92,11 +86,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/release-taplo-common-0')
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v1
       - name: Publish to Crates.io
         uses: nick-fields/retry@v2
@@ -115,11 +106,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/release-taplo-lsp-0')
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v1
       - name: Publish to Crates.io
         uses: nick-fields/retry@v2
@@ -138,11 +126,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/release-lsp-async-stub-0')
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v1
       - name: Publish to Crates.io
         uses: nick-fields/retry@v2
@@ -165,12 +150,10 @@ jobs:
         with:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
       - name: Publish to NPM
         uses: nick-fields/retry@v2
@@ -193,12 +176,10 @@ jobs:
         with:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
       - name: Build Core
         working-directory: js/core
@@ -224,12 +205,10 @@ jobs:
         with:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
       - name: Build Core
         working-directory: js/core
@@ -255,12 +234,10 @@ jobs:
         with:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
       - name: Build Core
         working-directory: js/core
@@ -492,11 +469,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
       - uses: Swatinem/rust-cache@v1
       - name: Install Node.js
         uses: actions/setup-node@v4

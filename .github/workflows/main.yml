@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: lts/*
 
+      - name: Install yarn
+        run: corepack enable
+
       - name: Extension NPM Install
         run: yarn
         working-directory: editors/vscode
@@ -29,7 +32,7 @@ jobs:
         run: npm install -g @vscode/vsce
 
       - name: Package Extension
-        run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode
+        run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode --no-yarn
         working-directory: editors/vscode
 
       - name: Upload artefact

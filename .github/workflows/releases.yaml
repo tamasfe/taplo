@@ -484,7 +484,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install latest Rust toolchain
-        run: rustup update --no-self-update
+        run: |
+          rustup update --no-self-update
       - uses: Swatinem/rust-cache@v2
       - name: Install Node.js
         uses: actions/setup-node@v4

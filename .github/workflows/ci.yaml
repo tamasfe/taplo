@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install latest Rust toolchain
         run: rustup update --no-self-update
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Test Taplo
         run: |
           cargo test -p taplo
@@ -52,7 +52,7 @@ jobs:
         run: |
           rustup update --no-self-update
           rustup target add wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - working-directory: crates/taplo-wasm
         run: cargo check --target wasm32-unknown-unknown
 
@@ -64,7 +64,7 @@ jobs:
       - name: Install latest Rust toolchain
         run: |
           rustup update --no-self-update
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Retrieve toml-test
         run: |
           wget https://github.com/BurntSushi/toml-test/releases/download/v1.1.0/toml-test-v1.1.0-linux-amd64.gz
@@ -85,7 +85,7 @@ jobs:
         run: |
           rustup update --no-self-update
           rustup default 1.67
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Test crates
         run: |
           cargo +1.67 check -p lsp-async-stub -p taplo-common -p taplo-lsp -p taplo
@@ -101,7 +101,7 @@ jobs:
           rustup update --no-self-update
           rustup default 1.74
           rustup target install wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Test taplo-cli
         run: |
           cargo +1.74 check -p taplo-cli

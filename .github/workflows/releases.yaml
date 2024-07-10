@@ -53,7 +53,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
         uses: nick-fields/retry@v2
         if: github.event_name == 'push'
@@ -77,7 +77,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
         uses: nick-fields/retry@v2
         if: github.event_name == 'push'
@@ -101,7 +101,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
         uses: nick-fields/retry@v2
         if: github.event_name == 'push'
@@ -125,7 +125,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
         uses: nick-fields/retry@v2
         if: github.event_name == 'push'
@@ -149,7 +149,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
         uses: nick-fields/retry@v2
         if: github.event_name == 'push'
@@ -178,7 +178,7 @@ jobs:
           profile: minimal
           toolchain: stable
           target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to NPM
         uses: nick-fields/retry@v2
         if: github.event_name == 'push'
@@ -207,7 +207,7 @@ jobs:
           profile: minimal
           toolchain: stable
           target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Build Core
         working-directory: js/core
         run: yarn install && yarn build
@@ -239,7 +239,7 @@ jobs:
           profile: minimal
           toolchain: stable
           target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Build Core
         working-directory: js/core
         run: yarn install && yarn build
@@ -271,7 +271,7 @@ jobs:
           profile: minimal
           toolchain: stable
           target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Build Core
         working-directory: js/core
         run: yarn install && yarn build
@@ -511,7 +511,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:

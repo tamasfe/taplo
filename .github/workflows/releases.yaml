@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - release-*
+  pull_request:
   workflow_dispatch:
 
 # TODO: github doesn't support regex matching in if expressions for some reason,
@@ -15,7 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Wait for CI
-        uses: lewagon/wait-on-check-action@v1.0.0
+        uses: lewagon/wait-on-check-action@v1.3.4
+        if: github.event_name != 'pull_request'
         with:
           ref: ${{ github.ref }}
           check-name: "Test on Rust stable"
@@ -43,17 +45,15 @@ jobs:
     name: Cargo publish taplo
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
+        if: github.event_name == 'push'
         with:
           max_attempts: 3
           retry_wait_seconds: 300
@@ -66,17 +66,15 @@ jobs:
     name: Cargo publish taplo-cli
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
+        if: github.event_name == 'push'
         with:
           max_attempts: 3
           retry_wait_seconds: 300
@@ -89,17 +87,15 @@ jobs:
     name: Cargo publish taplo-common
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo-common-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-common-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
+        if: github.event_name == 'push'
         with:
           max_attempts: 3
           retry_wait_seconds: 300
@@ -112,17 +108,15 @@ jobs:
     name: Cargo publish taplo-lsp
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo-lsp-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-lsp-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
+        if: github.event_name == 'push'
         with:
           max_attempts: 3
           retry_wait_seconds: 300
@@ -135,17 +129,15 @@ jobs:
     name: Cargo publish lsp-async-stub
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-lsp-async-stub-0')
+    if: startsWith(github.ref, 'refs/tags/release-lsp-async-stub-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
+        if: github.event_name == 'push'
         with:
           max_attempts: 3
           retry_wait_seconds: 300
@@ -158,22 +150,21 @@ jobs:
     name: NPM publish @taplo/core
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo__core-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo__core-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
       - name: Publish to NPM
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
+        if: github.event_name == 'push'
         with:
           max_attempts: 3
           retry_wait_seconds: 300
@@ -186,25 +177,24 @@ jobs:
     name: NPM publish @taplo/cli
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo__cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo__cli-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
       - name: Build Core
         working-directory: js/core
         run: yarn install && yarn build
       - name: Publish to NPM
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
+        if: github.event_name == 'push'
         with:
           max_attempts: 3
           retry_wait_seconds: 300
@@ -217,25 +207,24 @@ jobs:
     name: NPM publish @taplo/lsp
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo__lsp-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo__lsp-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
       - name: Build Core
         working-directory: js/core
         run: yarn install && yarn build
       - name: Publish to NPM
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
+        if: github.event_name == 'push'
         with:
           max_attempts: 3
           retry_wait_seconds: 300
@@ -248,25 +237,24 @@ jobs:
     name: NPM publish @taplo/lib
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo__lib-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo__lib-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
       - name: Build Core
         working-directory: js/core
         run: yarn install && yarn build
       - name: Publish to NPM
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
+        if: github.event_name == 'push'
         with:
           max_attempts: 3
           retry_wait_seconds: 300
@@ -278,14 +266,14 @@ jobs:
   cli_docker:
     runs-on: ubuntu-latest
     needs: ["wait_for_ci", "get_version"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     strategy:
       matrix:
         image:
           - file: docker/cli-alpine.Dockerfile
-            tags: tamasfe/taplo:latest,tamasfe/taplo:${{ needs.get_version.outputs.cli }},tamasfe/taplo:${{ needs.get_version.outputs.cli }}-alpine
+            tags: tamasfe/taplo:latest,tamasfe/taplo:${{ needs.get_version.outputs.cli || 'dev' }},tamasfe/taplo:${{ needs.get_version.outputs.cli || 'dev' }}-alpine
           - file: docker/cli-full-alpine.Dockerfile
-            tags: tamasfe/taplo:full,tamasfe/taplo:${{ needs.get_version.outputs.cli }}-full,tamasfe/taplo:${{ needs.get_version.outputs.cli }}-full-alpine
+            tags: tamasfe/taplo:full,tamasfe/taplo:${{ needs.get_version.outputs.cli || 'dev' }}-full,tamasfe/taplo:${{ needs.get_version.outputs.cli || 'dev' }}-full-alpine
     steps:
       - uses: actions/checkout@v4
       - name: Set up QEMU
@@ -294,6 +282,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
       - name: Login to DockerHub
         uses: docker/login-action@v2
+        if: ${{ github.event_name == 'push' }}
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -303,14 +292,14 @@ jobs:
           file: ${{ matrix.image.file }}
           context: .
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ github.event_name == 'push' }}
           tags: ${{ matrix.image.tags }}
 
   build_cli_windows:
     name: ${{ matrix.triple }}
     runs-on: windows-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     strategy:
       fail-fast: false
       matrix:
@@ -357,7 +346,7 @@ jobs:
     name: ${{ matrix.triple }}
     runs-on: ubuntu-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     env:
       CROSS_SYSROOT: /mnt/alpine-${{ matrix.platform }}
       PACKAGES: >
@@ -435,9 +424,9 @@ jobs:
 
   build_cli_macos:
     name: ${{ matrix.triple }}
-    runs-on: macos-11
+    runs-on: macos-latest
     needs: ["wait_for_ci"]
-    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     strategy:
       fail-fast: false
       matrix:
@@ -482,37 +471,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v3
-      - run: |
+      - name: Create GitHub release
+        if: github.event_name == 'push'
+        run: |
           gh release create --draft ${{ needs.get_version.outputs.cli }} --title "Taplo CLI ${{ needs.get_version.outputs.cli }}" --target $GITHUB_SHA taplo-windows-*/* taplo-macos-*/* taplo-linux-*/*
 
   publish_vscode_extension:
     name: Publish VSCode Extension
     needs: ["wait_for_ci", "get_version"]
-    if: startsWith(github.ref, 'refs/tags/release-even-better-toml-')
+    if: startsWith(github.ref, 'refs/tags/release-even-better-toml-') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
+      - uses: Swatinem/rust-cache@v2
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
+      - name: Enable latest yarn
+        run: corepack enable
+        working-directory: editors/vscode
       - name: Extension NPM Install
         run: yarn
         working-directory: editors/vscode
       - name: Install vsce
-        run: npm install -g vsce
+        run: npm install -g @vscode/vsce
       - name: Package Extension
-        run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode
+        run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode --no-yarn # Microsoft doesn't support anything other than npm and yarn@v1
         working-directory: editors/vscode
-        env:
-          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
       - name: Publish extension to microsoft marketplace
+        if: github.event_name == 'push'
         run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode -p $VSCE_TOKEN
         working-directory: editors/vscode
         env:
@@ -520,6 +510,7 @@ jobs:
       - name: Install ovsx
         run: npm install -g ovsx
       - name: Publish Open VSX Extension
+        if: github.event_name == 'push'
         run: ovsx publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode -p $OPEN_VSX_TOKEN "even-better-toml-${{ needs.get_version.outputs.vscode-ext }}.vsix"
         working-directory: editors/vscode
         env:

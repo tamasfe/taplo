@@ -334,7 +334,7 @@ jobs:
           $file.CopyTo($compressor)
           $compressor.Close()
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: taplo-windows-${{ matrix.platform }}
           path: |
@@ -415,7 +415,7 @@ jobs:
           cargo build --verbose --release --bin taplo --features toml-test,lsp
           gzip -c ./target/${{ matrix.triple }}/release/taplo > ./taplo-full-linux-${{ matrix.platform }}.gz
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: taplo-linux-${{ matrix.platform }}
           path: |
@@ -451,7 +451,7 @@ jobs:
           cargo build --verbose --release --bins --target ${{ matrix.triple }} --features toml-test,lsp
           gzip -c ./target/${{ matrix.triple }}/release/taplo > ./taplo-full-darwin-${{ matrix.platform }}.gz
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: taplo-macos-${{ matrix.platform }}
           path: |
@@ -470,7 +470,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
       - name: Create GitHub release
         if: github.event_name == 'push'
         run: |

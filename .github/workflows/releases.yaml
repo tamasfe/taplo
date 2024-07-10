@@ -52,7 +52,7 @@ jobs:
         run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         if: github.event_name == 'push'
         with:
           max_attempts: 3
@@ -73,7 +73,7 @@ jobs:
         run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         if: github.event_name == 'push'
         with:
           max_attempts: 3
@@ -94,7 +94,7 @@ jobs:
         run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         if: github.event_name == 'push'
         with:
           max_attempts: 3
@@ -115,7 +115,7 @@ jobs:
         run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         if: github.event_name == 'push'
         with:
           max_attempts: 3
@@ -136,7 +136,7 @@ jobs:
         run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v2
       - name: Publish to Crates.io
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         if: github.event_name == 'push'
         with:
           max_attempts: 3
@@ -163,7 +163,7 @@ jobs:
           rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - name: Publish to NPM
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         if: github.event_name == 'push'
         with:
           max_attempts: 3
@@ -193,7 +193,7 @@ jobs:
         working-directory: js/core
         run: yarn install && yarn build
       - name: Publish to NPM
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         if: github.event_name == 'push'
         with:
           max_attempts: 3
@@ -223,7 +223,7 @@ jobs:
         working-directory: js/core
         run: yarn install && yarn build
       - name: Publish to NPM
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         if: github.event_name == 'push'
         with:
           max_attempts: 3
@@ -253,7 +253,7 @@ jobs:
         working-directory: js/core
         run: yarn install && yarn build
       - name: Publish to NPM
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         if: github.event_name == 'push'
         with:
           max_attempts: 3

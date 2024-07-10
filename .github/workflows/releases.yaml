@@ -523,7 +523,7 @@ jobs:
         run: yarn
         working-directory: editors/vscode
       - name: Install vsce
-        run: npm install -g vsce
+        run: npm install -g @vscode/vsce
       - name: Package Extension
         run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode --no-yarn # Microsoft doesn't support anything other than npm and yarn@v1
         working-directory: editors/vscode

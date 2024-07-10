@@ -503,7 +503,7 @@ jobs:
         working-directory: editors/vscode
       - name: Publish extension to microsoft marketplace
         if: github.event_name == 'push'
-        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode -p $VSCE_TOKEN
+        run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode -p $VSCE_TOKEN --no-yarn
         working-directory: editors/vscode
         env:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}

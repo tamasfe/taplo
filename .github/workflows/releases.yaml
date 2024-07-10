@@ -515,6 +515,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
+      - name: Enable latest yarn
+        run: corepack enable
+        working-directory: editors/vscode
       - name: Extension NPM Install
         run: yarn
         working-directory: editors/vscode

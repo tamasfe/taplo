@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Wait for CI
-        uses: lewagon/wait-on-check-action@v1.0.0
+        uses: lewagon/wait-on-check-action@v1.3.4
         if: github.event_name != 'pull_request'
         with:
           ref: ${{ github.ref }}

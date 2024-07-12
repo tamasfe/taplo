@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.9.2
+
+This is a re-release of 0.9.1
+
 ## 0.9.1
 
 ### Fixes

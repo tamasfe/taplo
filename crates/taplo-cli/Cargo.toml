@@ -19,6 +19,10 @@ rustls-tls = ["taplo-common/rustls-tls"]
 toml-test  = []
 
 [dependencies]
+taplo        = { path = "../taplo", features = ["serde"] }
+taplo-common = { path = "../taplo-common" }
+taplo-lsp    = { path = "../taplo-lsp", default-features = false, optional = true }
+
 anyhow             = { workspace = true, features = ["backtrace"] }
 async-ctrlc        = { version = "1.2.0", features = ["stream"], optional = true }
 clap               = { version = "4.5.8", features = ["derive", "cargo", "env"] }
@@ -33,9 +37,6 @@ reqwest            = { workspace = true, features = ["json"] }
 schemars           = { workspace = true }
 serde              = { workspace = true }
 serde_json         = { workspace = true }
-taplo              = { version = "0.13.2", path = "../taplo", features = ["serde"] }
-taplo-common       = { version = "0.5.5", path = "../taplo-common" }
-taplo-lsp          = { version = "0.7.2", path = "../taplo-lsp", default-features = false, optional = true }
 time               = { workspace = true, features = ["parsing"] }
 toml               = { workspace = true }
 tracing            = { workspace = true }

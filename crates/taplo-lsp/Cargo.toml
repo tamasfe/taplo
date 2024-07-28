@@ -29,7 +29,7 @@ figment     = { version = "0.10.6", features = ["json"] }
 futures     = { workspace = true }
 indexmap    = { workspace = true, features = ["serde"] }
 itertools   = { workspace = true }
-lsp-types   = { version = "0.93.0", features = ["proposed"] }
+lsp-types   = { version = "0.95.0", features = ["proposed"] }
 once_cell   = { workspace = true }
 parking_lot = { workspace = true }
 regex       = { workspace = true }

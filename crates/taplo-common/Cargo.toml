@@ -12,6 +12,8 @@ version      = "0.5.2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+taplo = { path = "../taplo", features = ["schema"] }
+
 ahash              = { workspace = true, features = ["serde"] }
 anyhow             = { workspace = true, features = ["backtrace"] }
 arc-swap           = { workspace = true }
@@ -37,7 +39,6 @@ serde              = { version = "1", features = ["derive"] }
 serde_json         = { workspace = true, features = ["preserve_order"] }
 sha1               = { workspace = true }
 tap                = { workspace = true }
-taplo              = { version = "0.13.2", path = "../taplo", features = ["schema"] }
 thiserror          = { workspace = true }
 time               = { workspace = true, features = ["serde"] }
 tracing            = { workspace = true }

@@ -12,10 +12,10 @@ repository   = { workspace = true }
 rust-version = "1.74"
 
 [features]
-default    = ["rustls-tls"]
+default    = ["rustls-tls", "lsp", "toml-test"]
 lsp        = ["taplo-lsp", "async-ctrlc"]
-native-tls = ["taplo-common/native-tls"]
-rustls-tls = ["taplo-common/rustls-tls"]
+native-tls = ["taplo-common/native-tls", "taplo-lsp?/native-tls"]
+rustls-tls = ["taplo-common/rustls-tls", "taplo-lsp?/rustls-tls"]
 toml-test  = []
 
 [dependencies]

@@ -288,16 +288,11 @@ jobs:
       - name: Build taplo
         run: |
           cargo build --verbose --release --bin taplo --target ${{ matrix.triple }}
-          Compress-Archive -Path ./target/${{ matrix.triple }}/release/taplo.exe -DestinationPath ./taplo-windows-${{ matrix.platform }}.zip
-
-      - name: Build taplo-full
-        run: |
-          cargo build --verbose --release --bin taplo --target ${{ matrix.triple }} --features toml-test,lsp
           # zip
-          Compress-Archive -Path ./target/${{ matrix.triple }}/release/taplo.exe -DestinationPath ./taplo-full-windows-${{ matrix.platform }}.zip
+          Compress-Archive -Path ./target/${{ matrix.triple }}/release/taplo.exe -DestinationPath ./taplo-windows-${{ matrix.platform }}.zip
           # gzip
           $file = [System.IO.File]::Open('.\target\${{ matrix.triple }}\release\taplo.exe', [System.IO.FileMode]::Open)
-          $archive = [System.IO.File]::Create('.\taplo-full-windows-${{ matrix.platform }}.gz')
+          $archive = [System.IO.File]::Create('.\taplo-windows-${{ matrix.platform }}.gz')
           $compressor = [System.IO.Compression.GZipStream]::new($archive, [System.IO.Compression.CompressionMode]::Compress)
           $file.CopyTo($compressor)
           $compressor.Close()
@@ -374,11 +369,6 @@ jobs:
         run: |
           cargo build --verbose --release --bins --target ${{ matrix.triple }}
           gzip -c ./target/${{ matrix.triple }}/release/taplo > ./taplo-darwin-${{ matrix.platform }}.gz
-
-      - name: Build taplo-full
-        run: |
-          cargo build --verbose --release --bins --target ${{ matrix.triple }} --features toml-test,lsp
-          gzip -c ./target/${{ matrix.triple }}/release/taplo > ./taplo-full-darwin-${{ matrix.platform }}.gz
 
       - uses: actions/upload-artifact@v4
         with:

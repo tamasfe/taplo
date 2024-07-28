@@ -48,7 +48,7 @@ async-ctrlc    = { version = "1.2.0", features = ["stream"], optional = true }
 atty           = { version = "0.2.14" }
 lsp-async-stub = { path = "../lsp-async-stub", features = ["tokio-tcp", "tokio-stdio"] }
 # `prettydiff` is also a CLI that pulls in `clap` by default
-prettydiff = { version = "0.6.1", default-features = false }
+prettydiff = { version = "0.7.0", default-features = false }
 tokio      = { workspace = true, features = ["sync", "fs", "time", "io-std", "rt-multi-thread", "parking_lot"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

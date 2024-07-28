@@ -28,7 +28,7 @@ lsp-types          = { version = "0.93.0" }
 once_cell          = { version = "1.4" }
 parking_lot        = { version = "0.12.0" }
 regex              = { version = "1.5" }
-reqwest            = { version = "0.11.9", default-features = false }
+reqwest            = { version = "0.12.5", default-features = false }
 rowan              = { version = "0.15.3" }
 schemars           = { version = "0.8.3" }
 serde              = { version = "1" }

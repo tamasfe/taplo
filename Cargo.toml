@@ -38,7 +38,7 @@ tap                = { version = "1.0.1" }
 thiserror          = { version = "1.0.30" }
 time               = { version = "0.3.7" }
 tokio              = { version = "1.24.2", default-features = false }
-toml               = { version = "0.7" }
+toml               = { version = "0.8.16" }
 tracing            = { version = "0.1.30" }
 tracing-subscriber = { version = "0.3.7" }
 url                = { version = "2.2.2" }

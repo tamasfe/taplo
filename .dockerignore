@@ -1,1 +1,5 @@
 target
+docker
+.github
+.vscode
+.lapce

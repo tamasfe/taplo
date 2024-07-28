@@ -970,8 +970,6 @@ checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
 dependencies = [
  "autocfg",
  "hashbrown 0.12.3",
- "rayon",
- "serde",
 ]
 
 [[package]]
@@ -982,6 +980,8 @@ checksum = "168fb715dda47215e360912c096649d23d58bf392ac62f73919e831745e40f26"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.5",
+ "rayon",
+ "serde",
 ]
 
 [[package]]
@@ -2265,7 +2265,7 @@ dependencies = [
  "glob",
  "globset",
  "hex",
- "indexmap 1.9.3",
+ "indexmap 2.2.6",
  "itertools 0.13.0",
  "json_value_merge",
  "jsonschema",
@@ -2298,7 +2298,7 @@ dependencies = [
  "either",
  "figment",
  "futures",
- "indexmap 1.9.3",
+ "indexmap 2.2.6",
  "itertools 0.13.0",
  "lsp-async-stub",
  "lsp-types",

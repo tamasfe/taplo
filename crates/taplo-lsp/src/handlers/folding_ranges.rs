@@ -78,6 +78,7 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                                     .line as u32,
                                 end_character: None,
                                 kind: Some(FoldingRangeKind::Region),
+                                collapsed_text: None,
                             });
 
                             false
@@ -125,6 +126,7 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                                             end_line: end.line as u32,
                                             end_character: Some(end.character as u32),
                                             kind: Some(FoldingRangeKind::Region),
+                                            collapsed_text: None,
                                         });
                                     }
                                 }
@@ -147,6 +149,7 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                                             end_line: end.line as u32,
                                             end_character: Some(end.character as u32),
                                             kind: Some(FoldingRangeKind::Region),
+                                            collapsed_text: None,
                                         });
                                     }
                                 }
@@ -186,6 +189,7 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                 end_line: mapper.position(last_comment.unwrap().start()).unwrap().line as u32,
                 end_character: None,
                 kind: Some(FoldingRangeKind::Comment),
+                collapsed_text: None,
             });
             comments_start = None;
             last_comment = None;
@@ -203,6 +207,7 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                     .line as u32,
                 end_character: None,
                 kind: Some(FoldingRangeKind::Region),
+                collapsed_text: None,
             });
         }
     }
@@ -215,6 +220,7 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
                 end_line: mapper.position(l.start()).unwrap().line as u32,
                 end_character: None,
                 kind: Some(FoldingRangeKind::Comment),
+                collapsed_text: None,
             });
         }
     }

@@ -22,7 +22,7 @@ hex = "0.4.3"
 indexmap = { version = "2.2.6", features = ["serde", "rayon"] }
 itertools = "0.13.0"
 json_value_merge = "2.0.0"
-jsonschema = { version = "0.17.1", default-features = false }
+jsonschema = { version = "0.18.0", default-features = false }
 lru = "0.12.3"
 parking_lot = "0.12.0"
 percent-encoding = "2.1.0"

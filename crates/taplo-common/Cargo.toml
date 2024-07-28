@@ -28,7 +28,7 @@ indexmap           = { workspace = true, features = ["serde", "rayon"] }
 itertools          = { workspace = true }
 json_value_merge   = { version = "2.0.0" }
 jsonschema         = { version = "0.17.1", default-features = false }
-lru                = { version = "0.11.1" }
+lru                = { version = "0.12.3" }
 parking_lot        = { workspace = true }
 percent-encoding   = { version = "2.1.0" }
 regex              = { workspace = true }

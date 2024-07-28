@@ -30,7 +30,7 @@ lsp-types      = { version = "0.93.0", features = ["proposed"] }
 once_cell      = { workspace = true }
 parking_lot    = { workspace = true }
 regex          = { workspace = true }
-reqwest        = { version = "0.11.9", default-features = false, features = ["json"] }
+reqwest        = { workspace = true, features = ["json"] }
 schemars       = { workspace = true }
 serde          = { workspace = true, features = ["derive"] }
 serde_json     = { workspace = true, features = ["preserve_order"] }

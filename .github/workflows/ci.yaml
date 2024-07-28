@@ -96,7 +96,7 @@ jobs:
       - name: Install latest Rust toolchain
         run: |
           rustup update --no-self-update
-          rustup default 1.70
+          rustup default 1.77
       - uses: Swatinem/rust-cache@v2
       - name: Test MSRV for taplo
         run: |
@@ -111,7 +111,7 @@ jobs:
       - name: Install latest Rust toolchain
         run: |
           rustup update --no-self-update
-          rustup default 1.70
+          rustup default 1.77
       - uses: Swatinem/rust-cache@v2
       - name: Test taplo-cli
         run: |

@@ -9,8 +9,8 @@ use jsonschema::{error::ValidationErrorKind, JSONSchema, SchemaResolver, Validat
 use parking_lot::Mutex;
 use regex::Regex;
 use serde_json::Value;
-use std::{borrow::Cow, sync::Arc};
 use std::num::NonZero;
+use std::{borrow::Cow, sync::Arc};
 use taplo::dom::{self, node::Key, KeyOrIndex, Keys};
 use thiserror::Error;
 use tokio::sync::Semaphore;

@@ -1,4 +1,4 @@
-use clap::{crate_version, ValueEnum, Args, Parser, Subcommand};
+use clap::{crate_version, Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 use url::Url;
 

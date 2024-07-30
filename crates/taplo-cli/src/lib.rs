@@ -175,7 +175,9 @@ impl<E: Environment> Taplo<E> {
                 if entry.path() == cwd {
                     None
                 } else {
-                    Some(entry.path().to_path_buf())
+                    let p = entry.path().to_path_buf();
+                    tracing::debug!("Path passed filters: {}", p.display());
+                    Some(p)
                 }
             },
         )))

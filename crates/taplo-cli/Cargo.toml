@@ -2,7 +2,7 @@
 name         = "taplo-cli"
 description  = "A CLI for Taplo TOML toolkit"
 version      = "0.9.3"
-rust-version = "1.74"
+rust-version = "1.70"
 categories   = ["development-tools", "command-line-utilities"]
 keywords     = ["toml", "linter", "formatter"]
 authors      = { workspace = true }

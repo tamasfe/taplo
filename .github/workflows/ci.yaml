@@ -84,17 +84,12 @@ jobs:
       - name: Install latest Rust toolchain
         run: |
           rustup update --no-self-update
-          rustup default 1.67
-          rustup toolchain add 1.70
+          rustup default 1.70
       - uses: Swatinem/rust-cache@v2
-      - name: Test MSRV for lsp-async-stub/taplo-common/taplo-lsp
-        run: |
-          cargo +1.67 check -p lsp-async-stub -p taplo-common -p taplo-lsp
-          cargo +1.67 test  -p lsp-async-stub -p taplo-common -p taplo-lsp
       - name: Test MSRV for taplo
         run: |
-          cargo +1.70 check -p taplo-common -p taplo-lsp
-          cargo +1.70 test  -p taplo-common -p taplo-lsp
+          cargo check -p lsp-async-stub -p taplo-common -p taplo-lsp -p taplo
+          cargo test  -p lsp-async-stub -p taplo-common -p taplo-lsp -p taplo
 
   test-msrv-bin:
     name: Test binaries with MSRV
@@ -104,14 +99,25 @@ jobs:
       - name: Install latest Rust toolchain
         run: |
           rustup update --no-self-update
-          rustup default 1.74
-          rustup target install wasm32-unknown-unknown
+          rustup default 1.70
       - uses: Swatinem/rust-cache@v2
       - name: Test taplo-cli
         run: |
-          cargo +1.74 check -p taplo-cli
-          cargo +1.74 test -p taplo-cli
+          cargo check -p taplo-cli
+          cargo test  -p taplo-cli
+
+  test-msrv-wasm:
+    name: Test WASM with MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup default 1.74
+          rustup target install wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
       - name: Test taplo-wasm
         working-directory: crates/taplo-wasm
         run: |
-          cargo +1.74 check
+          cargo check

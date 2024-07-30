@@ -1,15 +1,15 @@
 [package]
-authors      = { workspace = true }
-categories   = ["development-tools", "command-line-utilities"]
+name         = "taplo-cli"
 description  = "A CLI for Taplo TOML toolkit"
+version      = "0.9.3"
+rust-version = "1.74"
+categories   = ["development-tools", "command-line-utilities"]
+keywords     = ["toml", "linter", "formatter"]
+authors      = { workspace = true }
 edition      = { workspace = true }
 homepage     = { workspace = true }
-keywords     = ["toml", "linter", "formatter"]
 license      = { workspace = true }
-name         = "taplo-cli"
-version      = "0.9.3"
 repository   = { workspace = true }
-rust-version = "1.74"
 
 [features]
 default    = ["rustls-tls", "lsp", "toml-test"]
@@ -24,7 +24,7 @@ taplo-common = { path = "../taplo-common" }
 taplo-lsp    = { path = "../taplo-lsp", default-features = false, optional = true }
 
 anyhow             = { workspace = true, features = ["backtrace"] }
-clap               = { version = "4.5.8", features = ["derive", "cargo", "env"] }
+clap               = { version = "4", features = ["derive", "cargo", "env"] }
 codespan-reporting = { version = "0.11.1" }
 futures            = { workspace = true }
 glob               = { workspace = true }
@@ -43,34 +43,16 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 url                = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-async-ctrlc        = { version = "1.2.0", features = ["stream"], optional = true }
-ansi_term = "0.12"
-atty = "0.2.14"
-lsp-async-stub = { version = "0.6.0", path = "../lsp-async-stub", features = [
-  "tokio-tcp",
-  "tokio-stdio",
-] }
+ansi_term      = { version = "0.12" }
+async-ctrlc    = { version = "1.2.0", features = ["stream"], optional = true }
+atty           = { version = "0.2.14" }
+lsp-async-stub = { path = "../lsp-async-stub", features = ["tokio-tcp", "tokio-stdio"] }
 # `prettydiff` is also a CLI that pulls in `clap` by default
 prettydiff = { version = "0.6.1", default-features = false }
-tokio = { version = "1.24.2", features = [
-  "sync",
-  "fs",
-  "time",
-  "io-std",
-  "rt-multi-thread",
-  "parking_lot",
-], default-features = false }
-lsp-async-stub = { version = "0.6.4", path = "../lsp-async-stub", features = [
-  "tokio-tcp",
-  "tokio-stdio",
-] }
+tokio      = { workspace = true, features = ["sync", "fs", "time", "io-std", "rt-multi-thread", "parking_lot"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-tokio = { version = "1.24.2", features = [
-  "sync",
-  "parking_lot",
-  "io-util",
-], default-features = false }
+tokio = { workspace = true, features = ["sync", "parking_lot", "io-util"] }
 
 [package.metadata.auto-tag]
 enabled = true

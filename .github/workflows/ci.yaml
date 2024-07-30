@@ -85,11 +85,16 @@ jobs:
         run: |
           rustup update --no-self-update
           rustup default 1.67
+          rustup toolchain add 1.70
       - uses: Swatinem/rust-cache@v2
-      - name: Test crates
+      - name: Test MSRV for lsp-async-stub/taplo-common/taplo-lsp
         run: |
-          cargo +1.67 check -p lsp-async-stub -p taplo-common -p taplo-lsp -p taplo
-          cargo +1.67 test -p lsp-async-stub -p taplo-common -p taplo-lsp -p taplo
+          cargo +1.67 check -p lsp-async-stub -p taplo-common -p taplo-lsp
+          cargo +1.67 test  -p lsp-async-stub -p taplo-common -p taplo-lsp
+      - name: Test MSRV for taplo
+        run: |
+          cargo +1.70 check -p taplo-common -p taplo-lsp
+          cargo +1.70 test  -p taplo-common -p taplo-lsp
 
   test-msrv-bin:
     name: Test binaries with MSRV
@@ -110,4 +115,3 @@ jobs:
         working-directory: crates/taplo-wasm
         run: |
           cargo +1.74 check
-

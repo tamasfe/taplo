@@ -1,9 +1,9 @@
 [package]
-edition    = "2021"
 name       = "taplo-wasm"
+version    = "0.2.1"
+edition    = "2021"
 publish    = false
 repository = "https://github.com/tamasfe/taplo"
-version    = "0.2.1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,11 +11,11 @@ version    = "0.2.1"
 crate-type = ["cdylib"]
 
 [dependencies]
-lsp-async-stub           = { path = "../lsp-async-stub" }
-taplo                    = { path = "../taplo" }
-taplo-cli                = { path = "../taplo-cli", optional = true, default-features = false }
-taplo-common             = { path = "../taplo-common", default-features = false, features = ["rustls-tls"] }
-taplo-lsp                = { path = "../taplo-lsp", optional = true, default-features = false }
+lsp-async-stub = { path = "../lsp-async-stub" }
+taplo          = { path = "../taplo" }
+taplo-cli      = { path = "../taplo-cli", optional = true, default-features = false }
+taplo-common   = { path = "../taplo-common", default-features = false, features = ["rustls-tls"] }
+taplo-lsp      = { path = "../taplo-lsp", optional = true, default-features = false }
 
 anyhow                   = { version = "1.0.57" }
 async-trait              = { version = "0.1.56" }

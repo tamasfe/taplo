@@ -1,16 +1,16 @@
 [package]
-authors      = { workspace = true }
-categories   = ["parser-implementations", "parsing"]
+name         = "taplo"
 description  = "A TOML parser, analyzer and formatter library"
+version      = "0.13.2"
+rust-version = "1.70"                                          # clap 4.4 = MSRV 1.70, clap 4.5 = MSRV 1.74
+categories   = ["parser-implementations", "parsing"]
+keywords     = ["toml", "parser", "formatter", "linter"]
+readme       = false
+authors      = { workspace = true }
 edition      = { workspace = true }
 homepage     = { workspace = true }
-keywords     = ["toml", "parser", "formatter", "linter"]
 license      = { workspace = true }
-name         = "taplo"
-readme       = false
 repository   = { workspace = true }
-rust-version = "1.67"
-version      = "0.13.2"
 
 [features]
 default = ["serde"]
@@ -35,9 +35,9 @@ serde    = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]
 assert-json-diff = { version = "2" }
-criterion        = { version = "0.5" }
+criterion        = { version = "0.5" }                                          # criterion -> clap
 difference       = { version = "2.0.0" }
-pprof            = { version = "0.13", features = ["flamegraph", "criterion"] }
+pprof            = { version = "0.13", features = ["flamegraph", "criterion"] } # pprof -> criterion -> clap
 serde_json       = { version = "1" }
 toml             = { version = "0.7" }
 

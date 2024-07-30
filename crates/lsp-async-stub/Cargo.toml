@@ -1,13 +1,13 @@
 [package]
-authors      = { workspace = true }
+name         = "lsp-async-stub"
 description  = "An LSP server stub for futures"
+version      = "0.6.4"
+rust-version = "1.67"
+authors      = { workspace = true }
 edition      = { workspace = true }
 homepage     = { workspace = true }
 license      = { workspace = true }
-name         = "lsp-async-stub"
 repository   = { workspace = true }
-rust-version = "1.65"
-version      = "0.6.4"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,24 +15,18 @@ version      = "0.6.4"
 anyhow      = { workspace = true }
 async-trait = { workspace = true }
 futures     = { workspace = true }
-getrandom   = { version = "0.2", features = ["wasm-bindgen", "js"] }
-lsp-types   = { version = "0.93.0" }
+getrandom   = { workspace = true, features = ["wasm-bindgen", "js"] }
+lsp-types   = { workspace = true }
 rowan       = { workspace = true }
 serde       = { workspace = true, features = ["derive"] }
 serde_json  = { workspace = true }
-tokio       = { version = "1.24.2", default-features = false, optional = true }
+tokio       = { workspace = true, optional = true }
 tracing     = { workspace = true }
 
 [features]
-default = []
-tokio-stdio = [
-  "tokio",
-  "tokio/rt",
-  "tokio/io-util",
-  "tokio/io-std",
-  "tokio/macros",
-]
-tokio-tcp = ["tokio", "tokio/rt", "tokio/io-util", "tokio/net", "tokio/macros"]
+default     = []
+tokio-stdio = ["tokio", "tokio/rt", "tokio/io-util", "tokio/io-std", "tokio/macros"]
+tokio-tcp   = ["tokio", "tokio/rt", "tokio/io-util", "tokio/net", "tokio/macros"]
 
 [package.metadata.auto-tag]
 enabled = true

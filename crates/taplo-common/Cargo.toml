@@ -1,13 +1,13 @@
 [package]
-authors      = { workspace = true }
+name         = "taplo-common"
 description  = "Shared code for taplo utilities."
+version      = "0.5.2"
+rust-version = "1.67"
+authors      = { workspace = true }
 edition      = { workspace = true }
 homepage     = { workspace = true }
 license      = { workspace = true }
-name         = "taplo-common"
 repository   = { workspace = true }
-rust-version = "1.67"
-version      = "0.5.2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -33,9 +33,9 @@ parking_lot        = { workspace = true }
 percent-encoding   = { version = "2.1.0" }
 regex              = { workspace = true }
 reqwest            = { workspace = true, features = ["json"] }
-schemars           = { version = "0.8.8", features = ["url"] }
+schemars           = { workspace = true, features = ["url"] }
 semver             = { version = "1.0.5", features = ["serde"] }
-serde              = { version = "1", features = ["derive"] }
+serde              = { workspace = true, features = ["derive"] }
 serde_json         = { workspace = true, features = ["preserve_order"] }
 sha1               = { workspace = true }
 tap                = { workspace = true }
@@ -46,20 +46,10 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 url                = { workspace = true, features = ["serde"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.24.2", features = [
-  "sync",
-  "fs",
-  "time",
-  "io-std",
-  "parking_lot",
-] }
+tokio = { workspace = true, features = ["sync", "fs", "time", "io-std", "parking_lot"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-tokio = { version = "1.24.2", features = [
-  "sync",
-  "parking_lot",
-  "io-util",
-], default-features = false }
+tokio = { workspace = true, features = ["sync", "parking_lot", "io-util"] }
 
 [features]
 # default-tls enables native-tls but without enabling native-tls specific features.

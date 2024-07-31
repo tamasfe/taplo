@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.7.2
+
+Re-release of 0.7.1
+
 ## 0.7.1
 
 ### Fixes

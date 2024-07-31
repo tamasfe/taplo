@@ -246,8 +246,9 @@ impl<E: Environment> WorkspaceState<E> {
             };
 
             if let Some(config_path) = config_path {
-                tracing::info!(path = ?config_path, "using config file");
-                self.taplo_config = toml::from_str(str::from_utf8(&env.read_file(&config_path).await?)?)?;
+                tracing::debug!(path = ?config_path, "using config file");
+                self.taplo_config =
+                    toml::from_str(str::from_utf8(&env.read_file(&config_path).await?)?)?;
             }
         }
 

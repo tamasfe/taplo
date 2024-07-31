@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.9.3
+
+### Fixes
+
+- Regression: `[rule.formatting]` completely overrides the default outside of the specified sections ([#634](https://github.com/tamasfe/taplo/issues/634))
+
 ## 0.9.2
 
 This is a re-release of 0.9.1

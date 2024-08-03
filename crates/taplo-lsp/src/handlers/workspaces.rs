@@ -17,7 +17,7 @@ pub async fn workspace_change<E: Environment>(
     let init_config = context.init_config.load();
 
     for removed in p.event.removed {
-        workspaces.remove(&removed.uri);
+        workspaces.swap_remove(&removed.uri);
     }
 
     for added in p.event.added {

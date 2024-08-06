@@ -116,8 +116,8 @@ key4 = -17
 
 # For large numbers, you may use underscores to enhance readability. Each
 # underscore must be surrounded by at least one digit.
-key1 = 1_000 
-key2 = 5_349_221 
+key1 = 1_000
+key2 = 5_349_221
 key3 = 1_2_3_4_5 # valid but inadvisable
 
 ################################################################################
@@ -180,7 +180,7 @@ key3 = 1979-05-27T00:32:00.999999-07:00
 key1 = [1, 2, 3]
 key2 = ["red", "yellow", "green"]
 key3 = [[1, 2], [3, 4, 5]]
-key4 = [[1, 2], ["a", "b", "c"]] # this is ok
+key4 = [[1, 2], ["a", "b", "c"]]  # this is ok
 
 # Arrays can also be multiline. So in addition to ignoring whitespace, arrays
 # also ignore newlines between the brackets.  Terminating commas are ok before

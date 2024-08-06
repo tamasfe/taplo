@@ -49,7 +49,7 @@ impl Cancellation {
     pub fn cancel(&mut self) {
         self.cancelled.store(true, Ordering::SeqCst);
 
-        if let Some(w) = std::mem::replace(&mut *self.waker.lock().unwrap(), None) {
+        if let Some(w) = (*self.waker.lock().unwrap()).take() {
             w.wake();
         }
     }

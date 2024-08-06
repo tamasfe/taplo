@@ -151,7 +151,7 @@ impl<E: Environment> WorkspaceState<E> {
         env: &impl Environment,
     ) -> Result<(), anyhow::Error> {
         if let Err(error) = self
-            .load_config(env, &*context.world().default_config.load())
+            .load_config(env, &context.world().default_config.load())
             .await
         {
             tracing::warn!(%error, "failed to load workspace configuration");
@@ -247,7 +247,8 @@ impl<E: Environment> WorkspaceState<E> {
 
             if let Some(config_path) = config_path {
                 tracing::info!(path = ?config_path, "using config file");
-                self.taplo_config = toml::from_str(str::from_utf8(&env.read_file(&config_path).await?)?)?;
+                self.taplo_config =
+                    toml::from_str(str::from_utf8(&env.read_file(&config_path).await?)?)?;
             }
         }
 

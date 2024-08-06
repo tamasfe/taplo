@@ -1,46 +1,46 @@
 [package]
-authors = ["tamasf97 <tamasf97@outlook.com>"]
-description = "Language server for Taplo"
-edition = "2021"
-name = "taplo-lsp"
-version = "0.7.2"
-license = "MIT"
-homepage = "https://taplo.tamasfe.dev"
-repository = "https://github.com/tamasfe/taplo"
+name         = "taplo-lsp"
+description  = "Language server for Taplo"
+version      = "0.7.2"
+rust-version = "1.70"
+authors      = { workspace = true }
+edition      = { workspace = true }
+homepage     = { workspace = true }
+license      = { workspace = true }
+repository   = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["rustls-tls"]
+default    = ["rustls-tls"]
 native-tls = ["taplo-common/native-tls"]
 rustls-tls = ["taplo-common/rustls-tls"]
 
 [dependencies]
-anyhow = "1"
-arc-swap = "1.5.0"
-either = "1.6.1"
-figment = { version = "0.10.6", features = ["json"] }
-futures = "0.3.5"
-indexmap = { version = "1.6", features = ["serde"] }
-itertools = "0.10.3"
-lsp-async-stub = { version = "0.6.4", path = "../lsp-async-stub" }
-lsp-types = { version = "0.93.0", features = ["proposed"] }
-once_cell = "1.5"
-parking_lot = "0.12.0"
-regex = "1.5.4"
-reqwest = { version = "0.11.9", default-features = false, features = [
-  "json",
-] }
-schemars = "0.8"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0", features = ["preserve_order"] }
-tap = "1.0.1"
-taplo = { version = "0.13.2", path = "../taplo", features = ["serde"] }
-taplo-common = { version = "0.5.2", path = "../taplo-common" }
-time = { version = "0.3", features = ["formatting", "parsing"] }
-toml = "0.7"
-tracing = "0.1.29"
+lsp-async-stub = { path = "../lsp-async-stub" }
+taplo          = { path = "../taplo", features = ["serde"] }
+taplo-common   = { path = "../taplo-common" }
+
+anyhow      = { workspace = true }
+arc-swap    = { workspace = true }
+either      = { workspace = true }
+figment     = { version = "0.10.6", features = ["json"] }
+futures     = { workspace = true }
+indexmap    = { workspace = true, features = ["serde"] }
+itertools   = { workspace = true }
+lsp-types   = { version = "0.93.0", features = ["proposed"] }
+once_cell   = { workspace = true }
+parking_lot = { workspace = true }
+regex       = { workspace = true }
+reqwest     = { workspace = true, features = ["json"] }
+schemars    = { workspace = true }
+serde       = { workspace = true, features = ["derive"] }
+serde_json  = { workspace = true, features = ["preserve_order"] }
+tap         = { workspace = true }
+time        = { workspace = true, features = ["formatting", "parsing"] }
+toml        = { workspace = true }
+tracing     = { workspace = true }
 
 [package.metadata.auto-tag]
 enabled = true

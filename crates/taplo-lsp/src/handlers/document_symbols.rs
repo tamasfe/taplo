@@ -162,7 +162,7 @@ fn symbols_for_value(
 
 fn ensure_non_empty_key(s: String) -> String {
     if s.is_empty() {
-        r#"''"#.into()
+        r"''".into()
     } else {
         s
     }

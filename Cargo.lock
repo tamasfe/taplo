@@ -1116,7 +1116,7 @@ dependencies = [
 
 [[package]]
 name = "lsp-async-stub"
-version = "0.6.3"
+version = "0.6.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2165,7 +2165,7 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "taplo"
-version = "0.13.1"
+version = "0.13.2"
 dependencies = [
  "ahash 0.8.8",
  "arc-swap",
@@ -2190,7 +2190,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-cli"
-version = "0.9.2"
+version = "0.9.3"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -2223,7 +2223,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-common"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "ahash 0.8.8",
  "anyhow",
@@ -2261,7 +2261,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-lsp"
-version = "0.7.1"
+version = "0.7.2"
 dependencies = [
  "anyhow",
  "arc-swap",

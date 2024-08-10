@@ -28,7 +28,7 @@ pub mod builtins {
 
     #[must_use]
     pub fn taplo_config_schema() -> Arc<Value> {
-        Arc::new(serde_json::to_value(&schemars::schema_for!(crate::config::Config)).unwrap())
+        Arc::new(serde_json::to_value(schemars::schema_for!(crate::config::Config)).unwrap())
     }
 
     #[must_use]

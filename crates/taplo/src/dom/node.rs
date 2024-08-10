@@ -114,7 +114,7 @@ impl Node {
     pub fn get_matches(
         &self,
         pattern: &str,
-    ) -> Result<impl Iterator<Item = (KeyOrIndex, Node)> + ExactSizeIterator, Error> {
+    ) -> Result<impl ExactSizeIterator<Item = (KeyOrIndex, Node)>, Error> {
         let glob = globset::Glob::new(pattern)
             .map_err(QueryError::from)?
             .compile_matcher();
@@ -132,7 +132,7 @@ impl Node {
             Node::Array(arr) => {
                 let items = arr.items().read();
                 for (idx, node) in items.iter().enumerate() {
-                    if glob.is_match(&idx.to_string()) {
+                    if glob.is_match(idx.to_string()) {
                         matched.push((KeyOrIndex::from(idx), node.clone()));
                     }
                 }
@@ -211,7 +211,7 @@ impl Node {
                                 }
                             }
                             KeyOrIndex::Index(idx) => {
-                                if !glob.is_match(&idx.to_string()) {
+                                if !glob.is_match(idx.to_string()) {
                                     return false;
                                 }
                             }

@@ -32,7 +32,7 @@ pub struct ScopedOptions(Vec<(TextRange, OptionsIncomplete)>);
 
 impl FromIterator<(TextRange, OptionsIncomplete)> for ScopedOptions {
     fn from_iter<T: IntoIterator<Item = (TextRange, OptionsIncomplete)>>(iter: T) -> Self {
-        Self(Vec::from_iter(iter.into_iter()))
+        Self(Vec::from_iter(iter))
     }
 }
 
@@ -318,7 +318,7 @@ where
         let matched = dom.find_all_matches(keys, false)?;
 
         for (_, node) in matched {
-            s.extend(node.text_ranges().into_iter().map(|r| (r, opts.clone())));
+            s.extend(node.text_ranges().map(|r| (r, opts.clone())));
         }
     }
 
@@ -681,7 +681,9 @@ fn add_entries(
                     entry.value.clear();
 
                     if let Some(c) = value.trailing_comment() {
-                        debug_assert!(entry.comment.is_none() || entry.comment.clone().unwrap() == c);
+                        debug_assert!(
+                            entry.comment.is_none() || entry.comment.clone().unwrap() == c
+                        );
                         entry.comment = Some(c);
                     }
 

@@ -281,7 +281,7 @@ impl Environment for WasmEnvironment {
     fn env_vars(&self) -> Vec<(String, String)> {
         let this = JsValue::null();
         let res: JsValue = self.js_env_vars.call0(&this).unwrap();
-        res.into_serde()
+        serde_wasm_bindgen::from_value(res)
             .map_err(|err| anyhow!("{err}"))
             .unwrap_or_default()
     }
@@ -310,7 +310,7 @@ impl Environment for WasmEnvironment {
             .js_glob_files
             .call1(&this, &JsValue::from_str(glob))
             .unwrap();
-        res.into_serde().map_err(|err| anyhow!("{err}"))
+        serde_wasm_bindgen::from_value(res).map_err(|err| anyhow!("{err}"))
     }
 
     async fn read_file(&self, path: &Path) -> Result<Vec<u8>, anyhow::Error> {
@@ -332,12 +332,11 @@ impl Environment for WasmEnvironment {
             .js_write_file
             .call2(&this, &path_str, &JsValue::from(Uint8Array::from(bytes)))
             .unwrap();
-
-        Ok(JsFuture::from(Promise::from(res))
+        let future = JsFuture::from(Promise::from(res))
             .await
-            .map_err(|err| anyhow!("{:?}", err))?
-            .into_serde()
-            .map_err(|err| anyhow!("{err}"))?)
+            .map_err(|err| anyhow!("{:?}", err))?;
+
+        Ok(serde_wasm_bindgen::from_value(future).map_err(|err| anyhow!("{err}"))?)
     }
 
     fn to_file_path(&self, url: &Url) -> Option<std::path::PathBuf> {

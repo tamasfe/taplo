@@ -276,9 +276,8 @@ jobs:
             platform: x86
           - triple: x86_64-pc-windows-msvc
             platform: x86_64
-          # https://github.com/briansmith/ring/issues/1167
-          # - triple: aarch64-pc-windows-msvc
-          #   platform: aarch64
+          - triple: aarch64-pc-windows-msvc
+            platform: aarch64
     steps:
       - uses: actions/checkout@v4
 
@@ -286,6 +285,8 @@ jobs:
       - run: rustup target add ${{ matrix.triple }}
 
       - name: Build taplo
+        env:
+          RUSTFLAGS: '-C target-feature=+crt-static'
         run: |
           cargo build --verbose --release --bin taplo --target ${{ matrix.triple }}
           # zip

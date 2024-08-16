@@ -18,9 +18,9 @@ arc-swap           = { version = "1.5.0" }
 async-trait        = { version = "0.1.52" }
 either             = { version = "1.6.1" }
 futures            = { version = "0.3.5" }
+getrandom          = { version = "0.2", default-features = false }
 glob               = { version = "0.3" }
 globset            = { version = "0.4.8" }
-getrandom          = { version = "0.2", default-features = false }
 hex                = { version = "0.4" }
 indexmap           = { version = "2.2" }
 itertools          = { version = "0.10.3" }
@@ -37,8 +37,8 @@ sha1               = { version = "0.10.5" }
 tap                = { version = "1.0.1" }
 thiserror          = { version = "1.0.30" }
 time               = { version = "0.3.7" }
-toml               = { version = "0.7" }
 tokio              = { version = "1.24.2", default-features = false }
+toml               = { version = "0.7" }
 tracing            = { version = "0.1.30" }
 tracing-subscriber = { version = "0.3.7" }
 url                = { version = "2.2.2" }

@@ -7,7 +7,6 @@ exclude = [
 ]
 
 [[rule]]
-include = ["taplo.toml"]
 
 [rule.formatting]
 align_entries = true
@@ -18,7 +17,6 @@ keys    = ["dependencies", "*-dependencies", "workspace"]
 
 [rule.formatting]
 reorder_keys      = true
-align_entries     = true
 align_comments    = true
 array_auto_expand = false
 
@@ -28,5 +26,4 @@ keys    = ["package", "workspace.package"]
 
 [rule.formatting]
 reorder_keys   = false
-align_entries  = true
 align_comments = true

@@ -31,6 +31,15 @@ jobs:
           email: me@tamasfe.dev
           token: ${{ secrets.WORKFLOW_PAT }}
 
+  fmt:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker://docker.io/tamasfe/taplo:latest
+        with:
+          args: fmt --check --diff
+
   test:
     name: Test on Rust stable
     runs-on: ubuntu-latest
@@ -40,8 +49,11 @@ jobs:
         run: rustup update --no-self-update
       - uses: Swatinem/rust-cache@v2
       - name: Test Taplo
-        run: |
-          cargo test -p taplo
+        run: cargo test -p taplo
+      - name: Check formatting regression
+        run: cargo run -- fmt --check
+      - name: Check if git index is clean
+        run: git diff-index --quiet HEAD --
 
   check_wasm32:
     name: Check on WASM

@@ -41,7 +41,7 @@ impl Node {
 
             // Use the original representation of primitives if available.
             if let Some(syntax) = self.syntax() {
-                return write!(f, "{}", syntax);
+                return write!(f, "{syntax}");
             }
         }
 
@@ -153,7 +153,7 @@ impl Node {
             Node::Bool(b) => write!(f, "{}", b.value())?,
             Node::Str(s) => {
                 if let Some(syntax) = s.syntax() {
-                    write!(f, "{}", syntax)?;
+                    write!(f, "{syntax}")?;
                 } else {
                     let escaped = escape(s.value());
 

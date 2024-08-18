@@ -2,7 +2,7 @@
 name         = "taplo"
 description  = "A TOML parser, analyzer and formatter library"
 version      = "0.13.2"
-rust-version = "1.70"                                          # clap 4.4 = MSRV 1.70, clap 4.5 = MSRV 1.74
+rust-version = "1.77"                                          # via rowan
 categories   = ["parser-implementations", "parsing"]
 keywords     = ["toml", "parser", "formatter", "linter"]
 readme       = false
@@ -39,7 +39,7 @@ criterion        = { version = "0.5" }                                          
 difference       = { version = "2.0.0" }
 pprof            = { version = "0.13", features = ["flamegraph", "criterion"] } # pprof -> criterion -> clap
 serde_json       = { version = "1" }
-toml             = { version = "0.7" }
+toml             = { version = "0.8.16" }
 
 [package.metadata.docs.rs]
 features = ["serde", "schema"]

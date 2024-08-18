@@ -23,12 +23,12 @@ glob               = { version = "0.3" }
 globset            = { version = "0.4.8" }
 hex                = { version = "0.4" }
 indexmap           = { version = "2.2" }
-itertools          = { version = "0.10.3" }
-lsp-types          = { version = "0.93.0" }
+itertools          = { version = "0.13.0" }
+lsp-types          = { version = "0.95.0" }
 once_cell          = { version = "1.4" }
 parking_lot        = { version = "0.12.0" }
 regex              = { version = "1.5" }
-reqwest            = { version = "0.11.9", default-features = false }
+reqwest            = { version = "0.12.5", default-features = false }
 rowan              = { version = "0.15.3" }
 schemars           = { version = "0.8.3" }
 serde              = { version = "1" }
@@ -38,7 +38,7 @@ tap                = { version = "1.0.1" }
 thiserror          = { version = "1.0.30" }
 time               = { version = "0.3.7" }
 tokio              = { version = "1.24.2", default-features = false }
-toml               = { version = "0.7" }
+toml               = { version = "0.8.16" }
 tracing            = { version = "0.1.30" }
 tracing-subscriber = { version = "0.3.7" }
 url                = { version = "2.2.2" }

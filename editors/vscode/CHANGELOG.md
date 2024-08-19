@@ -1,5 +1,17 @@
 # Change Log
 
+## 0.20.2
+
+### Fixes
+
+- Re-release that fixes release CI workflow
+
+## 0.20.1
+
+### Fixes
+
+- Remove crypto workaround since VS Code imports own
+
 ## 0.20.0
 
 ### Fixes

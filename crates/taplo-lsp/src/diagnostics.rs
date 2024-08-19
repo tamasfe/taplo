@@ -17,16 +17,12 @@ pub(crate) async fn publish_diagnostics<E: Environment>(
     let mut diags = Vec::new();
 
     let workspaces = context.workspaces.read().await;
-    let ws = match workspaces.get(&ws_url) {
-        Some(d) => d,
-        None => {
-            tracing::warn!(%document_url, "workspace not found");
-            return;
-        }
+    let Some(ws) = workspaces.get(&ws_url) else {
+        tracing::warn!(%document_url, "workspace not found");
+        return;
     };
-    let doc = match ws.documents.get(&document_url) {
-        Some(doc) => doc,
-        None => return,
+    let Some(doc) = ws.documents.get(&document_url) else {
+        return;
     };
 
     collect_syntax_errors(doc, &mut diags);
@@ -46,16 +42,12 @@ pub(crate) async fn publish_diagnostics<E: Environment>(
     }
 
     let workspaces = context.workspaces.read().await;
-    let ws = match workspaces.get(&ws_url) {
-        Some(d) => d,
-        None => {
-            tracing::warn!(%document_url, "workspace not found");
-            return;
-        }
+    let Some(ws) = workspaces.get(&ws_url) else {
+        tracing::warn!(%document_url, "workspace not found");
+        return;
     };
-    let doc = match ws.documents.get(&document_url) {
-        Some(doc) => doc,
-        None => return,
+    let Some(doc) = ws.documents.get(&document_url) else {
+        return;
     };
 
     let dom = doc.dom.clone();
@@ -77,16 +69,12 @@ pub(crate) async fn publish_diagnostics<E: Environment>(
     }
 
     let workspaces = context.workspaces.read().await;
-    let ws = match workspaces.get(&ws_url) {
-        Some(d) => d,
-        None => {
-            tracing::warn!(%document_url, "workspace not found");
-            return;
-        }
+    let Some(ws) = workspaces.get(&ws_url) else {
+        tracing::warn!(%document_url, "workspace not found");
+        return;
     };
-    let doc = match ws.documents.get(&document_url) {
-        Some(doc) => doc,
-        None => return,
+    let Some(doc) = ws.documents.get(&document_url) else {
+        return;
     };
 
     collect_schema_errors(ws, doc, &dom, &document_url, &mut diags).await;

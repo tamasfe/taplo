@@ -9,7 +9,7 @@ use jsonschema::{error::ValidationErrorKind, JSONSchema, SchemaResolver, Validat
 use parking_lot::Mutex;
 use regex::Regex;
 use serde_json::Value;
-use std::{borrow::Cow, sync::Arc};
+use std::{borrow::Cow, num::NonZeroUsize, sync::Arc};
 use taplo::dom::{self, node::Key, KeyOrIndex, Keys};
 use thiserror::Error;
 use tokio::sync::Semaphore;
@@ -28,7 +28,7 @@ pub mod builtins {
 
     #[must_use]
     pub fn taplo_config_schema() -> Arc<Value> {
-        Arc::new(serde_json::to_value(&schemars::schema_for!(crate::config::Config)).unwrap())
+        Arc::new(serde_json::to_value(schemars::schema_for!(crate::config::Config)).unwrap())
     }
 
     #[must_use]
@@ -62,7 +62,7 @@ impl<E: Environment> Schemas<E> {
             concurrent_requests: Arc::new(Semaphore::new(10)),
             http,
             validators: Arc::new(Mutex::new(LruCache::with_hasher(
-                3,
+                NonZeroUsize::new(3).unwrap(),
                 ahash::RandomState::new(),
             ))),
         }
@@ -90,7 +90,7 @@ impl<E: Environment> Schemas<E> {
         schema_url: &Url,
         root: &dom::Node,
     ) -> Result<Vec<NodeValidationError>, anyhow::Error> {
-        let value = serde_json::to_value(&root)?;
+        let value = serde_json::to_value(root)?;
         self.validate(schema_url, &value)
             .await?
             .into_iter()
@@ -132,7 +132,7 @@ impl<E: Environment> Schemas<E> {
         // to fully validate according to a schema that has many nested references.
         loop {
             match validator.validate(value) {
-                Ok(_) => return Ok(Vec::new()),
+                Ok(()) => return Ok(Vec::new()),
                 Err(errors) => {
                     let errors: Vec<_> = errors
                         .map(|err| ValidationError {
@@ -248,7 +248,6 @@ impl<E: Environment> Schemas<E> {
             }
             None => {
                 let val = self.load_schema(&url).await?;
-                let val = val;
                 drop(self.cache.store(url, val.clone()));
                 Ok(val)
             }
@@ -368,14 +367,11 @@ impl<E: Environment> Schemas<E> {
 
         let include_self = schema["allOf"].is_null();
 
-        let key = match path.iter().next() {
-            Some(k) => k,
-            None => {
-                if include_self {
-                    schemas.push((full_path.clone(), Arc::new(schema.clone())));
-                }
-                return Ok(());
+        let Some(key) = path.iter().next() else {
+            if include_self {
+                schemas.push((full_path.clone(), Arc::new(schema.clone())));
             }
+            return Ok(());
         };
 
         let child_path = path.skip_left(1);
@@ -474,7 +470,7 @@ impl<E: Environment> Schemas<E> {
         for (path, schema) in schemas {
             self.collect_child_schemas(
                 schema_url,
-                &*schema,
+                &schema,
                 &path,
                 &Keys::empty(),
                 max_depth,

@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.5.2
+
+This is a re-release of 0.5.1
+
 ## 0.5.1
 
 ### Fixes

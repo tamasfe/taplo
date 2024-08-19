@@ -15,12 +15,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

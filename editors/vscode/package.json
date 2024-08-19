@@ -2,7 +2,7 @@
   "name": "even-better-toml",
   "displayName": "Even Better TOML",
   "description": "Fully-featured TOML support",
-  "version": "0.20.0",
+  "version": "0.20.2",
   "autoTag": {
     "enabled": true
   },
@@ -24,7 +24,7 @@
   },
   "license": "SEE LICENSE IN LICENSE.md",
   "engines": {
-    "vscode": "^1.68.0"
+    "vscode": "^1.85.0"
   },
   "categories": [
     "Programming Languages",

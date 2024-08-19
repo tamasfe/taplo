@@ -1,4 +1,4 @@
-use clap::{crate_version, ArgEnum, Args, Parser, Subcommand};
+use clap::{crate_version, Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 use url::Url;
 
@@ -7,7 +7,7 @@ use url::Url;
 #[clap(bin_name = "taplo")]
 #[clap(version = crate_version!())]
 pub struct TaploArgs {
-    #[clap(long, arg_enum, global = true, default_value = "auto")]
+    #[clap(long, value_enum, global = true, default_value = "auto")]
     pub colors: Colors,
     /// Enable a verbose logging format.
     #[clap(long, global = true)]
@@ -34,7 +34,7 @@ pub struct GeneralArgs {
     pub no_auto_config: bool,
 }
 
-#[derive(Clone, Copy, ArgEnum)]
+#[derive(Clone, Copy, ValueEnum)]
 pub enum Colors {
     /// Determine whether to colorize output automatically.
     Auto,
@@ -190,7 +190,7 @@ pub struct GetCommand {
     /// Comments and formatting will not be preserved.
     /// It is possible to select arrays and individual values that are not tables,
     /// in this case the output will not be a valid TOML document.
-    #[clap(short, long, arg_enum, default_value = "value")]
+    #[clap(short, long, value_enum, default_value = "value")]
     pub output_format: OutputFormat,
 
     /// Strip the trailing newline from the output.
@@ -229,7 +229,7 @@ pub struct GetCommand {
     pub separator: Option<String>,
 }
 
-#[derive(Clone, Copy, ArgEnum)]
+#[derive(Clone, Copy, ValueEnum)]
 pub enum OutputFormat {
     /// Extract the value outputting it in a text format.
     Value,

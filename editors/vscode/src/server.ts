@@ -6,10 +6,6 @@ import { RpcMessage, TaploLsp } from "@taplo/lsp";
 import fetch, { Headers, Request, Response } from "node-fetch";
 import glob from "fast-glob";
 
-import { webcrypto } from "node:crypto";
-// https://docs.rs/getrandom/latest/getrandom/#nodejs-es-module-support
-globalThis.crypto = webcrypto;
-
 let taplo: TaploLsp;
 
 process.on("message", async (d: RpcMessage) => {

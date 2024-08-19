@@ -1,62 +1,55 @@
 [package]
-name = "taplo-common"
-version = "0.5.1"
-edition = "2021"
-description = "Shared code for taplo utilities."
-license = "MIT"
+name         = "taplo-common"
+description  = "Shared code for taplo utilities."
+version      = "0.5.2"
+rust-version = "1.70"
+authors      = { workspace = true }
+edition      = { workspace = true }
+homepage     = { workspace = true }
+license      = { workspace = true }
+repository   = { workspace = true }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ahash = { version = "0.8.3", features = ["serde"] }
-anyhow = { version = "1.0.53", features = ["backtrace"] }
-arc-swap = "1.5.0"
-async-recursion = "1.0.0"
-async-trait = "0.1.52"
-atty = "0.2.14"
-futures = "0.3.19"
-glob = "0.3.0"
-globset = "0.4.8"
-hex = "0.4.3"
-indexmap = { version = "1.6.0", features = ["serde", "rayon"] }
-itertools = "0.10.3"
-json_value_merge = "2.0.0"
-jsonschema = { version = "0.17.1", default-features = false }
-lru = "0.7.2"
-parking_lot = "0.12.0"
-percent-encoding = "2.1.0"
-regex = "1.5.4"
-reqwest = { version = "0.11.24", default-features = false, features = [
-  "json",
-] }
-schemars = { version = "0.8.8", features = ["url"] }
-semver = { version = "1.0.5", features = ["serde"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = { version = "1.0.78", features = ["preserve_order"] }
-sha1 = "0.10.5"
-tap = "1.0.1"
-taplo = { version = "0.13.0", path = "../taplo", features = ["schema"] }
-thiserror = "1.0.30"
-time = { version = "0.3.7", features = ["serde"] }
-tracing = "0.1.29"
-tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
-url = { version = "2.2.2", features = ["serde"] }
+taplo = { path = "../taplo", features = ["schema"] }
+
+ahash              = { workspace = true, features = ["serde"] }
+anyhow             = { workspace = true, features = ["backtrace"] }
+arc-swap           = { workspace = true }
+async-recursion    = { version = "1.0.0" }
+async-trait        = { workspace = true }
+atty               = { version = "0.2.14" }
+futures            = { workspace = true }
+glob               = { workspace = true }
+globset            = { workspace = true }
+hex                = { workspace = true }
+indexmap           = { workspace = true, features = ["serde", "rayon"] }
+itertools          = { workspace = true }
+json_value_merge   = { version = "2.0.0" }
+jsonschema         = { version = "0.17.1", default-features = false }
+lru                = { version = "0.11.1" }
+parking_lot        = { workspace = true }
+percent-encoding   = { version = "2.1.0" }
+regex              = { workspace = true }
+reqwest            = { workspace = true, features = ["json"] }
+schemars           = { workspace = true, features = ["url"] }
+semver             = { version = "1.0.5", features = ["serde"] }
+serde              = { workspace = true, features = ["derive"] }
+serde_json         = { workspace = true, features = ["preserve_order"] }
+sha1               = { workspace = true }
+tap                = { workspace = true }
+thiserror          = { workspace = true }
+time               = { workspace = true, features = ["serde"] }
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+url                = { workspace = true, features = ["serde"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.24.2", features = [
-  "sync",
-  "fs",
-  "time",
-  "io-std",
-  "parking_lot",
-] }
+tokio = { workspace = true, features = ["sync", "fs", "time", "io-std", "parking_lot"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-tokio = { version = "1.24.2", features = [
-  "sync",
-  "parking_lot",
-  "io-util",
-], default-features = false }
+tokio = { workspace = true, features = ["sync", "parking_lot", "io-util"] }
 
 [features]
 # default-tls enables native-tls but without enabling native-tls specific features.

@@ -3,12 +3,44 @@ exclude = [
   "**/*nested-1000.toml",
   "**/node_modules/**",
   "**/invalid/*",
-  "test-data/analytics/**",
+  "test-data/**",
 ]
+
+[formatting]
+
+[[rule]]
+
+[rule.formatting]
+include = ["taplo.toml"]
+keys    = ["exclude"]
+
+array_auto_collapse = false
+
+[[rule]]
+
+[rule.formatting]
+include = ["**/Cargo.toml"]
+
+array_auto_expand   = false
+inline_table_expand = false
+
+[[rule]]
+
+[rule.formatting]
+align_entries = true
 
 [[rule]]
 include = ["**/Cargo.toml"]
-keys = ["dependencies", "*-dependencies"]
+keys    = ["dependencies", "*-dependencies", "workspace"]
 
 [rule.formatting]
-reorder_keys = true
+reorder_keys   = true
+align_comments = true
+
+[[rule]]
+include = ["**/Cargo.toml"]
+keys    = ["package", "workspace.package"]
+
+[rule.formatting]
+reorder_keys   = false
+align_comments = true

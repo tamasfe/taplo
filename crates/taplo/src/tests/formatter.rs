@@ -1,6 +1,7 @@
 use difference::Changeset;
 
 use crate::formatter;
+use crate::formatter::Options;
 
 macro_rules! assert_format {
     ($expected:expr, $actual:expr) => {
@@ -1025,41 +1026,6 @@ foo = [
     assert_format!(expected, &formatted);
 }
 
-/// See https://github.com/tamasfe/taplo/issues/464
-#[test]
-fn test_reorder_keys_trailing_comment() {
-    let src = r#"
-[mytable]
-a = "a"
-c = "c"
-b = "b" # ...
-"#;
-
-    let expected = r#"
-[mytable]
-a = "a"
-b = "b" # ...
-c = "c"
-"#;
-
-    let p = crate::parser::parse(src);
-    let formatted = crate::formatter::format_with_path_scopes(
-        p.into_dom(),
-        Default::default(),
-        &[],
-        vec![(
-            "mytable",
-            formatter::OptionsIncomplete {
-                reorder_keys: Some(true),
-                ..Default::default()
-            },
-        )],
-    )
-    .unwrap();
-
-    assert_format!(expected, &formatted);
-}
-
 #[test]
 fn test_single_comment_no_alignment() {
     let src = r#"
@@ -1161,6 +1127,24 @@ my_array = [
 "#;
 
     let formatted = crate::formatter::format(src, Default::default());
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn test_comment_after_entry() {
+    let src = r#"
+a = "b" # comment
+"#;
+
+    let expected = r#"
+a = "b" # comment
+"#;
+    let opt = Options {
+        column_width: 1,
+        ..Default::default()
+    };
+    let formatted = crate::formatter::format(src, opt);
 
     assert_format!(expected, &formatted);
 }

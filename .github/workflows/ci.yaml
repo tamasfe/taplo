@@ -31,37 +31,40 @@ jobs:
           email: me@tamasfe.dev
           token: ${{ secrets.WORKFLOW_PAT }}
 
+  fmt:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker://docker.io/tamasfe/taplo:latest
+        with:
+          args: fmt --check --diff
+
   test:
     name: Test on Rust stable
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v1
-      - uses: actions-rs/cargo@v1
-        name: Test Taplo
-        with:
-          command: test
-          args: -p taplo
+      - name: Install latest Rust toolchain
+        run: rustup update --no-self-update
+      - uses: Swatinem/rust-cache@v2
+      - name: Test Taplo
+        run: cargo test -p taplo
+      - name: Check formatting regression
+        run: cargo run -- fmt --check
+      - name: Check if git index is clean
+        run: git diff-index --quiet HEAD --
 
   check_wasm32:
     name: Check on WASM
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          target: wasm32-unknown-unknown
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
       - working-directory: crates/taplo-wasm
         run: cargo check --target wasm32-unknown-unknown
 
@@ -70,22 +73,63 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v1
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+      - uses: Swatinem/rust-cache@v2
       - name: Retrieve toml-test
         run: |
           wget https://github.com/BurntSushi/toml-test/releases/download/v1.1.0/toml-test-v1.1.0-linux-amd64.gz
           gunzip toml-test-v1.1.0-linux-amd64.gz
           chmod +x toml-test-v1.1.0-linux-amd64
-      - uses: actions-rs/cargo@v1
-        name: Build taplo-cli
-        with:
-          command: build
-          args: --bin taplo --no-default-features --features "rustls-tls,toml-test"
+      - name: Build taplo-cli
+        run: |
+          cargo build --bin taplo --no-default-features --features "rustls-tls,toml-test"
       - name: Run toml-test
         run: ./toml-test-v1.1.0-linux-amd64 ./target/debug/taplo -- toml-test
+
+  test-msrv-lib:
+    name: Test libraries with MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup default 1.70
+      - uses: Swatinem/rust-cache@v2
+      - name: Test MSRV for taplo
+        run: |
+          cargo check -p lsp-async-stub -p taplo-common -p taplo-lsp -p taplo
+          cargo test  -p lsp-async-stub -p taplo-common -p taplo-lsp -p taplo
+
+  test-msrv-bin:
+    name: Test binaries with MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup default 1.70
+      - uses: Swatinem/rust-cache@v2
+      - name: Test taplo-cli
+        run: |
+          cargo check -p taplo-cli
+          cargo test  -p taplo-cli
+
+  test-msrv-wasm:
+    name: Test WASM with MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install latest Rust toolchain
+        run: |
+          rustup update --no-self-update
+          rustup default 1.74
+          rustup target install wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Test taplo-wasm
+        working-directory: crates/taplo-wasm
+        run: |
+          cargo check

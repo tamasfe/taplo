@@ -1,4 +1,4 @@
-use clap::StructOpt;
+use clap::Parser;
 use std::process::exit;
 use taplo_cli::{
     args::{Colors, TaploArgs},

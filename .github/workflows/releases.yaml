@@ -437,125 +437,48 @@ jobs:
         env:
           OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
 
-  pypi_build_linux:
+  pypi_build_taplo_cli:
     needs: ["wait_for_ci"]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
-        target:
-          - x86
-          - x86_64
-    steps:
-      - uses: actions/checkout@v4
-      - if: matrix.target == 'x86_64'
-        name: Build wheels (static openssl)
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist --features vendored-openssl
-          sccache: "true"
-          manylinux: auto
-          before-script-linux: |
-            yum install -y perl-IPC-Cmd
-      - if: matrix.target == 'x86'
-        name: Build wheels (shared openssl)
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist
-          sccache: "true"
-          manylinux: auto
-          before-script-linux: |
-            yum install -y openssl-devel
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ github.job }}-${{ matrix.target }}
-          path: dist
-
-  pypi_build_windows:
-    needs: ["wait_for_ci"]
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - x64
-          - x86
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist
-          sccache: "true"
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ github.job }}-${{ matrix.target }}
-          path: dist
-
-  pypi_build_macos:
-    needs: ["wait_for_ci"]
-    runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - aarch64
-          - x86_64
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist
-          sccache: "true"
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ github.job }}-${{ matrix.target }}
-          path: dist
-
-  pypi_build_sdist:
-    needs: ["wait_for_ci"]
-    runs-on: ubuntu-latest
+        include:
+          - os: ubuntu
+            arch: x86
+          - os: ubuntu
+            arch: x86_64
+          - os: windows
+            arch: x86
+          - os: windows
+            arch: x64
+          - os: macos
+            arch: aarch64
+          - os: macos
+            arch: x86_64
     steps:
       - uses: actions/checkout@v4
       - name: Build sdist
+        if: matrix.os == 'ubuntu' && matrix.arch == 'x86_64'
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
           args: --out dist
-      - name: Upload sdist
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.arch }}
+          args: --release --out dist
+          sccache: "true"
+          manylinux: auto
+      - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ github.job }}
+          name: wheels-${{ runner.os }}-${{ matrix.target }}
           path: dist
 
-  pypi_merge_wheels:
-    name: Merge PyPI wheels
-    runs-on: ubuntu-latest
-    needs:
-      - pypi_build_linux
-      - pypi_build_windows
-      - pypi_build_macos
-      - pypi_build_sdist
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          merge-multiple: true
-          path: wheels
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wheels
-          path: wheels
-
   pypi_test_taplo_cli:
-    needs: pypi_merge_wheels
+    needs: pypi_build_taplo_cli
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -567,11 +490,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: wheels
+          pattern: wheels-*
           path: wheels
+          merge-multiple: true
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3"
       - run: pip install taplo --no-index --find-links wheels/
       - run: taplo help
 
@@ -585,7 +509,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: wheels
+          pattern: wheels-*
           path: dist
+          merge-multiple: true
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

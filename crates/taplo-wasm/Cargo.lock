@@ -1712,7 +1712,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-cli"
-version = "0.9.4-rc.1"
+version = "0.9.3"
 dependencies = [
  "ansi_term",
  "anyhow",

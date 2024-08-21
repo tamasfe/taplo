@@ -12,8 +12,8 @@ license      = { workspace = true }
 repository   = { workspace = true }
 
 [features]
-default    = ["rustls-tls", "lsp", "toml-test"]
-lsp        = ["taplo-lsp", "async-ctrlc"]
+default    = ["lsp", "rustls-tls", "toml-test"]
+lsp        = ["async-ctrlc", "taplo-lsp"]
 native-tls = ["taplo-common/native-tls", "taplo-lsp?/native-tls"]
 rustls-tls = ["taplo-common/rustls-tls", "taplo-lsp?/rustls-tls"]
 toml-test  = []

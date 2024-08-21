@@ -4,3 +4,9 @@ target
 .vscode/settings.json
 .cargo/config.toml
 yarn-error.log
+
+# Python
+__pycache__/
+*venv/
+dist/
+wheels/

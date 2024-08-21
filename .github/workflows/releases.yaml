@@ -436,3 +436,79 @@ jobs:
         working-directory: editors/vscode
         env:
           OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+
+  pypi_build_taplo_cli:
+    name: Build python wheels
+    needs: ["wait_for_ci"]
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, windows, macos]
+        arch: [x86, x64, aarch64]
+        exclude:
+          - os: windows
+            arch: aarch64
+          - os: ubuntu
+            arch: aarch64
+          - os: macos
+            arch: x86
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build sdist
+        if: matrix.os == 'ubuntu' && matrix.arch == 'x64'
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.arch }}
+          args: --release --out dist
+          sccache: "true"
+          manylinux: auto
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist
+
+  pypi_test_taplo_cli:
+    name: Test python wheels
+    needs: ["pypi_build_taplo_cli"]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: wheels
+          merge-multiple: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3"
+      - run: pip install taplo --no-index --find-links wheels/
+      - run: taplo help
+
+  pypi_publish_taplo_cli:
+    name: PyPI publish taplo
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-taplo-cli-0')
+    needs: ["pypi_test_taplo_cli"]
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

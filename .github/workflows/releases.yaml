@@ -456,7 +456,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build sdist
-        if: matrix.os == 'ubuntu' && matrix.arch == 'x86_64'
+        if: matrix.os == 'ubuntu' && matrix.arch == 'x64'
         uses: PyO3/maturin-action@v1
         with:
           command: sdist

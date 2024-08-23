@@ -460,19 +460,19 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
-          args: --out dist
+          args: --out wheels
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.arch }}
-          args: --release --out dist
+          args: --release --out wheels
           sccache: "true"
           manylinux: auto
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
-          path: dist
+          path: wheels
 
   pypi_test_taplo_cli:
     name: Test python wheels
@@ -508,7 +508,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: wheels-*
-          path: dist
+          path: wheels
           merge-multiple: true
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

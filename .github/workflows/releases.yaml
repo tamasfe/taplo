@@ -474,9 +474,40 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: wheels
 
+  pypi_build_taplo_cli_musl:
+    name: Build python wheels for musl
+    runs-on: ubuntu-latest
+    container:
+      image: docker://messense/rust-musl-cross:${{ matrix.platform.image_tag }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # https://github.com/messense/auditwheel-symbols/blob/0447596/.github/workflows/CI.yml#L95-L99
+        # target: https://peps.python.org/pep-0491/#file-name-convention
+        # image_tag: https://github.com/rust-cross/rust-musl-cross?tab=readme-ov-file#prebuilt-images
+        platform: [
+          { target: "x86_64-unknown-linux-musl", image_tag: "x86_64-musl" },
+          { target: "i686-unknown-linux-musl", image_tag: "i686-musl" },
+          { target: "aarch64-unknown-linux-musl", image_tag: "aarch64-musl" },
+        ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out wheels
+          container: off
+          manylinux: musllinux_1_1
+          target: ${{ matrix.platform.target }}
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.platform.target }}
+          path: wheels
+
   pypi_merge_wheels:
     name: Merge wheels
-    needs: [pypi_build_taplo_cli]
+    needs: [pypi_build_taplo_cli, pypi_build_taplo_cli_musl]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

@@ -474,9 +474,24 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: wheels
 
+  pypi_merge_wheels:
+    name: Merge wheels
+    needs: [pypi_build_taplo_cli]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: wheels
+          merge-multiple: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels
+          path: wheels
+
   pypi_test_taplo_cli:
     name: Test python wheels
-    needs: ["pypi_build_taplo_cli"]
+    needs: [pypi_merge_wheels]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -488,9 +503,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: wheels-*
+          name: wheels
           path: wheels
-          merge-multiple: true
       - uses: actions/setup-python@v5
         with:
           python-version: "3"
@@ -507,8 +521,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: wheels-*
+          name: wheels
           path: wheels
-          merge-multiple: true
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

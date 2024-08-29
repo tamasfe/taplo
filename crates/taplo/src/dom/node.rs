@@ -244,16 +244,18 @@ impl Node {
         Ok(all.into_iter())
     }
 
-    pub fn text_ranges(&self) -> impl ExactSizeIterator<Item = TextRange> {
+    pub fn text_ranges(&self, include_children: bool) -> impl ExactSizeIterator<Item = TextRange> {
         let mut ranges = Vec::with_capacity(1);
 
         match self {
             Node::Table(v) => {
-                let entries = v.entries().read();
+                if include_children {
+                    let entries = v.entries().read();
 
-                for (k, entry) in entries.iter() {
-                    ranges.extend(k.text_ranges());
-                    ranges.extend(entry.text_ranges());
+                    for (k, entry) in entries.iter() {
+                        ranges.extend(k.text_ranges());
+                        ranges.extend(entry.text_ranges(true));
+                    }
                 }
 
                 if let Some(mut r) = v.syntax().map(|s| s.text_range()) {
@@ -265,9 +267,11 @@ impl Node {
                 }
             }
             Node::Array(v) => {
-                let items = v.items().read();
-                for item in items.iter() {
-                    ranges.extend(item.text_ranges());
+                if include_children {
+                    let items = v.items().read();
+                    for item in items.iter() {
+                        ranges.extend(item.text_ranges(true));
+                    }
                 }
 
                 if let Some(mut r) = v.syntax().map(|s| s.text_range()) {

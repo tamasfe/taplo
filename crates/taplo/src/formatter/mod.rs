@@ -8,10 +8,12 @@ use crate::{
     syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
     util::overlaps,
 };
+use itertools::Itertools;
 use once_cell::unsync::OnceCell;
 use rowan::{GreenNode, NodeOrToken, TextRange};
 use std::{
     cmp,
+    collections::VecDeque,
     iter::{repeat, FromIterator},
     ops::Range,
     rc::Rc,
@@ -866,6 +868,14 @@ fn format_inline_table(
         formatted = "{}".into();
     }
 
+    let mut sorted_children = VecDeque::new();
+    if options.reorder_keys {
+        sorted_children = node
+            .children()
+            .sorted_unstable_by(|x, y| x.to_string().cmp(&y.to_string()))
+            .collect();
+    }
+
     let mut node_index = 0;
     for c in node.children_with_tokens() {
         match c {
@@ -874,7 +884,8 @@ fn format_inline_table(
                     formatted += ", ";
                 }
 
-                let entry = format_entry(n, options, context);
+                let child = sorted_children.pop_front().unwrap_or(n);
+                let entry = format_entry(child, options, context);
                 debug_assert!(entry.comment.is_none());
                 entry.write_to(&mut formatted, options);
 
@@ -915,7 +926,6 @@ fn format_inline_table(
 
     (node.into(), formatted, comment)
 }
-
 // Check whether the array spans multiple lines in its current form.
 fn is_array_multiline(node: &SyntaxNode) -> bool {
     node.descendants_with_tokens().any(|n| n.kind() == NEWLINE)

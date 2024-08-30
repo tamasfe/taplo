@@ -1,11 +1,10 @@
 use crate::world::{DocumentState, WorkspaceState, World};
-use either::Either;
 use lsp_async_stub::{util::LspExt, Context, RequestWriter};
 use lsp_types::{
     notification, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, Location,
     PublishDiagnosticsParams, Url,
 };
-use taplo::dom::{KeyOrIndex, Node};
+use taplo::dom::Node;
 use taplo_common::environment::Environment;
 
 #[tracing::instrument(skip_all)]
@@ -298,34 +297,28 @@ async fn collect_schema_errors<E: Environment>(
             "using schema"
         );
 
-        match ws.schemas.validate_root(&schema_association.url, dom).await {
-            Ok(errors) => diags.extend(errors.into_iter().flat_map(|err| {
-                let ranges = if let Some(KeyOrIndex::Key(k)) = err.keys.into_iter().last() {
-                    Either::Left(k.text_ranges())
-                } else {
-                    Either::Right(err.node.text_ranges())
-                };
-
-                let error = err.error;
-
-                ranges.map(move |range| {
-                    let range = doc.mapper.range(range).unwrap_or_default().into_lsp();
-                    Diagnostic {
-                        range,
-                        severity: Some(DiagnosticSeverity::ERROR),
-                        code: None,
-                        code_description: None,
-                        source: Some("Even Better TOML".into()),
-                        message: error.to_string(),
-                        related_information: None,
-                        tags: None,
-                        data: None,
-                    }
-                })
-            })),
+        let errors = match ws.schemas.validate_root(&schema_association.url, dom).await {
+            Ok(errors) => errors,
             Err(error) => {
                 tracing::error!(?error, "schema validation failed");
+                return;
             }
+        };
+
+        for error in errors {
+            let range = doc
+                .mapper
+                .range(error.text_ranges().next().unwrap())
+                .unwrap()
+                .into_lsp();
+
+            diags.push(Diagnostic {
+                range,
+                severity: Some(DiagnosticSeverity::ERROR),
+                source: Some("Even Better TOML".into()),
+                message: error.error.to_string(),
+                ..Default::default()
+            });
         }
     }
 }

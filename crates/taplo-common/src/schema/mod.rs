@@ -10,7 +10,10 @@ use parking_lot::Mutex;
 use regex::Regex;
 use serde_json::Value;
 use std::{borrow::Cow, num::NonZeroUsize, sync::Arc};
-use taplo::dom::{self, node::Key, KeyOrIndex, Keys};
+use taplo::{
+    dom::{self, node::Key, KeyOrIndex, Keys},
+    rowan::TextRange,
+};
 use thiserror::Error;
 use tokio::sync::Semaphore;
 use url::Url;
@@ -679,6 +682,13 @@ impl NodeValidationError {
         let mut keys = Keys::empty();
         let mut node = root.clone();
 
+        match &error.kind {
+            ValidationErrorKind::AdditionalProperties { unexpected } => {
+                keys = keys.extend(unexpected.iter().map(Key::from).map(KeyOrIndex::Key));
+            }
+            _ => {}
+        }
+
         'outer: for path in &error.instance_path {
             match path {
                 jsonschema::paths::PathChunk::Property(p) => match node {
@@ -704,6 +714,25 @@ impl NodeValidationError {
         }
 
         Ok(Self { keys, node, error })
+    }
+
+    pub fn text_ranges(&self) -> Box<dyn Iterator<Item = TextRange> + '_> {
+        let include_children = match self.error.kind {
+            ValidationErrorKind::AdditionalProperties { .. } => false,
+            _ => true,
+        };
+
+        if self.keys.is_empty() {
+            return Box::new(self.node.text_ranges(include_children).into_iter());
+        }
+
+        Box::new(
+            self.keys
+                .clone()
+                .into_iter()
+                .map(move |key| self.node.get(key).text_ranges(include_children))
+                .flatten(),
+        )
     }
 }
 

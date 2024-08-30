@@ -974,6 +974,59 @@ very_long_inline_table = { array = ["aaaaa", "aaaaa", "aaaaa", "aaaaa", "aaaaa",
 }
 
 #[test]
+fn test_sorted_inline_tables() {
+    let src = r#"
+foo = { b = 2, a = 1 }
+
+bar = [
+  "b",
+  "a",
+  "c",
+
+  2021-01-01,
+  1979-05-27,
+
+  { a = 1, z = 2 },
+  { b = 2, a = 1 },
+
+  3,
+  1,
+  2,
+]
+"#;
+
+    let expected = r#"
+foo = { a = 1, b = 2 }
+
+bar = [
+  "b",
+  "a",
+  "c",
+
+  2021-01-01,
+  1979-05-27,
+
+  { a = 1, z = 2 },
+  { a = 1, b = 2 },
+
+  3,
+  1,
+  2,
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            reorder_keys: true,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
 fn test_sorted_groupings_in_array() {
     let src = r#"
 foo = [

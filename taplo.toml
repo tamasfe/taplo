@@ -44,3 +44,11 @@ keys    = ["package", "workspace.package"]
 [rule.formatting]
 reorder_keys   = false
 align_comments = true
+
+[[rule]]
+include = ["pyproject.toml"]
+
+[rule.formatting]
+align_entries  = true
+reorder_keys   = false
+align_comments = true

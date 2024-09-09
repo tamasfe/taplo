@@ -868,13 +868,13 @@ fn format_inline_table(
         formatted = "{}".into();
     }
 
-    let mut sorted_children = VecDeque::new();
-    if options.reorder_keys {
-        sorted_children = node
-            .children()
+    let mut sorted_children = if options.reorder_keys {
+        node.children()
             .sorted_unstable_by(|x, y| x.to_string().cmp(&y.to_string()))
-            .collect();
-    }
+            .collect::<VecDeque<_>>()
+    } else {
+        VecDeque::new()
+    };
 
     let mut node_index = 0;
     for c in node.children_with_tokens() {

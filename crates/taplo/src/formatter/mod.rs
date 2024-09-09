@@ -868,7 +868,7 @@ fn format_inline_table(
         formatted = "{}".into();
     }
 
-    let mut sorted_children = if options.reorder_keys {
+    let mut sorted_children = if options.reorder_arrays {
         node.children()
             .sorted_unstable_by(|x, y| x.to_string().cmp(&y.to_string()))
             .collect::<VecDeque<_>>()

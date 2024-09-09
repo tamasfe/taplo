@@ -979,46 +979,21 @@ fn test_sorted_inline_tables() {
 foo = { b = 2, a = 1 }
 
 bar = [
-  "b",
-  "a",
-  "c",
-
-  2021-01-01,
-  1979-05-27,
-
-  { a = 1, z = 2 },
-  { b = 2, a = 1 },
-
-  3,
-  1,
-  2,
+  { a = 1, b = 2, c = 3 },
+  { b = 2, a = 1, d = 4, e = 5 },
 ]
 "#;
 
     let expected = r#"
 foo = { a = 1, b = 2 }
 
-bar = [
-  "b",
-  "a",
-  "c",
-
-  2021-01-01,
-  1979-05-27,
-
-  { a = 1, z = 2 },
-  { a = 1, b = 2 },
-
-  3,
-  1,
-  2,
-]
+bar = [{ a = 1, b = 2, c = 3 }, { a = 1, b = 2, d = 4, e = 5 }]
 "#;
 
     let formatted = crate::formatter::format(
         src,
         formatter::Options {
-            reorder_keys: true,
+            reorder_arrays: true,
             ..Default::default()
         },
     );
@@ -1038,7 +1013,6 @@ foo = [
   1979-05-27,
 
   ["x", "a"],
-  { b = 2, a = 1 },
 
   3,
   1,
@@ -1058,7 +1032,6 @@ foo = [
   2021-01-01,
 
   ["a", "x"],
-  { b = 2, a = 1 },
 
   1,
   10, # due to the lexicographic order

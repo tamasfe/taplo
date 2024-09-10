@@ -869,11 +869,13 @@ fn format_inline_table(
     }
 
     let mut sorted_children = if options.reorder_arrays {
-        node.children()
-            .sorted_unstable_by(|x, y| x.to_string().cmp(&y.to_string()))
-            .collect::<VecDeque<_>>()
+        Some(
+            node.children()
+                .sorted_unstable_by(|x, y| x.to_string().cmp(&y.to_string()))
+                .collect::<VecDeque<_>>(),
+        )
     } else {
-        VecDeque::new()
+        None
     };
 
     let mut node_index = 0;
@@ -884,7 +886,15 @@ fn format_inline_table(
                     formatted += ", ";
                 }
 
-                let child = sorted_children.pop_front().unwrap_or(n);
+                let child = if options.reorder_arrays {
+                    sorted_children
+                        .as_mut()
+                        .and_then(|children| children.pop_front())
+                        .unwrap_or(n)
+                } else {
+                    n
+                };
+
                 let entry = format_entry(child, options, context);
                 debug_assert!(entry.comment.is_none());
                 entry.write_to(&mut formatted, options);

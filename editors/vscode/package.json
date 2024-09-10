@@ -371,6 +371,12 @@
           "default": null,
           "description": "Alphabetically reorder array values that are not separated by blank lines."
         },
+        "evenBetterToml.formatter.reorderInlineTables": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": null,
+          "description": "Alphabetically reorder inline tables."
+        },
         "evenBetterToml.formatter.allowedBlankLines": {
           "scope": "resource",
           "type": "number",

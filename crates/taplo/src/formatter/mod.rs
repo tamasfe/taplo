@@ -111,6 +111,9 @@ create_options!(
         /// Alphabetically reorder array values that are not separated by blank lines.
         pub reorder_arrays: bool,
 
+        /// Alphabetically reorder inline table values.
+        pub reorder_inline_tables: bool,
+
         /// The maximum amount of consecutive blank lines allowed.
         pub allowed_blank_lines: usize,
 
@@ -168,6 +171,7 @@ impl Default for Options {
             indent_string: "  ".into(),
             reorder_keys: false,
             reorder_arrays: false,
+            reorder_inline_tables: false,
             crlf: false,
         }
     }
@@ -868,7 +872,7 @@ fn format_inline_table(
         formatted = "{}".into();
     }
 
-    let mut sorted_children = if options.reorder_arrays {
+    let mut sorted_children = if options.reorder_inline_tables {
         Some(
             node.children()
                 .sorted_unstable_by(|x, y| x.to_string().cmp(&y.to_string()))
@@ -886,7 +890,7 @@ fn format_inline_table(
                     formatted += ", ";
                 }
 
-                let child = if options.reorder_arrays {
+                let child = if options.reorder_inline_tables {
                     sorted_children
                         .as_mut()
                         .and_then(|children| children.pop_front())

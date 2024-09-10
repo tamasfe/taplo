@@ -993,7 +993,7 @@ bar = [{ a = 1, b = 2, c = 3 }, { a = 1, b = 2, d = 4, e = 5 }]
     let formatted = crate::formatter::format(
         src,
         formatter::Options {
-            reorder_arrays: true,
+            reorder_inline_tables: true,
             ..Default::default()
         },
     );

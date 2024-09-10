@@ -974,6 +974,34 @@ very_long_inline_table = { array = ["aaaaa", "aaaaa", "aaaaa", "aaaaa", "aaaaa",
 }
 
 #[test]
+fn test_sorted_inline_tables() {
+    let src = r#"
+foo = { b = 2, a = 1 }
+
+bar = [
+  { a = 1, b = 2, c = 3 },
+  { b = 2, a = 1, d = 4, e = 5 },
+]
+"#;
+
+    let expected = r#"
+foo = { a = 1, b = 2 }
+
+bar = [{ a = 1, b = 2, c = 3 }, { a = 1, b = 2, d = 4, e = 5 }]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            reorder_inline_tables: true,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
 fn test_sorted_groupings_in_array() {
     let src = r#"
 foo = [

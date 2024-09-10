@@ -28,5 +28,6 @@ In some environments (e.g., Visual Studio Code), one needs to reload the extensi
 |   trailing_newline    |                                              Add trailing newline to the source.                                               |      true      |
 |     reorder_keys      |                               Alphabetically reorder keys that are not separated by blank lines.                               |     false      |
 |    reorder_arrays     |                           Alphabetically reorder array values that are not separated by blank lines.                           |     false      |
+| reorder_inline_tables |                                             Alphabetically reorder inline tables.                                              |     false      |
 |  allowed_blank_lines  |                                     The maximum amount of consecutive blank lines allowed.                                     |       2        |
 |         crlf          |                                                     Use CRLF line endings.                                                     |     false      |

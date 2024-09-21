@@ -141,7 +141,7 @@ fn lex_string(lex: &mut Lexer<SyntaxKind>) -> bool {
         }
 
         if c == '"' && !escaped {
-            lex.bump(remainder[0..total_len].as_bytes().len());
+            lex.bump(total_len);
             return true;
         }
 
@@ -171,7 +171,7 @@ fn lex_multi_line_string(lex: &mut Lexer<SyntaxKind>) -> bool {
                     return false;
                 }
 
-                lex.bump(remainder[0..total_len].as_bytes().len());
+                lex.bump(total_len);
                 return true;
             } else {
                 quote_count += 1;
@@ -205,7 +205,7 @@ fn lex_multi_line_string(lex: &mut Lexer<SyntaxKind>) -> bool {
             return false;
         }
 
-        lex.bump(remainder[0..total_len].as_bytes().len());
+        lex.bump(total_len);
         true
     } else {
         false
@@ -220,7 +220,7 @@ fn lex_string_literal(lex: &mut Lexer<SyntaxKind>) -> bool {
         total_len += c.len_utf8();
 
         if c == '\'' {
-            lex.bump(remainder[0..total_len].as_bytes().len());
+            lex.bump(total_len);
             return true;
         }
     }
@@ -242,7 +242,7 @@ fn lex_multi_line_string_literal(lex: &mut Lexer<SyntaxKind>) -> bool {
     for c in remainder.chars() {
         if quotes_found {
             if c != '\'' {
-                lex.bump(remainder[0..total_len].as_bytes().len());
+                lex.bump(total_len);
                 return true;
             } else {
                 if quote_count > 4 {
@@ -269,7 +269,7 @@ fn lex_multi_line_string_literal(lex: &mut Lexer<SyntaxKind>) -> bool {
 
     // End of input
     if quotes_found {
-        lex.bump(remainder[0..total_len].as_bytes().len());
+        lex.bump(total_len);
         true
     } else {
         false

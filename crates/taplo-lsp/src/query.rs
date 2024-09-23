@@ -469,8 +469,8 @@ fn full_range(keys: &Keys, node: &Node) -> TextRange {
         .last()
         .map(Key::text_ranges)
     else {
-        return join_ranges(node.text_ranges());
+        return join_ranges(node.text_ranges(true));
     };
 
-    join_ranges(last_key.chain(node.text_ranges()))
+    join_ranges(last_key.chain(node.text_ranges(true)))
 }

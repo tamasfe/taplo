@@ -58,11 +58,11 @@ fn symbols_for_value(
     mapper: &Mapper,
     symbols: &mut Vec<DocumentSymbol>,
 ) {
-    let own_range = mapper.range(join_ranges(node.text_ranges())).unwrap();
+    let own_range = mapper.range(join_ranges(node.text_ranges(true))).unwrap();
 
     let range = if let Some(key_r) = key_range {
         mapper
-            .range(key_r.cover(join_ranges(node.text_ranges())))
+            .range(key_r.cover(join_ranges(node.text_ranges(true))))
             .unwrap()
     } else {
         own_range

@@ -8,10 +8,12 @@ use crate::{
     syntax::{SyntaxElement, SyntaxKind::*, SyntaxNode, SyntaxToken},
     util::overlaps,
 };
+use itertools::Itertools;
 use once_cell::unsync::OnceCell;
 use rowan::{GreenNode, NodeOrToken, TextRange};
 use std::{
     cmp,
+    collections::VecDeque,
     iter::{repeat, FromIterator},
     ops::Range,
     rc::Rc,
@@ -109,6 +111,9 @@ create_options!(
         /// Alphabetically reorder array values that are not separated by blank lines.
         pub reorder_arrays: bool,
 
+        /// Alphabetically reorder inline table values.
+        pub reorder_inline_tables: bool,
+
         /// The maximum amount of consecutive blank lines allowed.
         pub allowed_blank_lines: usize,
 
@@ -166,6 +171,7 @@ impl Default for Options {
             indent_string: "  ".into(),
             reorder_keys: false,
             reorder_arrays: false,
+            reorder_inline_tables: false,
             crlf: false,
         }
     }
@@ -318,7 +324,7 @@ where
         let matched = dom.find_all_matches(keys, false)?;
 
         for (_, node) in matched {
-            s.extend(node.text_ranges().map(|r| (r, opts.clone())));
+            s.extend(node.text_ranges(false).map(|r| (r, opts.clone())));
         }
     }
 
@@ -866,6 +872,16 @@ fn format_inline_table(
         formatted = "{}".into();
     }
 
+    let mut sorted_children = if options.reorder_inline_tables {
+        Some(
+            node.children()
+                .sorted_unstable_by(|x, y| x.to_string().cmp(&y.to_string()))
+                .collect::<VecDeque<_>>(),
+        )
+    } else {
+        None
+    };
+
     let mut node_index = 0;
     for c in node.children_with_tokens() {
         match c {
@@ -874,7 +890,16 @@ fn format_inline_table(
                     formatted += ", ";
                 }
 
-                let entry = format_entry(n, options, context);
+                let child = if options.reorder_inline_tables {
+                    sorted_children
+                        .as_mut()
+                        .and_then(|children| children.pop_front())
+                        .unwrap_or(n)
+                } else {
+                    n
+                };
+
+                let entry = format_entry(child, options, context);
                 debug_assert!(entry.comment.is_none());
                 entry.write_to(&mut formatted, options);
 
@@ -915,7 +940,6 @@ fn format_inline_table(
 
     (node.into(), formatted, comment)
 }
-
 // Check whether the array spans multiple lines in its current form.
 fn is_array_multiline(node: &SyntaxNode) -> bool {
     node.descendants_with_tokens().any(|n| n.kind() == NEWLINE)

@@ -51,6 +51,12 @@ tokio = { workspace = true, features = ["sync", "fs", "time", "io-std", "parking
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 tokio = { workspace = true, features = ["sync", "parking_lot", "io-util"] }
 
+[dev-dependencies]
+tokio = { version = "1.24.2", features = [
+  "macros",
+  "test-util",
+] }
+
 [features]
 # default-tls enables native-tls but without enabling native-tls specific features.
 native-tls = ["reqwest/default-tls"]

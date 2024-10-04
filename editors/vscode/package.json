@@ -85,7 +85,8 @@
           ".toml"
         ],
         "filenames": [
-          "Cargo.lock"
+          "Cargo.lock",
+          "uv.lock"
         ],
         "configuration": "./language-configuration.json"
       }

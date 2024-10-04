@@ -20,6 +20,14 @@ The default build with commonly-used features.
 - [Windows (x86)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-windows-x86.zip)
 - [Windows (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-windows-x86_64.zip)
 
+#### Installation with shell managers
+
+[Zinit](https://github.com/zdharma-continuum/zinit):
+
+```shell
+zi for from'gh-r' sbin'taplo* -> taplo' @tamasfe/taplo
+```
+
 
 ### Full Build
 
@@ -37,6 +45,15 @@ The full build contains the following additional features:
 - [macOS (ARM64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-full-darwin-aarch64.gz)
 - [Windows (x86)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-full-windows-x86.zip)
 - [Windows (x86_64)](https://github.com/tamasfe/taplo/releases/latest/download/taplo-full-windows-x86_64.zip)
+
+
+#### Installation with shell managers
+
+[Zinit](https://github.com/zdharma-continuum/zinit):
+
+```shell
+zi for from'gh-r' bpick'*full*' sbin'taplo* -> taplo' @tamasfe/taplo
+```
 
 ## Example
 

@@ -28,17 +28,17 @@ pub async fn completion<E: Environment>(
 ) -> Result<Option<CompletionResponse>, Error> {
     let p = params.required()?;
 
-    let document_uri = p.text_document_position.text_document.uri;
+    let document_uri = &p.text_document_position.text_document.uri;
 
     let workspaces = context.workspaces.read().await;
-    let ws = workspaces.by_document(&document_uri);
+    let ws = workspaces.by_document(document_uri);
 
     // All completions are tied to schemas.
     if !ws.config.schema.enabled {
         return Ok(None);
     }
 
-    let doc = match ws.document(&document_uri) {
+    let doc = match ws.document(document_uri) {
         Ok(d) => d,
         Err(error) => {
             tracing::debug!(%error, "failed to get document from workspace");
@@ -46,11 +46,13 @@ pub async fn completion<E: Environment>(
         }
     };
 
-    let Some(schema_association) = ws.schemas.associations().association_for(&document_uri) else {
+    let Some(schema_association) = ws.schemas.associations().association_for(document_uri) else {
         return Ok(None);
     };
 
     let position = p.text_document_position.position;
+
+    // this errors out when a character gets deleted...
     let Some(offset) = doc.mapper.offset(Position::from_lsp(position)) else {
         tracing::error!(?position, "document position not found");
         return Ok(None);
@@ -65,6 +67,26 @@ pub async fn completion<E: Environment>(
             Value::Null
         }
     };
+
+    let (path, node) = query
+        .dom_node()
+        .cloned()
+        .or_else(|| {
+            doc.dom
+                .flat_iter()
+                .rev()
+                .find(|n| matches!(&n.1, Node::Table(t) if t.kind() == TableKind::Regular))
+        })
+        .unwrap_or_else(|| (Keys::empty(), doc.dom.clone()));
+
+    #[cfg(feature = "cargo_toml")]
+    if document_uri.path().ends_with("Cargo.toml") {
+        let dotted = path.dotted();
+        let k = dotted.split('.').next().unwrap_or_default();
+        if ["dependencies", "dev-dependencies", "build-dependencies"].contains(&k) {
+            return super::cargo::complete_dependencies(p, query, path, node);
+        }
+    }
 
     if query.in_table_header() {
         let key_count = query.header_keys().len();
@@ -101,18 +123,12 @@ pub async fn completion<E: Environment>(
                 Some(r)
             }
         });
-
-        let node = query
-            .dom_node()
-            .cloned()
-            .unwrap_or_else(|| (Keys::empty(), doc.dom.clone()));
-
         return Ok(Some(CompletionResponse::Array(
             object_schemas
                 // Filter out existing tables in the dom.
                 .filter(|(full_key, _, _)| match doc.dom.path(full_key) {
                     Some(n) => {
-                        node.0 == *full_key
+                        path == *full_key
                             || n.as_table()
                                 .map_or(false, |t| t.kind() == TableKind::Pseudo)
                     }

@@ -17,6 +17,7 @@ lsp        = ["async-ctrlc", "taplo-lsp"]
 native-tls = ["taplo-common/native-tls", "taplo-lsp?/native-tls"]
 rustls-tls = ["taplo-common/rustls-tls", "taplo-lsp?/rustls-tls"]
 toml-test  = []
+cargo_toml = ["taplo-lsp?/cargo_toml"]
 
 [dependencies]
 taplo        = { path = "../taplo", features = ["serde"] }

@@ -39,3 +39,9 @@ pub(crate) use rename::*;
 
 mod conversion;
 pub(crate) use conversion::*;
+
+mod code_action;
+pub(crate) use code_action::*;
+
+#[cfg(feature = "cargo_toml")]
+pub(crate) mod cargo;

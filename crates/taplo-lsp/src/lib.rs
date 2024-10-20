@@ -37,6 +37,7 @@ pub fn create_server<E: Environment>() -> Server<World<E>> {
         .on_request::<request::HoverRequest, _>(handlers::hover)
         .on_request::<request::DocumentLinkRequest, _>(handlers::links)
         .on_request::<request::SemanticTokensFullRequest, _>(handlers::semantic_tokens)
+        .on_request::<request::CodeActionRequest, _>(handlers::code_action)
         .on_request::<request::PrepareRenameRequest, _>(handlers::prepare_rename)
         .on_request::<request::Rename, _>(handlers::rename)
         .on_notification::<notification::Initialized, _>(handlers::initialized)

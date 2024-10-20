@@ -16,6 +16,7 @@ crate-type = ["cdylib", "rlib"]
 default    = ["rustls-tls"]
 native-tls = ["taplo-common/native-tls"]
 rustls-tls = ["taplo-common/rustls-tls"]
+cargo_toml = []
 
 [dependencies]
 lsp-async-stub = { path = "../lsp-async-stub" }

@@ -6,11 +6,12 @@ use crate::world::WorkspaceState;
 use crate::World;
 use lsp_async_stub::{rpc::Error, Context, Params};
 use lsp_types::{
-    CompletionOptions, DocumentLinkOptions, FoldingRangeProviderCapability,
-    HoverProviderCapability, InitializedParams, OneOf, RenameOptions, SemanticTokensFullOptions,
-    SemanticTokensLegend, SemanticTokensOptions, SemanticTokensServerCapabilities,
-    ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind,
-    WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+    CodeActionProviderCapability, CompletionOptions, DocumentLinkOptions,
+    FoldingRangeProviderCapability, HoverProviderCapability, InitializedParams, OneOf,
+    RenameOptions, SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions,
+    SemanticTokensServerCapabilities, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
+    TextDocumentSyncKind, WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities,
+    WorkspaceServerCapabilities,
 };
 use lsp_types::{InitializeParams, InitializeResult};
 use taplo_common::environment::Environment;
@@ -97,6 +98,7 @@ pub async fn initialize<E: Environment>(
                 resolve_provider: None,
                 work_done_progress_options: Default::default(),
             }),
+            code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
             ..Default::default()
         },
         server_info: Some(ServerInfo {

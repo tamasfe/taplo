@@ -1706,7 +1706,6 @@ dependencies = [
  "once_cell",
  "prettydiff",
  "regex",
- "reqwest",
  "schemars",
  "serde",
  "serde_json",

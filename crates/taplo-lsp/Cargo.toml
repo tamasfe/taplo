@@ -20,7 +20,7 @@ rustls-tls = ["taplo-common/rustls-tls"]
 [dependencies]
 lsp-async-stub = { path = "../lsp-async-stub" }
 taplo          = { path = "../taplo", features = ["serde"] }
-taplo-common   = { path = "../taplo-common" }
+taplo-common   = { path = "../taplo-common", features = ["schema", "reqwest"] }
 
 anyhow      = { workspace = true }
 arc-swap    = { workspace = true }

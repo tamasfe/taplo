@@ -95,7 +95,7 @@ impl Environment for NativeEnvironment {
         Ok(tokio::fs::write(path, bytes).await?)
     }
 
-    fn to_file_path(&self, url: &reqwest::Url) -> Option<std::path::PathBuf> {
+    fn to_file_path(&self, url: &url::Url) -> Option<std::path::PathBuf> {
         url.to_file_path().ok()
     }
 

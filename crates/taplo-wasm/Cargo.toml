@@ -14,7 +14,7 @@ crate-type = ["cdylib"]
 lsp-async-stub = { path = "../lsp-async-stub" }
 taplo          = { path = "../taplo" }
 taplo-cli      = { path = "../taplo-cli", optional = true, default-features = false }
-taplo-common   = { path = "../taplo-common", default-features = false, features = ["rustls-tls"] }
+taplo-common   = { path = "../taplo-common", default-features = false, features = ["rustls-tls", "schema", "reqwest"] }
 taplo-lsp      = { path = "../taplo-lsp", optional = true, default-features = false }
 
 anyhow                   = { version = "1.0.57" }

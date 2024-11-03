@@ -23,9 +23,9 @@ pub mod cache;
 pub mod ext;
 
 pub mod builtins {
-    use reqwest::Url;
     use serde_json::Value;
     use std::sync::Arc;
+    use url::Url;
 
     pub const TAPLO_CONFIG_URL: &str = "taplo://taplo.toml";
 

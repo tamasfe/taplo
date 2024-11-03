@@ -23,7 +23,7 @@ clap                     = { version = "4.5.8", features = ["derive"] }
 console_error_panic_hook = { version = "0.1.7" }
 futures                  = { version = "0.3.21" }
 getrandom                = { version = "0.2.15", features = ["js"] }
-indexmap                 = { version = "~1.6" }
+indexmap                 = { version = "2.6.0" }
 serde                    = { version = "1.0.137", features = ["derive"] }
 serde-wasm-bindgen       = { version = "0.6.5" }
 serde_json               = { version = "1.0.81" }

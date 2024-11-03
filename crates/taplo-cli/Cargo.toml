@@ -45,7 +45,6 @@ url                = { workspace = true }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 ansi_term      = { version = "0.12" }
 async-ctrlc    = { version = "1.2.0", features = ["stream"], optional = true }
-atty           = { version = "0.2.14" }
 lsp-async-stub = { path = "../lsp-async-stub", features = ["tokio-tcp", "tokio-stdio"] }
 # `prettydiff` is also a CLI that pulls in `clap` by default
 prettydiff = { version = "0.6.1", default-features = false }

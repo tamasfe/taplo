@@ -19,7 +19,6 @@ anyhow             = { workspace = true, features = ["backtrace"] }
 arc-swap           = { workspace = true }
 async-recursion    = { version = "1.0.0" }
 async-trait        = { workspace = true }
-atty               = { version = "0.2.14" }
 futures            = { workspace = true }
 glob               = { workspace = true }
 globset            = { workspace = true }

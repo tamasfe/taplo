@@ -60,7 +60,8 @@ impl Environment for NativeEnvironment {
     }
 
     fn atty_stderr(&self) -> bool {
-        atty::is(atty::Stream::Stderr)
+        use std::io::IsTerminal;
+        std::io::stderr().is_terminal()
     }
 
     fn stdin(&self) -> Self::Stdin {

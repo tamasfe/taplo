@@ -11,6 +11,13 @@ repository   = { workspace = true }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+# default-tls enables native-tls but without enabling native-tls specific features.
+native-tls = ["reqwest/default-tls"]
+rustls-tls = ["reqwest/rustls-tls"]
+schema     = []
+reqwest    = ["dep:reqwest"]
+
 [dependencies]
 taplo = { path = "../taplo", features = ["schema"] }
 
@@ -19,7 +26,6 @@ anyhow             = { workspace = true, features = ["backtrace"] }
 arc-swap           = { workspace = true }
 async-recursion    = { version = "1.0.0" }
 async-trait        = { workspace = true }
-atty               = { version = "0.2.14" }
 futures            = { workspace = true }
 glob               = { workspace = true }
 globset            = { workspace = true }
@@ -32,7 +38,7 @@ lru                = { version = "0.11.1" }
 parking_lot        = { workspace = true }
 percent-encoding   = { version = "2.1.0" }
 regex              = { workspace = true }
-reqwest            = { workspace = true, features = ["json"] }
+reqwest            = { workspace = true, features = ["json"], optional = true }
 schemars           = { workspace = true, features = ["url"] }
 semver             = { version = "1.0.5", features = ["serde"] }
 serde              = { workspace = true, features = ["derive"] }
@@ -50,11 +56,6 @@ tokio = { workspace = true, features = ["sync", "fs", "time", "io-std", "parking
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 tokio = { workspace = true, features = ["sync", "parking_lot", "io-util"] }
-
-[features]
-# default-tls enables native-tls but without enabling native-tls specific features.
-native-tls = ["reqwest/default-tls"]
-rustls-tls = ["reqwest/rustls-tls"]
 
 [package.metadata.auto-tag]
 enabled = true

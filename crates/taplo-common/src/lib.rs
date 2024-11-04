@@ -16,6 +16,7 @@ pub mod config;
 pub mod convert;
 pub mod environment;
 pub mod log;
+#[cfg(feature = "schema")]
 pub mod schema;
 pub mod util;
 

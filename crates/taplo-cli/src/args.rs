@@ -1,5 +1,6 @@
 use clap::{crate_version, Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
+#[cfg(feature = "lint")]
 use url::Url;
 
 #[derive(Clone, Parser)]
@@ -48,25 +49,32 @@ pub enum Colors {
 pub enum TaploCommand {
     /// Lint TOML documents.
     #[clap(visible_aliases = &["check", "validate"])]
+    #[cfg(feature = "lint")]
     Lint(LintCommand),
+
     /// Format TOML documents.
     ///
     /// Files are modified in-place unless the input comes from the standard input, in which case the formatted result is printed to the standard output.
     #[clap(visible_aliases = &["fmt"])]
     Format(FormatCommand),
+
     /// Language server operations.
+    #[cfg(feature = "lsp")]
     Lsp {
         #[clap(flatten)]
         cmd: LspCommand,
     },
+
     /// Operations with the Taplo config file.
     #[clap(visible_aliases = &["cfg"])]
     Config {
         #[clap(subcommand)]
         cmd: ConfigCommand,
     },
+
     /// Extract a value from the given TOML document.
     Get(GetCommand),
+
     /// Start a decoder for `toml-test` (https://github.com/BurntSushi/toml-test).
     #[cfg(feature = "toml-test")]
     TomlTest {},
@@ -108,6 +116,7 @@ pub struct FormatCommand {
     pub stdin_filepath: Option<String>,
 }
 
+#[cfg(feature = "lsp")]
 #[derive(Clone, Args)]
 pub struct LspCommand {
     #[clap(flatten)]
@@ -117,6 +126,7 @@ pub struct LspCommand {
     pub io: LspCommandIo,
 }
 
+#[cfg(feature = "lsp")]
 #[derive(Clone, Subcommand)]
 pub enum LspCommandIo {
     /// Run the language server and listen on a TCP address.
@@ -137,6 +147,7 @@ pub enum ConfigCommand {
     Schema,
 }
 
+#[cfg(feature = "lint")]
 #[derive(Clone, Args)]
 pub struct LintCommand {
     #[clap(flatten)]

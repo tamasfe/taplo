@@ -120,7 +120,7 @@ pub(crate) fn normalize_str(s: &str) -> Cow<str> {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "reqwest"))]
 #[tracing::instrument]
 pub fn get_reqwest_client(timeout: std::time::Duration) -> Result<reqwest::Client, reqwest::Error> {
     #[cfg(any(feature = "native-tls", feature = "rustls-tls"))]

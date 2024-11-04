@@ -6,7 +6,9 @@ use std::{
     str,
     sync::Arc,
 };
-use taplo_common::{config::Config, environment::Environment, schema::Schemas, util::Normalize};
+#[cfg(feature = "lint")]
+use taplo_common::schema::Schemas;
+use taplo_common::{config::Config, environment::Environment, util::Normalize};
 
 pub mod args;
 pub mod commands;
@@ -15,20 +17,22 @@ pub mod printing;
 pub struct Taplo<E: Environment> {
     env: E,
     colors: bool,
+    #[cfg(feature = "lint")]
     schemas: Schemas<E>,
     config: Option<Arc<Config>>,
 }
 
 impl<E: Environment> Taplo<E> {
     pub fn new(env: E) -> Self {
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(not(target_arch = "wasm32"), feature = "lint"))]
         let http =
             taplo_common::util::get_reqwest_client(std::time::Duration::from_secs(5)).unwrap();
 
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", feature = "lint"))]
         let http = reqwest::Client::default();
 
         Self {
+            #[cfg(feature = "lint")]
             schemas: Schemas::new(env.clone(), http),
             colors: env.atty_stderr(),
             config: None,

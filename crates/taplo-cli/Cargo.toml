@@ -12,11 +12,12 @@ license      = { workspace = true }
 repository   = { workspace = true }
 
 [features]
-default    = ["lsp", "rustls-tls", "toml-test"]
-lsp        = ["async-ctrlc", "taplo-lsp"]
+default    = ["lint", "lsp", "rustls-tls", "toml-test"]
+lint       = ["taplo-common/schema", "taplo-common/reqwest", "reqwest"]
+lsp        = ["async-ctrlc", "taplo-lsp", "lint"]
 native-tls = ["taplo-common/native-tls", "taplo-lsp?/native-tls"]
 rustls-tls = ["taplo-common/rustls-tls", "taplo-lsp?/rustls-tls"]
-toml-test  = []
+toml-test  = ["lint"]
 
 [dependencies]
 taplo        = { path = "../taplo", features = ["serde"] }
@@ -32,7 +33,7 @@ hex                = { workspace = true }
 itertools          = { workspace = true }
 once_cell          = { workspace = true }
 regex              = { workspace = true }
-reqwest            = { workspace = true, features = ["json"] }
+reqwest            = { workspace = true, features = ["json"], optional = true }
 schemars           = { workspace = true }
 serde              = { workspace = true }
 serde_json         = { workspace = true }
@@ -45,7 +46,6 @@ url                = { workspace = true }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 ansi_term      = { version = "0.12" }
 async-ctrlc    = { version = "1.2.0", features = ["stream"], optional = true }
-atty           = { version = "0.2.14" }
 lsp-async-stub = { path = "../lsp-async-stub", features = ["tokio-tcp", "tokio-stdio"] }
 # `prettydiff` is also a CLI that pulls in `clap` by default
 prettydiff = { version = "0.6.1", default-features = false }

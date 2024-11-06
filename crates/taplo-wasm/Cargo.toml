@@ -17,20 +17,20 @@ taplo-cli      = { path = "../taplo-cli", optional = true, default-features = fa
 taplo-common   = { path = "../taplo-common", default-features = false, features = ["rustls-tls", "schema", "reqwest"] }
 taplo-lsp      = { path = "../taplo-lsp", optional = true, default-features = false }
 
-anyhow                   = { version = "1.0.57" }
-async-trait              = { version = "0.1.56" }
-clap                     = { version = "4.5.8", features = ["derive"] }
+anyhow                   = { workspace = true }
+async-trait              = { workspace = true }
+clap                     = { workspace = true, features = ["derive"] }
 console_error_panic_hook = { version = "0.1.7" }
-futures                  = { version = "0.3.21" }
-getrandom                = { version = "0.2.15", features = ["js"] }
-indexmap                 = { version = "2.6.0" }
-serde                    = { version = "1.0.137", features = ["derive"] }
+futures                  = { workspace = true }
+getrandom                = { workspace = true, features = ["js"] }
+indexmap                 = { workspace = true }
+serde                    = { workspace = true, features = ["derive"] }
 serde-wasm-bindgen       = { version = "0.6.5" }
-serde_json               = { version = "1.0.81" }
-time                     = { version = "0.3.9", features = ["parsing"] }
-tokio                    = { version = "1.19.2", default-features = false }
-tracing                  = { version = "0.1.35" }
-url                      = { version = "2.2.2" }
+serde_json               = { workspace = true }
+time                     = { workspace = true, features = ["parsing"] }
+tokio                    = { workspace = true }
+tracing                  = { workspace = true }
+url                      = { workspace = true }
 
 # Bump all together since it's a monorepo
 js-sys               = { version = "0.3.72" }
@@ -41,7 +41,3 @@ wasm-bindgen-futures = { version = "0.4.45" }
 cli     = ["taplo-cli"]
 default = ["lsp", "cli"]
 lsp     = ["taplo-lsp"]
-
-[profile.release]
-lto       = true
-opt-level = 's'

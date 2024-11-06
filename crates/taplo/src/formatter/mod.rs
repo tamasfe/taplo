@@ -324,7 +324,7 @@ where
         let matched = dom.find_all_matches(keys, false)?;
 
         for (_, node) in matched {
-            s.extend(node.text_ranges(false).map(|r| (r, opts.clone())));
+            s.extend(node.text_ranges(true).map(|r| (r, opts.clone())));
         }
     }
 

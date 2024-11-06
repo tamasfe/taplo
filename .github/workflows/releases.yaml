@@ -380,7 +380,11 @@ jobs:
 
   publish_cli:
     name: Release Taplo CLI binaries
-    needs: [build_cli_windows, build_cli_linux_musl, build_cli_macos, get_version]
+    needs:
+      - "get_version"
+      - "build_cli_windows"
+      - "build_cli_linux_musl"
+      - "build_cli_macos"
     runs-on: ubuntu-latest
     env:
       GH_REPO: ${{ github.repository }}
@@ -440,6 +444,7 @@ jobs:
 
   pypi_build_taplo_cli:
     name: Build python wheels
+    if: startsWith(github.ref, 'refs/tags/release-even-better-toml-') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     needs: ["wait_for_ci"]
     runs-on: ${{ matrix.os }}-latest
     strategy:

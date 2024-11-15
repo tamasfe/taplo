@@ -8,6 +8,7 @@
     "module": "ESNext",
     "allowSyntheticDefaultImports": true,
     "declaration": true,
+    "declarationDir": "./dist",
     "strict": false
   },
   "exclude": ["node_modules"]

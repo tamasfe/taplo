@@ -2,7 +2,7 @@
 name         = "taplo-lsp"
 description  = "Language server for Taplo"
 version      = "0.7.2"
-rust-version = "1.70"
+rust-version = "1.71"
 authors      = { workspace = true }
 edition      = { workspace = true }
 homepage     = { workspace = true }

@@ -2,7 +2,7 @@
 name         = "taplo"
 description  = "A TOML parser, analyzer and formatter library"
 version      = "0.13.2"
-rust-version = "1.70"                                          # clap 4.4 = MSRV 1.70, clap 4.5 = MSRV 1.74
+rust-version = "1.71"                                          # yoke 0.7.5 via url 2.5.4 = MSRV 1.71
 categories   = ["parser-implementations", "parsing"]
 keywords     = ["toml", "parser", "formatter", "linter"]
 readme       = false

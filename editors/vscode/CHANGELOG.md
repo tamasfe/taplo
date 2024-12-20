@@ -1,10 +1,16 @@
 # Change Log
 
+## 0.21.2
+
+### Fixes
+
+- Re-release for VS Marketplace since the token for publishing extension was expired
+
 ## 0.21.1
 
 ### Fixes
 
-- Re-release for VS Marketplace since the token for published was expired
+- Re-release for VS Marketplace since the token for publishing extension was expired
 - Bump VS Code engine to 1.90.0 which is a minimum version required due to NodeJS v20 dependency that includes webcrypto
 
 ## 0.21.0

@@ -427,8 +427,7 @@ jobs:
         run: vsce package --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode --no-yarn # Microsoft doesn't support anything other than npm and yarn@v1
         working-directory: editors/vscode
       - name: Publish extension to microsoft marketplace
-        # disable publishing vscode ext in tamasfe/taplo due to expired token
-        if: github.event_name == 'push' && github.repository_owner != 'tamasfe'
+        if: github.event_name == 'push'
         run: vsce publish --baseImagesUrl https://raw.githubusercontent.com/tamasfe/taplo/master/editors/vscode -p $VSCE_TOKEN --no-yarn
         working-directory: editors/vscode
         env:

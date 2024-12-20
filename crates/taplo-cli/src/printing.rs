@@ -10,7 +10,9 @@ use codespan_reporting::{
 use itertools::Itertools;
 use std::ops::Range;
 use taplo::{dom, parser, rowan::TextRange};
-use taplo_common::{environment::Environment, schema::NodeValidationError};
+use taplo_common::environment::Environment;
+#[cfg(feature = "lint")]
+use taplo_common::schema::NodeValidationError;
 use tokio::io::AsyncWriteExt;
 
 impl<E: Environment> Taplo<E> {
@@ -113,6 +115,7 @@ impl<E: Environment> Taplo<E> {
         Ok(())
     }
 
+    #[cfg(feature = "lint")]
     pub(crate) async fn print_schema_errors(
         &self,
         file: &SimpleFile<&str, &str>,

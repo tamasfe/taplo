@@ -23,9 +23,9 @@ pub mod cache;
 pub mod ext;
 
 pub mod builtins {
-    use reqwest::Url;
     use serde_json::Value;
     use std::sync::Arc;
+    use url::Url;
 
     pub const TAPLO_CONFIG_URL: &str = "taplo://taplo.toml";
 
@@ -717,22 +717,24 @@ impl NodeValidationError {
     }
 
     pub fn text_ranges(&self) -> Box<dyn Iterator<Item = TextRange> + '_> {
-        let include_children = match self.error.kind {
-            ValidationErrorKind::AdditionalProperties { .. } => false,
-            _ => true,
-        };
+        match self.error.kind {
+            ValidationErrorKind::AdditionalProperties { .. } => {
+                let include_children = false;
 
-        if self.keys.is_empty() {
-            return Box::new(self.node.text_ranges(include_children).into_iter());
+                if self.keys.is_empty() {
+                    return Box::new(self.node.text_ranges(include_children).into_iter());
+                }
+
+                Box::new(
+                    self.keys
+                        .clone()
+                        .into_iter()
+                        .map(move |key| self.node.get(key).text_ranges(include_children))
+                        .flatten(),
+                )
+            }
+            _ => Box::new(self.node.text_ranges(true)),
         }
-
-        Box::new(
-            self.keys
-                .clone()
-                .into_iter()
-                .map(move |key| self.node.get(key).text_ranges(include_children))
-                .flatten(),
-        )
     }
 }
 

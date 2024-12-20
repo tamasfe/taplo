@@ -2,7 +2,7 @@
   "name": "even-better-toml",
   "displayName": "Even Better TOML",
   "description": "Fully-featured TOML support",
-  "version": "0.20.2",
+  "version": "0.21.2",
   "autoTag": {
     "enabled": true
   },
@@ -24,7 +24,7 @@
   },
   "license": "SEE LICENSE IN LICENSE.md",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Programming Languages",
@@ -33,12 +33,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:toml",
-    "onLanguage:cargoLock",
-    "onCommand:evenBetterToml.pasteAsJson",
-    "onCommand:evenBetterToml.copyAsJson",
-    "onCommand:evenBetterToml.pasteAsToml",
-    "onCommand:evenBetterToml.copyAsToml"
+    "onLanguage:cargoLock"
   ],
   "keywords": [
     "toml",
@@ -85,7 +80,8 @@
           ".toml"
         ],
         "filenames": [
-          "Cargo.lock"
+          "Cargo.lock",
+          "uv.lock"
         ],
         "configuration": "./language-configuration.json"
       }
@@ -407,16 +403,16 @@
     "build:browser-extension": "rollup -c rollup.config.browser-extension.mjs",
     "build:browser-server": "rollup -c rollup.config.browser-server.mjs",
     "build:node": "rollup -c rollup.config.mjs",
-    "build": "rm -rf dist && yarn build:syntax && yarn build:node && yarn build:browser-extension && yarn build:browser-server"
+    "build": "node scripts/build.mjs"
   },
   "dependencies": {
-    "@taplo/lsp": "^0.6.1",
+    "@taplo/lsp": "^0.8.0",
     "deep-equal": "^2.2.3",
     "encoding": "^0.1.13",
     "fast-glob": "^3.3.2",
     "node-fetch": "^3.3.2",
     "vscode-languageclient": "^9.0.1",
-    "which": "^4.0.0"
+    "which": "^5.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
@@ -424,7 +420,7 @@
     "@rollup/plugin-replace": "^5.0.5",
     "@types/deep-equal": "^1.0.4",
     "@types/node": "^20.11.9",
-    "@types/vscode": "^1.85.0",
+    "@types/vscode": "^1.90.0",
     "@types/which": "^3.0.3",
     "@vscode/test-web": "^0.0.51",
     "esbuild": "^0.20.0",

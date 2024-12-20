@@ -21,6 +21,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^12.1.1",
     "@types/node": "^20.11.9",
     "@wasm-tool/rollup-plugin-rust": "^2.4.5",
     "esbuild": "^0.20.0",

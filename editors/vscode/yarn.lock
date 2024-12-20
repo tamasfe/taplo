@@ -568,10 +568,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/vscode@npm:^1.85.0":
-  version: 1.95.0
-  resolution: "@types/vscode@npm:1.95.0"
-  checksum: 4ecfa717b6ea33b2dba267b3cc10383e75c2f787f753af3a6565675b3e2c86f810f36edb699a0516fbfd1afb524209c0a4bad9d2a6e0234274031a24c1910c98
+"@types/vscode@npm:^1.90.0":
+  version: 1.96.0
+  resolution: "@types/vscode@npm:1.96.0"
+  checksum: 3fb7ba394f6a8d6a4725b7ad0f0a4dd506371af934f7dc709989fd4b8f587cce96efb042e0d3af2b416b4bb74ecb2a5375c61f21b6b0cd86d85c6bdd2dcb2828
   languageName: node
   linkType: hard
 
@@ -1311,7 +1311,7 @@ __metadata:
     "@taplo/lsp": "npm:^0.8.0"
     "@types/deep-equal": "npm:^1.0.4"
     "@types/node": "npm:^20.11.9"
-    "@types/vscode": "npm:^1.85.0"
+    "@types/vscode": "npm:^1.90.0"
     "@types/which": "npm:^3.0.3"
     "@vscode/test-web": "npm:^0.0.51"
     deep-equal: "npm:^2.2.3"

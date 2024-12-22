@@ -37,7 +37,7 @@ serde    = { workspace = true, features = ["derive"], optional = true }
 assert-json-diff = { version = "2" }
 criterion        = { version = "0.5" }                                          # criterion -> clap
 difference       = { version = "2.0.0" }
-pprof            = { version = "0.13", features = ["flamegraph", "criterion"] } # pprof -> criterion -> clap
+pprof            = { version = "0.14", features = ["flamegraph", "criterion"] } # pprof -> criterion -> clap
 serde_json       = { version = "1" }
 toml             = { version = "0.7" }
 

@@ -14,7 +14,7 @@ fn time_in_arrays() {
 
     let errors = parse(src).errors;
 
-    assert!(errors.is_empty(), "{:#?}", errors);
+    assert!(errors.is_empty(), "{errors:#?}");
 }
 
 #[test]
@@ -25,5 +25,5 @@ fn comments_after_tables() {
 "#;
     let errors = parse(src).errors;
 
-    assert!(errors.is_empty(), "{:#?}", errors);
+    assert!(errors.is_empty(), "{errors:#?}");
 }

@@ -2,7 +2,7 @@
 name         = "taplo-common"
 description  = "Shared code for taplo utilities."
 version      = "0.5.2"
-rust-version = "1.70"
+rust-version = "1.71"
 authors      = { workspace = true }
 edition      = { workspace = true }
 homepage     = { workspace = true }

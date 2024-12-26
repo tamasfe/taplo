@@ -2,7 +2,7 @@
 name         = "lsp-async-stub"
 description  = "An LSP server stub for futures"
 version      = "0.6.4"
-rust-version = "1.70"
+rust-version = "1.71"
 authors      = { workspace = true }
 edition      = { workspace = true }
 homepage     = { workspace = true }

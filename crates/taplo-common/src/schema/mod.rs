@@ -11,7 +11,7 @@ use jsonschema::{
 use parking_lot::Mutex;
 use regex::Regex;
 use serde_json::Value;
-use std::{borrow::Cow, num::NonZeroUsize, sync::Arc};
+use std::{num::NonZeroUsize, sync::Arc};
 use taplo::{
     dom::{self, node::Key, KeyOrIndex, Keys},
     rowan::TextRange,
@@ -138,12 +138,7 @@ impl<E: Environment> Schemas<E> {
         loop {
             let errors = validator
                 .iter_errors(value)
-                .map(|err| ValidationError {
-                    instance: Cow::Owned(err.instance.into_owned()),
-                    kind: err.kind,
-                    instance_path: err.instance_path,
-                    schema_path: err.schema_path,
-                })
+                .map(ValidationError::to_owned)
                 .collect::<Vec<_>>();
 
             // We check whether there were any external schema errors,

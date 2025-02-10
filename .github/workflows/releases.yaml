@@ -458,6 +458,11 @@ jobs:
             arch: x86
     steps:
       - uses: actions/checkout@v4
+      - name: Set CFLAGS for aarch64 on Ubuntu
+        if: matrix.os == 'ubuntu' && matrix.arch == 'aarch64'
+        # Workaround issue cross-compiling to aarch64 https://github.com/bobzilladev/ring-poc
+        run: |
+          echo "CFLAGS_aarch64_unknown_linux_gnu=-D__ARM_ARCH=8" >> $GITHUB_ENV
       - name: Build sdist
         if: matrix.os == 'ubuntu' && matrix.arch == 'x64'
         uses: PyO3/maturin-action@v1

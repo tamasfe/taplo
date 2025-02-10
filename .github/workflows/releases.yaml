@@ -454,8 +454,6 @@ jobs:
         exclude:
           - os: windows
             arch: aarch64
-          - os: ubuntu
-            arch: aarch64
           - os: macos
             arch: x86
     steps:

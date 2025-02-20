@@ -567,9 +567,7 @@ impl<'p> Parser<'p> {
                 }
             }
             FLOAT => {
-                if self.lexer.slice().starts_with('0') {
-                    self.error("zero-padded numbers are not allowed")
-                } else if self.lexer.slice().starts_with('+') {
+                if self.lexer.slice().starts_with('+') {
                     Err(())
                 } else {
                     for (i, s) in self.lexer.slice().split('.').enumerate() {

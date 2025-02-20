@@ -8,8 +8,6 @@ use std::marker::PhantomData;
 
 #[async_trait(?Send)]
 pub(crate) trait Handler<W: Clone> {
-    fn method(&self) -> &'static str;
-
     async fn handle(
         &mut self,
         context: Context<W>,
@@ -72,10 +70,6 @@ where
     F: Future<Output = Result<R::Result, rpc::Error>> + 'static,
     W: Clone + 'static,
 {
-    fn method(&self) -> &'static str {
-        R::METHOD
-    }
-
     async fn handle(
         &mut self,
         context: Context<W>,
@@ -160,10 +154,6 @@ where
     F: Future + 'static,
     W: Clone + 'static,
 {
-    fn method(&self) -> &'static str {
-        N::METHOD
-    }
-
     async fn handle(
         &mut self,
         context: Context<W>,

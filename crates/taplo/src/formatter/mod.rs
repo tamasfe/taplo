@@ -418,10 +418,6 @@ impl FormattedItem for FormattedEntry {
     fn trailing_comment(&self) -> Option<String> {
         self.comment.clone()
     }
-
-    fn syntax(&self) -> SyntaxElement {
-        self.syntax.clone()
-    }
 }
 
 fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String {
@@ -1202,14 +1198,9 @@ impl<T: AsRef<str>> FormattedItem for (SyntaxElement, T, Option<T>) {
     fn trailing_comment(&self) -> Option<String> {
         self.2.as_ref().map(|s| s.as_ref().to_string())
     }
-
-    fn syntax(&self) -> SyntaxElement {
-        self.0.clone()
-    }
 }
 
 trait FormattedItem {
-    fn syntax(&self) -> SyntaxElement;
     #[allow(clippy::ptr_arg)]
     fn write_to(&self, formatted: &mut String, options: &Options);
     fn trailing_comment(&self) -> Option<String>;

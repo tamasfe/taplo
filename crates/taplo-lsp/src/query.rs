@@ -167,13 +167,10 @@ impl Query {
     pub fn header_key(&self) -> Option<SyntaxNode> {
         match (&self.before, &self.after) {
             (Some(before), _) => {
-                let Some(header_syntax) = before
+                let header_syntax = before
                     .syntax
                     .parent_ancestors()
-                    .find(|s| matches!(s.kind(), TABLE_ARRAY_HEADER | TABLE_HEADER))
-                else {
-                    return None;
-                };
+                    .find(|s| matches!(s.kind(), TABLE_ARRAY_HEADER | TABLE_HEADER))?;
 
                 header_syntax.descendants().find(|n| n.kind() == KEY)
             }
@@ -188,13 +185,10 @@ impl Query {
             None => return None,
         };
 
-        let Some(keys) = syntax
+        let keys = syntax
             .parent_ancestors()
             .find(|n| n.kind() == ENTRY)
-            .and_then(|entry| entry.children().find(|c| c.kind() == KEY))
-        else {
-            return None;
-        };
+            .and_then(|entry| entry.children().find(|c| c.kind() == KEY))?;
 
         Some(keys)
     }
@@ -206,13 +200,10 @@ impl Query {
             None => return None,
         };
 
-        let Some(value) = syntax
+        let value = syntax
             .parent_ancestors()
             .find(|n| n.kind() == ENTRY)
-            .and_then(|entry| entry.children().find(|c| c.kind() == VALUE))
-        else {
-            return None;
-        };
+            .and_then(|entry| entry.children().find(|c| c.kind() == VALUE))?;
 
         Some(value)
     }
@@ -294,7 +285,7 @@ impl Query {
     #[must_use]
     pub fn in_entry_keys(&self) -> bool {
         self.entry_key()
-            .map_or(false, |k| k.text_range().contains(self.offset))
+            .is_some_and(|k| k.text_range().contains(self.offset))
     }
 
     #[must_use]
@@ -318,7 +309,7 @@ impl Query {
         let in_value = self
             .entry_value()
             // We are inside the value even if the cursor is right after it.
-            .map_or(false, |k| k.text_range().contains_inclusive(self.offset));
+            .is_some_and(|k| k.text_range().contains_inclusive(self.offset));
 
         if in_value {
             return true;
@@ -341,7 +332,7 @@ impl Query {
 
     #[must_use]
     pub fn is_single_quote_value(&self) -> bool {
-        self.entry_value().map_or(false, |v| {
+        self.entry_value().is_some_and(|v| {
             v.descendants_with_tokens()
                 .any(|t| matches!(t.kind(), STRING_LITERAL | MULTI_LINE_STRING_LITERAL))
         })

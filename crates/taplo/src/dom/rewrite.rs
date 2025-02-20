@@ -129,6 +129,12 @@ pub enum Error {
     Dom(#[from] dom::error::Error),
 }
 
+fn std_range(range: TextRange) -> Range<usize> {
+    let start: usize = u32::from(range.start()) as usize;
+    let end: usize = u32::from(range.end()) as usize;
+    start..end
+}
+
 #[cfg(test)]
 mod tests {
     use super::Rewrite;
@@ -191,10 +197,4 @@ mod tests {
 
         assert_eq!(expected_toml, patches.to_string());
     }
-}
-
-fn std_range(range: TextRange) -> Range<usize> {
-    let start: usize = u32::from(range.start()) as usize;
-    let end: usize = u32::from(range.end()) as usize;
-    start..end
 }

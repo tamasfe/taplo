@@ -84,7 +84,7 @@ pub async fn completion<E: Environment>(
                         || s["type"] == "object"
                         || s["type"]
                             .as_array()
-                            .map_or(false, |arr| arr.iter().any(|v| v == "object"))
+                            .is_some_and(|arr| arr.iter().any(|v| v == "object"))
                 })
             }) {
             Ok(s) => s,
@@ -113,8 +113,7 @@ pub async fn completion<E: Environment>(
                 .filter(|(full_key, _, _)| match doc.dom.path(full_key) {
                     Some(n) => {
                         node.0 == *full_key
-                            || n.as_table()
-                                .map_or(false, |t| t.kind() == TableKind::Pseudo)
+                            || n.as_table().is_some_and(|t| t.kind() == TableKind::Pseudo)
                     }
                     None => true,
                 })
@@ -209,9 +208,7 @@ pub async fn completion<E: Environment>(
                 .into_iter()
                 // Filter out existing items.
                 .filter(|(full_key, _, _)| match doc.dom.path(full_key) {
-                    Some(n) => n
-                        .as_table()
-                        .map_or(false, |t| t.kind() == TableKind::Pseudo),
+                    Some(n) => n.as_table().is_some_and(|t| t.kind() == TableKind::Pseudo),
                     None => true,
                 })
                 .map(|(_, relative_keys, schema)| CompletionItem {
@@ -318,9 +315,7 @@ pub async fn completion<E: Environment>(
                     .into_iter()
                     // Filter out existing items.
                     .filter(|(full_key, _, _)| match doc.dom.path(full_key) {
-                        Some(n) => n
-                            .as_table()
-                            .map_or(false, |t| t.kind() == TableKind::Pseudo),
+                        Some(n) => n.as_table().is_some_and(|t| t.kind() == TableKind::Pseudo),
                         None => true,
                     })
                     .map(|(_, relative_keys, schema)| CompletionItem {
@@ -418,9 +413,7 @@ pub async fn completion<E: Environment>(
             .into_iter()
             // Filter out existing items.
             .filter(|(full_key, _, _)| match doc.dom.path(full_key) {
-                Some(n) => n
-                    .as_table()
-                    .map_or(false, |t| t.kind() == TableKind::Pseudo),
+                Some(n) => n.as_table().is_some_and(|t| t.kind() == TableKind::Pseudo),
                 None => true,
             })
             .map(|(_, relative_keys, schema)| CompletionItem {

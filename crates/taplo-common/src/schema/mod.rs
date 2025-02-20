@@ -716,21 +716,21 @@ impl NodeValidationError {
         Ok(Self { keys, node, error })
     }
 
+    #[must_use]
     pub fn text_ranges(&self) -> Box<dyn Iterator<Item = TextRange> + '_> {
         match self.error.kind {
             ValidationErrorKind::AdditionalProperties { .. } => {
                 let include_children = false;
 
                 if self.keys.is_empty() {
-                    return Box::new(self.node.text_ranges(include_children).into_iter());
+                    return Box::new(self.node.text_ranges(include_children));
                 }
 
                 Box::new(
                     self.keys
                         .clone()
                         .into_iter()
-                        .map(move |key| self.node.get(key).text_ranges(include_children))
-                        .flatten(),
+                        .flat_map(move |key| self.node.get(key).text_ranges(include_children)),
                 )
             }
             _ => Box::new(self.node.text_ranges(true)),

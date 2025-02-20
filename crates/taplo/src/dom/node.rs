@@ -180,7 +180,7 @@ impl Node {
         &self,
         keys: Keys,
         include_children: bool,
-    ) -> Result<impl Iterator<Item = (Keys, Node)> + ExactSizeIterator, Error> {
+    ) -> Result<impl ExactSizeIterator<Item = (Keys, Node)>, Error> {
         let mut all = self.flat_iter_impl();
 
         let mut err: Option<Error> = None;

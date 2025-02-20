@@ -1,3 +1,6 @@
+// Silence errors produced by the #[wasm_bindgen] macro.
+#![allow(unexpected_cfgs)]
+
 use environment::WasmEnvironment;
 use serde::Serialize;
 use std::path::Path;
@@ -213,7 +216,6 @@ pub async fn run_cli(env: JsValue, args: JsValue) -> Result<(), JsError> {
 #[cfg(feature = "lsp")]
 #[wasm_bindgen]
 pub fn create_lsp(env: JsValue, lsp_interface: JsValue) -> lsp::TaploWasmLsp {
-    use taplo_common::environment::Environment;
     use taplo_common::log::setup_stderr_logging;
 
     let env = WasmEnvironment::from(env);

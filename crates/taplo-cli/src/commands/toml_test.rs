@@ -90,7 +90,7 @@ impl<'a> TomlTestValue<'a> {
     }
 }
 
-impl<'a> Serialize for TomlTestValue<'a> {
+impl Serialize for TomlTestValue<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

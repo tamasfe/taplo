@@ -74,7 +74,7 @@ pub(crate) struct Parser<'p> {
     errors: Vec<Error>,
 }
 
-impl<'p> Parser<'p> {
+impl Parser<'_> {
     /// Required for patch syntax
     /// and key matches.
     ///

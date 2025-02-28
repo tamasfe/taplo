@@ -142,11 +142,7 @@ pub(crate) async fn hover<E: Environment>(
                         s += desc;
                     }
 
-                    let link_title = if let Some(s) = schema["title"].as_str() {
-                        s
-                    } else {
-                        "..."
-                    };
+                    let link_title = schema["title"].as_str().unwrap_or("...");
 
                     if links_in_hover {
                         if let Some(link) = &ext_links.key {
@@ -212,11 +208,7 @@ pub(crate) async fn hover<E: Environment>(
                                     if let Some(enum_docs) = enum_docs.get(idx).cloned().flatten() {
                                         if links_in_hover {
                                             let link_title =
-                                                if let Some(s) = schema["title"].as_str() {
-                                                    s
-                                                } else {
-                                                    "..."
-                                                };
+                                                schema["title"].as_str().unwrap_or("...");
 
                                             if let Some(enum_link) =
                                                 enum_links.get(idx).and_then(Option::as_ref)

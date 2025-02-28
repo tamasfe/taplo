@@ -53,7 +53,7 @@ where
     }
 
     pub(crate) fn update(&self, f: impl FnOnce(&mut T)) {
-        let mut inner = self.0.load_full().take().unwrap();
+        let mut inner = self.0.load_full().unwrap();
         f(Arc::make_mut(&mut inner));
         self.0.store(Some(inner))
     }

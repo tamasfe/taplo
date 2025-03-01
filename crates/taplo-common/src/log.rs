@@ -53,64 +53,49 @@ impl<W: AsyncWrite + Unpin> Write for BlockingWrite<W> {
 }
 
 pub fn setup_stderr_logging(e: impl Environment, spans: bool, verbose: bool, colors: Option<bool>) {
-    let span_events = if spans {
-        FmtSpan::NEW | FmtSpan::CLOSE
-    } else {
-        FmtSpan::NONE
-    };
-
     let registry = tracing_subscriber::registry();
 
-    let env_filter = match e.env_var("RUST_LOG") {
+    let colors = match colors {
+        None => e.atty_stderr(),
+        Some(v) => v,
+    };
+
+    let registry = registry.with(match e.env_var("RUST_LOG") {
         Some(log) => EnvFilter::new(log),
         None => EnvFilter::default().add_directive(tracing::Level::INFO.into()),
+    });
+
+    let event_format = tracing_subscriber::fmt::format().pretty().with_ansi(colors);
+
+    let layer = tracing_subscriber::fmt::layer()
+        .with_ansi(colors)
+        .with_writer(move || BlockingWrite(e.stderr()));
+
+    let layer = if spans {
+        layer.with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
+    } else {
+        layer
     };
 
     if verbose {
         registry
-            .with(env_filter)
-            .with(
-                tracing_subscriber::fmt::layer()
-                    .with_ansi(match colors {
-                        None => e.atty_stderr(),
-                        Some(v) => v,
-                    })
-                    .with_span_events(span_events)
-                    .event_format(tracing_subscriber::fmt::format().pretty().with_ansi(
-                        match colors {
-                            None => e.atty_stderr(),
-                            Some(v) => v,
-                        },
-                    ))
-                    .with_writer(move || BlockingWrite(e.stderr())),
-            )
+            .with(layer.event_format(event_format))
             .try_init()
             .ok();
     } else {
         registry
-            .with(env_filter)
             .with(
-                tracing_subscriber::fmt::layer()
-                    .with_ansi(match colors {
-                        None => e.atty_stderr(),
-                        Some(v) => v,
-                    })
+                layer
                     .event_format(
-                        tracing_subscriber::fmt::format()
+                        event_format
                             .compact()
                             .with_source_location(false)
                             .with_target(false)
-                            .without_time()
-                            .with_ansi(match colors {
-                                None => e.atty_stderr(),
-                                Some(v) => v,
-                            }),
+                            .without_time(),
                     )
                     .without_time()
                     .with_file(false)
-                    .with_line_number(false)
-                    .with_span_events(span_events)
-                    .with_writer(move || BlockingWrite(e.stderr())),
+                    .with_line_number(false),
             )
             .try_init()
             .ok();

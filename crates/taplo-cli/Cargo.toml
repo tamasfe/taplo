@@ -2,9 +2,9 @@
 name         = "taplo-cli"
 description  = "A CLI for Taplo TOML toolkit"
 version      = "0.9.3"
-rust-version = "1.70"
 categories   = ["development-tools", "command-line-utilities"]
 keywords     = ["toml", "linter", "formatter"]
+rust-version = { workspace = true }
 authors      = { workspace = true }
 edition      = { workspace = true }
 homepage     = { workspace = true }
@@ -12,12 +12,13 @@ license      = { workspace = true }
 repository   = { workspace = true }
 
 [features]
-default    = ["lint", "lsp", "rustls-tls", "toml-test"]
-lint       = ["taplo-common/schema", "taplo-common/reqwest", "reqwest"]
-lsp        = ["async-ctrlc", "taplo-lsp", "lint"]
-native-tls = ["taplo-common/native-tls", "taplo-lsp?/native-tls"]
-rustls-tls = ["taplo-common/rustls-tls", "taplo-lsp?/rustls-tls"]
-toml-test  = ["lint"]
+default     = ["lint", "lsp", "rustls-tls", "toml-test", "completions"]
+lint        = ["taplo-common/schema", "taplo-common/reqwest", "reqwest"]
+lsp         = ["async-ctrlc", "taplo-lsp", "lint"]
+native-tls  = ["taplo-common/native-tls", "taplo-lsp?/native-tls"]
+rustls-tls  = ["taplo-common/rustls-tls", "taplo-lsp?/rustls-tls"]
+toml-test   = ["lint"]
+completions = ["dep:clap_complete"]
 
 [dependencies]
 taplo        = { path = "../taplo", features = ["serde"] }
@@ -43,15 +44,16 @@ tracing            = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 url                = { workspace = true }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
 ansi_term      = { version = "0.12" }
 async-ctrlc    = { version = "1.2.0", features = ["stream"], optional = true }
+clap_complete  = { version = "4.4.18", optional = true }
 lsp-async-stub = { path = "../lsp-async-stub", features = ["tokio-tcp", "tokio-stdio"] }
 # `prettydiff` is also a CLI that pulls in `clap` by default
 prettydiff = { version = "0.6.1", default-features = false }
 tokio      = { workspace = true, features = ["sync", "fs", "time", "io-std", "rt-multi-thread", "parking_lot"] }
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
+[target.'cfg(target_family = "wasm")'.dependencies]
 tokio = { workspace = true, features = ["sync", "parking_lot", "io-util"] }
 
 [package.metadata.auto-tag]

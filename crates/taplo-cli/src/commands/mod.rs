@@ -25,6 +25,22 @@ impl<E: Environment> Taplo<E> {
         };
 
         match taplo.cmd {
+            #[cfg(feature = "completions")]
+            TaploCommand::Completions { shell } => {
+                use anyhow::anyhow;
+                use clap::CommandFactory;
+                use clap_complete::{generate, shells::Shell};
+                use std::{io::stdout, str::FromStr};
+
+                let shell = Shell::from_str(&shell).map_err(|e| anyhow!(e))?;
+                generate(
+                    shell,
+                    &mut TaploArgs::command(),
+                    TaploArgs::command().get_bin_name().unwrap(),
+                    &mut stdout(),
+                );
+                Ok(())
+            }
             TaploCommand::Config { cmd } => self.execute_config(cmd).await,
             TaploCommand::Format(fmt) => self.execute_format(fmt).await,
             TaploCommand::Get(cmd) => self.execute_get(cmd).await,

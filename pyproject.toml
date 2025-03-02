@@ -5,7 +5,6 @@ build-backend = "maturin"
 [project]
 name            = "taplo"
 description     = "A CLI for Taplo TOML toolkit"
-readme          = "README.md"
 authors         = [{ name = "tamasfe" }]
 maintainers     = [{ name = "Jakub Panek" }]
 requires-python = ">=3.8"

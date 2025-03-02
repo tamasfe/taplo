@@ -10,17 +10,14 @@ COPY --from=xx / /
 
 SHELL [ "/bin/ash", "-c" ]
 
-# install host dependencies
-ARG DISTRIBUTION_PACKAGES
 RUN \
-  --mount=type=cache,id=apk,sharing=private,target=/var/cache/apk \
-  --mount=type=cache,id=apk,sharing=private,target=/etc/apk/cache \
+  --mount=type=cache,id=apk,target=/var/cache/apk \
+  --mount=type=cache,id=apk,target=/etc/apk/cache \
   <<EOF
 
 apk upgrade -Ua
 apk add --no-cache \
-  bash clang lld llvm file git pkgconf build-base \
-  ${DISTRIBUTION_PACKAGES}
+  bash clang lld llvm file git pkgconf build-base maturin
 EOF
 
 WORKDIR /source
@@ -43,17 +40,15 @@ EOF
 
 # Install target dependencies
 ARG TARGETPLATFORM
-ARG DISTRIBUTION_PACKAGES
 RUN \
-  --mount=type=cache,id=apk,sharing=private,target=/var/cache/apk \
-  --mount=type=cache,id=apk,sharing=private,target=/etc/apk/cache \
+  --mount=type=cache,id=apk-cross,sharing=private,target=/var/cache/apk \
+  --mount=type=cache,id=apk-cross,sharing=private,target=/etc/apk/cache \
   <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
 
 xx-apk add \
-  "xx-cxx-essentials" \
-  ${DISTRIBUTION_PACKAGES}
+  "xx-cxx-essentials"
 EOF
 
 FROM build-prep AS build
@@ -81,24 +76,47 @@ fi
 export OPENSSL_STATIC="1"
 export PKG_CONFIG_ALL_STATIC="1"
 export OPENSSL_NO_VENDOR="1"
-export RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=lld -C target-feature=+crt-static"
-export PKG_CONFIG="$(xx-clang --print-prog-name=pkg-config)"
 
-xx-cargo build \
+cargo_target_env=$(xx-cargo --print-target-triple | tr '[:lower:]' '[:upper:]' | tr - _)
+
+export "CARGO_TARGET_${cargo_target_env}_CC=$(xx-cargo --print-target-triple)-clang"
+export "CARGO_TARGET_${cargo_target_env}_LINKER=$(xx-cargo --print-target-triple)-clang"
+export "CARGO_TARGET_${cargo_target_env}_RUSTFLAGS"="-C link-arg=-fuse-ld=lld -C target-feature=+crt-static"
+
+export "TARGET_CC=$(xx-clang --print-target-triple)-clang"
+export "TARGET_LINKER=$(xx-clang --print-target-triple)-clang"
+
+export PKG_CONFIG="$(xx-cargo --print-target-triple)-pkg-config"
+
+cargo build \
   --verbose \
   --frozen \
-  --bin taplo \
   --release \
-  --features toml-test,lsp
+  --target "$(xx-cargo --print-target-triple)" \
+  --package taplo-cli
+
+maturin build \
+  --verbose \
+  --frozen \
+  --release \
+  --target "$(xx-cargo --print-target-triple)" \
+  --out /maturin
+
+if ! xx-info is-cross; then
+  maturin sdist \
+    --verbose \
+    --out /maturin
+fi
 
 xx-verify "${CARGO_TARGET_DIR}"/"$(xx-cargo --print-target-triple)"/release/taplo
 
-mv -v "${CARGO_TARGET_DIR}"/"$(xx-cargo --print-target-triple)"/release/taplo /usr/local/bin/taplo
+cp -v "${CARGO_TARGET_DIR}"/"$(xx-cargo --print-target-triple)"/release/taplo /usr/local/bin/taplo
 
 EOF
 
 FROM scratch AS binary
 COPY --from=build /usr/local/bin/taplo .
+COPY --from=build /maturin .
 
 FROM scratch AS oci
 COPY --from=build /usr/local/bin/taplo /taplo

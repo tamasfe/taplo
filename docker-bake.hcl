@@ -18,28 +18,13 @@ variable "PUSH" {
   default = false
 }
 
-variable "APK_FAMILY_PACKAGES" {
-  default = [
-    "make",
-    "clang",
-    "git",
-    "lld",
-    "build-base",
-    "openssl-dev",
-    "openssl-libs-static",
-  ]
-}
-
-
 variable "platforms" {
   default = [
     "linux/i386",
     "linux/amd64",
     "linux/arm64",
-    // "linux/riscv64",
-    // "linux/s390x",
+    "linux/riscv64",
     "linux/arm/v7",
-    // "linux/arm/v6",
   ]
 }
 
@@ -72,7 +57,6 @@ target "alpine" {
   args = {
     RUST_VERSION          = RUST_VERSION
     XX_VERSION            = XX_VERSION
-    DISTRIBUTION_VERSION  = "3.20"
-    DISTRIBUTION_PACKAGES = join(" ", APK_FAMILY_PACKAGES)
+    DISTRIBUTION_VERSION  = "3.21"
   }
 }

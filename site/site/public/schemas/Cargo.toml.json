@@ -494,6 +494,25 @@
         }
       }
     },
+    "Strip": {
+      "title": "Strip symbols or debuginfo",
+      "description": "The strip option controls the [`-C strip` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#strip), which directs rustc to\nstrip either symbols or debuginfo from a binary",
+      "enum": ["none", "debuginfo", "symbols", true, false],
+      "x-taplo": {
+        "docs": {
+          "enumValues": [
+            "Do not strip anything.",
+            "Strip debuginfo. This retains symbols.",
+            "Strip all symbols. This is the most aggressive stripping mode.",
+            "Strip all symbols. This is the most aggressive stripping mode. Equivalent to `strip = \"symbols\"`.",
+            "Do not strip anything. Equivalent to `strip = \"none\"`."
+          ]
+        },
+        "links": {
+          "key": "https://doc.rust-lang.org/cargo/reference/profiles.html#strip"
+        }
+      }
+    },
     "Package": {
       "title": "Package",
       "description": "The only fields required by Cargo are [`name`](https://doc.rust-lang.org/cargo/reference/manifest.html#the-name-field) and\n[`version`](https://doc.rust-lang.org/cargo/reference/manifest.html#the-version-field). If publishing to a registry, the registry may\nrequire additional fields. See the notes below and [the publishing chapter](https://doc.rust-lang.org/cargo/reference/publishing.html) for requirements for publishing to [crates.io](https://crates.io/).",
@@ -961,6 +980,9 @@
         },
         "opt-level": {
           "$ref": "#/definitions/OptLevel"
+        },
+        "strip": {
+          "$ref": "#/definitions/Strip"
         },
         "overflow-checks": {
           "description": "The `overflow-checks` setting controls the [`-C overflow-checks` flag](https://doc.rust-lang.org/rustc/codegen-options/index.html#overflow-checks) which\ncontrols the behavior of [runtime integer overflow](https://doc.rust-lang.org/reference/expressions/operator-expr.html#overflow). When overflow-checks are\nenabled, a panic will occur on overflow.",

@@ -137,9 +137,11 @@ impl<E: Environment> Taplo<E> {
         let cwd = cwd.to_path_buf();
 
         let mut bldr = ignore::WalkBuilder::new(&cwd);
-        bldr.git_ignore(true)
+        bldr.standard_filters(false)
+            .git_ignore(true)
             .git_exclude(true)
             .git_global(true)
+            .parents(true)
             .ignore(true)
             .hidden(false)
             .same_file_system(true);
@@ -154,7 +156,8 @@ impl<E: Environment> Taplo<E> {
         for keep_pattern in config
             .include
             .iter()
-            .flatten().cloned()
+            .flatten()
+            .cloned()
             .map(|x| x.to_owned())
             .chain(patterns.into_iter())
         {

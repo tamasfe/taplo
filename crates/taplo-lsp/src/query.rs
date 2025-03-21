@@ -293,7 +293,8 @@ impl Query {
 
     #[must_use]
     pub fn in_entry_keys(&self) -> bool {
-        self.entry_key().is_some_and(|k| k.text_range().contains(self.offset))
+        self.entry_key()
+            .is_some_and(|k| k.text_range().contains(self.offset))
     }
 
     #[must_use]
@@ -315,7 +316,8 @@ impl Query {
     #[must_use]
     pub fn in_entry_value(&self) -> bool {
         let in_value = self
-            .entry_value().is_some_and(|k| k.text_range().contains_inclusive(self.offset));
+            .entry_value()
+            .is_some_and(|k| k.text_range().contains_inclusive(self.offset));
 
         if in_value {
             return true;

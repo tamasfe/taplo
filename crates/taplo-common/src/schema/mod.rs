@@ -716,7 +716,8 @@ impl NodeValidationError {
         Ok(Self { keys, node, error })
     }
 
-    #[must_use] pub fn text_ranges(&self) -> Box<dyn Iterator<Item = TextRange> + '_> {
+    #[must_use]
+    pub fn text_ranges(&self) -> Box<dyn Iterator<Item = TextRange> + '_> {
         match self.error.kind {
             ValidationErrorKind::AdditionalProperties { .. } => {
                 let include_children = false;

@@ -53,7 +53,7 @@ impl<E: Environment> Taplo<E> {
             }
         }
 
-        if matches!(cmd.files.get(0).map(|it| it.as_str()), Some("-")) {
+        if matches!(cmd.files.first().map(|it| it.as_str()), Some("-")) {
             self.lint_stdin(cmd).await
         } else {
             self.lint_files(cmd).await

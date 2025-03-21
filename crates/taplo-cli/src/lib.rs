@@ -144,8 +144,8 @@ impl<E: Environment> Taplo<E> {
             .hidden(false)
             .same_file_system(true);
 
-        for skip_pattern in config.exclude.iter().cloned().flatten() {
-            if let Ok(pat) = glob::Pattern::new(&skip_pattern) {
+        for skip_pattern in config.exclude.iter().flatten() {
+            if let Ok(pat) = glob::Pattern::new(skip_pattern) {
                 tracing::trace!("Compiling pattern: {skip_pattern}");
                 skip_patterns.push(pat.clone());
                 bldr.filter_entry(move |entry| !pat.matches_path_with(entry.path(), opts));
@@ -154,8 +154,7 @@ impl<E: Environment> Taplo<E> {
         for keep_pattern in config
             .include
             .iter()
-            .cloned()
-            .flatten()
+            .flatten().cloned()
             .map(|x| x.to_owned())
             .chain(patterns.into_iter())
         {
@@ -172,7 +171,7 @@ impl<E: Environment> Taplo<E> {
                 let entry = entry.ok()?;
                 debug_assert!(!skip_patterns
                     .iter()
-                    .any(|pat| pat.matches_path_with(entry.path(), opts.clone())));
+                    .any(|pat| pat.matches_path_with(entry.path(), opts)));
                 debug_assert!(keep_patterns
                     .iter()
                     .any(|pat| pat.matches_path_with(entry.path(), opts)));

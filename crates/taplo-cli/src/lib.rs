@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Context};
 use args::GeneralArgs;
-use itertools::Itertools;
 use std::{
     path::{Path, PathBuf},
     str,
@@ -13,6 +12,8 @@ use taplo_common::{config::Config, environment::Environment, util::Normalize};
 pub mod args;
 pub mod commands;
 pub mod printing;
+
+pub type EntryIter<'a, F> = std::iter::FilterMap<ignore::Walk, F>;
 
 pub struct Taplo<E: Environment> {
     env: E,
@@ -88,17 +89,25 @@ impl<E: Environment> Taplo<E> {
     }
 
     #[tracing::instrument(skip_all, fields(?cwd))]
-    async fn collect_files(
+    async fn files_iter(
         &self,
         cwd: &Path,
         config: &Config,
         arg_patterns: impl Iterator<Item = String>,
-    ) -> Result<Vec<PathBuf>, anyhow::Error> {
+    ) -> Result<
+        EntryIter<'_, Box<dyn FnMut(Result<ignore::DirEntry, ignore::Error>) -> Option<PathBuf>>>,
+        anyhow::Error,
+    > {
+        tracing::trace!("Nomarlizing patterns to absolute ones...");
+
         let mut patterns: Vec<String> = arg_patterns
             .map(|pat| {
                 if !self.env.is_absolute(Path::new(&pat)) {
-                    cwd.join(&pat).normalize().to_string_lossy().into_owned()
+                    let pat = cwd.join(&pat).normalize().to_string_lossy().into_owned();
+                    tracing::debug!("Arg(abs) {} ", &pat);
+                    pat
                 } else {
+                    tracing::debug!("Arg(rel) {} ", &pat);
                     pat
                 }
             })
@@ -115,33 +124,69 @@ impl<E: Environment> Taplo<E> {
             };
         };
 
-        let patterns = patterns
-            .into_iter()
-            .unique()
-            .map(|p| glob::Pattern::new(&p).map(|_| p))
-            .collect::<Result<Vec<_>, _>>()?;
+        tracing::trace!("Compiled patterns");
 
-        let files = patterns
-            .into_iter()
-            .map(|pat| self.env.glob_files_normalized(&pat))
-            .collect::<Result<Vec<_>, _>>()
-            .into_iter()
+        let mut skip_patterns = vec![];
+        let mut keep_patterns = vec![];
+
+        let opts = glob::MatchOptions {
+            case_sensitive: true,
+            ..Default::default()
+        };
+
+        let cwd = cwd.to_path_buf();
+
+        let mut bldr = ignore::WalkBuilder::new(&cwd);
+        bldr.standard_filters(false)
+            .git_ignore(true)
+            .git_exclude(true)
+            .git_global(true)
+            .parents(true)
+            .ignore(true)
+            .hidden(false)
+            .same_file_system(true);
+
+        for skip_pattern in config.exclude.iter().flatten() {
+            if let Ok(pat) = glob::Pattern::new(skip_pattern) {
+                tracing::trace!("Compiling pattern: {skip_pattern}");
+                skip_patterns.push(pat.clone());
+                bldr.filter_entry(move |entry| !pat.matches_path_with(entry.path(), opts));
+            }
+        }
+        for keep_pattern in config
+            .include
+            .iter()
             .flatten()
-            .flatten()
-            .collect::<Vec<_>>();
+            .cloned()
+            .map(|x| x.to_owned())
+            .chain(patterns.into_iter())
+        {
+            if let Ok(pat) = glob::Pattern::new(&keep_pattern) {
+                tracing::trace!("Compiling pattern: {pat}");
+                keep_patterns.push(pat.clone());
+                bldr.filter_entry(move |entry| pat.matches_path_with(entry.path(), opts));
+            }
+        }
+        let walker = bldr.build();
 
-        let total = files.len();
-
-        let files = files
-            .into_iter()
-            .filter(|path| config.is_included(path))
-            .collect::<Vec<_>>();
-
-        let excluded = total - files.len();
-
-        tracing::info!(total, excluded, "found files");
-
-        Ok(files)
+        Ok(walker.filter_map(Box::new(
+            move |entry: Result<ignore::DirEntry, ignore::Error>| -> Option<PathBuf> {
+                let entry = entry.ok()?;
+                debug_assert!(!skip_patterns
+                    .iter()
+                    .any(|pat| pat.matches_path_with(entry.path(), opts)));
+                debug_assert!(keep_patterns
+                    .iter()
+                    .any(|pat| pat.matches_path_with(entry.path(), opts)));
+                if entry.path() == cwd {
+                    None
+                } else {
+                    let p = entry.path().to_path_buf();
+                    tracing::debug!("Path passed filters: {}", p.display());
+                    Some(p)
+                }
+            },
+        )))
     }
 }
 

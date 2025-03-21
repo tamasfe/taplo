@@ -53,7 +53,7 @@ impl<E: Environment> Taplo<E> {
             }
         }
 
-        if matches!(cmd.files.get(0).map(|it| it.as_str()), Some("-")) {
+        if matches!(cmd.files.first().map(|it| it.as_str()), Some("-")) {
             self.lint_stdin(cmd).await
         } else {
             self.lint_files(cmd).await
@@ -77,7 +77,7 @@ impl<E: Environment> Taplo<E> {
             .ok_or_else(|| anyhow!("could not figure the current working directory"))?;
 
         let files = self
-            .collect_files(&cwd, &config, cmd.files.into_iter())
+            .files_iter(&cwd, &config, cmd.files.into_iter())
             .await?;
 
         let mut result = Ok(());

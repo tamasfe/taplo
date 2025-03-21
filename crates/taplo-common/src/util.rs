@@ -62,13 +62,13 @@ impl PartialEq for ArcHashValue {
 #[derive(Eq)]
 pub struct HashValue<'v>(pub &'v Value);
 
-impl<'v> PartialEq for HashValue<'v> {
+impl PartialEq for HashValue<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
 }
 
-impl<'v> Hash for HashValue<'v> {
+impl Hash for HashValue<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match &self.0 {
             Value::Null => 0.hash(state),
@@ -129,7 +129,7 @@ pub fn get_reqwest_client(timeout: std::time::Duration) -> Result<reqwest::Clien
         path: std::ffi::OsString,
     ) -> reqwest::ClientBuilder {
         fn get_cert(path: &Path) -> Result<reqwest::Certificate, anyhow::Error> {
-            let is_der = path.extension().map_or(false, |ext| ext == "der");
+            let is_der = path.extension().is_some_and(|ext| ext == "der");
             let buf = std::fs::read(path)?;
             tracing::info!(
                 "Found a custom CA {}. Reading the CA...",

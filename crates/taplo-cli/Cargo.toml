@@ -30,6 +30,7 @@ codespan-reporting = { version = "0.11.1" }
 futures            = { workspace = true }
 glob               = { workspace = true }
 hex                = { workspace = true }
+ignore             = { workspace = true }
 itertools          = { workspace = true }
 once_cell          = { workspace = true }
 regex              = { workspace = true }

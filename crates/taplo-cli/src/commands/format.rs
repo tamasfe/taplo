@@ -214,7 +214,7 @@ impl<E: Environment> Taplo<E> {
             .ok_or_else(|| anyhow!("could not figure the current working directory"))?;
 
         let files = self
-            .collect_files(&cwd, &config, mem::take(&mut cmd.files).into_iter())
+            .files_iter(&cwd, &config, mem::take(&mut cmd.files).into_iter())
             .await?;
 
         let mut result = Ok(());

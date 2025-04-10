@@ -804,11 +804,15 @@ fn format_key(node: SyntaxNode, formatted: &mut String, _options: &Options, _con
 fn format_value(node: SyntaxNode, options: &Options, context: &Context) -> impl FormattedItem {
     let mut value = String::new();
     let mut comment = None;
+
+    let mut scoped_options = options.clone();
+    context.update_options(&mut scoped_options, node.text_range());
+
     for c in node.children_with_tokens() {
         match c {
             NodeOrToken::Node(n) => match n.kind() {
                 ARRAY => {
-                    let formatted = format_array(n, options, context);
+                    let formatted = format_array(n, &scoped_options, context);
 
                     let c = formatted.trailing_comment();
 
@@ -818,10 +822,10 @@ fn format_value(node: SyntaxNode, options: &Options, context: &Context) -> impl 
                     }
 
                     debug_assert!(value.is_empty());
-                    formatted.write_to(&mut value, options);
+                    formatted.write_to(&mut value, &scoped_options);
                 }
                 INLINE_TABLE => {
-                    let formatted = format_inline_table(n, options, context);
+                    let formatted = format_inline_table(n, &scoped_options, context);
 
                     let c = formatted.trailing_comment();
 
@@ -832,7 +836,7 @@ fn format_value(node: SyntaxNode, options: &Options, context: &Context) -> impl 
 
                     debug_assert!(value.is_empty());
 
-                    formatted.write_to(&mut value, options);
+                    formatted.write_to(&mut value, &scoped_options);
                 }
                 _ => unreachable!(),
             },

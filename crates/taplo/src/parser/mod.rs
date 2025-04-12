@@ -786,11 +786,10 @@ impl<'p> Parser<'p> {
     }
 
     fn parse_inline_table(&mut self) -> ParserResult<()> {
+        // https://github.com/toml-lang/toml/blob/78fcf9dd7eab7acfbaf147c684b649477e7bdd9c/toml.abnf#L238
         self.must_token_or(BRACE_START, r#"expected "{""#)?;
 
-        let mut first = true;
-        let mut comma_last = false;
-        let mut was_newline = false;
+        let mut expect_comma_or_end = false;
 
         loop {
             let t = match self.get_token() {
@@ -800,52 +799,28 @@ impl<'p> Parser<'p> {
 
             match t {
                 BRACE_END => {
-                    if comma_last {
-                        // it is still reported as a syntax error,
-                        // but we can still analyze it as if it was a valid
-                        // table.
-                        let _ = self.report_error("expected value, trailing comma is not allowed");
-                    }
-                    break self.add_token()?;
+                    self.add_token()?;
+                    break;
                 }
-                NEWLINE => {
-                    // To avoid infinite loop in case
-                    // new lines are whitelisted.
-                    if was_newline {
-                        break;
-                    }
-
-                    let _ = self.error("newline is not allowed in an inline table");
-                    was_newline = true;
+                WHITESPACE | NEWLINE | COMMENT => {
+                    self.add_token()?;
                 }
                 COMMA => {
-                    if comma_last {
-                        let _ = self.report_error(r#"unexpected ",""#);
-                    }
-
-                    if first {
-                        let _ = self.error(r#"unexpected ",""#);
-                    } else {
-                        self.token()?;
-                    }
-                    comma_last = true;
-                    was_newline = false;
+                    self.add_token()?;
+                    expect_comma_or_end = false;
                 }
                 _ => {
-                    was_newline = false;
-                    if !comma_last && !first {
-                        let _ = self.error(r#"expected ",""#);
+                    if expect_comma_or_end {
+                        let _ = self.error(r#"expected "," or "}""#);
                     }
                     let _ = whitelisted!(
                         self,
                         COMMA,
                         with_node!(self.builder, ENTRY, self.parse_entry())
                     );
-                    comma_last = false;
+                    expect_comma_or_end = true;
                 }
             }
-
-            first = false;
         }
         Ok(())
     }

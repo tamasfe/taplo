@@ -806,6 +806,9 @@ impl<'p> Parser<'p> {
                     self.add_token()?;
                 }
                 COMMA => {
+                    if !expect_comma_or_end {
+                        let _ = self.error(r#"unexpected ",""#);
+                    }
                     self.add_token()?;
                     expect_comma_or_end = false;
                 }

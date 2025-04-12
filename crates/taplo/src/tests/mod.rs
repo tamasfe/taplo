@@ -27,3 +27,15 @@ fn comments_after_tables() {
 
     assert!(errors.is_empty(), "{:#?}", errors);
 }
+
+#[test]
+fn digits_in_keys() {
+    let src = r#"
+0123 = true
+01.23 = true
+23.01 = true
+"#;
+    let errors = parse(src).errors;
+
+    assert!(errors.is_empty(), "{:#?}", errors);
+}

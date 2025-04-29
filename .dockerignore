@@ -1,5 +1,9 @@
-target
-docker
 .github
-.vscode
 .lapce
+.vscode
+docker
+editors
+js
+scripts
+site
+target

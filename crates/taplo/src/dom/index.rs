@@ -50,8 +50,8 @@ impl Index for String {
     }
 }
 
-impl<'a, T> Sealed for &'a T where T: ?Sized + Sealed {}
-impl<'a, T> Index for &'a T
+impl<T> Sealed for &T where T: ?Sized + Sealed {}
+impl<T> Index for &T
 where
     T: ?Sized + Index,
 {

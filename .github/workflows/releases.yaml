@@ -330,8 +330,16 @@ jobs:
           PUSH: ${{ github.event_name == 'push' }}
         run: |
           docker buildx bake
-      - name: Rename
-        run: |
+      - run: |
+          mkdir -p ./target/wheels
+          mv ./target/alpine/linux_*/taplo*.whl ./target/wheels/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musl
+          path: |
+            ./target/wheels/*
+          retention-days: 1
+      - run: |
           cd ./target/alpine
           mv ./linux_386/taplo ./linux_386/taplo-x86
           mv ./linux_amd64/taplo ./linux_amd64/taplo-x86_64
@@ -484,7 +492,7 @@ jobs:
 
   pypi_test_taplo_cli:
     name: Test python wheels
-    needs: ["pypi_build_taplo_cli"]
+    needs: ["pypi_build_taplo_cli", "build_cli_linux_musl"]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

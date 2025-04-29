@@ -78,6 +78,10 @@ pub enum TaploCommand {
     /// Start a decoder for `toml-test` (https://github.com/BurntSushi/toml-test).
     #[cfg(feature = "toml-test")]
     TomlTest {},
+
+    /// Generate completions for Taplo CLI
+    #[cfg(feature = "completions")]
+    Completions { shell: String },
 }
 
 #[derive(Clone, Args)]

@@ -113,7 +113,7 @@ pub async fn associate_schema<E: Environment>(
                 let ws_root = ws.root.clone();
                 publish_diagnostics(context.clone(), ws_root, document_uri.clone()).await;
             }
-        };
+        }
         ws.emit_associations(context.clone()).await;
     }
 }

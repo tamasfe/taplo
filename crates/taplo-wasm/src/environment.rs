@@ -43,17 +43,7 @@ impl AsyncRead for JsAsyncRead {
                 }
             };
 
-            let promise = match Promise::try_from(ret) {
-                Ok(p) => p,
-                Err(err) => {
-                    return Poll::Ready(Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        format!("{:?}", err),
-                    )));
-                }
-            };
-
-            self.fut = Some(JsFuture::from(promise));
+            self.fut = Some(JsFuture::from(Promise::from(ret)));
         }
 
         if let Some(fut) = self.fut.as_mut() {
@@ -113,17 +103,7 @@ impl AsyncWrite for JsAsyncWrite {
                 }
             };
 
-            let promise = match Promise::try_from(ret) {
-                Ok(p) => p,
-                Err(err) => {
-                    return Poll::Ready(Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        format!("{:?}", err),
-                    )));
-                }
-            };
-
-            self.fut = Some(JsFuture::from(promise));
+            self.fut = Some(JsFuture::from(Promise::from(ret)));
         }
 
         if let Some(fut) = self.fut.as_mut() {

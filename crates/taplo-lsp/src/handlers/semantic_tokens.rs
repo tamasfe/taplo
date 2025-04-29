@@ -86,7 +86,7 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                         .parent()
                         .and_then(|p| p.next_sibling())
                         .and_then(|t| t.first_child())
-                        .map_or(false, |t| t.kind() == INLINE_TABLE);
+                        .is_some_and(|t| t.kind() == INLINE_TABLE);
 
                     if is_table_key {
                         builder.add_token(&token, TokenType::TomlTableKey, &[]);
@@ -98,7 +98,7 @@ pub fn create_tokens(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<SemanticToken>
                         .parent()
                         .and_then(|p| p.next_sibling())
                         .and_then(|t| t.first_child())
-                        .map_or(false, |t| t.kind() == ARRAY);
+                        .is_some_and(|t| t.kind() == ARRAY);
 
                     if is_array_key {
                         builder.add_token(&token, TokenType::TomlArrayKey, &[]);

@@ -27,3 +27,17 @@ fn comments_after_tables() {
 
     assert!(errors.is_empty(), "{:#?}", errors);
 }
+
+#[test]
+fn dates_in_table_keys() {
+    let src = r#"
+[2024-01-01]
+2024-01-01 = true
+
+[[2024-01-02]]
+2024-01-01 = true
+"#;
+    let errors = parse(src).errors;
+
+    assert!(errors.is_empty(), "{:#?}", errors);
+}

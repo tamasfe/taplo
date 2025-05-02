@@ -27,7 +27,7 @@
     "@rollup/plugin-typescript": "^12.1.1",
     "@types/node": "^20.11.9",
     "@wasm-tool/rollup-plugin-rust": "^2.4.5",
-    "esbuild": "^0.20.0",
+    "esbuild": "^0.25.0",
     "rollup": "^4.9.6",
     "rollup-plugin-esbuild": "^6.1.1",
     "tslib": "^2.6.2",

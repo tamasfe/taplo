@@ -16,3 +16,7 @@ node_modules
 .yarnrc.yml
 rollup-config.js
 scripts/
+node.tsconfig.json
+rollup.config.browser-extension.mjs
+rollup.config.browser-server.mjs
+rollup.config.mjs

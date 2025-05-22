@@ -1,6 +1,24 @@
 # Change Log
 
+## 0.14.0
+
+### Fixes
+
+- Pass `include_children = true` to `text_ranges` in formatting (#684)
+
+### Features
+
+- Improve error locations for unexpected properties (#664)
+- Sort inline tables (#671)
+
+### Breaking Changes
+
+- Bump MSRV to 1.74
+- `text_ranges` now accepts `include_children: bool` parameter
+
 ## 0.13.2
+
+### Fixes
 
 - Revert "Account for trailing comments in span handling (#527)" to fix sorting regression
 

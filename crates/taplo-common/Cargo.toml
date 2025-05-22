@@ -1,7 +1,7 @@
 [package]
 name         = "taplo-common"
 description  = "Shared code for taplo utilities."
-version      = "0.5.2"
+version      = "0.6.0"
 rust-version = { workspace = true }
 authors      = { workspace = true }
 edition      = { workspace = true }

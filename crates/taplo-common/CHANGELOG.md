@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.6.0
+
+### Fixes
+
+- Fix incorrect error locations for unexpected entries ([#680](https://github.com/tamasfe/taplo/pull/664))
+
+### Features
+
+- Improve error locations for unexpected properties ([#664](https://github.com/tamasfe/taplo/pull/664))
+  - Add `text_ranges` for `NodeValidationError`
+
 ## 0.5.2
 
 This is a re-release of 0.5.1

@@ -39,7 +39,7 @@ Homepage      = "https://taplo.tamasfe.dev"
 Documentation = "https://taplo.tamasfe.dev/cli/introduction.html"
 Repository    = "https://github.com/tamasfe/taplo.git"
 Tracker       = "https://github.com/tamasfe/taplo/issues"
-Changelog     = "https://github.com/tamasfe/taplo/blob/master/CHANGELOG.md"
+Changelog     = "https://github.com/tamasfe/taplo/blob/master/crates/taplo-cli/CHANGELOG.md"
 
 [tool.maturin]
 bindings      = "bin"

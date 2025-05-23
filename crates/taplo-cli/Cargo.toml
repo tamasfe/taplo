@@ -1,7 +1,7 @@
 [package]
 name         = "taplo-cli"
 description  = "A CLI for Taplo TOML toolkit"
-version      = "0.9.3"
+version      = "0.10.0"
 categories   = ["development-tools", "command-line-utilities"]
 keywords     = ["toml", "linter", "formatter"]
 rust-version = { workspace = true }
@@ -21,9 +21,9 @@ toml-test   = ["lint"]
 completions = ["dep:clap_complete"]
 
 [dependencies]
-taplo        = { path = "../taplo", features = ["serde"] }
-taplo-common = { path = "../taplo-common" }
-taplo-lsp    = { path = "../taplo-lsp", default-features = false, optional = true }
+taplo        = { version = "0.14.0", path = "../taplo", features = ["serde"] }
+taplo-common = { version = "0.6.0", path = "../taplo-common" }
+taplo-lsp    = { version = "0.8.0", path = "../taplo-lsp", default-features = false, optional = true }
 
 anyhow             = { workspace = true, features = ["backtrace"] }
 clap               = { workspace = true, features = ["derive", "cargo", "env", "default"] }
@@ -45,13 +45,14 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 url                = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-ansi_term      = { version = "0.12" }
-async-ctrlc    = { version = "1.2.0", features = ["stream"], optional = true }
-clap_complete  = { version = "4.4.18", optional = true }
-lsp-async-stub = { path = "../lsp-async-stub", features = ["tokio-tcp", "tokio-stdio"] }
-# `prettydiff` is also a CLI that pulls in `clap` by default
-prettydiff = { version = "0.6.1", default-features = false }
-tokio      = { workspace = true, features = ["sync", "fs", "time", "io-std", "rt-multi-thread", "parking_lot"] }
+lsp-async-stub = { version = "0.7.0", path = "../lsp-async-stub", features = ["tokio-tcp", "tokio-stdio"] }
+
+ansi_term     = { version = "0.12" }
+async-ctrlc   = { version = "1.2.0", features = ["stream"], optional = true }
+clap_complete = { version = "4.4.18", optional = true }
+prettydiff    = { version = "0.6.1", default-features = false }               # `prettydiff` is also a CLI that pulls in `clap` by default
+
+tokio = { workspace = true, features = ["sync", "fs", "time", "io-std", "rt-multi-thread", "parking_lot"] }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 tokio = { workspace = true, features = ["sync", "parking_lot", "io-util"] }

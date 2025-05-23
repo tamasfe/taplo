@@ -1,5 +1,18 @@
 # Change Log
 
+## 0.10.0
+
+### Fixes
+
+- Fix incorrect error locations for unexpected entries ([#680](https://github.com/tamasfe/taplo/pull/664))
+
+### Features
+
+- Add `completions` subcommand for generating shell completions (enabled via `completions` feature)
+- Move linter command behind `lint` feature (enabled by default)
+- Move LSP command behind `lsp` feature (enabled by default)
+- Improve error locations for unexpected properties ([#664](https://github.com/tamasfe/taplo/pull/664))
+
 ## 0.9.3
 
 ### Fixes

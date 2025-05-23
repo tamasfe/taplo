@@ -65,12 +65,6 @@ fn inline_table_imutable_2() {
     assert!(!p.errors.is_empty() || p.into_dom().validate().is_err());
 }
 #[test]
-fn inline_table_trailing_comma() {
-    let src = "abc = { abc = 123, }\n";
-    let p = crate::parser::parse(src);
-    assert!(!p.errors.is_empty() || p.into_dom().validate().is_err());
-}
-#[test]
 fn int_0_padded() {
     let src = "int = 0123\n";
     let p = crate::parser::parse(src);
@@ -350,12 +344,6 @@ fn taplo_invalid_array() {
 #[test]
 fn taplo_invalid_float() {
     let src = "what = 1.";
-    let p = crate::parser::parse(src);
-    assert!(!p.errors.is_empty() || p.into_dom().validate().is_err());
-}
-#[test]
-fn taplo_invalid_inline_table() {
-    let src = "cooldowns = { \n    aggressive = true, \n}";
     let p = crate::parser::parse(src);
     assert!(!p.errors.is_empty() || p.into_dom().validate().is_err());
 }

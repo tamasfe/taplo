@@ -17,7 +17,7 @@ schema     = []
 reqwest    = ["dep:reqwest"]
 
 [dependencies]
-taplo = { path = "../taplo", features = ["schema"] }
+taplo = { version = "0.14.0", path = "../taplo", features = ["schema"] }
 
 ahash              = { workspace = true, features = ["serde"] }
 anyhow             = { workspace = true, features = ["backtrace"] }
@@ -28,7 +28,7 @@ futures            = { workspace = true }
 glob               = { workspace = true }
 globset            = { workspace = true }
 hex                = { workspace = true }
-indexmap           = { workspace = true, features = ["serde", "rayon"] }
+indexmap           = { workspace = true, features = ["rayon", "serde"] }
 itertools          = { workspace = true }
 json_value_merge   = { version = "2.0.0" }
 jsonschema         = { version = "0.17.1", default-features = false }
@@ -50,10 +50,10 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 url                = { workspace = true, features = ["serde"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { workspace = true, features = ["sync", "fs", "time", "io-std", "parking_lot"] }
+tokio = { workspace = true, features = ["fs", "io-std", "io-util", "parking_lot", "rt", "sync", "time"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-tokio = { workspace = true, features = ["sync", "parking_lot", "io-util"] }
+tokio = { workspace = true, features = ["io-util", "parking_lot", "sync"] }
 
 [package.metadata.auto-tag]
 enabled = true

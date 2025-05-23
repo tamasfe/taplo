@@ -1,0 +1,36 @@
+name: "cargo.toml fmt"
+author: "Gwen Lg"
+description: "Run TOML formatting change or check on Cargo.toml in GitHub Actions"
+
+inputs:
+  version:
+    description: "Version of Taplo"
+    required: false
+    default: "0.9.3"
+
+  files:
+    description: "Files or patterns to check"
+    required: false
+    default: "Cargo.toml"
+
+  write_changes:
+    description: "Do the formatting and write changes to the repository"
+    required: false
+    default: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Taplo
+      id: fmt
+      shell: bash
+      env:
+        INSTALL_DIR: .
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_FILES: ${{ inputs.files }}
+        INPUT_WRITE_CHANGES: ${{ inputs.write_changes }}
+      run: $GITHUB_ACTION_PATH/action/entrypoint.sh
+
+branding:
+  icon: "type"
+  color: "red"

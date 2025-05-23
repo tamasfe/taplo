@@ -47,6 +47,13 @@ reorder_keys   = false
 align_comments = true
 
 [[rule]]
+include = ["**/Cargo.toml"]
+keys    = ["features"]
+
+[rule.formatting]
+reorder_arrays = true
+
+[[rule]]
 include = ["pyproject.toml"]
 
 [rule.formatting]

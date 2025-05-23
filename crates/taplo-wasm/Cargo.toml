@@ -40,6 +40,6 @@ wasm-bindgen         = { version = "0.2.95" }
 wasm-bindgen-futures = { version = "0.4.45" }
 
 [features]
+default = ["cli", "lsp"]
 cli     = ["taplo-cli"]
-default = ["lsp", "cli"]
 lsp     = ["taplo-lsp"]

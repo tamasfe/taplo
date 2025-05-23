@@ -12,9 +12,9 @@ license      = { workspace = true }
 repository   = { workspace = true }
 
 [features]
-default     = ["lint", "lsp", "rustls-tls", "toml-test", "completions"]
-lint        = ["taplo-common/schema", "taplo-common/reqwest", "reqwest"]
-lsp         = ["async-ctrlc", "taplo-lsp", "lint"]
+default     = ["completions", "lint", "lsp", "rustls-tls", "toml-test"]
+lint        = ["reqwest", "taplo-common/reqwest", "taplo-common/schema"]
+lsp         = ["async-ctrlc", "lint", "taplo-lsp"]
 native-tls  = ["taplo-common/native-tls", "taplo-lsp?/native-tls"]
 rustls-tls  = ["taplo-common/rustls-tls", "taplo-lsp?/rustls-tls"]
 toml-test   = ["lint"]

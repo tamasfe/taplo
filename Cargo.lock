@@ -2317,7 +2317,7 @@ dependencies = [
 
 [[package]]
 name = "taplo-lsp"
-version = "0.7.2"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "arc-swap",

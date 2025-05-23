@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.8.0
+
+### Features
+
+- Improve error locations for unexpected properties ([#664](https://github.com/tamasfe/taplo/pull/664))
+
 ## 0.7.2
 
 Re-release of 0.7.1

@@ -1,7 +1,7 @@
 [package]
 name         = "taplo-lsp"
 description  = "Language server for Taplo"
-version      = "0.7.2"
+version      = "0.8.0"
 rust-version = { workspace = true }
 authors      = { workspace = true }
 edition      = { workspace = true }
@@ -18,9 +18,9 @@ native-tls = ["taplo-common/native-tls"]
 rustls-tls = ["taplo-common/rustls-tls"]
 
 [dependencies]
-lsp-async-stub = { path = "../lsp-async-stub" }
-taplo          = { path = "../taplo", features = ["serde"] }
-taplo-common   = { path = "../taplo-common", features = ["schema", "reqwest"] }
+lsp-async-stub = { version = "0.7.0", path = "../lsp-async-stub" }
+taplo          = { version = "0.14.0", path = "../taplo", features = ["serde"] }
+taplo-common   = { version = "0.6.0", path = "../taplo-common", features = ["schema", "reqwest"] }
 
 anyhow      = { workspace = true }
 arc-swap    = { workspace = true }

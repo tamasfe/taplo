@@ -301,10 +301,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: taplo-windows-${{ matrix.platform }}
+          retention-days: 1
+          compression-level: 0
           path: |
             ./taplo-*.gz
             ./taplo-*.zip
-          retention-days: 1
 
   build_cli_linux_musl:
     name: Build linux executables
@@ -336,14 +337,15 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-musl
+          retention-days: 1
+          compression-level: 0
           path: |
             ./target/wheels/*
-          retention-days: 1
       - run: |
           cd ./target/alpine
           mv ./linux_386/taplo ./linux_386/taplo-x86
           mv ./linux_amd64/taplo ./linux_amd64/taplo-x86_64
-          mv ./linux_arm64/taplo ./linux_amd64/taplo-aarch64
+          mv ./linux_arm64/taplo ./linux_arm64/taplo-aarch64
           mv ./linux_arm_v7/taplo ./linux_arm_v7/taplo-armv7
       - name: Gzip files
         run: |
@@ -351,9 +353,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: taplo-linux
+          compression-level: 0
+          retention-days: 1
           path: |
             ./target/alpine/linux_*/taplo*.gz
-          retention-days: 1
 
   build_cli_macos:
     name: ${{ matrix.triple }}
@@ -382,9 +385,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: taplo-macos-${{ matrix.platform }}
+          retention-days: 1
+          compression-level: 0
           path: |
             ./taplo-*.gz
-          retention-days: 1
 
   publish_cli:
     name: Release Taplo CLI binaries
@@ -451,7 +455,7 @@ jobs:
 
   pypi_build_taplo_cli:
     name: Build python wheels
-    if: startsWith(github.ref, 'refs/tags/release-even-better-toml-') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
+    if: startsWith(github.ref, 'refs/tags/release-taplo-cli-0') || contains(fromJSON('["workflow_dispatch", "pull_request"]'), github.event_name)
     needs: ["wait_for_ci"]
     runs-on: ${{ matrix.os }}-latest
     strategy:

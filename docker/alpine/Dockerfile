@@ -1,20 +1,18 @@
 # syntax=docker/dockerfile:1
 
-ARG DISTRIBUTION_VERSION
-ARG RUST_VERSION
+ARG RUST_VERSION=1
 ARG XX_VERSION=latest
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
-FROM --platform=$BUILDPLATFORM rust:${RUST_VERSION}-alpine${DISTRIBUTION_VERSION} AS build-base
+FROM --platform=$BUILDPLATFORM rust:${RUST_VERSION}-alpine AS build-base
 COPY --from=xx / /
 
 SHELL [ "/bin/ash", "-c" ]
 
 RUN \
-  --mount=type=cache,id=apk,target=/var/cache/apk \
-  --mount=type=cache,id=apk,target=/etc/apk/cache \
-  <<EOF
-
+    --mount=type=cache,id=apk,target=/var/cache/apk \
+    --mount=type=cache,id=apk,target=/etc/apk/cache \
+    <<EOF
 apk upgrade -Ua
 apk add --no-cache \
   bash clang lld llvm file git pkgconf build-base maturin
@@ -28,10 +26,10 @@ FROM build-base AS build-prep
 ENV CARGO_TARGET_DIR='/root/.cache/rust'
 
 RUN \
-  --mount=type=cache,id=crates,target=/usr/local/cargo/git/db \
-  --mount=type=cache,id=crates,target=/usr/local/cargo/registry/cache \
-  --mount=type=cache,id=crates,target=/usr/local/cargo/registry/index \
-  <<EOF
+    --mount=type=cache,id=crates,target=/usr/local/cargo/git/db \
+    --mount=type=cache,id=crates,target=/usr/local/cargo/registry/cache \
+    --mount=type=cache,id=crates,target=/usr/local/cargo/registry/index \
+    <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
 
@@ -41,9 +39,9 @@ EOF
 # Install target dependencies
 ARG TARGETPLATFORM
 RUN \
-  --mount=type=cache,id=apk-cross,sharing=private,target=/var/cache/apk \
-  --mount=type=cache,id=apk-cross,sharing=private,target=/etc/apk/cache \
-  <<EOF
+    --mount=type=cache,id=apk-cross,sharing=private,target=/var/cache/apk \
+    --mount=type=cache,id=apk-cross,sharing=private,target=/etc/apk/cache \
+    <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
 
@@ -56,11 +54,11 @@ FROM build-prep AS build
 ENV CARGO_TARGET_DIR='/root/.cache/rust'
 
 RUN \
-  --mount=type=cache,id=crates,sharing=shared,readonly,target=/usr/local/cargo/git/db \
-  --mount=type=cache,id=crates,sharing=shared,readonly,target=/usr/local/cargo/registry/cache \
-  --mount=type=cache,id=crates,sharing=shared,readonly,target=/usr/local/cargo/registry/index \
-  --mount=type=cache,id=build,sharing=private,target=/root/.cache \
-  <<EOF
+    --mount=type=cache,id=crates,sharing=shared,readonly,target=/usr/local/cargo/git/db \
+    --mount=type=cache,id=crates,sharing=shared,readonly,target=/usr/local/cargo/registry/cache \
+    --mount=type=cache,id=crates,sharing=shared,readonly,target=/usr/local/cargo/registry/index \
+    --mount=type=cache,id=build,sharing=private,target=/root/.cache \
+    <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
 
@@ -119,5 +117,14 @@ COPY --from=build /usr/local/bin/taplo .
 COPY --from=build /maturin .
 
 FROM scratch AS oci
-COPY --from=build /usr/local/bin/taplo /taplo
-ENTRYPOINT [ "/taplo" ]
+COPY --from=build /usr/local/bin/taplo /bin/taplo
+ENTRYPOINT [ "/bin/taplo" ]
+
+FROM alpine:3 AS shell
+RUN apk add -U busybox-static
+
+FROM oci AS oci-shell
+ENV PATH=/bin
+COPY --from=shell /bin/busybox.static /bin/busybox
+SHELL [ "/bin/busybox", "ash", "-c" ]
+RUN /bin/busybox --install -s /bin

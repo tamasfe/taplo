@@ -24,3 +24,13 @@ The correctness of the TOML parsing and decoding is not yet entirely guaranteed 
 ## Contributing
 
 All kinds of contributions are welcome. Make sure to read the [CONTRIBUTING.md](CONTRIBUTING.md) first!
+
+## Use it in Github Workflow
+
+To use taplo in your Github workflow, you can add a step :
+```yaml
+      uses: tamasfe/taplo
+```
+Setup the configuration in a file on your repository: [Documentation](https://taplo.tamasfe.dev/configuration/file.html).
+And you can configure what running with action inputs: `format`, `format_write_changes`, `lint` and `version`.
+`format_write_changes` don't update the commits, should be used with additional step if changes should be integrated (tool like autofix.ci)

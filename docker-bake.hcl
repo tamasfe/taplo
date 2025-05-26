@@ -33,7 +33,7 @@ target "_platforms" {
 }
 
 group "default" {
-  targets = ["binary", "oci"]
+  targets = ["binary", "oci", "oci-shell"]
 }
 
 target "binary" {
@@ -49,14 +49,20 @@ target "oci" {
   tags     = flatten(["${REPO}:latest", RELEASE_TAG != null ? ["${REPO}:${RELEASE_TAG}"] : []])
 }
 
+target "oci-shell" {
+  inherits = ["alpine"]
+  output   = ["type=image,push=${PUSH}"]
+  target   = "oci-shell"
+  tags     = flatten(["${REPO}:latest-shell", RELEASE_TAG != null ? ["${REPO}:${RELEASE_TAG}-shell"] : []])
+}
+
 target "alpine" {
   context    = "."
   platforms  = platforms
   pull       = true
   dockerfile = "docker/alpine/Dockerfile"
   args = {
-    RUST_VERSION          = RUST_VERSION
-    XX_VERSION            = XX_VERSION
-    DISTRIBUTION_VERSION  = "3.21"
+    RUST_VERSION = RUST_VERSION
+    XX_VERSION   = XX_VERSION
   }
 }

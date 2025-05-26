@@ -1,6 +1,6 @@
 name: "Taplo Action"
 author: "Gwen Lg"
-description: "Run Taplo for TOML formatting"
+description: "Run Taplo for TOML formatting or/and lint check."
 
 inputs:
   format:
@@ -10,6 +10,11 @@ inputs:
 
   format_write_changes:
     description: "Write the formatting changes to the repository"
+    required: false
+    default: false
+
+  lint:
+    description: "Check TOML files with lints"
     required: false
     default: false
 
@@ -34,11 +39,18 @@ runs:
       if: ${{ inputs.format == 'true' }}
       id: format
       shell: bash
+      if: ${{ inputs.format }}
       run: |
         if ! ${{ inputs.format_write_changes }}; then
             ARGS=" --check --diff"
         fi
         ${taplo_cmd} format ${ARGS}
+
+    - name: Lint with Taplo
+      if: ${{ inputs.lint == 'true' }}
+      id: lint
+      shell: bash
+      run: ${taplo_cmd} lint
 
 branding:
   icon: "type"

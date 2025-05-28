@@ -25,7 +25,7 @@ taplo        = { version = "0.14.0", path = "../taplo", features = ["serde"] }
 taplo-common = { version = "0.6.0", path = "../taplo-common" }
 taplo-lsp    = { version = "0.8.0", path = "../taplo-lsp", default-features = false, optional = true }
 
-anyhow             = { workspace = true, features = ["backtrace"] }
+anyhow             = { workspace = true }
 clap               = { workspace = true, features = ["derive", "cargo", "env", "default"] }
 codespan-reporting = { version = "0.11.1" }
 futures            = { workspace = true }

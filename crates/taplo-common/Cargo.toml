@@ -20,7 +20,7 @@ reqwest    = ["dep:reqwest"]
 taplo = { version = "0.14.0", path = "../taplo", features = ["schema"] }
 
 ahash              = { workspace = true, features = ["serde"] }
-anyhow             = { workspace = true, features = ["backtrace"] }
+anyhow             = { workspace = true }
 arc-swap           = { workspace = true }
 async-recursion    = { version = "1.0.0" }
 async-trait        = { workspace = true }

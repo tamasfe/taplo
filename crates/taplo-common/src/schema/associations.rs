@@ -17,7 +17,7 @@ use taplo::dom::Node;
 use tokio::sync::Semaphore;
 use url::Url;
 
-pub const DEFAULT_CATALOGS: &[&str] = &["https://www.schemastore.org/api/json/catalog.json"];
+pub const DEFAULT_CATALOGS: &[&str] = &["https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/api/json/catalog.json"];
 
 pub mod priority {
     pub const BUILTIN: usize = 10;
@@ -504,7 +504,7 @@ pub struct SchemaStoreSchemaMeta {
 }
 
 pub const SCHEMA_STORE_CATALOG_SCHEMA_URL: &str =
-    "https://json.schemastore.org/schema-catalog.json";
+    "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/schema-catalog.json";
 
 #[derive(Debug, Clone, Copy)]
 pub struct SchemaStoreCatalogSchema;

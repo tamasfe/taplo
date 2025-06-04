@@ -18,6 +18,6 @@ taplo check --schema https://example.com/foo-schema.json foo.toml
 
 ### Using a Schema Catalog
 
-Taplo supports schema catalogs such as the [JSON Schema Store](https://www.schemastore.org/json/) for retrieving schemas and matching them to files via file names.
+Taplo supports schema catalogs such as the [JSON Schema Store](https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/json/) for retrieving schemas and matching them to files via file names.
 
 You can enable this by either specifying a catalog via the `--schema-catalog` flag, or enabling the use of the default catalogs via `--default-schema-catalogs`.

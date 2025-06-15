@@ -201,6 +201,7 @@ jobs:
           timeout_minutes: 60
           command: cd js/cli && yarn install && yarn publish
         env:
+          RELEASE: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   npm_publish_taplo_lsp:
@@ -231,6 +232,7 @@ jobs:
           timeout_minutes: 60
           command: cd js/lsp && yarn install && yarn publish
         env:
+          RELEASE: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   npm_publish_taplo_lib:
@@ -261,6 +263,7 @@ jobs:
           timeout_minutes: 60
           command: cd js/lib && yarn install && yarn publish
         env:
+          RELEASE: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   build_cli_windows:

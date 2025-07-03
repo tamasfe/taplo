@@ -1,7 +1,6 @@
 use difference::Changeset;
 
-use crate::formatter;
-use crate::formatter::Options;
+use crate::formatter::{self, Options, OptionsIncomplete};
 
 macro_rules! assert_format {
     ($expected:expr, $actual:expr) => {
@@ -1173,6 +1172,34 @@ a = "b" # comment
         ..Default::default()
     };
     let formatted = crate::formatter::format(src, opt);
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn test_entry_rule() {
+    let src = r#"
+[foo]
+sort_me = ["3", "2", "1"]
+sort_me_not = ["3", "2", "1"]
+"#;
+
+    let expected = r#"
+[foo]
+sort_me = ["1", "2", "3"]
+sort_me_not = ["3", "2", "1"]
+"#;
+
+    let dom = crate::parser::parse(src).into_dom();
+    let scopes = [(
+        "foo.sort_me",
+        OptionsIncomplete {
+            reorder_arrays: Some(true),
+            ..Default::default()
+        },
+    )];
+    let formatted =
+        crate::formatter::format_with_path_scopes(dom, Options::default(), &[], scopes).unwrap();
 
     assert_format!(expected, &formatted);
 }

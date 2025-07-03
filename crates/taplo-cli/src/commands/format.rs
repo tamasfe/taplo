@@ -260,7 +260,7 @@ impl<E: Environment> Taplo<E> {
                         self.env
                             .stderr()
                             .write_all(
-                                format!("Failed to write diff to stdout: {:?}", e)
+                                format!("Failed to write diff to stdout: {e:?}")
                                     .as_str()
                                     .as_bytes(),
                             )

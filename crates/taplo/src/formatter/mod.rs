@@ -138,10 +138,10 @@ impl core::fmt::Display for OptionParseError {
             "invalid formatting option: {}",
             match self {
                 OptionParseError::InvalidOption(k) => {
-                    format!(r#"invalid option "{}""#, k)
+                    format!(r#"invalid option "{k}""#)
                 }
                 OptionParseError::InvalidValue { key, error } => {
-                    format!(r#"invalid value for option "{}": {}"#, key, error)
+                    format!(r#"invalid value for option "{key}": {error}"#)
                 }
             }
         )
@@ -417,10 +417,6 @@ impl FormattedItem for FormattedEntry {
 
     fn trailing_comment(&self) -> Option<String> {
         self.comment.clone()
-    }
-
-    fn syntax(&self) -> SyntaxElement {
-        self.syntax.clone()
     }
 }
 
@@ -1194,7 +1190,7 @@ fn format_table_header(
 }
 
 // Simply a tuple of the formatted item and an optional trailing comment.
-impl<T: AsRef<str>> FormattedItem for (SyntaxElement, T, Option<T>) {
+impl<T: AsRef<str> + Clone> FormattedItem for (SyntaxElement, T, Option<T>) {
     fn write_to(&self, formatted: &mut String, _options: &Options) {
         *formatted += self.1.as_ref()
     }
@@ -1202,14 +1198,9 @@ impl<T: AsRef<str>> FormattedItem for (SyntaxElement, T, Option<T>) {
     fn trailing_comment(&self) -> Option<String> {
         self.2.as_ref().map(|s| s.as_ref().to_string())
     }
-
-    fn syntax(&self) -> SyntaxElement {
-        self.0.clone()
-    }
 }
 
 trait FormattedItem {
-    fn syntax(&self) -> SyntaxElement;
     #[allow(clippy::ptr_arg)]
     fn write_to(&self, formatted: &mut String, options: &Options);
     fn trailing_comment(&self) -> Option<String>;

@@ -269,8 +269,8 @@ impl<W: Clone> RequestWriter for Context<W> {
     }
 }
 
-pub trait MessageWriter: Sink<rpc::Message, Error = io::Error> + Unpin {}
-impl<T: Sink<rpc::Message, Error = io::Error> + Unpin> MessageWriter for T {}
+pub trait MessageWriter: Sink<rpc::Message, Error = io::Error> + Unpin + Send + Sync {}
+impl<T: Sink<rpc::Message, Error = io::Error> + Unpin + Send + Sync> MessageWriter for T {}
 
 struct Inner<W: Clone> {
     next_request_id: i32,

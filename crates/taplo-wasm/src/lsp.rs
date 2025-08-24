@@ -38,6 +38,10 @@ pub(crate) struct WasmLspInterface {
     js_on_message: Function,
 }
 
+// SAFETY: This is safe because WASM is single-threaded
+unsafe impl Send for WasmLspInterface {}
+unsafe impl Sync for WasmLspInterface {}
+
 impl From<JsValue> for WasmLspInterface {
     fn from(val: JsValue) -> Self {
         Self {

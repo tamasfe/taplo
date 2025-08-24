@@ -9,7 +9,7 @@ export const comment = {
     },
     comment: 'Comments',
     match: '\\s*((#).*)$',
-}
+};
 
 export const commentDirective = {
     captures: {
@@ -22,5 +22,5 @@ export const commentDirective = {
     },
     comment: 'Comments',
     match: '\\s*((#):.*)$',
-}
+};
 

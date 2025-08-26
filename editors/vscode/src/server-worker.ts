@@ -12,7 +12,7 @@ const reader = new BrowserMessageReader(worker);
 
 let taplo: TaploLsp;
 
-reader.listen(async message => {
+reader.listen(async (message) => {
   if (!taplo) {
     taplo = await TaploLsp.initialize(
       {
@@ -34,7 +34,10 @@ reader.listen(async message => {
           console.log(new TextDecoder().decode(bytes));
           return bytes.length;
         },
-        urlToFilePath: (url: string) => url.slice("file://".length),
+        urlToFilePath: (url: string) => {
+          const c = url.slice("file://".length);
+          return process.platform === "win32" ? c.replace(/\\/g, "/") : c;
+        },
       },
       {
         onMessage(message) {

@@ -93,7 +93,6 @@ impl Hash for HashValue<'_> {
 pub trait Normalize {
     /// Normalizing in the context of Taplo the following:
     ///
-    /// - replaces `\` with `/` on windows
     /// - decodes all percent-encoded characters
     #[must_use]
     fn normalize(self) -> Self;
@@ -112,12 +111,7 @@ pub(crate) fn normalize_str(s: &str) -> Cow<str> {
     let Some(percent_decoded) = percent_decode_str(s).decode_utf8().ok() else {
         return s.into();
     };
-
-    if cfg!(windows) {
-        percent_decoded.replace('\\', "/").into()
-    } else {
-        percent_decoded
-    }
+    percent_decoded
 }
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "reqwest"))]

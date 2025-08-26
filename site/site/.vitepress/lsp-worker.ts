@@ -30,7 +30,10 @@ const lsp = await TaploLsp.initialize(
       console.log(new TextDecoder().decode(bytes));
       return bytes.length;
     },
-    urlToFilePath: (url: string) => url.slice("file://".length),
+    urlToFilePath: (url: string) => {
+      const c = url.slice("file://".length);
+      return process.platform === "win32" ? c.replace(/\\/g, "/") : c;
+    },
   },
   {
     onMessage(message) {

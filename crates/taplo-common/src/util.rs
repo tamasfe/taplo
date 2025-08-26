@@ -115,11 +115,7 @@ pub(crate) fn normalize_str<'a>(s: &'a str, e: &impl Environment) -> Cow<'a, str
         return s.into();
     };
 
-    if cfg!(windows) || e.is_windows() {
-        percent_decoded.replace('\\', "/").into()
-    } else {
-        percent_decoded
-    }
+    e.to_unix_path_on_windows(&percent_decoded).into()
 }
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "reqwest"))]

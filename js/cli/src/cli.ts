@@ -28,7 +28,6 @@ import { convertEnv, Environment, prepareEnv } from "@taplo/core";
     },
     glob: (p) => glob.sync(p),
     isAbsolute: (p) => path.isAbsolute(p),
-    isWindows: () => process.platform === "win32",
     now: () => new Date(),
     readFile: (path) => fsPromise.readFile(path),
     writeFile: (path, content) => fsPromise.writeFile(path, content),
@@ -45,6 +44,8 @@ import { convertEnv, Environment, prepareEnv } from "@taplo/core";
 
       return c;
     },
+    toUnixPathOnWindows: (path: string) =>
+      process.platform === "win32" ? path.replace(/\\/g, "/") : path,
     fetch: {
       fetch,
       Headers,

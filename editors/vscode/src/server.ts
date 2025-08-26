@@ -32,7 +32,6 @@ process.on("message", async (d: RpcMessage) => {
         },
         glob: (p) => glob.sync(p),
         isAbsolute: (p) => path.isAbsolute(p),
-        isWindows: () => process.platform === "win32",
         now: () => new Date(),
         readFile: (path) => fsPromise.readFile(path),
         writeFile: (path, content) => fsPromise.writeFile(path, content),
@@ -49,6 +48,8 @@ process.on("message", async (d: RpcMessage) => {
 
           return c;
         },
+        toUnixPathOnWindows: (path: string) =>
+          process.platform === "win32" ? path.replace(/\\/g, "/") : path,
         fetch: {
           fetch,
           Headers,

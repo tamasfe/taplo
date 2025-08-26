@@ -21,7 +21,6 @@ reader.listen(async (message) => {
         findConfigFile: () => undefined,
         glob: () => [],
         isAbsolute: () => true,
-        isWindows: () => false,
         now: () => new Date(),
         readFile: () => Promise.reject("not implemented"),
         writeFile: () => Promise.reject("not implemented"),
@@ -36,6 +35,8 @@ reader.listen(async (message) => {
           return bytes.length;
         },
         urlToFilePath: (url: string) => url.slice("file://".length),
+        // For VS Code extensions, paths are already Unix-style
+        toUnixPathOnWindows: (path: string) => path,
       },
       {
         onMessage(message) {

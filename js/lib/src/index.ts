@@ -224,7 +224,6 @@ function browserEnvironment(): Environment {
     findConfigFile: () => undefined,
     glob: () => [],
     isAbsolute: () => true,
-    isWindows: () => false,
     now: () => new Date(),
     readFile: () => Promise.reject("not implemented"),
     writeFile: () => Promise.reject("not implemented"),
@@ -239,5 +238,7 @@ function browserEnvironment(): Environment {
       return bytes.length;
     },
     urlToFilePath: (url: string) => url.slice("file://".length),
+    toUnixPathOnWindows: (path: string) =>
+      navigator.userAgent.includes("Win") ? path.replace(/\\/g, "/") : path,
   };
 }

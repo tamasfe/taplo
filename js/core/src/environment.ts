@@ -57,13 +57,13 @@ export interface Environment {
    */
   urlToFilePath: (url: string) => string;
   /**
+   * If running on Windows, convert a Windows-style path to a Unix-style path.
+   */
+  toUnixPathOnWindows: (path: string) => string;
+  /**
    * Return whether a path is absolute.
    */
   isAbsolute: (path: string) => boolean;
-  /**
-   * Return whether the platform is Windows.
-   */
-  isWindows: () => boolean;
   /**
    * Return the path to the current working directory.
    */
@@ -134,8 +134,8 @@ export function convertEnv(env: Environment): any {
     js_read_file: env.readFile,
     js_write_file: env.writeFile,
     js_to_file_path: env.urlToFilePath,
+    js_to_unix_path_on_windows: env.toUnixPathOnWindows,
     js_is_absolute: env.isAbsolute,
-    js_is_windows: env.isWindows,
     js_cwd: env.cwd,
     js_find_config_file: env.findConfigFile,
   };

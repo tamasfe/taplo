@@ -17,7 +17,6 @@ const lsp = await TaploLsp.initialize(
     findConfigFile: () => undefined,
     glob: () => [],
     isAbsolute: () => true,
-    isWindows: () => false,
     now: () => new Date(),
     readFile: () => Promise.reject("not implemented"),
     writeFile: () => Promise.reject("not implemented"),
@@ -32,6 +31,8 @@ const lsp = await TaploLsp.initialize(
       return bytes.length;
     },
     urlToFilePath: (url: string) => url.slice("file://".length),
+    toUnixPathOnWindows: (path: string) =>
+      navigator.userAgent.includes("Win") ? path.replace(/\\/g, "/") : path,
   },
   {
     onMessage(message) {

@@ -47,9 +47,9 @@ pub trait Environment: Clone + Send + Sync + 'static {
 
     fn to_file_path(&self, url: &Url) -> Option<PathBuf>;
 
-    fn is_absolute(&self, path: &Path) -> bool;
+    fn to_unix_path_on_windows(&self, path: &str) -> String;
 
-    fn is_windows(&self) -> bool;
+    fn is_absolute(&self, path: &Path) -> bool;
 
     /// Absolute current working dir.
     fn cwd(&self) -> Option<PathBuf>;

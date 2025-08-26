@@ -157,6 +157,7 @@ pub(crate) struct WasmEnvironment {
     js_write_file: Function,
     js_to_file_path: Function,
     js_is_absolute: Function,
+    js_is_windows: Function,
     js_cwd: Function,
     js_find_config_file: Function,
 }
@@ -198,6 +199,9 @@ impl From<JsValue> for WasmEnvironment {
                 .unwrap()
                 .into(),
             js_is_absolute: js_sys::Reflect::get(&val, &JsValue::from_str("js_is_absolute"))
+                .unwrap()
+                .into(),
+            js_is_windows: js_sys::Reflect::get(&val, &JsValue::from_str("js_is_windows"))
                 .unwrap()
                 .into(),
             js_cwd: js_sys::Reflect::get(&val, &JsValue::from_str("js_cwd"))
@@ -331,6 +335,13 @@ impl Environment for WasmEnvironment {
         let path_str = JsValue::from_str(&path.to_string_lossy());
         let this = JsValue::null();
         let res: JsValue = self.js_is_absolute.call1(&this, &path_str).unwrap();
+
+        res.is_truthy()
+    }
+
+    fn is_windows(&self) -> bool {
+        let this = JsValue::null();
+        let res: JsValue = self.js_is_windows.call0(&this).unwrap();
 
         res.is_truthy()
     }

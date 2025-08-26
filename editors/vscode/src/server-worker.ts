@@ -12,7 +12,7 @@ const reader = new BrowserMessageReader(worker);
 
 let taplo: TaploLsp;
 
-reader.listen(async message => {
+reader.listen(async (message) => {
   if (!taplo) {
     taplo = await TaploLsp.initialize(
       {
@@ -21,6 +21,7 @@ reader.listen(async message => {
         findConfigFile: () => undefined,
         glob: () => [],
         isAbsolute: () => true,
+        isWindows: () => false,
         now: () => new Date(),
         readFile: () => Promise.reject("not implemented"),
         writeFile: () => Promise.reject("not implemented"),

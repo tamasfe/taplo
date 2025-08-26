@@ -103,6 +103,10 @@ impl Environment for NativeEnvironment {
         base.is_absolute()
     }
 
+    fn is_windows(&self) -> bool {
+        cfg!(target_os = "windows")
+    }
+
     fn cwd(&self) -> Option<std::path::PathBuf> {
         std::env::current_dir().ok()
     }

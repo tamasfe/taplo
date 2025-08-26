@@ -97,7 +97,10 @@ impl<E: Environment> Taplo<E> {
         let mut patterns: Vec<String> = arg_patterns
             .map(|pat| {
                 if !self.env.is_absolute(Path::new(&pat)) {
-                    cwd.join(&pat).normalize().to_string_lossy().into_owned()
+                    cwd.join(&pat)
+                        .normalize(&self.env)
+                        .to_string_lossy()
+                        .into_owned()
                 } else {
                     pat
                 }
@@ -109,7 +112,7 @@ impl<E: Environment> Taplo<E> {
                 Some(patterns) => patterns,
                 None => Vec::from([cwd
                     .join("**/*.toml")
-                    .normalize()
+                    .normalize(&self.env)
                     .to_string_lossy()
                     .into_owned()]),
             };

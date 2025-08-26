@@ -224,16 +224,17 @@ function browserEnvironment(): Environment {
     findConfigFile: () => undefined,
     glob: () => [],
     isAbsolute: () => true,
+    isWindows: () => false,
     now: () => new Date(),
     readFile: () => Promise.reject("not implemented"),
     writeFile: () => Promise.reject("not implemented"),
-    stderr: async bytes => {
+    stderr: async (bytes) => {
       console.error(new TextDecoder().decode(bytes));
       return bytes.length;
     },
     stdErrAtty: () => false,
     stdin: () => Promise.reject("not implemented"),
-    stdout: async bytes => {
+    stdout: async (bytes) => {
       console.log(new TextDecoder().decode(bytes));
       return bytes.length;
     },

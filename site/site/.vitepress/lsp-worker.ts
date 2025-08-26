@@ -17,6 +17,7 @@ const lsp = await TaploLsp.initialize(
     findConfigFile: () => undefined,
     glob: () => [],
     isAbsolute: () => true,
+    isWindows: () => false,
     now: () => new Date(),
     readFile: () => Promise.reject("not implemented"),
     writeFile: () => Promise.reject("not implemented"),

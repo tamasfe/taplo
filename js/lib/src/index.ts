@@ -227,19 +227,16 @@ function browserEnvironment(): Environment {
     now: () => new Date(),
     readFile: () => Promise.reject("not implemented"),
     writeFile: () => Promise.reject("not implemented"),
-    stderr: async (bytes) => {
+    stderr: async bytes => {
       console.error(new TextDecoder().decode(bytes));
       return bytes.length;
     },
     stdErrAtty: () => false,
     stdin: () => Promise.reject("not implemented"),
-    stdout: async (bytes) => {
+    stdout: async bytes => {
       console.log(new TextDecoder().decode(bytes));
       return bytes.length;
     },
-    urlToFilePath: (url: string) => {
-      const c = url.slice("file://".length);
-      return process.platform === "win32" ? c.replace(/\\/g, "/") : c;
-    },
+    urlToFilePath: (url: string) => url.slice("file://".length),
   };
 }

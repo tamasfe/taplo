@@ -363,11 +363,31 @@ dependencies = [
 
 [[package]]
 name = "clap_complete"
-version = "4.5.3"
+version = "4.5.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5a2d6eec27fce550d708b2be5d798797e5a55b246b323ef36924a0001996352"
+checksum = "4d9501bd3f5f09f7bbee01da9a511073ed30a80cd7a509f1214bb74eadea71ad"
 dependencies = [
  "clap",
+]
+
+[[package]]
+name = "clap_complete_fig"
+version = "4.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d494102c8ff3951810c72baf96910b980fb065ca5d3101243e6a8dc19747c86b"
+dependencies = [
+ "clap",
+ "clap_complete",
+]
+
+[[package]]
+name = "clap_complete_nushell"
+version = "4.5.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a0c951694691e65bf9d421d597d68416c22de9632e884c28412cb8cd8b73dce"
+dependencies = [
+ "clap",
+ "clap_complete",
 ]
 
 [[package]]
@@ -2251,6 +2271,8 @@ dependencies = [
  "async-ctrlc",
  "clap",
  "clap_complete",
+ "clap_complete_fig",
+ "clap_complete_nushell",
  "codespan-reporting",
  "futures",
  "glob",

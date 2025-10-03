@@ -134,7 +134,7 @@ impl<E: Environment> Taplo<E> {
 
         let files = files
             .into_iter()
-            .filter(|path| config.is_included(path))
+            .filter(|path| config.is_included(path) && !path.is_symlink())
             .collect::<Vec<_>>();
 
         let excluded = total - files.len();

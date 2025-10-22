@@ -305,7 +305,7 @@ impl<E: Environment> SchemaAssociations<E> {
             .read()
             .iter()
             .filter_map(|(rule, assoc)| {
-                if rule.is_match(file) {
+                if self.association_rule_is_match(rule, file) {
                     Some(assoc.clone())
                 } else {
                     None
@@ -322,6 +322,27 @@ impl<E: Environment> SchemaAssociations<E> {
                     );
                 }
             })
+    }
+
+    fn association_rule_is_match(&self, rule: &AssociationRule, url: &Url) -> bool {
+        match rule {
+            // Glob associations typically come from config files
+            // with a glob pattern that is an absolute file path
+            // without a scheme.
+            //
+            // So in order to be a match, we need to
+            // strip the scheme from the URL.
+            AssociationRule::Glob(g) => g.is_match(&*normalize_str(
+                url.as_str()
+                    .strip_prefix(url.scheme())
+                    .unwrap()
+                    .strip_prefix("://")
+                    .unwrap(),
+                &self.env,
+            )),
+            AssociationRule::Regex(r) => r.is_match(&normalize_str(url.as_str(), &self.env)),
+            AssociationRule::Url(u) => u == url,
+        }
     }
 
     async fn load_catalog(&self, index_url: &Url) -> Result<SchemaCatalog, anyhow::Error> {
@@ -407,29 +428,6 @@ impl From<Regex> for AssociationRule {
 impl From<GlobRule> for AssociationRule {
     fn from(v: GlobRule) -> Self {
         Self::Glob(v)
-    }
-}
-
-impl AssociationRule {
-    #[must_use]
-    pub fn is_match(&self, url: &Url) -> bool {
-        match self {
-            // Glob associations typically come from config files
-            // with a glob pattern that is an absolute file path
-            // without a scheme.
-            //
-            // So in order to be a match, we need to
-            // strip the scheme from the URL.
-            AssociationRule::Glob(g) => g.is_match(&*normalize_str(
-                url.as_str()
-                    .strip_prefix(url.scheme())
-                    .unwrap()
-                    .strip_prefix("://")
-                    .unwrap(),
-            )),
-            AssociationRule::Regex(r) => r.is_match(&normalize_str(url.as_str())),
-            AssociationRule::Url(u) => u == url,
-        }
     }
 }
 

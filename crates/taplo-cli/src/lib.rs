@@ -139,7 +139,8 @@ impl<E: Environment> Taplo<E> {
 
         let excluded = total - files.len();
 
-        tracing::info!(total, excluded, ?files, "found files");
+        tracing::info!(total, excluded, "found files");
+        tracing::debug!(?files, "file details");
 
         Ok(files)
     }

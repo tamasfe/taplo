@@ -18,7 +18,7 @@ lsp         = ["async-ctrlc", "lint", "taplo-lsp"]
 native-tls  = ["taplo-common/native-tls", "taplo-lsp?/native-tls"]
 rustls-tls  = ["taplo-common/rustls-tls", "taplo-lsp?/rustls-tls"]
 toml-test   = ["lint"]
-completions = ["dep:clap_complete"]
+completions = ["dep:clap_complete", "dep:clap_complete_fig", "dep:clap_complete_nushell"]
 
 [dependencies]
 taplo        = { version = "0.14.0", path = "../taplo", features = ["serde"] }
@@ -47,10 +47,12 @@ url                = { workspace = true }
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 lsp-async-stub = { version = "0.7.0", path = "../lsp-async-stub", features = ["tokio-tcp", "tokio-stdio"] }
 
-ansi_term     = { version = "0.12" }
-async-ctrlc   = { version = "1.2.0", features = ["stream"], optional = true }
-clap_complete = { version = "4.4.18", optional = true }
-prettydiff    = { version = "0.6.1", default-features = false }               # `prettydiff` is also a CLI that pulls in `clap` by default
+ansi_term             = { version = "0.12" }
+async-ctrlc           = { version = "1.2.0", features = ["stream"], optional = true }
+clap_complete         = { version = "4.4.18", optional = true }
+clap_complete_nushell = { version = "4.5.8", optional = true }
+clap_complete_fig     = { version = "4.5.2", optional = true }
+prettydiff            = { version = "0.6.1", default-features = false }               # `prettydiff` is also a CLI that pulls in `clap` by default
 
 tokio = { workspace = true, features = ["sync", "fs", "time", "io-std", "rt-multi-thread", "parking_lot"] }
 

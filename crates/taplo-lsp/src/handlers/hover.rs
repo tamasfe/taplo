@@ -112,7 +112,7 @@ pub(crate) async fn hover<E: Environment>(
             keys = lookup_keys(doc.dom.clone(), &keys);
 
             // We're interested in the array itself, not its item type.
-            if let Some(KeyOrIndex::Index(_)) = keys.iter().last() {
+            while let Some(KeyOrIndex::Index(_)) = keys.iter().last() {
                 keys = keys.skip_right(1);
             }
 

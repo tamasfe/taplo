@@ -66,7 +66,7 @@ The example below contains all the currently supported extension fields:
 
 ## Publishing
 
-Submitting schemas directly to Taplo is not possible anymore, and all JSON schemas should be submitted to the [JSON Schema Store](https://www.schemastore.org/json/).
+Submitting schemas directly to Taplo is not possible anymore, and all JSON schemas should be submitted to the [JSON Schema Store](https://www.schemastore.org).
 
 In earlier versions, schemas had several limitations and had to be specifically written for Taplo. For this reason a separate catalog was used that is still available [here](https://taplo.tamasfe.dev/schema_index.json).
 

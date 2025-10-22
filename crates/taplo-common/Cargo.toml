@@ -9,6 +9,12 @@ homepage     = { workspace = true }
 license      = { workspace = true }
 repository   = { workspace = true }
 
+[dev-dependencies]
+tokio = { version = "1.24.2", features = [
+  "macros",
+  "test-util",
+] }
+
 [features]
 # default-tls enables native-tls but without enabling native-tls specific features.
 native-tls = ["reqwest/default-tls"]

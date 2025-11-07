@@ -504,7 +504,7 @@ pub struct SchemaStoreSchemaMeta {
 }
 
 pub const SCHEMA_STORE_CATALOG_SCHEMA_URL: &str =
-    "https://json.schemastore.org/schema-catalog.json";
+    "https://www.schemastore.org/schema-catalog.json";
 
 #[derive(Debug, Clone, Copy)]
 pub struct SchemaStoreCatalogSchema;

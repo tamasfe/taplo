@@ -269,8 +269,9 @@ mod tests {
 
     #[test]
     fn parses_taplo_config_file() {
-        let cfg =
-            parse_config_str("include = [\"a.toml\"]", Path::new("taplo.toml")).unwrap().unwrap();
+        let cfg = parse_config_str("include = [\"a.toml\"]", Path::new("taplo.toml"))
+            .unwrap()
+            .unwrap();
 
         assert_eq!(cfg.include, Some(vec![String::from("a.toml")]));
     }
@@ -289,10 +290,49 @@ mod tests {
 
     #[test]
     fn ignores_pyproject_without_taplo_table() {
-        let cfg = parse_config_str("[tool.other]\nkey = 1", Path::new(PYPROJECT_FILE_NAME))
-            .unwrap();
+        let cfg =
+            parse_config_str("[tool.other]\nkey = 1", Path::new(PYPROJECT_FILE_NAME)).unwrap();
 
         assert!(cfg.is_none());
+    }
+
+    #[test]
+    fn parses_documented_pyproject_example() {
+        let cfg = parse_config_str(
+            r#"
+[tool.taplo]
+include = ["pyproject.toml"]
+
+[[tool.taplo.rule]]
+include = ["pyproject.toml"]
+keys = ["dependencies", "*-dependencies"]
+
+[tool.taplo.rule.formatting]
+reorder_keys = true
+"#,
+            Path::new(PYPROJECT_FILE_NAME),
+        )
+        .unwrap()
+        .unwrap();
+
+        assert_eq!(cfg.include, Some(vec![String::from(PYPROJECT_FILE_NAME)]));
+
+        let rule = cfg.rule.first().expect("rule present");
+        assert_eq!(rule.include, Some(vec![String::from(PYPROJECT_FILE_NAME)]));
+        assert_eq!(
+            rule.keys,
+            Some(vec![
+                String::from("dependencies"),
+                String::from("*-dependencies")
+            ])
+        );
+        assert_eq!(
+            rule.options
+                .formatting
+                .as_ref()
+                .and_then(|f| f.reorder_keys),
+            Some(true)
+        );
     }
 }
 

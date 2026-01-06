@@ -262,6 +262,40 @@ impl Config {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn parses_taplo_config_file() {
+        let cfg =
+            parse_config_str("include = [\"a.toml\"]", Path::new("taplo.toml")).unwrap().unwrap();
+
+        assert_eq!(cfg.include, Some(vec![String::from("a.toml")]));
+    }
+
+    #[test]
+    fn parses_pyproject_tool_taplo_table() {
+        let cfg = parse_config_str(
+            "[tool.taplo]\ninclude = [\"b.toml\"]",
+            Path::new(PYPROJECT_FILE_NAME),
+        )
+        .unwrap()
+        .unwrap();
+
+        assert_eq!(cfg.include, Some(vec![String::from("b.toml")]));
+    }
+
+    #[test]
+    fn ignores_pyproject_without_taplo_table() {
+        let cfg = parse_config_str("[tool.other]\nkey = 1", Path::new(PYPROJECT_FILE_NAME))
+            .unwrap();
+
+        assert!(cfg.is_none());
+    }
+}
+
 #[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Options {

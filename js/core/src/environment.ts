@@ -72,6 +72,7 @@ export interface Environment {
    *
    * - `.taplo.toml`
    * - `taplo.toml`
+   * - `pyproject.toml` (containing `[tool.taplo]`)
    */
   findConfigFile: (from: string) => string | undefined;
   /**

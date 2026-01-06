@@ -111,14 +111,10 @@ impl Environment for NativeEnvironment {
         let mut p = from;
 
         loop {
-            if let Ok(mut dir) = tokio::fs::read_dir(p).await {
-                while let Ok(Some(entry)) = dir.next_entry().await {
-                    for name in CONFIG_FILE_NAMES {
-                        if entry.file_name() == *name {
-                            let path = entry.path();
-                            return Some(path);
-                        }
-                    }
+            for name in CONFIG_FILE_NAMES {
+                let candidate = p.join(name);
+                if tokio::fs::metadata(&candidate).await.is_ok() {
+                    return Some(candidate);
                 }
             }
 

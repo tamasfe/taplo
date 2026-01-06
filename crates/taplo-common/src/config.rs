@@ -1,4 +1,5 @@
 use std::{
+    ffi::OsStr,
     fmt::Debug,
     path::{Path, PathBuf},
 };
@@ -8,6 +9,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use taplo::formatter;
+use toml::Value as TomlValue;
 use url::Url;
 
 use crate::{
@@ -16,7 +18,38 @@ use crate::{
     HashMap,
 };
 
-pub const CONFIG_FILE_NAMES: &[&str] = &[".taplo.toml", "taplo.toml"];
+pub const PYPROJECT_FILE_NAME: &str = "pyproject.toml";
+pub const CONFIG_FILE_NAMES: &[&str] = &[".taplo.toml", "taplo.toml", PYPROJECT_FILE_NAME];
+
+pub fn parse_config_str(contents: &str, path: &Path) -> Result<Option<Config>, toml::de::Error> {
+    let value: TomlValue = toml::from_str(contents)?;
+
+    parse_config_value(
+        value,
+        matches!(
+            path.file_name().and_then(OsStr::to_str),
+            Some(PYPROJECT_FILE_NAME)
+        ),
+    )
+}
+
+fn parse_config_value(
+    value: TomlValue,
+    from_pyproject: bool,
+) -> Result<Option<Config>, toml::de::Error> {
+    if from_pyproject {
+        match value
+            .get("tool")
+            .and_then(|tool| tool.get("taplo"))
+            .cloned()
+        {
+            Some(config) => config.try_into().map(Some),
+            None => Ok(None),
+        }
+    } else {
+        value.try_into().map(Some)
+    }
+}
 
 #[derive(Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]

@@ -8,7 +8,11 @@ use std::{
 };
 #[cfg(feature = "lint")]
 use taplo_common::schema::Schemas;
-use taplo_common::{config::Config, environment::Environment, util::Normalize};
+use taplo_common::{
+    config::{parse_config_str, Config, PYPROJECT_FILE_NAME},
+    environment::Environment,
+    util::Normalize,
+};
 
 pub mod args;
 pub mod commands;
@@ -47,19 +51,52 @@ impl<E: Environment> Taplo<E> {
         }
 
         let mut config_path = general.config.clone();
+        let mut auto_discovered = false;
 
         if config_path.is_none() && !general.no_auto_config {
             if let Some(cwd) = self.env.cwd_normalized() {
-                config_path = self.env.find_config_file_normalized(&cwd).await
+                config_path = self.env.find_config_file_normalized(&cwd).await;
+                auto_discovered = config_path.is_some();
             }
         }
 
         let mut config = Config::default();
-        if let Some(c) = config_path {
+        let mut next_path = config_path;
+
+        while let Some(c) = next_path {
             tracing::info!(path = ?c, "found configuration file");
             match self.env.read_file(&c).await {
-                Ok(cfg) => match toml::from_str(str::from_utf8(&cfg)?) {
-                    Ok(c) => config = c,
+                Ok(cfg) => match parse_config_str(str::from_utf8(&cfg)?, &c) {
+                    Ok(Some(c)) => {
+                        config = c;
+                        break;
+                    }
+                    Ok(None)
+                        if auto_discovered
+                            && matches!(
+                                c.file_name().and_then(|f| f.to_str()),
+                                Some(PYPROJECT_FILE_NAME)
+                            ) =>
+                    {
+                        tracing::info!(
+                            "no taplo configuration found in pyproject.toml, continuing search"
+                        );
+
+                        next_path = if let Some(parent) = c.parent() {
+                            self.env.find_config_file_normalized(parent).await
+                        } else {
+                            None
+                        };
+
+                        if next_path.is_none() {
+                            tracing::debug!("no further configuration files found");
+                        }
+
+                        continue;
+                    }
+                    Ok(None) => {
+                        tracing::info!("no taplo configuration found in pyproject.toml");
+                    }
                     Err(error) => {
                         tracing::warn!(%error, "invalid configuration file");
                     }
@@ -68,6 +105,8 @@ impl<E: Environment> Taplo<E> {
                     tracing::warn!(%error, "failed to read configuration file");
                 }
             }
+
+            break;
         }
 
         config

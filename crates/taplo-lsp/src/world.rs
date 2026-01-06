@@ -12,7 +12,7 @@ use serde_json::json;
 use std::{str, sync::Arc, time::Duration};
 use taplo::{dom::Node, parser::Parse};
 use taplo_common::{
-    config::Config,
+    config::{parse_config_str, Config, PYPROJECT_FILE_NAME},
     environment::Environment,
     schema::{
         associations::{priority, source, AssociationRule, SchemaAssociation},
@@ -227,7 +227,7 @@ impl<E: Environment> WorkspaceState<E> {
             .ok_or_else(|| anyhow!("invalid root URL"))?;
 
         if self.config.taplo.config_file.enabled {
-            let config_path = if let Some(p) = &self.config.taplo.config_file.path {
+            let mut config_path = if let Some(p) = &self.config.taplo.config_file.path {
                 tracing::debug!(path = ?p, "using config file at specified path");
 
                 if env.is_absolute(p) {
@@ -245,10 +245,42 @@ impl<E: Environment> WorkspaceState<E> {
                 None
             };
 
-            if let Some(config_path) = config_path {
-                tracing::info!(path = ?config_path, "using config file");
-                self.taplo_config =
-                    toml::from_str(str::from_utf8(&env.read_file(&config_path).await?)?)?;
+            let mut auto_discovered = self.config.taplo.config_file.path.is_none();
+
+            while let Some(path) = config_path {
+                tracing::info!(path = ?path, "using config file");
+                match parse_config_str(str::from_utf8(&env.read_file(&path).await?)?, &path)? {
+                    Some(c) => {
+                        self.taplo_config = c;
+                        break;
+                    }
+                    None if auto_discovered
+                        && matches!(
+                            path.file_name().and_then(|f| f.to_str()),
+                            Some(PYPROJECT_FILE_NAME)
+                        ) =>
+                    {
+                        tracing::info!(
+                            "no taplo configuration found in pyproject.toml, continuing search"
+                        );
+                        config_path = if let Some(parent) = path.parent() {
+                            env.find_config_file_normalized(parent).await
+                        } else {
+                            None
+                        };
+
+                        if config_path.is_none() {
+                            tracing::debug!("no further configuration files found");
+                        }
+
+                        continue;
+                    }
+                    None => {
+                        tracing::info!("no taplo configuration found in pyproject.toml");
+                    }
+                }
+
+                break;
             }
         }
 

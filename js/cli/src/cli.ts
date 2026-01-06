@@ -25,6 +25,11 @@ import { convertEnv, Environment, prepareEnv } from "@taplo/core";
         fs.accessSync(path.join(from, "taplo.toml"));
         return path.join(from, "taplo.toml");
       } catch {}
+
+      try {
+        fs.accessSync(path.join(from, "pyproject.toml"));
+        return path.join(from, "pyproject.toml");
+      } catch {}
     },
     glob: p => glob.sync(p),
     isAbsolute: p => path.isAbsolute(p),

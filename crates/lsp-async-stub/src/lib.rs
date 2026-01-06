@@ -67,7 +67,7 @@ impl CancelToken {
         self.cancelled.load(Ordering::SeqCst)
     }
 
-    pub fn as_err(&mut self) -> CancelTokenErr {
+    pub fn as_err(&mut self) -> CancelTokenErr<'_> {
         CancelTokenErr(self)
     }
 }

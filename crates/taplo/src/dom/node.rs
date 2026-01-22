@@ -124,7 +124,7 @@ impl Node {
             Node::Table(t) => {
                 let entries = t.entries().read();
                 for (key, node) in entries.iter() {
-                    if glob.is_match(pattern) {
+                    if glob.is_match(key.value()) {
                         matched.push((KeyOrIndex::from(key.clone()), node.clone()));
                     }
                 }
@@ -663,3 +663,5 @@ impl From<Invalid> for Node {
         Self::Invalid(v)
     }
 }
+
+

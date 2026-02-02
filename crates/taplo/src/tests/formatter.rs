@@ -504,10 +504,10 @@ my_array = [
     [
         [
             [
-                "my_value",
-            ],
-        ],
-    ],
+                "my_value"
+            ]
+        ]
+    ]
 ]
 "#;
 
@@ -520,6 +520,32 @@ my_array = [[[["my_value"]]]]
         formatter::Options {
             array_auto_collapse: true,
             compact_arrays: true,
+            indent_string: "    ".into(),
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn array_collapse_preserves_trailing_comma() {
+    let src = r#"
+my_array = [
+    "my_value",
+]
+"#;
+
+    let expected = r#"
+my_array = [
+    "my_value",
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: true,
             indent_string: "    ".into(),
             ..Default::default()
         },
@@ -980,7 +1006,7 @@ foo = { b = 2, a = 1 }
 
 bar = [
   { a = 1, b = 2, c = 3 },
-  { b = 2, a = 1, d = 4, e = 5 },
+  { b = 2, a = 1, d = 4, e = 5 }
 ]
 "#;
 

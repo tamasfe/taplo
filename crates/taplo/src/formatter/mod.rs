@@ -945,8 +945,20 @@ fn is_array_multiline(node: &SyntaxNode) -> bool {
     node.descendants_with_tokens().any(|n| n.kind() == NEWLINE)
 }
 
+fn has_trailing_comma(node: &SyntaxNode) -> bool {
+    let mut last_significant = None;
+    for child in node.children_with_tokens() {
+        match child.kind() {
+            COMMA | VALUE => last_significant = Some(child.kind()),
+            WHITESPACE | NEWLINE | COMMENT | BRACKET_END => {}
+            _ => {}
+        }
+    }
+    last_significant == Some(COMMA)
+}
+
 fn can_collapse_array(node: &SyntaxNode) -> bool {
-    !node.descendants_with_tokens().any(|n| n.kind() == COMMENT)
+    !node.descendants_with_tokens().any(|n| n.kind() == COMMENT) && !has_trailing_comma(node)
 }
 
 fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl FormattedItem {

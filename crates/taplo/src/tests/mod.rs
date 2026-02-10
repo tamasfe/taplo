@@ -41,3 +41,24 @@ fn dates_in_table_keys() {
 
     assert!(errors.is_empty(), "{:#?}", errors);
 }
+
+#[test]
+fn get_matches_table_key() {
+    let src = r#"
+name1 = "v"
+other = "v2"
+"#;
+
+    let root = parse(src).into_dom();
+
+    let matched: Vec<String> = root
+        .get_matches("na*")
+        .unwrap()
+        .map(|(k, _)| match k {
+            crate::dom::KeyOrIndex::Key(key) => key.value().to_string(),
+            crate::dom::KeyOrIndex::Index(idx) => idx.to_string(),
+        })
+        .collect();
+
+    assert_eq!(matched, vec!["name1"]);
+}

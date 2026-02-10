@@ -1,0 +1,57 @@
+name: "Taplo Action"
+author: "Gwen Lg"
+description: "Run Taplo for TOML formatting or/and lint check."
+
+inputs:
+  format:
+    description: "Check formatting TOML files"
+    required: false
+    default: true
+
+  format_write_changes:
+    description: "Write the formatting changes to the repository"
+    required: false
+    default: false
+
+  lint:
+    description: "Check TOML files with lints"
+    required: false
+    default: false
+
+  version:
+    description: "Version of Taplo"
+    required: false
+    default: "0.10.0"
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Taplo
+      id: install
+      shell: bash
+      env:
+        INSTALL_DIR: .
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_FILES: ${{ inputs.files }}
+      run: $GITHUB_ACTION_PATH/action/install.sh
+
+    - name: Format with Taplo
+      if: ${{ inputs.format == 'true' }}
+      id: format
+      shell: bash
+      if: ${{ inputs.format }}
+      run: |
+        if ! ${{ inputs.format_write_changes }}; then
+            ARGS=" --check --diff"
+        fi
+        ${taplo_cmd} format ${ARGS}
+
+    - name: Lint with Taplo
+      if: ${{ inputs.lint == 'true' }}
+      id: lint
+      shell: bash
+      run: ${taplo_cmd} lint
+
+branding:
+  icon: "type"
+  color: "red"

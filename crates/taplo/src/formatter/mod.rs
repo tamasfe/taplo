@@ -138,10 +138,10 @@ impl core::fmt::Display for OptionParseError {
             "invalid formatting option: {}",
             match self {
                 OptionParseError::InvalidOption(k) => {
-                    format!(r#"invalid option "{}""#, k)
+                    format!(r#"invalid option "{k}""#)
                 }
                 OptionParseError::InvalidValue { key, error } => {
-                    format!(r#"invalid value for option "{}": {}"#, key, error)
+                    format!(r#"invalid value for option "{key}": {error}"#)
                 }
             }
         )

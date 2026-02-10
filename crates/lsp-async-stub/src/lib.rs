@@ -383,6 +383,7 @@ impl<W: Clone> Server<W> {
                         rpc::Response::error(
                             rpc::Error::invalid_request().with_data("server is shutting down"),
                         )
+                        .with_request_id(request.id.clone().unwrap())
                         .into_message(),
                     )
                     .await?;
@@ -409,7 +410,11 @@ impl<W: Clone> Server<W> {
                 );
 
                 writer
-                    .send(rpc::Response::error(rpc::Error::server_not_initialized()).into_message())
+                    .send(
+                        rpc::Response::error(rpc::Error::server_not_initialized())
+                            .with_request_id(request.id.clone().unwrap())
+                            .into_message(),
+                    )
                     .await?;
                 return Ok(());
             }

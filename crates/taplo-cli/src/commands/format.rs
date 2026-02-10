@@ -80,18 +80,6 @@ impl<E: Environment> Taplo<E> {
         Ok(())
     }
 
-    #[cfg(target_arch = "wasm32")]
-    async fn print_diff(
-        &self,
-        _path: impl AsRef<Path>,
-        _original: &str,
-        _formatted: &str,
-    ) -> Result<(), anyhow::Error> {
-        tracing::warn!("the `--diff` flag is not available in this build yet");
-        Ok(())
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
     async fn print_diff(
         &self,
         path: impl AsRef<Path>,

@@ -25,6 +25,7 @@ taplo        = { version = "0.14.0", path = "../taplo", features = ["serde"] }
 taplo-common = { version = "0.6.0", path = "../taplo-common" }
 taplo-lsp    = { version = "0.8.0", path = "../taplo-lsp", default-features = false, optional = true }
 
+ansi_term          = { version = "0.12" }
 anyhow             = { workspace = true }
 clap               = { workspace = true, features = ["derive", "cargo", "env", "default"] }
 codespan-reporting = { version = "0.11.1" }
@@ -33,6 +34,7 @@ glob               = { workspace = true }
 hex                = { workspace = true }
 itertools          = { workspace = true }
 once_cell          = { workspace = true }
+prettydiff         = { version = "0.6.1", default-features = false }
 regex              = { workspace = true }
 reqwest            = { workspace = true, features = ["json"], optional = true }
 schemars           = { workspace = true }
@@ -47,10 +49,8 @@ url                = { workspace = true }
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 lsp-async-stub = { version = "0.7.0", path = "../lsp-async-stub", features = ["tokio-tcp", "tokio-stdio"] }
 
-ansi_term     = { version = "0.12" }
 async-ctrlc   = { version = "1.2.0", features = ["stream"], optional = true }
 clap_complete = { version = "4.4.18", optional = true }
-prettydiff    = { version = "0.6.1", default-features = false }               # `prettydiff` is also a CLI that pulls in `clap` by default
 
 tokio = { workspace = true, features = ["sync", "fs", "time", "io-std", "rt-multi-thread", "parking_lot"] }
 

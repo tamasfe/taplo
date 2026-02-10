@@ -28,14 +28,14 @@ impl<E: Environment> Taplo<E> {
         let config = self.load_config(&cmd.general).await?;
         let display_path = match cmd.stdin_filepath.as_deref() {
             Some(filepath) if self.env.is_absolute(filepath.as_ref()) => {
-                PathBuf::from(filepath).normalize()
+                PathBuf::from(filepath).normalize(&self.env)
             }
             Some(filepath) => {
                 let cwd = self
                     .env
                     .cwd_normalized()
                     .ok_or_else(|| anyhow!("could not figure the current working directory"))?;
-                cwd.join(filepath).normalize()
+                cwd.join(filepath).normalize(&self.env)
             }
             None => PathBuf::from("-"),
         };

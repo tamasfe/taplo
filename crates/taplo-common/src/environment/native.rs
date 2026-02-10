@@ -99,6 +99,14 @@ impl Environment for NativeEnvironment {
         url.to_file_path().ok()
     }
 
+    fn to_unix_path_on_windows(&self, path: &str) -> String {
+        if cfg!(target_os = "windows") {
+            path.replace('\\', "/")
+        } else {
+            path.to_string()
+        }
+    }
+
     fn is_absolute(&self, base: &std::path::Path) -> bool {
         base.is_absolute()
     }

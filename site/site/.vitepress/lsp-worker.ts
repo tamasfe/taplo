@@ -31,6 +31,8 @@ const lsp = await TaploLsp.initialize(
       return bytes.length;
     },
     urlToFilePath: (url: string) => url.slice("file://".length),
+    toUnixPathOnWindows: (path: string) =>
+      navigator.userAgent.includes("Win") ? path.replace(/\\/g, "/") : path,
   },
   {
     onMessage(message) {

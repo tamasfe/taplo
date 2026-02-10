@@ -17,9 +17,9 @@ process.on("message", async (d: RpcMessage) => {
     taplo = await TaploLsp.initialize(
       {
         cwd: () => process.cwd(),
-        envVar: name => process.env[name],
+        envVar: (name) => process.env[name],
         envVars: () => Object.entries(process.env),
-        findConfigFile: from => {
+        findConfigFile: (from) => {
           const fileNames = [".taplo.toml", "taplo.toml"];
 
           for (const name of fileNames) {
@@ -30,10 +30,10 @@ process.on("message", async (d: RpcMessage) => {
             } catch {}
           }
         },
-        glob: p => glob.sync(p),
-        isAbsolute: p => path.isAbsolute(p),
+        glob: (p) => glob.sync(p),
+        isAbsolute: (p) => path.isAbsolute(p),
         now: () => new Date(),
-        readFile: path => fsPromise.readFile(path),
+        readFile: (path) => fsPromise.readFile(path),
         writeFile: (path, content) => fsPromise.writeFile(path, content),
         stderr: process.stderr,
         stdErrAtty: () => process.stderr.isTTY,
@@ -48,6 +48,8 @@ process.on("message", async (d: RpcMessage) => {
 
           return c;
         },
+        toUnixPathOnWindows: (path: string) =>
+          process.platform === "win32" ? path.replace(/\\/g, "/") : path,
         fetch: {
           fetch,
           Headers,
@@ -67,6 +69,6 @@ process.on("message", async (d: RpcMessage) => {
 });
 
 // These are panics from Rust.
-process.on("unhandledRejection", up => {
+process.on("unhandledRejection", (up) => {
   throw up;
 });

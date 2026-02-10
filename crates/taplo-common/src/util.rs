@@ -8,6 +8,8 @@ use std::{
     sync::Arc,
 };
 
+use crate::environment::Environment;
+
 #[derive(Debug, Clone)]
 pub struct GlobRule {
     include: globset::GlobSet,
@@ -93,31 +95,27 @@ impl Hash for HashValue<'_> {
 pub trait Normalize {
     /// Normalizing in the context of Taplo the following:
     ///
-    /// - replaces `\` with `/` on windows
     /// - decodes all percent-encoded characters
+    /// - replaces `\` with `/` on windows
     #[must_use]
-    fn normalize(self) -> Self;
+    fn normalize(self, e: &impl Environment) -> Self;
 }
 
 impl Normalize for PathBuf {
-    fn normalize(self) -> Self {
+    fn normalize(self, e: &impl Environment) -> Self {
         match self.to_str() {
-            Some(s) => (*normalize_str(s)).into(),
+            Some(s) => (*normalize_str(s, e)).into(),
             None => self,
         }
     }
 }
 
-pub(crate) fn normalize_str(s: &str) -> Cow<str> {
+pub(crate) fn normalize_str<'a>(s: &'a str, e: &impl Environment) -> Cow<'a, str> {
     let Some(percent_decoded) = percent_decode_str(s).decode_utf8().ok() else {
         return s.into();
     };
 
-    if cfg!(windows) {
-        percent_decoded.replace('\\', "/").into()
-    } else {
-        percent_decoded
-    }
+    e.to_unix_path_on_windows(&percent_decoded).into()
 }
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "reqwest"))]

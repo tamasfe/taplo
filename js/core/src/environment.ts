@@ -57,6 +57,10 @@ export interface Environment {
    */
   urlToFilePath: (url: string) => string;
   /**
+   * If running on Windows, convert a Windows-style path to a Unix-style path.
+   */
+  toUnixPathOnWindows: (path: string) => string;
+  /**
    * Return whether a path is absolute.
    */
   isAbsolute: (path: string) => boolean;
@@ -130,6 +134,7 @@ export function convertEnv(env: Environment): any {
     js_read_file: env.readFile,
     js_write_file: env.writeFile,
     js_to_file_path: env.urlToFilePath,
+    js_to_unix_path_on_windows: env.toUnixPathOnWindows,
     js_is_absolute: env.isAbsolute,
     js_cwd: env.cwd,
     js_find_config_file: env.findConfigFile,
@@ -139,8 +144,8 @@ export function convertEnv(env: Environment): any {
 function streamToWriteCb(
   stream: Writable
 ): (bytes: Uint8Array) => Promise<number> {
-  return bytes => {
-    return new Promise(resolve => {
+  return (bytes) => {
+    return new Promise((resolve) => {
       // FIXME: we immediately resolve as it does not matter
       //   in any of the use-cases.
       stream.write(bytes);
@@ -160,7 +165,7 @@ function streamToReadCb(stream: Readable): (n: bigint) => Promise<Uint8Array> {
   // touching the stream.
   let eof = false;
 
-  return n => {
+  return (n) => {
     // Make sure that we only resolve/reject the promise once.
     // This might not be necessary, but it's better to be safe.
     let done = false;
@@ -191,7 +196,7 @@ function streamToReadCb(stream: Readable): (n: bigint) => Promise<Uint8Array> {
         }
       });
 
-      stream.once("error", err => {
+      stream.once("error", (err) => {
         if (!done) {
           done = true;
           reject(err);

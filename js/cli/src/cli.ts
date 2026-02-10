@@ -13,9 +13,9 @@ import { convertEnv, Environment, prepareEnv } from "@taplo/core";
 
   const env: Environment = {
     cwd: () => process.cwd(),
-    envVar: name => process.env[name],
+    envVar: (name) => process.env[name],
     envVars: () => Object.entries(process.env),
-    findConfigFile: from => {
+    findConfigFile: (from) => {
       try {
         fs.accessSync(path.join(from, ".taplo.toml"));
         return path.join(from, ".taplo.toml");
@@ -26,10 +26,10 @@ import { convertEnv, Environment, prepareEnv } from "@taplo/core";
         return path.join(from, "taplo.toml");
       } catch {}
     },
-    glob: p => glob.sync(p),
-    isAbsolute: p => path.isAbsolute(p),
+    glob: (p) => glob.sync(p),
+    isAbsolute: (p) => path.isAbsolute(p),
     now: () => new Date(),
-    readFile: path => fsPromise.readFile(path),
+    readFile: (path) => fsPromise.readFile(path),
     writeFile: (path, content) => fsPromise.writeFile(path, content),
     stderr: process.stderr,
     stdErrAtty: () => process.stderr.isTTY,
@@ -44,6 +44,8 @@ import { convertEnv, Environment, prepareEnv } from "@taplo/core";
 
       return c;
     },
+    toUnixPathOnWindows: (path: string) =>
+      process.platform === "win32" ? path.replace(/\\/g, "/") : path,
     fetch: {
       fetch,
       Headers,

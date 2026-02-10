@@ -47,6 +47,8 @@ pub trait Environment: Clone + Send + Sync + 'static {
 
     fn to_file_path(&self, url: &Url) -> Option<PathBuf>;
 
+    fn to_unix_path_on_windows(&self, path: &str) -> String;
+
     fn is_absolute(&self, path: &Path) -> bool;
 
     /// Absolute current working dir.
@@ -60,25 +62,28 @@ pub trait Environment: Clone + Send + Sync + 'static {
         Ok(self
             .glob_files(glob)?
             .into_iter()
-            .map(Normalize::normalize)
+            .map(|path| Normalize::normalize(path, self))
             .collect())
     }
 
     /// Same as [`Self::cwd`], but the returned path is
     /// [normalized](Normalize:normalize) in addition.
     fn cwd_normalized(&self) -> Option<PathBuf> {
-        self.cwd().map(Normalize::normalize)
+        self.cwd().map(|path| Normalize::normalize(path, self))
     }
 
     /// Same as [`Self::to_file_path`], but the returned path is
     /// [normalized](Normalize:normalize) in addition.
     fn to_file_path_normalized(&self, url: &Url) -> Option<PathBuf> {
-        self.to_file_path(url).map(Normalize::normalize)
+        self.to_file_path(url)
+            .map(|path| Normalize::normalize(path, self))
     }
 
     /// Same as [`Self::find_config_file`], but the returned path is
     /// [normalized](Normalize:normalize) in addition.
     async fn find_config_file_normalized(&self, from: &Path) -> Option<PathBuf> {
-        self.find_config_file(from).await.map(Normalize::normalize)
+        self.find_config_file(from)
+            .await
+            .map(|path| Normalize::normalize(path, self))
     }
 }

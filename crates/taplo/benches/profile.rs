@@ -1,6 +1,8 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use pprof::criterion::{Output, PProfProfiler};
 use taplo::parser::parse;
+
+#[cfg(unix)]
+use pprof::criterion::{Output, PProfProfiler};
 
 pub fn syntax(c: &mut Criterion) {
     let source = include_str!("../../../test-data/example.toml");
@@ -14,9 +16,18 @@ pub fn dom(c: &mut Criterion) {
     });
 }
 
+#[cfg(unix)]
 criterion_group!(
     name = benches;
     config = Criterion::default().with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
     targets = syntax, dom
 );
+
+#[cfg(not(unix))]
+criterion_group!(
+    name = benches;
+    config = Criterion::default();
+    targets = syntax, dom
+);
+
 criterion_main!(benches);

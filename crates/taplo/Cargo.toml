@@ -35,11 +35,13 @@ serde    = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]
 assert-json-diff = { version = "2" }
-criterion        = { version = "0.5" }                                          # criterion -> clap
+criterion        = { version = "0.5" }   # criterion -> clap
 difference       = { version = "2.0.0" }
-pprof            = { version = "0.14", features = ["flamegraph", "criterion"] } # pprof -> criterion -> clap
 serde_json       = { version = "1" }
 toml             = { version = "0.7" }
+
+[target.'cfg(unix)'.dev-dependencies]
+pprof = { version = "0.14", features = ["flamegraph", "criterion"] } # pprof -> criterion -> clap
 
 [package.metadata.docs.rs]
 features = ["serde", "schema"]

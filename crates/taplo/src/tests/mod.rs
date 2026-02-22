@@ -41,3 +41,16 @@ fn dates_in_table_keys() {
 
     assert!(errors.is_empty(), "{:#?}", errors);
 }
+
+#[test]
+fn inline_table_with_linebreaks_and_trailing_comma() {
+    let src = r#"
+cooldowns = { 
+    foo = "foo",
+    bar = "bar",
+}
+"#;
+    let errors = parse(src).errors;
+
+    assert!(errors.is_empty(), "{:#?}", errors);
+}

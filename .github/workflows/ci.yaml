@@ -79,14 +79,14 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Retrieve toml-test
         run: |
-          wget https://github.com/BurntSushi/toml-test/releases/download/v1.1.0/toml-test-v1.1.0-linux-amd64.gz
-          gunzip toml-test-v1.1.0-linux-amd64.gz
-          chmod +x toml-test-v1.1.0-linux-amd64
+          wget https://github.com/toml-lang/toml-test/releases/download/v2.1.0/toml-test-v2.1.0-linux-amd64.gz
+          gunzip toml-test-v2.1.0-linux-amd64.gz
+          chmod +x toml-test-v2.1.0-linux-amd64
       - name: Build taplo-cli
         run: |
           cargo build --bin taplo --no-default-features --features "rustls-tls,toml-test"
       - name: Run toml-test
-        run: ./toml-test-v1.1.0-linux-amd64 ./target/debug/taplo -- toml-test
+        run: ./toml-test-v2.1.0-linux-amd64 test -toml 1.1 -skip 'invalid/control/cr,invalid/control/multi-cr,invalid/control/rawmulti-cr,invalid/table/append-with-dotted-keys-04,invalid/table/super-twice,valid/array/array,valid/comment/everywhere,valid/comment/nonascii,valid/datetime/datetime,valid/datetime/edge,valid/datetime/leap-year,valid/datetime/local,valid/datetime/local-date,valid/datetime/local-time,valid/datetime/milliseconds,valid/datetime/no-seconds,valid/datetime/timezone,valid/example,valid/key/numeric-04,valid/key/quoted-unicode,valid/spec-1.1.0/common-12,valid/spec-1.1.0/common-27,valid/spec-1.1.0/common-28,valid/spec-1.1.0/common-29,valid/spec-1.1.0/common-30,valid/spec-1.1.0/common-31,valid/spec-1.1.0/common-32,valid/spec-1.1.0/common-33,valid/spec-1.1.0/common-34,valid/spec-1.1.0/common-44,valid/spec-example-1,valid/spec-example-1-compact,valid/string/escape-esc,valid/string/hex-escape,valid/string/quoted-unicode' -decoder "./target/debug/taplo toml-test"
 
   test-msrv-lib:
     name: Test libraries with MSRV

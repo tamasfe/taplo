@@ -70,6 +70,17 @@ create_options!(
         /// where possible.
         pub inline_table_expand: bool,
 
+        /// Automatically collapse multiline inline tables
+        /// if they fit in one line.
+        ///
+        /// The inline table won't be collapsed if it
+        /// contains a comment.
+        pub inline_table_auto_collapse: bool,
+
+        /// Put trailing commas for multiline
+        /// inline tables.
+        pub inline_table_trailing_comma: bool,
+
         /// Automatically collapse arrays if they
         /// fit in one line.
         ///
@@ -166,6 +177,8 @@ impl Default for Options {
             indent_tables: false,
             indent_entries: false,
             inline_table_expand: true,
+            inline_table_auto_collapse: true,
+            inline_table_trailing_comma: true,
             trailing_newline: true,
             allowed_blank_lines: 2,
             indent_string: "  ".into(),
@@ -860,16 +873,23 @@ fn format_inline_table(
     let mut formatted = String::new();
     let mut comment = None;
 
-    let mut context = context.clone();
-    if context.force_multiline {
-        context.force_multiline = options.inline_table_expand;
+    let force_ml = context.force_multiline && options.inline_table_expand;
+    let mut multiline = is_inline_table_multiline(&node) || force_ml;
+
+    if can_collapse_inline_table(&node) && options.inline_table_auto_collapse && !force_ml {
+        multiline = false;
     }
-    let context = &context;
 
     let child_count = node.children().count();
 
-    if node.children().count() == 0 {
+    if child_count == 0 {
         formatted = "{}".into();
+    }
+
+    let mut inner_context = context.clone();
+    inner_context.force_multiline = force_ml;
+    if multiline {
+        inner_context.indent_level += 1;
     }
 
     let mut sorted_children = if options.reorder_inline_tables {
@@ -882,11 +902,20 @@ fn format_inline_table(
         None
     };
 
+    // In multiline mode, we delay emitting newlines after entries
+    // to allow trailing comments to be appended on the same line.
+    let mut pending_newline = false;
+
     let mut node_index = 0;
     for c in node.children_with_tokens() {
         match c {
             NodeOrToken::Node(n) => {
-                if node_index != 0 {
+                if multiline && pending_newline {
+                    formatted += options.newline();
+                    pending_newline = false;
+                }
+
+                if !multiline && node_index != 0 {
                     formatted += ", ";
                 }
 
@@ -899,9 +928,21 @@ fn format_inline_table(
                     n
                 };
 
-                let entry = format_entry(child, options, context);
-                debug_assert!(entry.comment.is_none());
+                let entry = format_entry(child, options, &inner_context);
+
+                if multiline {
+                    formatted.extend(inner_context.indent(options));
+                }
                 entry.write_to(&mut formatted, options);
+
+                if multiline {
+                    let has_comma = node_index < child_count - 1
+                        || options.inline_table_trailing_comma;
+                    if has_comma {
+                        formatted += ",";
+                    }
+                    pending_newline = true;
+                }
 
                 node_index += 1;
             }
@@ -913,7 +954,9 @@ fn format_inline_table(
                     }
 
                     formatted += "{";
-                    if !options.compact_inline_tables {
+                    if multiline {
+                        formatted += options.newline();
+                    } else if !options.compact_inline_tables {
                         formatted += " ";
                     }
                 }
@@ -923,15 +966,42 @@ fn format_inline_table(
                         continue;
                     }
 
-                    if !options.compact_inline_tables {
+                    if multiline {
+                        if pending_newline {
+                            formatted += options.newline();
+                            pending_newline = false;
+                        }
+                        formatted.extend(context.indent(options));
+                    } else if !options.compact_inline_tables {
                         formatted += " ";
                     }
                     formatted += "}";
                 }
                 WHITESPACE | COMMA => {}
+                NEWLINE => {
+                    if multiline && pending_newline {
+                        formatted += options.newline();
+                        pending_newline = false;
+                    }
+                }
                 COMMENT => {
-                    debug_assert!(comment.is_none());
-                    comment = Some(t.text().into());
+                    if multiline {
+                        if pending_newline {
+                            // Trailing comment on the previous entry.
+                            formatted += " ";
+                            formatted += t.text();
+                            formatted += options.newline();
+                            pending_newline = false;
+                        } else {
+                            // Standalone comment on its own line.
+                            formatted.extend(inner_context.indent(options));
+                            formatted += t.text();
+                            formatted += options.newline();
+                        }
+                    } else {
+                        debug_assert!(comment.is_none());
+                        comment = Some(t.text().into());
+                    }
                 }
                 _ => formatted += t.text(),
             },
@@ -947,6 +1017,18 @@ fn is_array_multiline(node: &SyntaxNode) -> bool {
 
 fn can_collapse_array(node: &SyntaxNode) -> bool {
     !node.descendants_with_tokens().any(|n| n.kind() == COMMENT)
+}
+
+// Check whether the inline table spans multiple lines in its current form.
+fn is_inline_table_multiline(node: &SyntaxNode) -> bool {
+    node.children_with_tokens()
+        .any(|c| c.kind() == NEWLINE)
+}
+
+fn can_collapse_inline_table(node: &SyntaxNode) -> bool {
+    !node
+        .children_with_tokens()
+        .any(|c| c.kind() == COMMENT)
 }
 
 fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl FormattedItem {

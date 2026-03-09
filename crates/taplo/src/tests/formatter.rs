@@ -1176,3 +1176,212 @@ a = "b" # comment
 
     assert_format!(expected, &formatted);
 }
+
+#[test]
+fn multiline_inline_table_preserve() {
+    let src = r#"
+foo = {
+  bar = "baz",
+  qux = "quux",
+}
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            inline_table_auto_collapse: false,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}
+
+#[test]
+fn multiline_inline_table_collapse() {
+    let src = r#"
+foo = {
+  bar = "baz",
+  qux = "quux",
+}
+"#;
+
+    let expected = r#"
+foo = { bar = "baz", qux = "quux" }
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            inline_table_auto_collapse: true,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn multiline_inline_table_auto_expand() {
+    let src = r#"
+long_key = { first = "aaaaaaa", second = "bbbbbbb", third = "ccccccc", fourth = "ddddddd" }
+"#;
+
+    let expected = r#"
+long_key = {
+  first = "aaaaaaa",
+  second = "bbbbbbb",
+  third = "ccccccc",
+  fourth = "ddddddd",
+}
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            column_width: 80,
+            inline_table_expand: true,
+            inline_table_auto_collapse: false,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn multiline_inline_table_no_trailing_comma() {
+    let src = r#"
+foo = {
+  bar = "baz",
+  qux = "quux",
+}
+"#;
+
+    let expected = r#"
+foo = {
+  bar = "baz",
+  qux = "quux"
+}
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            inline_table_auto_collapse: false,
+            inline_table_trailing_comma: false,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn multiline_inline_table_with_comment() {
+    let src = r#"
+foo = {
+  # group a
+  bar = "baz",
+  qux = "quux", # trailing
+}
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            ..Default::default()
+        },
+    );
+
+    // Comments prevent collapsing, so it stays multiline.
+    assert_format!(src, &formatted);
+}
+
+#[test]
+fn multiline_inline_table_nested() {
+    let src = r#"
+foo = {
+  bar = {
+    a = 1,
+    b = 2,
+  },
+  c = 3,
+}
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            inline_table_auto_collapse: false,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}
+
+#[test]
+fn multiline_inline_table_custom_indent() {
+    let src = r#"
+foo = {
+    bar = "baz",
+    qux = "quux",
+}
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            indent_string: "    ".into(),
+            inline_table_auto_collapse: false,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}
+
+#[test]
+fn multiline_inline_table_compact() {
+    let src = r#"
+foo = {bar = "baz", qux = "quux"}
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            compact_inline_tables: true,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}
+
+#[test]
+fn multiline_inline_table_in_array() {
+    let src = r#"
+items = [
+  {
+    name = "first",
+    value = 1,
+  },
+  {
+    name = "second",
+    value = 2,
+  },
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            array_auto_collapse: false,
+            inline_table_auto_collapse: false,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(src, &formatted);
+}

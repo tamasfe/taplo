@@ -14,5 +14,6 @@ images
 node_modules
 .yarn/**
 .yarnrc.yml
-rollup-config.js
+rollup.config*.mjs
 scripts/
+node.tsconfig.json

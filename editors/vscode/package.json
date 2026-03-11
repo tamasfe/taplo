@@ -46,6 +46,12 @@
     "workspace"
   ],
   "contributes": {
+    "jsonValidation": [
+      {
+        "fileMatch": "package.json",
+        "url": "./schemas/package-json.schema.json"
+      }
+    ],
     "grammars": [
       {
         "language": "toml",

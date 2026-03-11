@@ -1,0 +1,52 @@
+{
+    "properties": {
+        "contributes": {
+            "type": "object",
+            "properties": {
+                "tomlValidation": {
+                    "description": "Contributes json schema configuration for TOML.",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "fileMatch": {
+                                "description": "The file glob pattern (or an array of patterns) to match use glob, for example \"Cargo.toml\".",
+                                "type": [
+                                    "string",
+                                    "array"
+                                ],
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "regexMatch": {
+                                "description": "The file regular expression pattern (or an array of patterns) to match, for example \"^.*foo.toml$\".",
+                                "type": [
+                                    "string",
+                                    "array"
+                                ],
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "url": {
+                                "description": "A schema URL ('http:', 'https:') or relative path to the extension folder ('./').",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "defaultSnippets": [
+                        {
+                            "body": [
+                                {
+                                    "regexMatch": "${1:^.*foo.toml$}",
+                                    "url": "${2:url}"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

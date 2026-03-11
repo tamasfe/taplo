@@ -182,7 +182,7 @@ impl Config {
                 if !e.is_absolute(Path::new(pat)) {
                     *pat = base
                         .join(pat.as_str())
-                        .normalize()
+                        .normalize(e)
                         .to_string_lossy()
                         .into_owned();
                 }
@@ -194,7 +194,7 @@ impl Config {
                 if !e.is_absolute(Path::new(pat)) {
                     *pat = base
                         .join(pat.as_str())
-                        .normalize()
+                        .normalize(e)
                         .to_string_lossy()
                         .into_owned();
                 }
@@ -207,7 +207,7 @@ impl Config {
                     if !e.is_absolute(Path::new(pat)) {
                         *pat = base
                             .join(pat.as_str())
-                            .normalize()
+                            .normalize(e)
                             .to_string_lossy()
                             .into_owned();
                     }
@@ -219,7 +219,7 @@ impl Config {
                     if !e.is_absolute(Path::new(pat)) {
                         *pat = base
                             .join(pat.as_str())
-                            .normalize()
+                            .normalize(e)
                             .to_string_lossy()
                             .into_owned();
                     }
@@ -249,7 +249,7 @@ impl Options {
                         let p = if e.is_absolute(Path::new(&p)) {
                             PathBuf::from(p)
                         } else {
-                            base.join(p).normalize()
+                            base.join(p).normalize(e)
                         };
 
                         let s = p.to_string_lossy();

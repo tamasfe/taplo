@@ -82,7 +82,7 @@ Other than `fileMatch`, it is also possible to specify `regexMatch` that is matc
     "tomlValidation": [
       {
         "regexMatch": "^.*foo.toml$",
-        "url": "https://json.schemastore.org/foo.json"
+        "url": "https://www.schemastore.org/foo.json"
       }
     ]
   }

@@ -36,10 +36,7 @@ impl AsyncRead for JsAsyncRead {
             let ret: JsValue = match self.f.call1(&this, &JsValue::from(buf.remaining())) {
                 Ok(val) => val,
                 Err(error) => {
-                    return Poll::Ready(Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        format!("{:?}", error),
-                    )));
+                    return Poll::Ready(Err(io::Error::other(format!("{error:?}"))));
                 }
             };
 
@@ -58,7 +55,7 @@ impl AsyncRead for JsAsyncRead {
 
                             Ok(())
                         }
-                        Err(err) => Err(io::Error::new(io::ErrorKind::Other, format!("{:?}", err))),
+                        Err(err) => Err(io::Error::other(format!("{err:?}"))),
                     };
 
                     self.fut = None;
@@ -96,9 +93,8 @@ impl AsyncWrite for JsAsyncWrite {
             let ret: JsValue = match self.f.call1(&this, &Uint8Array::from(buf).into()) {
                 Ok(val) => val,
                 Err(error) => {
-                    return Poll::Ready(Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        format!("{:?}", error),
+                    return Poll::Ready(Err(io::Error::other(
+                        format!("{error:?}"),
                     )));
                 }
             };
@@ -114,7 +110,7 @@ impl AsyncWrite for JsAsyncWrite {
                             let n = num_written.as_f64().unwrap_or(0.0).floor() as usize;
                             Ok(n)
                         }
-                        Err(err) => Err(io::Error::new(io::ErrorKind::Other, format!("{:?}", err))),
+                        Err(err) => Err(io::Error::other(format!("{err:?}"))),
                     };
 
                     self.fut = None;

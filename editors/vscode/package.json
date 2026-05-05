@@ -233,7 +233,7 @@
             "type": "string"
           },
           "default": [
-            "https://json.schemastore.org/api/json/catalog.json"
+            "https://www.schemastore.org/api/json/catalog.json"
           ]
         },
         "evenBetterToml.schema.associations": {

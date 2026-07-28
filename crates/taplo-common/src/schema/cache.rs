@@ -19,6 +19,7 @@ pub struct Cache<E: Environment> {
     expiration_times: Arc<ArcSwap<(Duration, Duration)>>,
     lru_expires_by: Arc<Mutex<OffsetDateTime>>,
     schemas: Arc<Mutex<LruCache<Url, Arc<Value>>>>,
+    failed_urls: Arc<Mutex<LruCache<Url, OffsetDateTime>>>,
     cache_path: Arc<ArcSwap<Option<PathBuf>>>,
 }
 
@@ -35,6 +36,10 @@ impl<E: Environment> Cache<E> {
                 NonZeroUsize::new(10).unwrap(),
                 ahash::RandomState::new(),
             ))),
+            failed_urls: Arc::new(Mutex::new(LruCache::with_hasher(
+                NonZeroUsize::new(10).unwrap(),
+                ahash::RandomState::new(),
+            ))),
             cache_path: Default::default(),
         }
     }
@@ -45,6 +50,35 @@ impl<E: Environment> Cache<E> {
 
     pub fn contains_schema(&self, url: &Url) -> bool {
         self.schemas.lock().contains(url)
+    }
+
+    pub fn recently_failed(&self, url: &Url) -> bool {
+        if self.lru_expired() {
+            self.schemas.lock().clear();
+            self.failed_urls.lock().clear();
+            return false;
+        }
+
+        let now = self.env.now();
+        let mut failed_urls = self.failed_urls.lock();
+
+        match failed_urls.get(url).copied() {
+            Some(expires_by) if expires_by >= now => true,
+            Some(_) => {
+                failed_urls.pop(url);
+                false
+            }
+            None => false,
+        }
+    }
+
+    pub fn remember_failure(&self, url: Url) {
+        let expires_by = self.env.now() + self.expiration_times.load().0;
+        self.failed_urls.lock().put(url, expires_by);
+    }
+
+    pub fn clear_failure(&self, url: &Url) {
+        self.failed_urls.lock().pop(url);
     }
 
     pub fn set_cache_path(&self, path: Option<PathBuf>) {

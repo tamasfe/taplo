@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as node from "vscode-languageclient/node";
 import * as browser from "vscode-languageclient/browser";
 import which from "which";
-import { getOutput } from "./util";
+import { getOutput, resolveVariables } from "./util";
 import { BaseLanguageClient } from "vscode-languageclient";
 
 export async function createClient(
@@ -119,6 +119,27 @@ async function clientOpts(context: vscode.ExtensionContext): Promise<any> {
     initializationOptions: {
       configurationSection: "evenBetterToml",
       cachePath: context.globalStorageUri.fsPath,
+    },
+
+    middleware: {
+      workspace: {
+        configuration: async (params, token, next) => {
+          const result = await next(params, token);
+          if (Array.isArray(result)) {
+            for (const config of result) {
+              if (
+                config?.taplo?.configFile?.path &&
+                typeof config.taplo.configFile.path === "string"
+              ) {
+                config.taplo.configFile.path = resolveVariables(
+                  config.taplo.configFile.path
+                );
+              }
+            }
+          }
+          return result;
+        },
+      },
     },
   };
 }

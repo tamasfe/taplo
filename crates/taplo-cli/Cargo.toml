@@ -60,6 +60,9 @@ tokio = { workspace = true, features = ["sync", "parking_lot", "io-util"] }
 [package.metadata.auto-tag]
 enabled = true
 
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/{ version }/{ name }-{ target-family }-{ target-arch }{ archive-suffix }"
+
 [[bin]]
 name = "taplo"
 path = "bin/taplo.rs"

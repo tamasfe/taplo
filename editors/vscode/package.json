@@ -403,7 +403,8 @@
     "build:browser-extension": "rollup -c rollup.config.browser-extension.mjs",
     "build:browser-server": "rollup -c rollup.config.browser-server.mjs",
     "build:node": "rollup -c rollup.config.mjs",
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "test:unit": "TS_NODE_PROJECT=node.tsconfig.json node --test --require ts-node/register/transpile-only test/**/*.test.ts"
   },
   "dependencies": {
     "@taplo/lsp": "^0.8.0",

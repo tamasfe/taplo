@@ -13,7 +13,7 @@ use serde_json::Value;
 use taplo::{
     dom::{KeyOrIndex, Keys},
     syntax::SyntaxKind::{
-        self, BOOL, DATE, DATE_TIME_LOCAL, DATE_TIME_OFFSET, IDENT, INTEGER, INTEGER_BIN,
+        self, BOOL, DATE, DATE_TIME_LOCAL, DATE_TIME_OFFSET, FLOAT, IDENT, INTEGER, INTEGER_BIN,
         INTEGER_HEX, INTEGER_OCT, MULTI_LINE_STRING, MULTI_LINE_STRING_LITERAL, STRING,
         STRING_LITERAL, TIME,
     },
@@ -111,21 +111,72 @@ pub(crate) async fn hover<E: Environment>(
         if position_info.syntax.kind() == SyntaxKind::IDENT {
             keys = lookup_keys(doc.dom.clone(), &keys);
 
-            // We're interested in the array itself, not its item type.
-            while let Some(KeyOrIndex::Index(_)) = keys.iter().last() {
-                keys = keys.skip_right(1);
+            // Determine if we're in an array of tables context
+            let is_in_array_of_tables = query.in_table_array_header();
+
+            // For array of tables headers, prefer the items schema (indexed path).
+            // For regular properties, prefer the container/array schema (non-indexed path)
+            // and fall back to the indexed path only when the non-indexed lookup fails.
+            let keys_with_index = keys.clone();
+            let mut keys_without_index = keys.clone();
+            while let Some(KeyOrIndex::Index(_)) = keys_without_index.iter().last() {
+                keys_without_index = keys_without_index.skip_right(1);
             }
 
-            let schemas = match ws
+            // Get schemas at both paths to potentially combine information.
+            // Normalize empty vecs to None so that Option::or() falls back correctly
+            // when a path resolves successfully but matches zero schemas.
+            let mut had_resolution_error = false;
+
+            let schemas_with_index = if keys_with_index != keys_without_index {
+                match ws
+                    .schemas
+                    .schemas_at_path(&schema_association.url, &value, &keys_with_index)
+                    .await
+                {
+                    Ok(s) if !s.is_empty() => Some(s),
+                    Ok(_) => None,
+                    Err(err) => {
+                        tracing::error!(?err, "schema resolution failed for indexed path");
+                        had_resolution_error = true;
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+
+            let schemas_without_index = match ws
                 .schemas
-                .schemas_at_path(&schema_association.url, &value, &keys)
+                .schemas_at_path(&schema_association.url, &value, &keys_without_index)
                 .await
             {
-                Ok(s) => s,
-                Err(error) => {
-                    tracing::error!(?error, "schema resolution failed");
-                    return Ok(None);
+                Ok(s) if !s.is_empty() => Some(s),
+                Ok(_) => None,
+                Err(err) => {
+                    tracing::error!(?err, "schema resolution failed for non-indexed path");
+                    had_resolution_error = true;
+                    None
                 }
+            };
+
+            // Determine which schemas to use based on context
+            let schemas = if is_in_array_of_tables {
+                // For array of tables headers like [[plugins]], show items schema
+                schemas_with_index.or(schemas_without_index)
+            } else {
+                // For all other hovers, prefer the non-indexed/container schema so
+                // array-level docs are not hidden merely because lookup_keys appended
+                // an index for an array-valued key. Still fall back to the indexed
+                // path if the non-indexed lookup fails.
+                schemas_without_index.or(schemas_with_index)
+            };
+
+            let Some(schemas) = schemas else {
+                if !had_resolution_error {
+                    tracing::debug!("no matching schemas found");
+                }
+                return Ok(None);
             };
 
             let content = schemas
@@ -291,5 +342,6 @@ fn is_primitive(kind: SyntaxKind) -> bool {
             | INTEGER_HEX
             | INTEGER_OCT
             | INTEGER_BIN
+            | FLOAT
     )
 }

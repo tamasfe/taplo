@@ -2,6 +2,7 @@ use crate::environment::WasmEnvironment;
 use futures::Sink;
 use js_sys::Function;
 use lsp_async_stub::{rpc, Server};
+use serde::Serialize;
 use std::{io, sync::Arc};
 use taplo_lsp::world::WorldState;
 use wasm_bindgen::prelude::*;
@@ -63,8 +64,12 @@ impl Sink<rpc::Message> for WasmLspInterface {
         message: rpc::Message,
     ) -> Result<(), Self::Error> {
         let this = JsValue::null();
+        // Use json_compatible() to serialize None/null as JS null (not undefined)
+        // and structs as plain objects (not Maps). This ensures response messages
+        // with result: null survive Node.js IPC JSON serialization.
+        let serializer = serde_wasm_bindgen::Serializer::json_compatible();
         self.js_on_message
-            .call1(&this, &serde_wasm_bindgen::to_value(&message).unwrap())
+            .call1(&this, &message.serialize(&serializer).unwrap())
             .unwrap();
         Ok(())
     }

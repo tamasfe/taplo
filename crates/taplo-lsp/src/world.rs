@@ -228,15 +228,27 @@ impl<E: Environment> WorkspaceState<E> {
 
         if self.config.taplo.config_file.enabled {
             let config_path = if let Some(p) = &self.config.taplo.config_file.path {
-                tracing::debug!(path = ?p, "using config file at specified path");
-
-                if env.is_absolute(p) {
-                    Some(p.clone())
-                } else if self.root != *DEFAULT_WORKSPACE_URL {
-                    Some(root_path.join(p))
+                let p_str = p.to_string_lossy();
+                if p_str.trim().is_empty() {
+                    tracing::debug!("config file path is empty, falling back to auto-discovery");
+                    if self.root != *DEFAULT_WORKSPACE_URL {
+                        env.find_config_file_normalized(&root_path).await
+                    } else {
+                        None
+                    }
                 } else {
-                    tracing::debug!("relative config path is not valid for detached workspace");
-                    None
+                    tracing::debug!(path = ?p, "using config file at specified path");
+
+                    if env.is_absolute(p) {
+                        Some(p.clone())
+                    } else if self.root != *DEFAULT_WORKSPACE_URL {
+                        Some(root_path.join(p))
+                    } else {
+                        tracing::debug!(
+                            "relative config path is not valid for detached workspace"
+                        );
+                        None
+                    }
                 }
             } else if self.root != *DEFAULT_WORKSPACE_URL {
                 tracing::debug!("discovering config file in workspace");

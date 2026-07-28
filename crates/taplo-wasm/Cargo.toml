@@ -39,6 +39,10 @@ js-sys               = { version = "0.3.72" }
 wasm-bindgen         = { version = "0.2.95" }
 wasm-bindgen-futures = { version = "0.4.45" }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# ahash now pulls getrandom 0.3 transitively; enable its wasm backend in the final graph.
+getrandom_0_3 = { package = "getrandom", version = "0.3", default-features = false, features = ["wasm_js"] }
+
 [features]
 default = ["cli", "lsp"]
 cli     = ["taplo-cli"]

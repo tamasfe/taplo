@@ -167,17 +167,28 @@ pub async fn completion<E: Environment>(
 
         return Ok(Some(CompletionResponse::Array(
             array_of_objects_schemas
-                .map(|(full_key, _, s)| CompletionItem {
-                    label: full_key.to_string(),
-                    kind: Some(CompletionItemKind::STRUCT),
-                    documentation: documentation(&s),
-                    text_edit: key_range.map(|r| {
-                        CompletionTextEdit::Edit(TextEdit {
-                            range: doc.mapper.range(r).unwrap().into_lsp(),
-                            new_text: full_key.to_string(),
-                        })
-                    }),
-                    ..Default::default()
+                .map(|(full_key, _, s)| {
+                    // For array of tables, prefer documentation from the items schema,
+                    // but fall back to the array schema when items has no docs.
+                    let items_schema = &s["items"];
+                    let item_doc = if !items_schema.is_null() {
+                        documentation(items_schema).or_else(|| documentation(&s))
+                    } else {
+                        documentation(&s)
+                    };
+
+                    CompletionItem {
+                        label: full_key.to_string(),
+                        kind: Some(CompletionItemKind::STRUCT),
+                        documentation: item_doc,
+                        text_edit: key_range.map(|r| {
+                            CompletionTextEdit::Edit(TextEdit {
+                                range: doc.mapper.range(r).unwrap().into_lsp(),
+                                new_text: full_key.to_string(),
+                            })
+                        }),
+                        ..Default::default()
+                    }
                 })
                 .collect(),
         )));

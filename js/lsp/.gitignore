@@ -1,6 +1,7 @@
 dist
 node_modules
 target
+src/wasm
 **/.local*
 *.tgz
 yarn-error.log

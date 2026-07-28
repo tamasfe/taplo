@@ -864,6 +864,23 @@ fn format_inline_table(
     let mut formatted = String::new();
     let mut comment = None;
 
+    // An inline table is rendered on a single line, so a comment attached to
+    // one of its entries (or otherwise inside the table) cannot be kept in
+    // place without commenting out the rest of the line. Collect any such
+    // comments and emit them as a single trailing comment on the inline table,
+    // rather than panicking in debug builds or silently dropping them in
+    // release builds. See https://github.com/tamasfe/taplo/issues/867.
+    fn append_comment(acc: &mut Option<String>, text: &str) {
+        let text = text.trim();
+        match acc {
+            Some(existing) => {
+                existing.push(' ');
+                existing.push_str(text);
+            }
+            None => *acc = Some(text.to_string()),
+        }
+    }
+
     let mut context = context.clone();
     if context.force_multiline {
         context.force_multiline = options.inline_table_expand;
@@ -904,7 +921,9 @@ fn format_inline_table(
                 };
 
                 let entry = format_entry(child, options, context);
-                debug_assert!(entry.comment.is_none());
+                if let Some(entry_comment) = &entry.comment {
+                    append_comment(&mut comment, entry_comment);
+                }
                 entry.write_to(&mut formatted, options);
 
                 node_index += 1;
@@ -932,10 +951,9 @@ fn format_inline_table(
                     }
                     formatted += "}";
                 }
-                WHITESPACE | COMMA => {}
+                WHITESPACE | COMMA | NEWLINE => {}
                 COMMENT => {
-                    debug_assert!(comment.is_none());
-                    comment = Some(t.text().into());
+                    append_comment(&mut comment, t.text());
                 }
                 _ => formatted += t.text(),
             },

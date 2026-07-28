@@ -1203,3 +1203,26 @@ sort_me_not = ["3", "2", "1"]
 
     assert_format!(expected, &formatted);
 }
+
+#[test]
+fn inline_table_entry_trailing_comment_is_preserved() {
+    // Regression: an inline table whose entry carries a trailing comment (valid
+    // in a multi-line inline table) used to hit `debug_assert!(entry.comment
+    // .is_none())` and panic in debug builds, while silently dropping the
+    // comment in release builds. The comment is now kept as a trailing comment
+    // on the inline table. https://github.com/tamasfe/taplo/issues/867
+    let formatted = crate::formatter::format(
+        "a = { x = 1 # keep me\n}\n",
+        formatter::Options::default(),
+    );
+    assert_format!("a = { x = 1 } # keep me\n", &formatted);
+}
+
+#[test]
+fn inline_table_multiple_entry_comments_are_preserved() {
+    let formatted = crate::formatter::format(
+        "a = { x = 1 # first\n, y = 2 # second\n}\n",
+        formatter::Options::default(),
+    );
+    assert_format!("a = { x = 1, y = 2 } # first # second\n", &formatted);
+}

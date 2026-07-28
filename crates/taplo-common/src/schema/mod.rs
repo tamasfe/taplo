@@ -542,9 +542,12 @@ impl<E: Environment> Schemas<E> {
         if let Some(all_ofs) = schema["allOf"].as_array() {
             if !all_ofs.is_empty() && composed {
                 let mut schema = schema.clone();
-                if let Some(obj) = schema["allOf"].as_object_mut() {
-                    obj.remove("allOf");
-                }
+                // Remove the allOf because we're resolving in this spot -- not doing so will cause
+                // infinite recursion.
+                schema
+                    .as_object_mut()
+                    .expect("schema is an object")
+                    .remove("allOf");
 
                 let mut merged_all_of = Value::Object(serde_json::Map::default());
 
@@ -745,5 +748,42 @@ mod formats {
 
     pub(super) fn semver_req(value: &str) -> bool {
         semver::VersionReq::parse(value).is_ok()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    use crate::environment::native::NativeEnvironment;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_all_of_composed() {
+        let schemas = new_schemas();
+        let schema_url = url_for_test_schema("all-of-composed.json");
+
+        // Ensure this doesn't panic: this ensures that allOfs don't cause infinite recursion.
+        schemas
+            .possible_schemas_from(&schema_url, &serde_json::Value::Null, &Keys::empty(), 8)
+            .await
+            .unwrap();
+    }
+
+    fn new_schemas() -> Schemas<NativeEnvironment> {
+        Schemas::new(NativeEnvironment::new(), reqwest::Client::new())
+    }
+
+    fn url_for_test_schema(name: &str) -> Url {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let path = dir
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .join("test-data/schemas")
+            .join(name);
+        Url::parse(&format!("file://{}", path.display())).unwrap()
     }
 }

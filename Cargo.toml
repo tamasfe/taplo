@@ -55,3 +55,23 @@ strip         = true
 [profile.bench]
 lto       = true
 opt-level = 3
+
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/release-cli-{ version }/taplo-{ target }.gz"
+bin-dir = "taplo{ binary-ext }"
+pkg-fmt = "gz"
+
+[package.metadata.binstall.overrides.'cfg(all(target_os = "linux", target_arch = "x86_64"))']
+pkg-url = "{ repo }/releases/download/release-cli-{ version }/taplo-linux-x86_64.gz"
+
+[package.metadata.binstall.overrides.'cfg(all(target_os = "linux", target_arch = "aarch64"))']
+pkg-url = "{ repo }/releases/download/release-cli-{ version }/taplo-linux-aarch64.gz"
+
+[package.metadata.binstall.overrides.'cfg(all(target_os = "macos", target_arch = "x86_64"))']
+pkg-url = "{ repo }/releases/download/release-cli-{ version }/taplo-darwin-x86_64.gz"
+
+[package.metadata.binstall.overrides.'cfg(all(target_os = "macos", target_arch = "aarch64"))']
+pkg-url = "{ repo }/releases/download/release-cli-{ version }/taplo-darwin-aarch64.gz"
+
+[package.metadata.binstall.overrides.'cfg(target_os = "windows")']
+pkg-url = "{ repo }/releases/download/release-cli-{ version }/taplo-windows-x86_64.gz"

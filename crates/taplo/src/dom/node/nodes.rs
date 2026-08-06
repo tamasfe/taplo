@@ -649,8 +649,6 @@ impl DateTime {
                             *b = b'T';
                         } else if *b == b'z' {
                             *b = b'Z';
-                        } else if *b == b',' {
-                            *b = b'.';
                         }
                     }
                 }

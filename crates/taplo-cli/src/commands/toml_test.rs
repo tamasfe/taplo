@@ -102,6 +102,7 @@ impl Serialize for TomlTestValue<'_> {
                 "value",
                 &match self.node {
                     Node::Str(d) => d.value().to_string(),
+                    Node::Date(d) => d.value().to_string(),
                     Node::Float(f) if f.value().is_nan() => String::from("nan"),
                     Node::Float(f) if f.value().is_infinite() => f.syntax().unwrap().to_string(),
                     _ => serde_json::to_string(&self.node).map_err(serde::ser::Error::custom)?,

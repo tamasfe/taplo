@@ -58,6 +58,12 @@ create_options!(
         /// there's only one comment.
         pub align_single_comments: bool,
 
+        /// The amount of spaces to put before a trailing comment on the same
+        /// line as an entry or array item.
+        ///
+        /// This has no effect on comments that get aligned via `align_comments`.
+        pub inline_comment_spaces: usize,
+
         /// Put trailing commas for multiline
         /// arrays.
         pub array_trailing_comma: bool,
@@ -156,6 +162,7 @@ impl Default for Options {
             align_entries: false,
             align_comments: true,
             align_single_comments: true,
+            inline_comment_spaces: 1,
             array_trailing_comma: true,
             array_auto_expand: true,
             array_auto_collapse: true,
@@ -739,6 +746,11 @@ fn add_entries(
         &rows,
         options.newline(),
         " ",
+        if align_comments {
+            None
+        } else {
+            Some((4, " ".repeat(options.inline_comment_spaces)))
+        },
     );
 
     were_entries
@@ -1025,6 +1037,11 @@ fn format_array(node: SyntaxNode, options: &Options, context: &Context) -> impl 
             &rows,
             options.newline(),
             " ",
+            if align_comments {
+                None
+            } else {
+                Some((2, " ".repeat(options.inline_comment_spaces)))
+            },
         );
 
         were_values
@@ -1236,6 +1253,7 @@ fn format_rows<R, S>(
     rows: &[R],
     newline: &str,
     separator: &str,
+    comment_separator: Option<(usize, String)>,
 ) -> String
 where
     R: AsRef<[S]>,
@@ -1287,7 +1305,10 @@ where
                 && item_idx <= separator_range.end.saturating_add(1)
                 && item_idx < row.as_ref().len()
             {
-                out += separator;
+                match &comment_separator {
+                    Some((idx, sep)) if *idx == item_idx => out += sep,
+                    _ => out += separator,
+                }
             }
 
             out += item.as_ref();

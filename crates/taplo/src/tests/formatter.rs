@@ -308,6 +308,59 @@ a            = "longer_string_hm" # trailing comment
 }
 
 #[test]
+fn test_inline_comment_spaces() {
+    let src = r#"
+entry = "value" # comment
+
+my_array = [
+  "a", # first
+  "b", # second
+]
+"#;
+
+    let expected = r#"
+entry = "value"   # comment
+
+my_array = [
+  "a",   # first
+  "b",   # second
+]
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            align_comments: false,
+            inline_comment_spaces: 3,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
+fn test_inline_comment_spaces_default_unchanged() {
+    let src = r#"
+entry = "value"    # comment
+"#;
+
+    let expected = r#"
+entry = "value" # comment
+"#;
+
+    let formatted = crate::formatter::format(
+        src,
+        formatter::Options {
+            align_comments: false,
+            ..Default::default()
+        },
+    );
+
+    assert_format!(expected, &formatted);
+}
+
+#[test]
 fn test_nested_arrays() {
     let src = r#"
 my_array = [

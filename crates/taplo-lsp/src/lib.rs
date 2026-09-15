@@ -40,6 +40,7 @@ pub fn create_server<E: Environment>() -> Server<World<E>> {
         .on_request::<request::PrepareRenameRequest, _>(handlers::prepare_rename)
         .on_request::<request::Rename, _>(handlers::rename)
         .on_notification::<notification::Initialized, _>(handlers::initialized)
+        .on_notification::<notification::SetTrace, _>(handlers::set_trace)
         .on_notification::<notification::DidOpenTextDocument, _>(handlers::document_open)
         .on_notification::<notification::DidChangeTextDocument, _>(handlers::document_change)
         .on_notification::<notification::DidSaveTextDocument, _>(handlers::document_save)

@@ -222,6 +222,13 @@ jobs:
       - name: Build Core
         working-directory: js/core
         run: yarn install && yarn build
+      - name: Install LSP dependencies
+        working-directory: js/lsp
+        run: yarn install
+      - name: Pack LSP
+        if: github.event_name != 'push'
+        working-directory: js/lsp
+        run: yarn pack
       - name: Publish to NPM
         uses: nick-fields/retry@v3
         if: github.event_name == 'push'
@@ -229,7 +236,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 300
           timeout_minutes: 60
-          command: cd js/lsp && yarn install && yarn publish
+          command: cd js/lsp && yarn npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -422,6 +429,7 @@ jobs:
       - name: Install latest Rust toolchain
         run: |
           rustup update --no-self-update
+          rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - name: Install Node.js
         uses: actions/setup-node@v4

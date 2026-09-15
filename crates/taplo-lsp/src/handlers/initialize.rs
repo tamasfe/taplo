@@ -9,8 +9,9 @@ use lsp_types::{
     CompletionOptions, DocumentLinkOptions, FoldingRangeProviderCapability,
     HoverProviderCapability, InitializedParams, OneOf, RenameOptions, SemanticTokensFullOptions,
     SemanticTokensLegend, SemanticTokensOptions, SemanticTokensServerCapabilities,
-    ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind,
-    WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+    ServerCapabilities, ServerInfo, SetTraceParams, TextDocumentSyncCapability,
+    TextDocumentSyncKind, WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities,
+    WorkspaceServerCapabilities,
 };
 use lsp_types::{InitializeParams, InitializeResult};
 use taplo_common::environment::Environment;
@@ -115,4 +116,12 @@ pub async fn initialized<E: Environment>(
     context
         .env
         .spawn_local(update_configuration(context.clone()));
+}
+
+pub async fn set_trace<E: Environment>(
+    _context: Context<World<E>>,
+    _params: Params<SetTraceParams>,
+) {
+    // Taplo does not emit trace events, but accepting the standard notification
+    // avoids reporting a supported client message as unhandled.
 }

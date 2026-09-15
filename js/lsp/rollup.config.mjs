@@ -22,7 +22,7 @@ export default {
       debug: process.env["RELEASE"] !== "true",
       nodejs: true,
       inlineWasm: true,
-      cargoArgs: ["--features", "lsp", "--frozen"],
+      cargoArgs: ["--features", "lsp", "--locked"],
       verbose: process.env["VERBOSE"] === "true",
     }),
     commonjs(),

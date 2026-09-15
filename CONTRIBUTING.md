@@ -63,6 +63,18 @@ A JavaScript wrapper over the core [taplo](crates/taplo) library exposing a high
 
 The VSCode extension, and a Node.js wrapper for [taplo-ide](crates/taplo-ide).
 
+The extension bundles the language server from this repository. To build it
+locally, install Rust and the WebAssembly target, then install and build the
+extension dependencies:
+
+```sh
+rustup target add wasm32-unknown-unknown
+corepack enable
+cd editors/vscode
+yarn install --immutable
+yarn build
+```
+
 ### [util](util)
 
 Contains utilities for schemas and tests.

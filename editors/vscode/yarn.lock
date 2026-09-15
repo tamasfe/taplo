@@ -501,14 +501,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@taplo/lsp@npm:^0.8.0":
-  version: 0.8.0
-  resolution: "@taplo/lsp@npm:0.8.0"
+"@taplo/lsp@portal:../../js/lsp::locator=even-better-toml%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@taplo/lsp@portal:../../js/lsp::locator=even-better-toml%40workspace%3A."
   dependencies:
     "@taplo/core": "npm:^0.2.0"
-  checksum: f556092473fdb7c0dd2bdd967768e855d7139aa82e169a97d1eaf0db580ac593fbbe77909fdea51c9faf4fa84c22855b33dec0dcf9464f015f5a80fe83bcd519
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@tsconfig/node10@npm:^1.0.7":
   version: 1.0.11
@@ -1308,7 +1307,7 @@ __metadata:
     "@rollup/plugin-commonjs": "npm:^25.0.7"
     "@rollup/plugin-node-resolve": "npm:^15.2.3"
     "@rollup/plugin-replace": "npm:^5.0.5"
-    "@taplo/lsp": "npm:^0.8.0"
+    "@taplo/lsp": "portal:../../js/lsp"
     "@types/deep-equal": "npm:^1.0.4"
     "@types/node": "npm:^20.11.9"
     "@types/vscode": "npm:^1.90.0"

@@ -34,7 +34,10 @@ export class TaploLsp {
     lspInterface: LspInterface
   ): Promise<TaploLsp> {
     if (typeof TaploLsp.taplo === "undefined") {
-      TaploLsp.taplo = await loadTaplo();
+      TaploLsp.taplo = await loadTaplo({
+        initializeHook: (initialize: any, module: any) =>
+          initialize({ module_or_path: module }),
+      });
     }
     TaploLsp.taplo.initialize();
 

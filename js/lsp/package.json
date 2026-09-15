@@ -1,10 +1,11 @@
 {
   "name": "@taplo/lsp",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "A JavaScript wrapper for the Taplo TOML language server.",
   "scripts": {
     "build": "yarn rollup --silent -c rollup.config.mjs",
-    "prepublish": "RELEASE=true yarn build"
+    "test": "node test/lsp-json-rpc.test.mjs",
+    "prepack": "RELEASE=true yarn build && yarn test"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

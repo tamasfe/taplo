@@ -532,7 +532,15 @@ fn format_root(node: SyntaxNode, options: &Options, context: &Context) -> String
                 }
                 ENTRY => {
                     scoped_options = options.clone();
-                    context.update_options(&mut scoped_options, c_range);
+
+                    // Match the key so trailing comments do not exclude the entry from its scope.
+                    let key_range = node
+                        .children()
+                        .find(|child| child.kind() == KEY)
+                        .map(|key| key.text_range())
+                        .unwrap_or(c_range);
+
+                    context.update_options(&mut scoped_options, key_range);
 
                     if add_comments(
                         &mut comment_group,

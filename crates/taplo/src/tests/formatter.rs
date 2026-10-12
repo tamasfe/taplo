@@ -1203,3 +1203,53 @@ sort_me_not = ["3", "2", "1"]
 
     assert_format!(expected, &formatted);
 }
+
+#[test]
+fn test_reorder_keys_rule_preserves_other_tables() {
+    // https://github.com/tamasfe/taplo/issues/634
+    let src = r#"[package]
+name = "rustup"
+version = "1.27.1"
+edition = "2021"
+
+[dependencies]
+chrono = "0.4"
+anyhow.workspace = true
+
+[dev-dependencies]
+z = "1"
+a = "1"
+"#;
+
+    let expected = r#"[package]
+name = "rustup"
+version = "1.27.1"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+chrono = "0.4"
+
+[dev-dependencies]
+z = "1"
+a = "1"
+"#;
+
+    let parsed = crate::parser::parse(src);
+
+    assert!(parsed.errors.is_empty(), "{:#?}", parsed.errors);
+
+    let scopes = [(
+        "dependencies",
+        OptionsIncomplete {
+            reorder_keys: Some(true),
+            ..Default::default()
+        },
+    )];
+
+    let formatted =
+        formatter::format_with_path_scopes(parsed.into_dom(), Options::default(), &[], scopes)
+            .unwrap();
+
+    assert_format!(expected, &formatted);
+}

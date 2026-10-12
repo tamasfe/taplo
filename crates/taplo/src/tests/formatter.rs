@@ -1203,3 +1203,37 @@ sort_me_not = ["3", "2", "1"]
 
     assert_format!(expected, &formatted);
 }
+
+#[test]
+fn test_reorder_keys_rule_with_trailing_comment() {
+    // https://github.com/tamasfe/taplo/issues/464
+    let src = r#"[mytable]
+a = "a"
+c = "c"
+b = "b" # ...
+"#;
+
+    let expected = r#"[mytable]
+a = "a"
+b = "b" # ...
+c = "c"
+"#;
+
+    let parsed = crate::parser::parse(src);
+
+    assert!(parsed.errors.is_empty(), "{:#?}", parsed.errors);
+
+    let scopes = [(
+        "mytable",
+        OptionsIncomplete {
+            reorder_keys: Some(true),
+            ..Default::default()
+        },
+    )];
+
+    let formatted =
+        formatter::format_with_path_scopes(parsed.into_dom(), Options::default(), &[], scopes)
+            .unwrap();
+
+    assert_format!(expected, &formatted);
+}

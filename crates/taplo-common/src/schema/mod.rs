@@ -542,7 +542,7 @@ impl<E: Environment> Schemas<E> {
         if let Some(all_ofs) = schema["allOf"].as_array() {
             if !all_ofs.is_empty() && composed {
                 let mut schema = schema.clone();
-                if let Some(obj) = schema["allOf"].as_object_mut() {
+                if let Some(obj) = schema.as_object_mut() {
                     obj.remove("allOf");
                 }
 

@@ -68,7 +68,13 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
 
                 if let Some(e) = &last_non_header {
                     header_starts.retain(|(k, h)| {
-                        if k == &key || !key.starts_with(k) {
+                        // Only a `.` separates a table from its children, so
+                        // `fruit_juice` is not nested inside `fruit`.
+                        let is_descendant = key
+                            .strip_prefix(k.as_str())
+                            .is_some_and(|rest| rest.starts_with('.'));
+
+                        if k == &key || !is_descendant {
                             folding_ranges.push(FoldingRange {
                                 start_line: mapper.position(h.start()).unwrap().line as u32,
                                 start_character: None,
@@ -220,4 +226,39 @@ pub fn create_folding_ranges(syntax: &SyntaxNode, mapper: &Mapper) -> Vec<Foldin
     }
 
     folding_ranges
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn region_lines(src: &str) -> Vec<(u32, u32)> {
+        let parse = taplo::parser::parse(src);
+        assert!(parse.errors.is_empty());
+        let mapper = Mapper::new_utf16(src, false);
+        let mut lines: Vec<_> = create_folding_ranges(&parse.into_syntax(), &mapper)
+            .into_iter()
+            .map(|r| (r.start_line, r.end_line))
+            .collect();
+        lines.sort_unstable();
+        lines
+    }
+
+    #[test]
+    fn sibling_with_common_text_prefix_is_not_nested() {
+        let src = "[fruit]\ncolor = \"red\"\n\n[fruit_juice]\nsugar = true\n";
+        assert_eq!(region_lines(src), vec![(0, 2), (3, 4)]);
+    }
+
+    #[test]
+    fn array_sibling_with_common_text_prefix_is_not_nested() {
+        let src = "[[a.well]]\nx = 1\n\n[[a.well_log]]\ny = 2\n";
+        assert_eq!(region_lines(src), vec![(0, 2), (3, 4)]);
+    }
+
+    #[test]
+    fn dotted_child_is_still_nested() {
+        let src = "[server]\nport = 1\n\n[server.http]\nx = 2\n";
+        assert_eq!(region_lines(src), vec![(0, 4), (3, 4)]);
+    }
 }

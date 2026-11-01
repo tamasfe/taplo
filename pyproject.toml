@@ -44,3 +44,5 @@ Changelog     = "https://github.com/tamasfe/taplo/blob/master/crates/taplo-cli/C
 [tool.maturin]
 bindings      = "bin"
 manifest-path = "crates/taplo-cli/Cargo.toml"
+
+include = [{ path = "crates/**/*", format = "sdist" }]

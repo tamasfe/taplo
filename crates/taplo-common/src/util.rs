@@ -156,7 +156,7 @@ pub fn get_reqwest_client(timeout: std::time::Duration) -> Result<reqwest::Clien
     #[cfg(not(any(feature = "native-tls", feature = "rustls-tls")))]
     fn get_certs(
         builder: reqwest::ClientBuilder,
-        path: std::ffi::OsString,
+        path: &std::ffi::OsString,
     ) -> reqwest::ClientBuilder {
         tracing::error!(?path, "Could not load certs, taplo was built without TLS");
         builder

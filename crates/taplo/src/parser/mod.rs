@@ -651,7 +651,7 @@ impl<'p> Parser<'p> {
                 let int_slice = if self.lexer.slice().contains('.') {
                     self.lexer.slice().split('.').next().unwrap()
                 } else {
-                    self.lexer.slice().split('e').next().unwrap()
+                    self.lexer.slice().split(['e', 'E']).next().unwrap()
                 };
 
                 if (int_slice.starts_with('0') && int_slice != "0")

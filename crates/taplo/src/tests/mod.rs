@@ -86,3 +86,26 @@ token_expires_at = 0001-01-01T00:00:00Z
 
     assert!(errors.is_empty(), "{:#?}", errors);
 }
+
+#[test]
+fn uppercase_exponent_zero_float_is_valid() {
+    // TOML 1.0 allows a case-insensitive exponent marker. The integer-part
+    // zero-padding check must split on both 'e' and 'E', otherwise `0E2`
+    // is mistaken for a zero-padded integer.
+    for src in ["a = 0E2\n", "a = +0E2\n", "a = -0E0\n", "a = 0e2\n"] {
+        let errors = parse(src).errors;
+        assert!(
+            errors.is_empty(),
+            "expected {src:?} to parse, got {errors:#?}"
+        );
+    }
+}
+
+#[test]
+fn uppercase_exponent_still_rejects_zero_padded_integer_part() {
+    let errors = parse("a = 00E2\n").errors;
+    assert!(
+        !errors.is_empty(),
+        "00E2 must still be rejected as zero-padded"
+    );
+}

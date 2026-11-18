@@ -1,0 +1,102 @@
+# Module: schema
+
+**File:** `\crates\taplo-lsp\src\handlers\schema.rs`
+
+## Overview
+
+Module `schema` contains 3 analyzed entities.
+
+```
+use crate::{
+    diagnostics::publish_diagnostics,
+    lsp_ext::{
+        notification::{self, AssociateSchemaParams},
+        request::{
+            AssociatedSchemaParams, AssociatedSchemaResponse, ListSchemasParams,
+            ListSchemasResponse, SchemaInfo,
+        },
+    },
+    world::World,
+};
+use lsp_async_stub::{rpc::Error, Context, Params};
+use serde_json::json;
+use taplo_common::{
+    environment::Environment,
+    schema::associations::{priority, source, AssociationRule, SchemaAssociation},
+};
+
+#[tracing::instrument(skip_all)]
+pub async fn list_schemas<E: Environment>(
+    context: Context<World<E>>,
+    params: Params<ListSchemasParams>,
+) -> Result<ListSchemasResponse, Error> {
+    let p = params.required()?;
+
+    let workspaces = context.workspaces.read().await;
+    let ws = workspaces.by_document(&p.document_uri);
+
+    let associations = ws.schemas.associations().read();
+
+    Ok(ListSchemasResponse {
+        schemas: associations
+            .iter()
+            .filter(|(rule, _)| !matches!(rule, AssociationRule::Url(..)))
+            .map(|(_, s)| SchemaInfo {
+                url: s.url.clone(),
+                meta: s.meta.clone(),
+            })
+            .collect(),
+    })
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn associate_schema<E: Environment>(
+    context: Context<World<E>>,
+    params: Params<AssociateSchemaParams>,
+) {
+    let Ok(p) = params.required() else {
+        return;
+    };
+
+    let workspaces = context.workspaces.read().await;
+
+    let assoc = SchemaAssociation {
+        priority: p.priority.unwrap_or(priority::MAX),
+        url: p.schema_uri,
+        meta: {
+            let mut meta = p.meta.unwrap_or_default();
+            if !meta.is_object() {
+                meta = json!({});
+            }
+
+            meta["source"] = source::MANUAL.into();
+            meta
+        },
+    };
+
+    for (_, ws) in workspaces.iter() {
+        // FIXME: there is no way to remove these.
+        match &p.rule {
+            notification::Ass
+```
+
+## Key Components
+
+| Entity | Type | Description |
+|--------|------|-------------|
+| `schema.list_schemas` | function | No description |
+| `schema.associated_schema` | function | No description |
+| `schema.associate_schema` | function | No description |
+
+## Git History
+
+- Commits: 3
+- Authors: 2
+- Bug fixes: 1
+- Features: 1
+
+## Note
+
+Connect an NVIDIA Nemotron model (Ollama locally or Nebius Serverless) and re-run
+`documentor generate` to upgrade these pages to AI-generated narrative docs with
+purpose, usage examples, and gotchas.
